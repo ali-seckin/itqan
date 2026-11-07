@@ -5,7 +5,11 @@ const geladen = new Map();
 export function schrift(p) {
   if (!geladen.has(p)) {
     // erst die Datei holen (über den Service Worker auch offline), dann als Schrift anmelden
-    geladen.set(p, fetch(`schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${p}.woff2`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    // mit Zeitlimit und einem zweiten Versuch, damit eine hängende Verbindung die Seite nicht blockiert
+    const url = `schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${p}.woff2`;
+    const holen = () => { const c = new AbortController(), t = setTimeout(() => c.abort(), 12000);
+      return fetch(url, { signal: c.signal }).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).finally(() => clearTimeout(t)); };
+    geladen.set(p, holen().catch(holen)
       .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); return true; })
       .catch(() => { geladen.delete(p); return false; }));
   }
