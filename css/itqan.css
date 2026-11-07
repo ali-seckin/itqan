@@ -97,9 +97,17 @@ button.karte:active{transform:scale(.99)}
 .seiten{display:flex;flex-direction:column;gap:18px}
 .seite{container-type:inline-size;background:linear-gradient(180deg,var(--seite),var(--seite2));color:var(--seitetext);border-radius:6px;padding:4.5cqw 3.6cqw 2cqw;box-shadow:var(--schatten);border:var(--seitenrand)}
 [data-modus=dunkel] .seite{outline:3px double rgba(201,164,92,.7);outline-offset:3px;margin:4px}
-/* rechte und linke Seite: leicht anderer Papierton und ein Schatten am Bundsteg */
-.seite.rechts{background:linear-gradient(90deg,rgba(110,72,30,.13),rgba(110,72,30,0) 7%),linear-gradient(180deg,var(--seite),var(--seite2))}
-.seite.links{background:linear-gradient(270deg,rgba(110,72,30,.13),rgba(110,72,30,0) 7%),linear-gradient(180deg,#f9f0dc,#f0e2c6)}
+/* Lage im doppelseitigen Muṣḥaf: R oder L neben der Seitenzahl */
+.reihe-k{display:flex;align-items:center;gap:8px}
+.seitenlage{width:38px;height:38px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzent);font:600 17px var(--fliess);display:grid;place-items:center;padding:0}
+[data-modus=dunkel] .seitenlage{color:var(--akzent2)}
+.lageinfo:not(.verdeckt){display:flex;gap:14px;align-items:center;border-style:solid}
+.buch{width:96px;flex:none}
+.buch path{stroke:var(--akzent);stroke-width:1.5;stroke-linejoin:round}
+.buch .leer{fill:var(--karte2)}
+.buch .hier{fill:var(--akzent);fill-opacity:.55}
+.buch .falz{fill:none}
+.buch text{font:600 13px var(--fliess);fill:var(--text);text-anchor:middle}
 .seite-innen{container-type:inline-size}
 .mz{display:flex;justify-content:space-between;direction:rtl;height:9.3cqw;align-items:center;white-space:nowrap;line-height:1;font-size:5.9cqw}
 .mz.mitte{justify-content:center;gap:.22em}

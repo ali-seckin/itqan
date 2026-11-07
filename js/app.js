@@ -402,6 +402,16 @@ function lichtkarte() {
 }
 
 // ---------- Muṣḥaf ----------
+// Lage im doppelseitigen Madanī-Muṣḥaf: ungerade Seiten rechts, gerade links
+function lageInfo(p) {
+  const r = p % 2 === 1, rechts = r ? p : p - 1, links = r ? p + 1 : p;
+  const buch = `<svg class="buch" viewBox="0 0 120 70" aria-hidden="true">
+    <path d="M60 10 C45 4 22 4 6 8 V64 C22 60 45 60 60 66 Z" class="${r ? 'leer' : 'hier'}"/>
+    <path d="M60 10 C75 4 98 4 114 8 V64 C98 60 75 60 60 66 Z" class="${r ? 'hier' : 'leer'}"/>
+    <path d="M60 10 V66" class="falz"/>
+    <text x="33" y="42">${links <= 604 ? links : ''}</text><text x="87" y="42">${rechts >= 1 ? rechts : ''}</text></svg>`;
+  return `${buch}<div><b>${r ? 'Rechte Seite' : 'Linke Seite'}</b><br>Im gedruckten Muṣḥaf liegt Seite ${p} ${r ? 'rechts' : 'links'}${links <= 604 && rechts >= 1 ? `, aufgeschlagen zusammen mit Seite ${r ? links : rechts} ${r ? 'links' : 'rechts'} daneben` : ''}. Ungerade Seiten liegen immer rechts, gerade immer links.</div>`;
+}
 async function mushaf(pText) {
   navSetzen('mushaf');
   const p = Math.min(604, Math.max(1, +pText || 1));
@@ -412,7 +422,8 @@ async function mushaf(pText) {
   const t = Z.tagesplan();
   const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>Seite ${p} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
-      <div class="pille"><input id="nr" type="number" min="1" max="604" value="${p}" style="width:58px;border:0;background:none;text-align:center" aria-label="Seite"></div></div>
+      <div class="reihe-k"><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><div class="pille"><input id="nr" type="number" min="1" max="604" value="${p}" style="width:58px;border:0;background:none;text-align:center" aria-label="Seite"></div></div></div>
+    <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
     <div class="reihe" style="margin:14px 0"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
     <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true })}</div>
     <div class="titel-klein">Abschnitte auf dieser Seite</div>
@@ -424,6 +435,7 @@ async function mushaf(pText) {
   app.querySelector('#vor').onclick = () => location.replace('#mushaf/' + Math.min(604, p + 1));
   app.querySelector('#zur').onclick = () => location.replace('#mushaf/' + Math.max(1, p - 1));
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
+  app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
   app.querySelector('#seite').onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
