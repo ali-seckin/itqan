@@ -1,0 +1,207 @@
+// Itqān · Profil, Tagesplan (Wird), Karteisystem, Punkte, Kette
+import { D } from './daten.js';
+
+const SCHLUESSEL = 'itqan-profil-v1';
+export const STUFEN = ['neu', 'im Aufbau', 'gefestigt', 'sicher', 'mutqan'];
+export const KETTEN_MEILEN = [7, 40, 66, 100, 200, 365, 604];
+const FEHLER_ABSTAND = [1, 3, 7];      // Tage bis zur nächsten Fehlerwiederholung
+export let P = null;
+
+// ---------- Datum (lokal) ----------
+export function heute(d = new Date()) {
+  const z = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+}
+export function plusTage(datum, n) {
+  const [y, m, t] = datum.split('-').map(Number);
+  return heute(new Date(y, m - 1, t + n));
+}
+export const wochentag = datum => { const [y, m, t] = datum.split('-').map(Number); return (new Date(y, m - 1, t).getDay() + 6) % 7; }; // 0 = Montag
+export const tageZwischen = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+
+// ---------- Laden / Speichern ----------
+export function laden() {
+  try { const t = localStorage.getItem(SCHLUESSEL); if (t) P = JSON.parse(t); } catch (e) { P = null; }
+  return P;
+}
+export function speichern() {
+  try { localStorage.setItem(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
+}
+export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto' } = {}) {
+  P = {
+    format: 'itqan', version: 1, erstellt: new Date().toISOString(), name,
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true },
+    karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
+    tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
+    meilen: []
+  };
+  speichern(); return P;
+}
+export function ersetzeProfil(neu) { P = neu; speichern(); }
+export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL); } catch (e) {} }
+
+// ---------- Karteikarten ----------
+export const karte = id => P.karten[id] || { st: 0, n: 0, fe: 0, zul: null, fae: null, fs: 0, fa: [] };
+export function imBereich(id) { return !P.einst.bereich || P.einst.bereich.includes(id); }
+export function reihe() {
+  const ids = D.A.map(e => e.id).filter(imBereich);
+  if (P.einst.reihenfolge !== 'rueckwaerts') return ids;
+  // Sūren rückwärts (an-Nās zuerst), innerhalb der Sūra vorwärts
+  const gruppen = []; let g = [], s = null;
+  for (const id of ids) { const e = D.A[id]; if (e.von[0] !== s) { if (g.length) gruppen.push(g); g = []; s = e.von[0]; } g.push(id); }
+  if (g.length) gruppen.push(g);
+  return gruppen.reverse().flat();
+}
+
+// ---------- Tagesplan ----------
+export function pensumAm(datum) { return Math.max(1, P.einst.pensum[wochentag(datum)] || 1); }
+export function ketteAktiv(datum = heute()) {
+  const z = P.kette.zuletzt; if (!z || !P.kette.n) return false;
+  return z === datum || z === plusTage(datum, -1) || z === plusTage(datum, -2);
+}
+export function tagesplan(datum = heute()) {
+  if (P.tage[datum]) return P.tage[datum];
+  let n = pensumAm(datum), qadaa = 0;
+  // Qaḍāʾ: gestern verpasst, vorgestern erfüllt, Kette läuft → gestriges Pensum nachholen
+  if (P.kette.n > 0 && P.kette.zuletzt === plusTage(datum, -2)) qadaa = pensumAm(plusTage(datum, -1));
+  const plan = [], art = {};
+  const faellig = Object.entries(P.karten)
+    .filter(([id, k]) => k.fae && k.fae <= datum && imBereich(+id))
+    .sort((a, b) => a[1].fae.localeCompare(b[1].fae) || a[1].st - b[1].st)
+    .map(([id]) => +id);
+  for (const id of faellig.slice(0, Math.ceil((n + qadaa) / 2))) { plan.push(id); art[id] = 'fehler'; }
+  const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan));
+  naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
+  P.tage[datum] = { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa };
+  aufraeumen(); speichern();
+  return P.tage[datum];
+}
+export function naechsteImZyklus(anzahl, ausser = new Set()) {
+  const erl = new Set(P.zyklus.erledigt), aus = [];
+  for (const id of reihe()) { if (aus.length >= anzahl) break; if (!erl.has(id) && !ausser.has(id)) aus.push(id); }
+  if (aus.length < anzahl) { // Runde fast fertig: von vorne weiter
+    for (const id of reihe()) { if (aus.length >= anzahl) break; if (!ausser.has(id) && !aus.includes(id)) aus.push(id); }
+  }
+  return aus;
+}
+export function pensumHeuteAendern(delta) {
+  const t = tagesplan(); const offen = t.plan.filter(id => !t.fertig.includes(id));
+  if (delta > 0) { const [id] = naechsteImZyklus(1, new Set(t.plan)); if (id != null) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; } }
+  else if (offen.length && t.plan.length > 1) { const id = offen[offen.length - 1]; t.plan = t.plan.filter(x => x !== id); delete t.art[id]; }
+  speichern(); return t;
+}
+export function bonusVorschlag() { const t = tagesplan(); return naechsteImZyklus(1, new Set(t.plan))[0]; }
+function aufraeumen() { // alte Tage verdichten, Statistik behalten
+  for (const [d, t] of Object.entries(P.tage)) if (tageZwischen(d, heute()) > 400) delete P.tage[d];
+}
+
+// ---------- Ergebnis eines Abschnitts ----------
+// ergebnisse: Array von 'ok' | 'hilfe' | 'fehler' je Āya (in Reihenfolge v[0]..v[1])
+export function abschnittAbschliessen(id, ergebnisse, quelle) {
+  const datum = heute(), t = tagesplan(datum), e = D.A[id], k = { ...karte(id) };
+  const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
+  const art = quelle || t.art[id] || 'frei';
+  // Punkte: Rückmeldung über Können
+  let punkte = 10 * r + 5 * h, teile = [[`${r} Āyāt richtig`, 10 * r]];
+  if (h) teile.push([`${h} mit Hilfe`, 5 * h]);
+  if (!f && !h) { const b = Math.round(punkte * 0.25); punkte += b; teile.push(['Fehlerfrei', b]); }
+  if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push(['Bonusabschnitt +50 %', b]); }
+  const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
+  if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([`Kette +${kp} %`, b]); }
+  const hasanat = e.buchstaben * 10;
+  // Karteisystem
+  const vorher = k.st;
+  if (f) { k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
+  else if (h) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
+  else {
+    k.st = Math.min(4, k.st + 1);
+    if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < FEHLER_ABSTAND.length ? plusTage(datum, FEHLER_ABSTAND[k.fs]) : null; if (!k.fae) k.fs = 0; }
+  }
+  k.n++; k.fe += f; k.zul = datum;
+  k.fa = ergebnisse.map((x, i) => x !== 'ok' ? e.v[0] + i : -1).filter(i => i >= 0);
+  P.karten[id] = k;
+  // Tag und Summen
+  if (!t.fertig.includes(id)) t.fertig.push(id);
+  if (art === 'bonus' && !t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'bonus'; }
+  Object.assign(t, { punkte: t.punkte + punkte, hasanat: t.hasanat + hasanat, r: t.r + r, f: t.f + f, h: t.h + h });
+  Object.assign(P.summe, { punkte: P.summe.punkte + punkte, hasanat: P.summe.hasanat + hasanat, r: P.summe.r + r, f: P.summe.f + f, h: P.summe.h + h, abschnitte: P.summe.abschnitte + 1 });
+  const ereignisse = [];
+  // Zyklus / Ḫatma
+  if (art !== 'frei' && !P.zyklus.erledigt.includes(id)) {
+    P.zyklus.erledigt.push(id);
+    if (reihe().every(x => P.zyklus.erledigt.includes(x))) {
+      P.zyklus.khatma++; P.zyklus.erledigt = []; P.zyklus.beginn = datum;
+      ereignisse.push({ typ: 'khatma', n: P.zyklus.khatma });
+    }
+  }
+  // Wird erfüllt → Kette
+  const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
+  if (!t.voll && pflicht.every(x => t.fertig.includes(x))) {
+    t.voll = true;
+    const z = P.kette.zuletzt;
+    if (z === plusTage(datum, -1)) P.kette.n++;
+    else if (z === plusTage(datum, -2) && t.qadaa) P.kette.n += 2;
+    else if (z !== datum) P.kette.n = 1;
+    P.kette.zuletzt = datum; P.kette.beste = Math.max(P.kette.beste, P.kette.n);
+    ereignisse.push({ typ: 'wird' });
+    for (const m of KETTEN_MEILEN) if (P.kette.n >= m && !P.meilen.includes('kette-' + m)) { P.meilen.push('kette-' + m); ereignisse.push({ typ: 'kette', n: m }); }
+  }
+  // Ornamente: ganze Sūra gefestigt / mutqan
+  for (const s of new Set([e.von[0], e.bis[0]])) {
+    const ids = D.A.filter(x => x.von[0] === s && imBereich(x.id)).map(x => x.id);
+    for (const [st, name] of [[2, 'gefestigt'], [4, 'mutqan']]) {
+      const key = `sure-${name}-${s}`;
+      if (ids.length && !P.meilen.includes(key) && ids.every(x => karte(x).st >= st)) { P.meilen.push(key); ereignisse.push({ typ: 'ornament', s, stufe: name }); }
+    }
+  }
+  if (k.st > vorher) ereignisse.push({ typ: 'stufe', st: k.st });
+  speichern();
+  return { punkte, teile, hasanat, r, f, h, ereignisse, stufe: k.st, vorher };
+}
+
+// ---------- Auswertungen ----------
+export function seitenStufe(p) {
+  const ids = D.A.filter(e => e.seiten.includes(p) && imBereich(e.id));
+  if (!ids.length) return null;
+  const ks = ids.map(e => karte(e.id)).filter(k => k.n);
+  if (!ks.length) return 0;
+  return ks.reduce((s, k) => s + k.st + 0.6, 0) / ids.length;
+}
+export function letzteTage(n = 30) {
+  const aus = [];
+  for (let i = n - 1; i >= 0; i--) { const d = plusTage(heute(), -i); aus.push({ d, t: P.tage[d] || null }); }
+  return aus;
+}
+export function schwaechste(n = 8) {
+  return Object.entries(P.karten).filter(([id, k]) => k.n && imBereich(+id))
+    .map(([id, k]) => ({ id: +id, k, w: (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0) }))
+    .sort((a, b) => b.w - a.w).slice(0, n);
+}
+export function khatmaFortschritt() {
+  const r = reihe(); const erl = new Set(P.zyklus.erledigt);
+  const zeilen = r.reduce((s, id) => s + D.A[id].zeilen, 0), fertig = r.filter(id => erl.has(id)).reduce((s, id) => s + D.A[id].zeilen, 0);
+  return { anteil: zeilen ? fertig / zeilen : 0, fertig: r.filter(id => erl.has(id)).length, gesamt: r.length };
+}
+export function tageProKhatma() {
+  const woche = P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
+  return Math.ceil(reihe().length / Math.max(0.1, woche));
+}
+
+// Auswertung eines fremden Profils (Lehreransicht), ohne das eigene zu verändern
+export function mitProfil(profil, fn) { const eigenes = P; P = profil; try { return fn(); } finally { P = eigenes; } }
+
+// ---------- Profildatei (Sicherung und Lehreransicht) ----------
+async function pruefsumme(text) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+export async function exportDatei(profil = P) {
+  const daten = JSON.stringify(profil);
+  return JSON.stringify({ format: 'itqan-profil', version: 1, exportiert: new Date().toISOString(), pruef: await pruefsumme(daten), profil }, null, 0);
+}
+export async function importDatei(text) {
+  const o = JSON.parse(text);
+  if (o.format !== 'itqan-profil' || !o.profil || o.profil.format !== 'itqan') throw new Error('Keine Itqān-Profildatei');
+  const echt = (await pruefsumme(JSON.stringify(o.profil))) === o.pruef;
+  return { profil: o.profil, echt, exportiert: o.exportiert };
+}
