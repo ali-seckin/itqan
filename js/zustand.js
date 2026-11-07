@@ -185,6 +185,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
     P.zyklus.erledigt.push(id);
     if (reihe().every(x => P.zyklus.erledigt.includes(x))) {
       P.zyklus.khatma++; P.zyklus.erledigt = []; P.zyklus.beginn = datum;
+      if (!P.einst.bereich) P.zyklus.voll = (P.zyklus.voll || 0) + 1;   // Ḫatma über den ganzen Qurʾān
       ereignisse.push({ typ: 'khatma', n: P.zyklus.khatma });
     }
   }
@@ -209,8 +210,64 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
     }
   }
   if (k.st > vorher) ereignisse.push({ typ: 'stufe', st: k.st });
+  // Rang: neu erreicht, wenn er höher ist als der bisher höchste
+  const rg = rangJetzt();
+  if (rg > (P.rangBeste?.r ?? 0)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
   speichern();
   return { punkte, teile, hasanat, r, f, h, ereignisse, stufe: k.st, vorher };
+}
+
+// ---------- Ränge (Stufen des Itqān) ----------
+// Bedingungen: punkte (Itqān-Punkte gesamt), kette (längste Kette), khatma (Runden im eigenen Bereich),
+// ganz (ganzer Qurʾān gewählt), voll (Ḫatmāt über den ganzen Qurʾān), quote (% der Āyāt beim letzten Durchgang
+// ohne Fehler und ohne Hilfe, gemessen über den ganzen gewählten Bereich), st2/st3/st4 (% der Abschnitte
+// mindestens gefestigt / sicher / mutqan), offen0 (keine Fehlerwiederholung offen)
+export const RAENGE = [
+  { n: 'Mubtadiʾ', ar: 'مُبْتَدِئ', de: 'der Beginnende', hifz: 'Du hast mit der geordneten Murāǧaʿa begonnen. Gemessen wird noch nichts, jeder Anfang zählt.', b: {} },
+  { n: 'Murīd', ar: 'مُرِيد', de: 'der Wollende, der Strebende', hifz: 'Die Absicht ist gefasst und durch Taten bestätigt. Die ersten Abschnitte sind wiederholt.', b: { punkte: 1000 } },
+  { n: 'Muwāẓib', ar: 'مُوَاظِب', de: 'der Beständige', hifz: 'Die Wiederholung hat einen festen Platz im Tag. Eine ganze Woche ohne Unterbrechung.', b: { punkte: 5000, kette: 7 } },
+  { n: 'Mutaʿāhid', ar: 'مُتَعَاهِد', de: 'der, der den Qurʾān pflegt', hifz: 'Nach dem Ḥadīṯ „Taʿāhadū hāḏā l-Qurʾān“: Er entkommt leichter als Kamele aus ihren Fußfesseln, darum pflegt man ihn. Vierzig Tage Beständigkeit, die Murāǧaʿa ist zur Gewohnheit geworden.', b: { punkte: 15000, kette: 40 } },
+  { n: 'Murābiṭ', ar: 'مُرَابِط', de: 'der auf seinem Posten Ausharrende', hifz: 'Du hältst deinen Bereich gegen das Vergessen. Drei von vier Āyāt sitzen beim letzten Durchgang.', b: { punkte: 30000, quote: 75 } },
+  { n: 'Ḫātim', ar: 'خَاتِم', de: 'der Vollendende', hifz: 'Eine ganze Runde durch deinen Bereich ist vollbracht. Mehr als vier von fünf Āyāt kommen ohne Fehler.', b: { punkte: 60000, khatma: 1, quote: 85 } },
+  { n: 'Mustaḥḍir', ar: 'مُسْتَحْضِر', de: 'der den Qurʾān gegenwärtig hat', hifz: 'Der ganze Qurʾān ist einmal vollständig wiederholt. Du findest in jede Stelle hinein, auch wenn es noch manchmal stockt.', b: { punkte: 100000, ganz: 1, voll: 1, quote: 88 } },
+  { n: 'Ḍābiṭ', ar: 'ضَابِط', de: 'der Genaue', hifz: 'Ḍabṭ heißt in den Ḥadīṯwissenschaften das genaue Bewahren des Wortlauts. Fehler sind Einzelfälle, die Hälfte aller Abschnitte ist gefestigt.', b: { punkte: 180000, ganz: 1, voll: 2, quote: 92, st2: 50 } },
+  { n: 'Ḥāḏiq', ar: 'حَاذِق', de: 'der Geübte, der Kundige', hifz: 'In den alten Qurʾānschulen hieß der Abschluss des Auswendiglernens Ḥiḏāq. Alle Teile sitzen, ähnliche Stellen (Mutašābihāt) werden meist sicher unterschieden.', b: { punkte: 270000, ganz: 1, voll: 3, quote: 94, st2: 75 } },
+  { n: 'Rāsiḫ', ar: 'رَاسِخ', de: 'der fest Verwurzelte', hifz: 'Wie „ar-rāsiḫūna fī l-ʿilm“ (3:7). Fehler sind selten, die Hälfte aller Abschnitte ist mehrere Runden in Folge fehlerfrei.', b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
+  { n: 'Mutqin', ar: 'مُتْقِن', de: 'der Meisterhafte', hifz: 'Vom selben Stamm wie Itqān. Der Qurʾān sitzt fast überall ohne Fehler, ein Drittel der Abschnitte ist schon vier Runden in Folge fehlerfrei.', b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
+  { n: 'Ṯabt', ar: 'ثَبْت', de: 'der Verlässliche', hifz: 'Ṯiqa ṯabt ist das höchste Lob für einen Überlieferer. Auf jede deiner Rezitationen ist Verlass, drei Viertel aller Abschnitte sind vier Runden in Folge fehlerfrei.', b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
+  { n: 'Mutqin Muṭlaq', ar: 'مُتْقِنٌ مُطْلَق', de: 'der uneingeschränkt Meisterhafte', hifz: 'Jede Stelle des ganzen Qurʾān sitzt ohne Fehler und ohne Hilfe. Jeder der 734 Abschnitte war in den letzten vier Durchgängen fehlerfrei, keine Fehlerwiederholung steht offen.', b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
+];
+export function kennzahlen() {
+  const ids = reihe(); let ay = 0, ok = 0, offen = 0; const st = [0, 0, 0, 0, 0];
+  for (const id of ids) {
+    const e = D.A[id], k = karte(id);
+    ay += e.ayat; if (k.n) ok += e.ayat - (k.fa?.length || 0);
+    st[k.st]++; if (k.fae) offen++;
+  }
+  const ab = x => ids.length ? 100 * st.slice(x).reduce((a, b) => a + b, 0) / ids.length : 0;
+  return { punkte: P.summe.punkte, kette: P.kette.beste, khatma: P.zyklus.khatma, voll: P.zyklus.voll || 0, ganz: P.einst.bereich ? 0 : 1,
+    quote: ay ? 100 * ok / ay : 0, st2: ab(2), st3: ab(3), st4: ab(4), offen };
+}
+const BED = {
+  punkte: (s, z) => [`${s.toLocaleString('de-DE')} Itqān-Punkte`, z.punkte, s],
+  kette: (s, z) => [`${s} Tage Kette (längste)`, z.kette, s],
+  khatma: (s, z) => [`${s} ${s === 1 ? 'Runde' : 'Runden'} durch deinen Bereich`, z.khatma, s],
+  ganz: (s, z) => ['Ganzer Qurʾān gewählt (alle 30 Aǧzāʾ)', z.ganz, 1],
+  voll: (s, z) => [`${s} ${s === 1 ? 'Ḫatma' : 'Ḫatmāt'} über den ganzen Qurʾān`, z.voll, s],
+  quote: (s, z) => [`${s} % fehlerfrei beim letzten Durchgang`, Math.floor(z.quote * 10) / 10, s],
+  st2: (s, z) => [`${s} % der Abschnitte mindestens gefestigt`, Math.floor(z.st2), s],
+  st3: (s, z) => [`${s} % der Abschnitte mindestens sicher`, Math.floor(z.st3), s],
+  st4: (s, z) => [`${s} % der Abschnitte mutqan`, Math.floor(z.st4), s],
+  offen0: (s, z) => ['Keine Fehlerwiederholung offen', z.offen ? 0 : 1, 1]
+};
+// je Bedingung: { text, ist, soll, ok }
+export function bedingungen(i, z = kennzahlen()) {
+  return Object.entries(RAENGE[i].b).map(([k, s]) => { const [text, ist, soll] = BED[k](s, z); return { k, text, ist, soll, ok: ist >= soll }; });
+}
+export function rangJetzt(z = kennzahlen()) {
+  let r = 0;
+  for (let i = 1; i < RAENGE.length; i++) { if (bedingungen(i, z).every(b => b.ok)) r = i; else break; }
+  return r;
 }
 
 // ---------- Auswertungen ----------

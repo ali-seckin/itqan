@@ -51,8 +51,10 @@ function navSetzen(aktiv) {
   nav.querySelectorAll('a').forEach(a => a.classList.toggle('an', a.dataset.r === aktiv));
 }
 
+const rangBand = r => `<div class="band rang-band"><span class="ar">${Z.RAENGE[r].ar}</span><span><b>Neuer Rang: ${Z.RAENGE[r].n}</b><br>${Z.RAENGE[r].de}. <a href="#raenge">Was das bedeutet</a></span></div>`;
+
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge };
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   if (!Z.P && name !== 'start') { location.replace('#start'); return; }
@@ -312,7 +314,8 @@ async function ueben(idText, quelle) {
     const t2 = Z.tagesplan();
     const wirdJetzt = res.ereignisse.some(x => x.typ === 'wird');
     const naechster = t2.plan.find(x => !t2.fertig.includes(x));
-    const orn = res.ereignisse.filter(x => x.typ === 'ornament').map(x => `<div class="band">✦ <span><b>Neues Ornament:</b> ${sureName(x.s)} ist jetzt „${x.stufe}“.</span></div>`).join('');
+    const orn = res.ereignisse.filter(x => x.typ === 'ornament').map(x => `<div class="band">✦ <span><b>Neues Ornament:</b> ${sureName(x.s)} ist jetzt „${x.stufe}“.</span></div>`).join('')
+      + res.ereignisse.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('');
     document.querySelector('.steuerung').remove();
     app.innerHTML = `<div class="feier">${qandil()}
       <h2>${res.f ? 'Abschnitt beendet' : res.h ? 'Gut gemacht' : 'Fehlerfrei, mā šāʾa llāh'}</h2>
@@ -342,7 +345,7 @@ function fertig() {
   const t = Z.tagesplan(), P = Z.P, bonusId = Z.bonusVorschlag();
   const ev = letzteEreignisse; letzteEreignisse = [];
   const quote = t.r + t.f + t.h ? `${t.r + t.h}/${t.r + t.f + t.h}` : '·';
-  const extra = ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
+  const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
     x.typ === 'kette' ? `<div class="band">✦ <span><b>${x.n} Tage in Folge.</b> ${x.n === 66 ? 'Im Mittel wird eine Gewohnheit nach etwa 66 Tagen zur Selbstverständlichkeit.' : x.n === 40 ? 'Vierzig Tage Beständigkeit.' : 'Beständigkeit ist das Liebste bei Allāh, auch wenn es wenig ist.'}</span></div>`
     : x.typ === 'khatma' ? `<div class="band">✦ <span><b>Ḫatma ${x.n} vollendet.</b> Allāhumma rḥamnī bi-l-Qurʾān.</span></div>`
     : `<div class="band">✦ <span><b>Neues Ornament:</b> ${sureName(x.s)} ist jetzt „${x.stufe}“.</span></div>`).join('');
@@ -413,6 +416,29 @@ async function mushaf(pText) {
   if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
 }
 
+// ---------- Ränge ----------
+const fortschritt = b => b.k === 'ganz' || b.k === 'offen0' ? (b.ok ? 1 : 0) : Math.min(1, b.ist / b.soll);
+const istText = b => b.k === 'ganz' || b.k === 'offen0' ? (b.ok ? 'erfüllt' : 'offen') : `${b.k === 'punkte' ? zahl(b.ist) : String(b.ist).replace('.', ',')}${['quote', 'st2', 'st3', 'st4'].includes(b.k) ? ' %' : ''}`;
+const bedListe = (i, z) => `<div class="bed">${Z.bedingungen(i, z).map(b => `<div class="${b.ok ? 'ok' : ''}"><span>${b.ok ? '✓ ' : ''}${b.text}</span><span>${istText(b)}</span><i><b style="width:${(fortschritt(b) * 100).toFixed(1)}%"></b></i></div>`).join('')}</div>`;
+function rangKarte() {
+  const z = Z.kennzahlen(), r = Z.rangJetzt(z), R = Z.RAENGE[r], best = Z.P.rangBeste?.r ?? 0;
+  return `<div class="rangkarte"><div class="kopf"><span class="ar">${R.ar}</span><div><span class="titel-klein" style="margin:0">Rang ${r + 1} von ${Z.RAENGE.length}</span><b>${R.n}</b><span>${R.de}</span></div></div>
+    ${best > r ? `<p class="unter">Höchster erreichter Rang: ${Z.RAENGE[best].n}. Die Bedingungen dafür sind gerade nicht alle erfüllt.</p>` : ''}
+    ${r + 1 < Z.RAENGE.length ? `<p class="naechster">Zum nächsten Rang, ${Z.RAENGE[r + 1].n}:</p>${bedListe(r + 1, z)}` : '<p class="naechster">Der höchste Rang. Allāhumma bārik.</p>'}
+    <a class="textlink" href="#raenge" style="padding-left:0">Alle Ränge und was sie bedeuten ›</a></div>`;
+}
+function raenge() {
+  navSetzen('profil');
+  const z = Z.kennzahlen(), r = Z.rangJetzt(z);
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Die Ränge<small>Dreizehn Stufen vom ersten Schritt bis zum Itqān über den ganzen Qurʾān.</small></div>
+    <p class="unter" style="margin:14px 0 4px">Ein Rang verlangt immer beides: Fleiß (Itqān-Punkte, Ḫatmāt) und Güte (die Fehlerfrei-Quote). Die Quote zählt die Āyāt, die beim letzten Durchgang jedes Abschnitts ohne Fehler und ohne Hilfe kamen, über deinen ganzen Bereich. Noch nicht wiederholte Abschnitte zählen als nicht sicher. Lässt die Güte nach, sinkt auch der Rang, bis sie wieder erreicht ist.</p>
+    <p class="unter">Ab Rang 7 gilt nur der ganze Qurʾān. Bei drei Abschnitten am Tag dauert der Weg zum höchsten Rang mehrere Jahre.</p>
+    ${Z.RAENGE.map((R, i) => `<div class="rangstufe ${i === r ? 'jetzt' : i < r ? 'erreicht' : ''}">
+      <div class="kopf"><span class="nr">${i + 1}</span><span class="ar">${R.ar}</span><div><b>${R.n}</b><span>${R.de}</span></div></div>
+      <p>${R.hifz}</p>${i ? bedListe(i, z) : ''}</div>`).join('')}`;
+}
+
 // ---------- Profil ----------
 function profil() {
   navSetzen('profil');
@@ -427,6 +453,7 @@ function profil() {
   for (const f of fl) for (const d of [-1, 0, 1]) { const w = D.W.get(f.vi + '.' + (f.i + d)); if (w) schrift(w[3]); }
   const wortHTML = k => { const w = D.W.get(k); return w ? `<span style="font-family:qp${w[3]}">${glyphen(w[1], w[2])}</span>` : ''; };
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : 'Dein Profil'}<small>dabei seit ${new Date(P.erstellt).toLocaleDateString('de-AT')} · ${P.zyklus.khatma} ${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'} vollendet</small></div>
+    ${rangKarte()}
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>Itqān-Punkte</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>Ḥasanāt</span></div><div class="zahl"><b>${quote} %</b><span>Āyāt sicher</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>Kette jetzt</span></div><div class="zahl"><b>${P.kette.beste}</b><span>längste Kette</span></div><div class="zahl"><b>${s.abschnitte}</b><span>Abschnitte</span></div></div>
     <div class="titel-klein">Itqān-Punkte der letzten 30 Tage</div>
@@ -566,7 +593,7 @@ function lehrer() {
       return w.length ? (0.12 + 0.88 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6).toFixed(2) : null;
     });
     return `<div class="abschnitt"><div class="kopfzeile"><h3>${esc(x.profil.name || 'ohne Namen')}</h3><button class="textlink" data-weg="${i}">entfernen</button></div>
-      <p class="unter">Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
+      <p class="unter">Rang: <b>${Z.RAENGE[Z.rangJetzt()].n}</b> · Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
       <div class="zahlen"><div class="zahl"><b>${x.profil.kette.n}</b><span>Kette</span></div><div class="zahl"><b>${q} %</b><span>Āyāt sicher</span></div><div class="zahl"><b>${Math.floor(kf.anteil * 100)} %</b><span>${x.profil.zyklus.khatma + 1}. Ḫatma</span></div></div>
       <div class="licht-seiten" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
       <p class="unter" style="margin-top:10px">${schwach.length ? 'Schwach: ' + schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ') : 'Noch keine Wiederholungen.'}</p></div>`;
