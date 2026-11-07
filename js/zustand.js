@@ -22,7 +22,13 @@ export const tageZwischen = (a, b) => Math.round((new Date(b) - new Date(a)) / 8
 // ---------- Laden / Speichern ----------
 export function laden() {
   try { const t = localStorage.getItem(SCHLUESSEL); if (t) P = JSON.parse(t); } catch (e) { P = null; }
+  if (P) ergaenzen(P);
   return P;
+}
+// ältere Profile um neue Felder ergänzen
+export function ergaenzen(p) {
+  p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.fstellen ??= {};
+  return p;
 }
 export function speichern() {
   try { localStorage.setItem(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
@@ -30,14 +36,14 @@ export function speichern() {
 export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto' } = {}) {
   P = {
     format: 'itqan', version: 1, erstellt: new Date().toISOString(), name,
-    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true },
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true },
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
-    meilen: []
+    meilen: [], fstellen: {}
   };
   speichern(); return P;
 }
-export function ersetzeProfil(neu) { P = neu; speichern(); }
+export function ersetzeProfil(neu) { P = ergaenzen(neu); speichern(); }
 export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL); } catch (e) {} }
 
 // ---------- Karteikarten ----------
@@ -46,7 +52,7 @@ export function imBereich(id) { return !P.einst.bereich || P.einst.bereich.inclu
 export function reihe() {
   const ids = D.A.map(e => e.id).filter(imBereich);
   if (P.einst.reihenfolge !== 'rueckwaerts') return ids;
-  // Sūren rückwärts (an-Nās zuerst), innerhalb der Sūra vorwärts
+  // Sūren rückwärts (an-Nās zuerst), innerhalb der Sūra vorwärts. Bei Zufall bleibt die Grundreihe vorwärts.
   const gruppen = []; let g = [], s = null;
   for (const id of ids) { const e = D.A[id]; if (e.von[0] !== s) { if (g.length) gruppen.push(g); g = []; s = e.von[0]; } g.push(id); }
   if (g.length) gruppen.push(g);
@@ -70,27 +76,75 @@ export function tagesplan(datum = heute()) {
     .sort((a, b) => a[1].fae.localeCompare(b[1].fae) || a[1].st - b[1].st)
     .map(([id]) => +id);
   for (const id of faellig.slice(0, Math.ceil((n + qadaa) / 2))) { plan.push(id); art[id] = 'fehler'; }
-  const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan));
+  const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan), datum);
   naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
   P.tage[datum] = { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa };
   aufraeumen(); speichern();
   return P.tage[datum];
 }
-export function naechsteImZyklus(anzahl, ausser = new Set()) {
+// Zufallszahlen mit Startwert: derselbe Tag ergibt denselben Vorschlag
+function zufall(text) {
+  let h = 1779033703 ^ text.length;
+  for (let i = 0; i < text.length; i++) { h = Math.imul(h ^ text.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+}
+export function naechsteImZyklus(anzahl, ausser = new Set(), datum = heute()) {
   const erl = new Set(P.zyklus.erledigt), aus = [];
+  if (P.einst.reihenfolge === 'zufall') {
+    const r = reihe(), rnd = zufall(`${datum}|${P.erstellt}|${erl.size}|${[...ausser].join(',')}`);
+    const offen = r.filter(id => !erl.has(id) && !ausser.has(id));
+    const pool = offen.length ? offen : r.filter(id => !ausser.has(id));
+    if (P.einst.zufall === 'block') {  // eine zufällige Stelle, dann am Stück weiter (ohne Sprung vom Ende an den Anfang)
+      const k = Math.floor(rnd() * (Math.max(0, pool.length - anzahl) + 1));
+      aus.push(...pool.slice(k, k + anzahl));
+    } else {
+      const a = [...pool]; while (aus.length < anzahl && a.length) aus.push(a.splice(Math.floor(rnd() * a.length), 1)[0]);
+    }
+    if (aus.length < anzahl) for (const id of r) { if (aus.length >= anzahl) break; if (!ausser.has(id) && !aus.includes(id)) aus.push(id); }
+    return aus;
+  }
   for (const id of reihe()) { if (aus.length >= anzahl) break; if (!erl.has(id) && !ausser.has(id)) aus.push(id); }
   if (aus.length < anzahl) { // Runde fast fertig: von vorne weiter
     for (const id of reihe()) { if (aus.length >= anzahl) break; if (!ausser.has(id) && !aus.includes(id)) aus.push(id); }
   }
   return aus;
 }
+// nächster Abschnitt nach dem heutigen Plan: bei „Zufall am Stück“ direkt im Anschluss
+function fortsetzung(t) {
+  if (P.einst.reihenfolge === 'zufall' && P.einst.zufall === 'block') {
+    const letzte = [...t.plan].reverse().find(id => t.art[id] !== 'fehler');
+    if (letzte != null) {
+      const r = reihe(), erl = new Set(P.zyklus.erledigt), i0 = r.indexOf(letzte);
+      for (let k = 1; k < r.length; k++) { const id = r[(i0 + k) % r.length]; if (!t.plan.includes(id) && !erl.has(id)) return id; }
+    }
+  }
+  return naechsteImZyklus(1, new Set(t.plan))[0];
+}
 export function pensumHeuteAendern(delta) {
   const t = tagesplan(); const offen = t.plan.filter(id => !t.fertig.includes(id));
-  if (delta > 0) { const [id] = naechsteImZyklus(1, new Set(t.plan)); if (id != null) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; } }
+  if (delta > 0) { const id = fortsetzung(t); if (id != null) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; } }
   else if (offen.length && t.plan.length > 1) { const id = offen[offen.length - 1]; t.plan = t.plan.filter(x => x !== id); delete t.art[id]; }
   speichern(); return t;
 }
-export function bonusVorschlag() { const t = tagesplan(); return naechsteImZyklus(1, new Set(t.plan))[0]; }
+export function bonusVorschlag() { return fortsetzung(tagesplan()); }
+
+// ---------- Fehlerstellen (einzelne Wörter) ----------
+// P.fstellen['vi.i'] = { n: Anzahl, t: { Art: Anzahl }, d: zuletzt }
+export const FEHLERARTEN = [['verwechslung', 'Verwechslung'], ['ausgelassen', 'Ausgelassen'], ['haraka', 'Ḥaraka'], ['haenger', 'Hänger']];
+export function fehlerstellenMerken(schluessel, art) {
+  for (const s of schluessel) {
+    const f = P.fstellen[s] || { n: 0, t: {}, d: null };
+    f.n++; f.d = heute(); if (art) f.t[art] = (f.t[art] || 0) + 1;
+    P.fstellen[s] = f;
+  }
+  speichern();
+}
+export function fehlerstelleLoeschen(s) { delete P.fstellen[s]; speichern(); }
+export const fehlerstellenSet = () => new Set(Object.keys(P.fstellen || {}));
+export function fehlerstellenListe(n = 12) {
+  return Object.entries(P.fstellen || {}).map(([s, f]) => ({ s, vi: +s.split('.')[0], i: +s.split('.')[1], ...f }))
+    .sort((a, b) => b.n - a.n || (b.d || '').localeCompare(a.d || '')).slice(0, n);
+}
 function aufraeumen() { // alte Tage verdichten, Statistik behalten
   for (const [d, t] of Object.entries(P.tage)) if (tageZwischen(d, heute()) > 400) delete P.tage[d];
 }

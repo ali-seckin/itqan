@@ -4,26 +4,43 @@ import { D, sureArabisch, arZahl } from './daten.js';
 const geladen = new Map();
 export function schrift(p) {
   if (!geladen.has(p)) {
-    const f = new FontFace('qp' + p, `url(schriften/v1/p${p}.woff2)`);
-    geladen.set(p, f.load().then(x => { document.fonts.add(x); return true; }).catch(() => { geladen.delete(p); return false; }));
+    // erst die Datei holen (über den Service Worker auch offline), dann als Schrift anmelden
+    geladen.set(p, fetch(`schriften/v1/p${p}.woff2`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); return true; })
+      .catch(() => { geladen.delete(p); return false; }));
   }
   return geladen.get(p);
 }
 export const schriftenLaden = seiten => Promise.all(seiten.map(schrift));
 
+// Glyphen eines Worteintrags nach Typ gruppieren: w Wort, q Stoppzeichen, n Lā, o Ornament
+const KL = { w: 'wt', q: 'wq', n: 'wq la', o: 'wo' };
+export function glyphen(c, ty) {
+  if (!ty) return c;
+  let aus = '', i = 0;
+  while (i < c.length) {
+    if (ty[i] === ' ') { aus += ' '; i++; continue; }
+    let j = i; while (j < c.length && ty[j] === ty[i]) j++;
+    aus += `<span class="${KL[ty[i]]}">${c.slice(i, j)}</span>`; i = j;
+  }
+  return aus;
+}
 // opt: { von, bis } Āya-Indizes des Abschnitts; zu: Set verdeckter Āyāt; alt: Set früherer Fehler-Āyāt; status: Map vi → 'ok'|'hilfe'|'fehler'
+// klar: Āyāt vor dem Abschnitt, die deutlich sichtbar bleiben; ton: vi → Farbnummer; fst: Set 'vi.i' markierter Fehlerstellen
 export function seiteHTML(p, opt = {}) {
-  const { von = -1, bis = -1, zu = new Set(), alt = new Set(), status = new Map(), naechste = -1 } = opt;
+  const { von = -1, bis = -1, zu = new Set(), alt = new Set(), status = new Map(), naechste = -1, klar = new Set(), ton = null, fst = null } = opt;
   const zeilen = D.L[p - 1].map(z => {
     if (z.kopf) return `<div class="mz kopfz"><span>سُورَةُ ${sureArabisch(z.kopf)}</span></div>`;
     if (z.basmala) return `<div class="mz bas">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`;
-    const w = z.w.map(([c, vi]) => {
+    const w = z.w.map(([c, vi, ty, i]) => {
       let k = 'w';
-      if (von >= 0) k += vi < von ? ' vor' : vi > bis ? ' nach' : ' in';
+      if (von >= 0) k += vi < von ? (klar.has(vi) ? ' klar' : ' vor') : vi > bis ? ' nach' : ' in';
       if (zu.has(vi)) k += ' zu' + (vi === naechste ? ' naechste' : '');
       if (status.has(vi)) k += ' ' + status.get(vi);
       if (alt.has(vi) && !zu.has(vi)) k += ' alt';
-      return `<span class="${k}" data-v="${vi}">${c}</span>`;
+      if (ton) { const t = ton(vi); if (t != null) k += ' ton' + t; }
+      if (fst?.has(vi + '.' + i)) k += ' fs';
+      return `<span class="${k}" data-v="${vi}" data-i="${i}">${glyphen(c, ty)}</span>`;
     }).join('');
     return `<div class="mz${p < 3 ? ' mitte' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');

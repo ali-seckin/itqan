@@ -1,11 +1,22 @@
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
-export const D = { L: null, V: null, A: null, S: null };
+export const D = { L: null, V: null, A: null, S: null, W: null };
 
 export async function ladeDaten() {
   const j = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
   const [L, V, A, S] = await Promise.all([j('daten/layout_v1.json'), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
   Object.assign(D, { L, V, A, S });
   for (const e of A) e.juz = juzVonSeite(e.seiten[0]);
+  // Wortindex je Āya (Eintrag[3]) und Fundort jedes Wortes: D.W 'vi.i' → [Seite, Glyphen, Typen]
+  const zaehler = new Map(); D.W = new Map();
+  L.forEach((seite, pi) => { for (const z of seite) if (z?.w) for (const e of z.w) {
+    const i = zaehler.get(e[1]) || 0; zaehler.set(e[1], i + 1); e[3] = i; D.W.set(e[1] + '.' + i, [pi + 1, e[0], e[2]]);
+  } });
+}
+// alle Worteinträge einer Āya mit Seite: [[code, vi, typen, i, p], …]
+export function ayaWoerter(vi) {
+  const aus = [], p0 = D.V[vi][3];
+  for (let p = p0; p <= Math.min(604, p0 + 1); p++) for (const z of D.L[p - 1]) if (z?.w) for (const e of z.w) if (e[1] === vi) aus.push([...e, p]);
+  return aus;
 }
 
 // Beginn der Aǧzāʾ im Madanī-Muṣḥaf (Seite)

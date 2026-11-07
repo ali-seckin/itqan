@@ -1,7 +1,7 @@
 // Itqān · Oberfläche
-import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, juzVonSeite, juzStart } from './daten.js';
+import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
 import * as Z from './zustand.js';
-import { seiteHTML, schriftenLaden, schrift } from './mushaf.js';
+import { seiteHTML, schriftenLaden, schrift, glyphen } from './mushaf.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -63,6 +63,7 @@ async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   if (!Z.P && name !== 'start') { location.replace('#start'); return; }
   const f = ROUTEN[name] || heute;
+  document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
   window.scrollTo(0, 0);
   await f(...arg);
 }
@@ -71,7 +72,7 @@ addEventListener('hashchange', zeige);
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto' };
   const tageText = () => {
     const ids = D.A.filter(e => s.juz.has(e.juz)).length;
     return `${ids} Abschnitte · eine Ḫatma dauert damit etwa ${Math.ceil(ids / s.pensum)} Tage`;
@@ -85,7 +86,8 @@ function start() {
     <div class="abschnitt"><h3>Wie viele Abschnitte am Tag?</h3><p class="unter">Ein Abschnitt hat meist 10 bis 15 Zeilen. Pro Wochentag kannst du es später anpassen.</p>
       <div class="zaehler"><button id="minus" aria-label="weniger">−</button><b id="pensum">3</b><button id="plus" aria-label="mehr">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
-    <div class="abschnitt"><h3>In welcher Reihenfolge?</h3><div class="wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">Ab al-Fātiḥah</button><button data-w="rueckwaerts">Ab an-Nās</button></div></div>
+    <div class="abschnitt"><h3>In welcher Reihenfolge?</h3><div class="wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">Ab al-Fātiḥah</button><button data-w="rueckwaerts">Ab an-Nās</button><button data-w="zufall">Zufällig</button></div>
+      <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">Bei mehreren Abschnitten am Tag:</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">Verstreute Stellen</button><button data-w="block">Eine Stelle am Stück</button></div></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema"><button data-w="hell">Hell</button><button data-w="dunkel">Dunkel</button><button data-w="auto" class="an">Wie Gerät</button></div></div>
     <button class="knopf haupt" id="los" style="margin-top:18px">Bismillāh, beginnen</button>`;
   const juzEl = app.querySelector('#juz');
@@ -95,15 +97,17 @@ function start() {
   app.querySelector('#keine').onclick = () => { s.juz.clear(); juzZeichnen(); };
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').textContent = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
-  for (const id of ['reihenfolge', 'thema']) app.querySelector('#' + id).onclick = e => {
+  for (const id of ['reihenfolge', 'zufall', 'thema']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
+    if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
     if (id === 'thema') { try { localStorage.setItem('itqan-thema', w); } catch (x) {} themaAnwenden(); }
   };
   app.querySelector('#los').onclick = () => {
     if (!s.juz.size) { toast('Wähle mindestens einen Ǧuzʾ.'); return; }
     const bereich = s.juz.size === 30 ? null : D.A.filter(e => s.juz.has(e.juz)).map(e => e.id);
     Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich, thema: s.thema });
+    Z.P.einst.zufall = s.zufall; Z.speichern();
     navigator.storage?.persist?.();
     location.hash = '#heute';
   };
@@ -173,43 +177,90 @@ function heute() {
 }
 
 // ---------- Üben ----------
+const zurueckPfeil = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>';
 async function ueben(idText, quelle) {
   navSetzen(null);
   const id = +idText, e = D.A[id]; if (!e) { location.hash = '#heute'; return; }
   app.innerHTML = '<div class="lade">Seiten werden geladen …</div>';
-  await schriftenLaden(e.seiten);
-  const k = Z.karte(id), t = Z.tagesplan();
+  const E = Z.P.einst, t = Z.tagesplan(), art = quelle || t.art[id];
+  // Bei Zufall und Fehlerwiederholung: die Āya davor deutlich zeigen, damit man weiß, wo man ist
+  const vorVi = e.v[0] - 1;
+  const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler');
+  const kWoerter = kontext ? ayaWoerter(vorVi) : [];
+  const kSeiten = [...new Set(kWoerter.map(x => x[4]))];
+  const kBox = kontext && kSeiten.some(p => !e.seiten.includes(p));
+  await schriftenLaden([...new Set([...e.seiten, ...kSeiten])]);
+  const k = Z.karte(id);
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
-  let pos = 0, offen = false, hilfe = false;
-  const art = quelle || t.art[id];
-  const ueber = `${abschnittName(e)}${e.nr ? ' von ' + e.von_n : ''}`;
-  app.innerHTML = `<button class="zurueck" id="zurueck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>${art === 'frei' ? 'Zurück' : 'Wird'}</button>
-    <div class="ab-kopf"><div class="ueber">${ueber}${art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : ''}</div><h2>${esc(e.titel)}</h2>
-    <p>${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen · Seite ${e.seiten.join(', ')}</p></div>
-    <div class="seiten" id="seiten"></div><div style="height:150px"></div>
-    <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="reihe" id="knoepfe"></div>
-    <div class="zeile2"><span class="unter" id="hinweis"></span><span class="unter">${pos + 1}</span></div></div></div>`;
+  let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
+  const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
+  app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
+      <div class="info">${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen · S. ${e.seiten.join(', ')}</div></div>
+    ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([c, , ty, , p]) => `<span style="font-family:qp${p}">${glyphen(c, ty)}</span>`).join('')}</div></div>` : ''}
+    <div class="seiten" id="seiten"></div><div style="height:190px"></div>
+    <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
+    <div class="zeile2"><span class="unter" id="hinweis"></span><span class="unter" id="zaehler"></span></div></div></div>
+    <div class="einblendung" id="einbl"><div><div class="ueber">${abschnittName(e)}${e.nr ? ' von ' + e.von_n : ''}${zusatz}</div><h2>${esc(e.titel)}</h2>
+      <div class="ar">${sureArabisch(e.von[0])}</div></div></div>`;
+  const einbl = app.querySelector('#einbl');
+  const einblWeg = () => { if (!einbl.isConnected) return; einbl.classList.add('weg'); setTimeout(() => einbl.remove(), 350); };
+  einbl.addEventListener('animationend', ev => { if (ev.target === einbl) einbl.remove(); });
+  einbl.onclick = einblWeg;
   const seitenEl = app.querySelector('#seiten');
-  seitenEl.innerHTML = e.seiten.map(p => seiteHTML(p, { von: e.v[0], bis: e.v[1], zu, alt })).join('');
+  seitenEl.innerHTML = e.seiten.map(p => seiteHTML(p, { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() })).join('');
   app.querySelector('#zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#heute');
-  const spans = vi => seitenEl.querySelectorAll(`.w[data-v="${vi}"]`);
-  const zeile2 = app.querySelector('.zeile2 span:last-child');
+  const spans = vi => [...seitenEl.querySelectorAll(`.w[data-v="${vi}"]`)];
+  const K = app.querySelector('#knoepfe'), H = app.querySelector('#hinweis'), A = app.querySelector('#arten'), Zl = app.querySelector('#zaehler');
+  // Āya in Teile bis zum jeweils nächsten Stoppzeichen zerlegen (Lā zählt nicht als Halt)
+  function teileVon(vi) {
+    const aus = [[]];
+    for (const s of spans(vi)) { aus[aus.length - 1].push(s); if (s.querySelector('.wq:not(.la)')) aus.push([]); }
+    while (aus.length > 1 && aus[aus.length - 1].length <= 1) { const rest = aus.pop(); aus[aus.length - 1].push(...rest); }
+    return aus;
+  }
+  function sichtbar(el) { if (!el) return; const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 210) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   function zeichne() {
-    const vi = ayat[pos];
     app.querySelector('#punkte').innerHTML = ayat.map((a, i) => `<i class="${erg[i] || (i === pos ? 'jetzt' : '')}"></i>`).join('');
     seitenEl.querySelectorAll('.naechste').forEach(x => x.classList.remove('naechste'));
-    const K = app.querySelector('#knoepfe'), H = app.querySelector('#hinweis');
+    seitenEl.querySelectorAll('.ziel').forEach(x => x.classList.remove('ziel'));
+    A.classList.add('verdeckt');
     if (pos >= ayat.length) return abschluss();
-    zeile2.textContent = `Āya ${pos + 1} von ${ayat.length}`;
+    const vi = ayat[pos];
+    Zl.textContent = `Āya ${pos + 1} von ${ayat.length}`;
+    if (vorschau) {
+      K.innerHTML = '<button class="knopf haupt" id="pruefen">Jetzt prüfen</button>';
+      H.textContent = 'Lies den Abschnitt in Ruhe. Dann prüfe dich.';
+      app.querySelector('#pruefen').onclick = () => { vorschau = false; seitenEl.classList.remove('vorschau'); zeichne(); sichtbar(spans(ayat[0])[0]); };
+      return;
+    }
+    if (markieren) {
+      A.classList.remove('verdeckt');
+      A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
+      K.innerHTML = '<button class="knopf haupt" id="weiter">Weiter</button>';
+      H.textContent = 'Tippe auf das Wort, bei dem du dich vertan hast. Freiwillig.';
+      app.querySelector('#weiter').onclick = markierenFertig;
+      return;
+    }
     if (!offen) {
-      spans(vi).forEach(x => x.classList.add('naechste'));
-      K.innerHTML = `${Z.P.einst.hilfe && !hilfe ? '<button class="knopf leise" id="hilfe" style="flex:.55">Anfang zeigen</button>' : ''}<button class="knopf haupt" id="auf">Āya ${D.V[vi][1]} aufdecken</button>`;
-      H.textContent = alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : 'Rezitiere aus dem Gedächtnis, dann decke auf.';
+      if (ti === 0) teile = teileVon(vi);
+      teile.slice(ti).flat().forEach(x => x.classList.add('naechste'));
+      const grenze = ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
+      grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
+      K.innerHTML = `${grenze ? '<button class="knopf leise" id="teil">Bis zum Zeichen</button>' : ''}<button class="knopf haupt" id="auf">${ti ? 'Rest aufdecken' : `Āya ${D.V[vi][1]} aufdecken`}</button>`;
+      const links = [];
+      if (E.hilfe && !hilfe) links.push('<button class="textlink mini" id="hilfe">Anfang zeigen</button>');
+      if (E.vorueben && pos === 0 && ti === 0) links.push('<button class="textlink mini" id="ansehen">Erst ansehen</button>');
+      H.innerHTML = (alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.') + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
-      const hb = app.querySelector('#hilfe'); if (hb) hb.onclick = () => { hilfe = true; const s = spans(vi)[0]; s.classList.remove('zu', 'naechste'); s.classList.add('erstes'); zeichne(); };
-      const erstes = spans(vi)[0];
-      if (erstes) { const r = erstes.getBoundingClientRect(); if (r.top < 80 || r.bottom > innerHeight - 190) erstes.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
+      const hb = app.querySelector('#hilfe'); if (hb) hb.onclick = () => {
+        hilfe = true; const s = spans(vi).find(x => x.classList.contains('zu'));
+        if (s) { s.classList.remove('zu', 'naechste'); s.classList.add('erstes'); }
+        zeichne();
+      };
+      const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
+      sichtbar(teile[ti]?.[0]);
     } else {
       K.innerHTML = '<button class="knopf schlecht" id="f">Fehler</button><button class="knopf gut" id="r">Richtig</button>';
       H.textContent = hilfe ? 'Mit Hilfe: zählt als halb sicher.' : 'Warst du sicher und fehlerfrei?';
@@ -217,13 +268,44 @@ async function ueben(idText, quelle) {
       app.querySelector('#f').onclick = () => bewerte('fehler');
     }
   }
-  function aufdecken() { const vi = ayat[pos]; zu.delete(vi); spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes')); offen = true; zeichne(); }
-  function bewerte(x) { const vi = ayat[pos]; erg[pos] = x; status.set(vi, x); spans(vi).forEach(s => { s.classList.remove('alt'); s.classList.add(x); }); pos++; offen = false; hilfe = false; zeichne(); }
-  seitenEl.onclick = ev => { const w = ev.target.closest('.w.zu'); if (w && +w.dataset.v === ayat[pos] && !offen) aufdecken(); };
+  function aufdecken() {
+    const vi = ayat[pos]; zu.delete(vi);
+    spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
+    offen = true; zeichne();
+  }
+  function teilAufdecken() {
+    teile[ti].forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
+    ti++;
+    if (ti >= teile.length) return aufdecken();
+    zeichne();
+  }
+  function bewerte(x) {
+    const vi = ayat[pos]; erg[pos] = x; status.set(vi, x);
+    spans(vi).forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
+    if (x === 'fehler') { markieren = true; fArt = null; return zeichne(); }
+    naechsteAya();
+  }
+  function naechsteAya() { pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
+  function markierenFertig() {
+    const marken = [...seitenEl.querySelectorAll('.w.fmark')];
+    if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
+    marken.forEach(s => { s.classList.remove('fmark'); s.classList.add('fs'); });
+    if (marken.length) toast(marken.length === 1 ? 'Stelle gemerkt.' : `${marken.length} Stellen gemerkt.`, 1600);
+    naechsteAya();
+  }
+  A.onclick = ev => { const a = ev.target.dataset.a; if (!a) return; fArt = fArt === a ? null : a; A.querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.a === fArt)); };
+  seitenEl.onclick = ev => {
+    const w = ev.target.closest('.w'); if (!w) return;
+    if (markieren) { if (+w.dataset.v === ayat[pos]) w.classList.toggle('fmark'); return; }
+    if (w.classList.contains('zu') && +w.dataset.v === ayat[pos] && !offen && !vorschau) aufdecken();
+  };
   const tasten = ev => {
     if (!document.body.contains(seitenEl)) { removeEventListener('keydown', tasten); return; }
     if (pos >= ayat.length) return;
+    if (vorschau) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
+    if (markieren) { if (ev.key === 'Enter') { ev.preventDefault(); markierenFertig(); } return; }
     if (!offen && (ev.key === ' ' || ev.key === 'Enter')) { ev.preventDefault(); aufdecken(); }
+    else if (!offen && (ev.key === 's' || ev.key === 'ArrowDown')) { ev.preventDefault(); app.querySelector('#teil')?.click(); }
     else if (offen && (ev.key === 'r' || ev.key === 'ArrowRight')) bewerte(hilfe ? 'hilfe' : 'ok');
     else if (offen && (ev.key === 'f' || ev.key === 'ArrowLeft')) bewerte('fehler');
   };
@@ -311,16 +393,27 @@ async function mushaf(pText) {
   app.innerHTML = '<div class="lade">Seite wird geladen …</div>';
   await schrift(p);
   const abschnitte = D.A.filter(e => e.seiten.includes(p));
+  const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
+  const t = Z.tagesplan();
   const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>Seite ${p} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
       <div class="pille"><input id="nr" type="number" min="1" max="604" value="${p}" style="width:58px;border:0;background:none;text-align:center" aria-label="Seite"></div></div>
     <div class="reihe" style="margin:14px 0"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
-    ${seiteHTML(p)}
+    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : i % 4; }, fst: Z.fehlerstellenSet() })}</div>
     <div class="titel-klein">Abschnitte auf dieser Seite</div>
-    ${abschnitte.map(e => `<div class="karte"><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`).join('')}`;
+    ${abschnitte.map((e, i) => {
+      const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
+      return `<div class="karte tonk${i % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
+    }).join('')}`;
   app.querySelector('#vor').onclick = () => location.replace('#mushaf/' + Math.min(604, p + 1));
   app.querySelector('#zur').onclick = () => location.replace('#mushaf/' + Math.max(1, p - 1));
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
+  // Tippen auf die Seite zeigt den passenden Abschnitt unten
+  app.querySelector('#seite').onclick = ev => {
+    const w = ev.target.closest('.w'); if (!w) return;
+    const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (!k) return;
+    k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz');
+  };
   if (p < 604) schrift(p + 1); if (p > 1) schrift(p - 1);
 }
 
@@ -334,6 +427,9 @@ function profil() {
   const schwach = Z.schwaechste(6);
   const orn = P.meilen.filter(m => m.startsWith('sure-')).map(m => { const [, st, sn] = m.split('-'); return `${sureName(+sn)} ${st}`; });
   const ketten = P.meilen.filter(m => m.startsWith('kette-')).map(m => m.split('-')[1] + ' Tage');
+  const fl = Z.fehlerstellenListe(12);
+  for (const f of fl) { const w = D.W.get(f.s); if (w) schrift(w[0]); }
+  const wortHTML = k => { const w = D.W.get(k); return w ? `<span style="font-family:qp${w[0]}">${glyphen(w[1], w[2])}</span>` : ''; };
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : 'Dein Profil'}<small>dabei seit ${new Date(P.erstellt).toLocaleDateString('de-AT')} · ${P.zyklus.khatma} ${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'} vollendet</small></div>
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>Itqān-Punkte</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>Ḥasanāt</span></div><div class="zahl"><b>${quote} %</b><span>Āyāt sicher</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>Kette jetzt</span></div><div class="zahl"><b>${P.kette.beste}</b><span>längste Kette</span></div><div class="zahl"><b>${s.abschnitte}</b><span>Abschnitte</span></div></div>
@@ -342,12 +438,20 @@ function profil() {
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="titel-klein">Wo du am meisten übst</div>
     ${schwach.length ? schwach.map(({ id, k }) => `<a class="karte" href="#ueben/${id}/frei" style="text-decoration:none;color:inherit"><div class="t"><b>${esc(D.A[id].titel)}</b><span>${abschnittName(D.A[id])} · ${k.fe} Fehler in ${k.n} Durchgängen${k.fae ? ' · kommt wieder' : ''}</span></div>${stufePunkte(k.st)}</a>`).join('') : '<p class="leer">Noch keine Daten. Nach den ersten Tagen siehst du hier deine schwächsten Abschnitte.</p>'}
+    <div class="titel-klein">Deine Fehlerstellen</div>
+    ${fl.length ? fl.map(f => {
+      const w = D.W.get(f.s); if (!w) return '';
+      const arten = Object.entries(f.t).sort((a, b) => b[1] - a[1]).map(([x]) => Z.FEHLERARTEN.find(y => y[0] === x)?.[1]).filter(Boolean).join(', ');
+      return `<div class="karte fstelle"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="Im Muṣḥaf zeigen"><span class="nb">${wortHTML(f.vi + '.' + (f.i - 1))}</span>${wortHTML(f.s)}<span class="nb">${wortHTML(f.vi + '.' + (f.i + 1))}</span></a>
+        <div class="t"><b>${sureName(D.V[f.vi][0])} ${D.V[f.vi][0]}:${D.V[f.vi][1]}</b><span>${f.n}× vertan${arten ? ' · ' + arten : ''}</span></div><button class="textlink" data-fweg="${f.s}">sitzt jetzt</button></div>`;
+    }).join('') : '<p class="leer">Wenn du nach „Fehler“ auf das Wort tippst, bei dem du dich vertan hast, sammelt Itqān diese Stellen hier.</p>'}
     <div class="titel-klein">Ornamente und Meilensteine</div>
     ${orn.length || ketten.length ? `<p>${[...ketten, ...orn].map(x => `<span class="pille" style="margin:0 6px 6px 0">✦ ${x}</span>`).join('')}</p>` : '<p class="leer">Dein erstes Ornament bekommst du, wenn eine ganze Sūra gefestigt ist.</p>'}
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei.${P.einst.letzteSicherung ? ` Letzte Sicherung: ${new Date(P.einst.letzteSicherung).toLocaleDateString('de-AT')}.` : ''}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
     <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a></div>`;
+  app.querySelectorAll('[data-fweg]').forEach(b => b.onclick = () => { Z.fehlerstelleLoeschen(b.dataset.fweg); toast('Alḥamdu li-llāh.'); profil(); });
   app.querySelector('#sichern').onclick = async () => {
     const name = `Itqan-${(P.name || 'Profil').replace(/[^\p{L}\p{N}]+/gu, '_')}-${Z.heute()}.itqan`;
     herunterladen(name, await Z.exportDatei(), 'application/json');
@@ -364,39 +468,66 @@ function profil() {
 }
 
 // ---------- Einstellungen ----------
+const TAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const optionen = (werte, wahl, text = x => x) => werte.map(x => `<option value="${x}"${x === wahl ? ' selected' : ''}>${text(x)}</option>`).join('');
 function einstellungen() {
   navSetzen('profil');
   const P = Z.P, E = P.einst;
   const juzAn = new Set(E.bereich ? D.A.filter(e => E.bereich.includes(e.id)).map(e => e.juz) : Array.from({ length: 30 }, (_, i) => i + 1));
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>Profil</button>
+  const bis = n => Array.from({ length: Math.max(30, n) }, (_, i) => i + 1);
+  const gleich = () => E.pensum.every(x => x === E.pensum[0]);
+  const [hh, mm] = (E.erinnerung || '05:30').split(':').map(Number);
+  const minuten = [...new Set([...Array.from({ length: 12 }, (_, i) => i * 5), mm])].sort((a, b) => a - b);
+  const zwei = x => String(x).padStart(2, '0');
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
     <div class="marke">Einstellungen</div>
     <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema">${[['hell', 'Hell'], ['dunkel', 'Dunkel'], ['auto', 'Wie Gerät']].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
-    <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Pro Wochentag einstellbar.</p>
-      <div class="wochentage" style="margin-top:10px">${WT.map((w, i) => `<div>${w}<input type="number" min="1" max="40" value="${E.pensum[i]}" data-i="${i}"></div>`).join('')}</div>
+    <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag.</p>
+      <label class="auswahl stark"><span>Alle Tage</span><select id="alle">${gleich() ? '' : '<option value="" selected>verschieden</option>'}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
+      <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen(bis(E.pensum[i]), E.pensum[i])}</select></label>`).join('')}</div>
       <p class="unter" style="margin-top:10px" id="dauer">Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.</p></div>
-    <div class="abschnitt"><h3>Reihenfolge</h3><div class="wahl" id="reihenfolge">${[['vorwaerts', 'Ab al-Fātiḥah'], ['rueckwaerts', 'Ab an-Nās']].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>Reihenfolge</h3><div class="wahl" id="reihenfolge">${[['vorwaerts', 'Ab al-Fātiḥah'], ['rueckwaerts', 'Ab an-Nās'], ['zufall', 'Zufällig']].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">Bei mehreren Abschnitten am Tag:</p>
+        <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', 'Verstreute Stellen'], ['block', 'Eine Stelle am Stück']].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+        <p class="unter" style="margin-top:8px">Jede Ḫatma bleibt vollständig: Zufällig gewählt wird nur unter den Abschnitten, die in dieser Runde noch offen sind. Zu Beginn siehst du die Āya davor.</p></div></div>
     <div class="abschnitt"><h3>Was du wiederholst</h3><div class="juzwahl" id="juz">${Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${juzAn.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>Erst ansehen, dann prüfen</h3><p class="unter">Vor der ersten Āya kannst du den Abschnitt offen lesen und dich danach prüfen.</p>
+      <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Hilfe beim Aufdecken</h3><p class="unter">„Anfang zeigen“ deckt das erste Wort einer Āya auf. Die Āya zählt dann als halb sicher.</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">Erlaubt</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Tägliche Erinnerung</h3><p class="unter">Ohne Server kann die App selbst keine Benachrichtigung schicken. Deshalb trägt sie dein Wird als täglichen Termin mit Erinnerung in deinen Kalender ein.</p>
-      <div class="feld"><input type="time" id="zeit" value="${E.erinnerung}"></div><button class="knopf leise" id="ics">In den Kalender eintragen</button></div>
+      <div class="zeitwahl"><select id="std" aria-label="Stunde">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="Minute">${optionen(minuten, mm, zwei)}</select><span>Uhr</span></div>
+      <button class="knopf leise" id="ics">In den Kalender eintragen</button></div>
     <div class="abschnitt"><h3>Offline</h3><p class="unter">Lädt alle 604 Seiten (etwa 48 MB), damit Itqān auch ohne Internet jede Seite zeigt.</p><button class="knopf leise" id="offline" style="margin-top:10px">Alle Seiten speichern</button></div>
     <div class="abschnitt"><h3>Neu beginnen</h3><p class="unter">Löscht dein Profil auf diesem Gerät. Sichere es vorher.</p><button class="knopf schlecht" id="reset" style="margin-top:10px">Profil löschen</button></div>`;
+  const dauer = () => app.querySelector('#dauer').textContent = `Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.`;
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });
-  wahl('reihenfolge', w => { E.reihenfolge = w; toast('Gilt ab dem nächsten Tagesplan.'); });
+  wahl('reihenfolge', w => { E.reihenfolge = w; app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer(); toast('Gilt ab dem nächsten Tagesplan.'); });
+  wahl('zufall', w => { E.zufall = w; toast('Gilt ab dem nächsten Tagesplan.'); });
+  wahl('vorueben', w => { E.vorueben = w === '1'; });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
-  app.querySelectorAll('.wochentage input').forEach(i => i.onchange = () => { E.pensum[+i.dataset.i] = Math.max(1, Math.min(40, +i.value || 1)); Z.speichern(); app.querySelector('#dauer').textContent = `Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.`; });
+  const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
+  alle.onchange = () => {
+    const n = +alle.value; if (!n) return;
+    E.pensum = Array(7).fill(n); tage.forEach(x => x.value = String(n));
+    alle.querySelector('option[value=""]')?.remove(); Z.speichern(); dauer();
+  };
+  tage.forEach(x => x.onchange = () => {
+    E.pensum[+x.dataset.i] = +x.value; Z.speichern(); dauer();
+    if (gleich()) { alle.querySelector('option[value=""]')?.remove(); alle.value = String(E.pensum[0]); }
+    else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', '<option value="">verschieden</option>'); alle.value = ''; }
+  });
   app.querySelector('#juz').onclick = ev => {
     const j = +ev.target.dataset.j; if (!j) return;
     ev.target.classList.toggle('an'); juzAn.has(j) ? juzAn.delete(j) : juzAn.add(j);
     if (!juzAn.size) { juzAn.add(j); ev.target.classList.add('an'); toast('Mindestens ein Ǧuzʾ.'); return; }
-    E.bereich = juzAn.size === 30 ? null : D.A.filter(e => juzAn.has(e.juz)).map(e => e.id); Z.speichern();
-    app.querySelector('#dauer').textContent = `Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.`;
+    E.bereich = juzAn.size === 30 ? null : D.A.filter(e => juzAn.has(e.juz)).map(e => e.id); Z.speichern(); dauer();
   };
-  app.querySelector('#zeit').onchange = ev => { E.erinnerung = ev.target.value; Z.speichern(); };
+  const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); };
+  app.querySelector('#std').onchange = zeit; app.querySelector('#min').onchange = zeit;
   app.querySelector('#ics').onclick = () => {
     const [h, m] = (E.erinnerung || '05:30').split(':'), d = Z.heute().replace(/-/g, '');
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
@@ -436,7 +567,7 @@ function lehrer() {
       return w.length ? (0.12 + 0.88 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6).toFixed(2) : null;
     });
     return `<div class="abschnitt"><div class="kopfzeile"><h3>${esc(x.profil.name || 'ohne Namen')}</h3><button class="textlink" data-weg="${i}">entfernen</button></div>
-      <p class="unter">Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')}${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
+      <p class="unter">Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
       <div class="zahlen"><div class="zahl"><b>${x.profil.kette.n}</b><span>Kette</span></div><div class="zahl"><b>${q} %</b><span>Āyāt sicher</span></div><div class="zahl"><b>${Math.floor(kf.anteil * 100)} %</b><span>${x.profil.zyklus.khatma + 1}. Ḫatma</span></div></div>
       <div class="licht-seiten" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
       <p class="unter" style="margin-top:10px">${schwach.length ? 'Schwach: ' + schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ') : 'Noch keine Wiederholungen.'}</p></div>`;
