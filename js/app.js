@@ -1,7 +1,7 @@
 // Itqān · Oberfläche
 import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
 import * as Z from './zustand.js';
-import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen } from './mushaf.js';
+import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -397,13 +397,13 @@ async function mushaf(pText) {
   app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>Seite ${p} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
       <div class="pille"><input id="nr" type="number" min="1" max="604" value="${p}" style="width:58px;border:0;background:none;text-align:center" aria-label="Seite"></div></div>
     <div class="reihe" style="margin:14px 0"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
-    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet() })}</div>
+    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true })}</div>
     <div class="titel-klein">Abschnitte auf dieser Seite</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
       return `<div class="karte tonk${e.id % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
     }).join('')}`;
-  zeilenEinpassen(app.querySelector('#seite'));
+  zeilenEinpassen(app.querySelector('#seite')); grenzenZeichnen(app.querySelector('#seite'));
   app.querySelector('#vor').onclick = () => location.replace('#mushaf/' + Math.min(604, p + 1));
   app.querySelector('#zur').onclick = () => location.replace('#mushaf/' + Math.max(1, p - 1));
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);

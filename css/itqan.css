@@ -222,6 +222,8 @@ button.karte:active{transform:scale(.99)}
 .karte.blitz{animation:blitz 1.3s ease}
 @keyframes blitz{25%{box-shadow:0 0 0 2px var(--akzent),0 8px 24px var(--glow)}}
 [data-ansicht=mushaf] #seite{margin:0 -12px}
+.mz{position:relative}
+.gz{position:absolute;pointer-events:none;border:0 dashed rgba(110,72,30,.5)}
 
 /* Üben: große Seite, kleine Kopfzeile, Einblendung */
 [data-ansicht=ueben] #app{padding-left:5px;padding-right:5px;padding-top:calc(env(safe-area-inset-top) + 8px);max-width:760px}
