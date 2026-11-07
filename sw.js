@@ -1,9 +1,9 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v8';
+const SCHALE = 'itqan-schale-v9';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/mushaf.js',
   'daten/layout_v1.json', 'daten/layout_misch.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
-  'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
+  'icons/icon-192.png', 'icons/laterne.png', 'icons/laterne_hell.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
 self.addEventListener('install', e => e.waitUntil((async () => {
   const c = await caches.open(SCHALE);
   await c.addAll(DATEIEN);

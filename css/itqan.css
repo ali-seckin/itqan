@@ -134,7 +134,12 @@ button.karte:active{transform:scale(.99)}
 
 /* Feier und Ergebnis */
 .feier{text-align:center;padding-top:10px}
-.qandil{width:120px;height:170px;margin:0 auto;display:block;filter:drop-shadow(0 0 28px var(--glow))}
+.qandil{height:170px;margin:0 auto;display:flex;justify-content:center;animation:laterne 4s ease-in-out infinite}
+.qandil img,.lampe-k img{height:100%;width:auto;display:block}
+.lampe-k{display:inline-flex;height:20px}
+[data-modus=dunkel] .nur-hell,[data-modus=hell] .nur-dunkel{display:none!important}
+@keyframes laterne{0%,100%{filter:drop-shadow(0 0 14px var(--glow))}50%{filter:drop-shadow(0 0 30px var(--glow))}}
+@media (prefers-reduced-motion:reduce){.qandil{animation:none;filter:drop-shadow(0 0 20px var(--glow))}}
 .qandil .flamme{animation:flackern 3s ease-in-out infinite;transform-origin:60px 96px}
 @keyframes flackern{0%,100%{transform:scale(1)}40%{transform:scale(1.04,.97)}70%{transform:scale(.97,1.03)}}
 .feier .ar{font-family:'Uthmani',serif;font-size:34px;color:var(--akzent);margin-top:8px}
@@ -193,7 +198,7 @@ button.karte:active{transform:scale(.99)}
 
 /* Start */
 .start{text-align:center;padding-top:24px}
-.start .qandil{width:96px;height:136px}
+.start .qandil{height:150px}
 .start h1{font-size:44px;color:var(--akzent);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}
 .start .ar{font-family:'Uthmani',serif;font-size:29px;color:var(--leise)}

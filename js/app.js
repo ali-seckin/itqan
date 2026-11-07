@@ -31,18 +31,10 @@ function datumText(d = new Date()) {
   return g + (h ? ' · ' + h : '');
 }
 const stufePunkte = st => `<div class="stufe" title="${Z.STUFEN[st]}">${[1, 2, 3, 4].map(i => `<i class="${st >= i ? 'an' : ''}"></i>`).join('')}</div>`;
-function qandil(gross = true) {
-  return `<svg class="qandil" viewBox="0 0 120 170" aria-hidden="true">
-    <defs><radialGradient id="fl${gross ? 1 : 0}" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/></radialGradient></defs>
-    <path d="M60 0v22" stroke="var(--akzent)" stroke-width="2"/><path d="M38 22h44l-8 14H46z" fill="none" stroke="var(--akzent)" stroke-width="2"/>
-    <path d="M22 40h76c0 46-14 74-38 88C36 114 22 86 22 40z" fill="var(--akzent)" opacity=".16"/>
-    <path d="M22 40h76c0 46-14 74-38 88C36 114 22 86 22 40z" fill="none" stroke="var(--akzent)" stroke-width="2"/>
-    <path d="M30 52h60M33 70h54M40 92h40" stroke="var(--akzent)" stroke-width="1" opacity=".55"/>
-    <g fill="none" stroke="var(--akzent)" stroke-width="1" opacity=".65"><path d="M45 52l7 9 8-9 8 9 7-9"/><path d="M47 70l6 11 7-11 7 11 6-11"/></g>
-    <g class="flamme"><ellipse cx="60" cy="88" rx="22" ry="30" fill="url(#fl${gross ? 1 : 0})"/><path d="M60 70c6 9 8 15 0 26-8-11-6-17 0-26z" fill="#fff7e0"/></g>
-    <path d="M52 128h16l-8 18z" fill="var(--akzent)"/><circle cx="60" cy="152" r="3" fill="var(--akzent)"/></svg>`;
-}
-const lampeKlein = `<svg width="15" height="20" viewBox="0 0 24 32" aria-hidden="true"><path d="M12 0v5M7 5h10l-2 4H9z" stroke="var(--akzent)" fill="none" stroke-width="1.6"/><path d="M5 11c0 9 3 13 7 15 4-2 7-6 7-15z" fill="var(--akzent)"/><ellipse cx="12" cy="17" rx="3" ry="4.5" fill="#ffe2a0"/><path d="M10 27h4l-2 4z" fill="var(--akzent)"/></svg>`;
+// Die Laterne (App-Symbol), freigestellt: hell = Bronze für die Lesestube, dunkel = Gold für Tezhip
+const laterne = klasse => `<span class="${klasse}" aria-hidden="true"><img class="nur-hell" src="icons/laterne_hell.png" alt=""><img class="nur-dunkel" src="icons/laterne.png" alt=""></span>`;
+const qandil = () => laterne('qandil');
+const lampeKlein = laterne('lampe-k');
 function herunterladen(name, inhalt, typ) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([inhalt], { type: typ })); a.download = name;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
