@@ -395,11 +395,28 @@ function lichtkarte() {
   }
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
     ${stellenWahl()}
-    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s}</span></button>`).join('')}</div>
+    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s === 'im Aufbau' ? 'Aufbau' : s}</span></button>`).join('')}</div>
     <div class="hinweisbox verdeckt" id="stufeninfo"></div>
     <div style="margin-top:16px" id="licht">${zeilen.join('')}</div>
-    <div class="legende"><span><i style="opacity:.12"></i>neu</span><span><i style="opacity:.45"></i>im Aufbau</span><span><i style="opacity:.7"></i>sicher</span><span><i></i>mutqan</span></div>`;
-  app.querySelector('#licht').onclick = ev => { const p = ev.target.dataset.p; if (p) location.hash = '#mushaf/' + p; };
+    <div class="legende"><span><i style="opacity:.12"></i>neu</span><span><i style="opacity:.45"></i>Aufbau</span><span><i style="opacity:.7"></i>sicher</span><span><i></i>mutqan</span></div>`;
+  // Tippen auf eine Seite: kleines Infokästchen unter dem Ǧuzʾ, erst der Knopf darin führt zur Seite
+  const licht = app.querySelector('#licht');
+  licht.onclick = ev => {
+    const b = ev.target.closest('[data-p]');
+    if (ev.target.closest('#seiteninfo') || !b) return;
+    const alt = licht.querySelector('#seiteninfo'), p = +b.dataset.p;
+    licht.querySelectorAll('.gewaehlt').forEach(x => x.classList.remove('gewaehlt'));
+    if (alt) { const gleich = +alt.dataset.p === p; alt.remove(); if (gleich) return; }
+    b.classList.add('gewaehlt');
+    const abschnitte = D.A.filter(e => e.seiten.includes(p));
+    const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0], st = Z.seitenStufe(p);
+    const box = document.createElement('div'); box.id = 'seiteninfo'; box.className = 'seiteninfo'; box.dataset.p = p;
+    box.innerHTML = `<div class="kopf"><b>Seite ${p}</b><span>${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)} · ${p % 2 ? 'rechte' : 'linke'} Seite</span></div>
+      ${st == null ? '<p class="unter">Diese Seite gehört nicht zu deinem Wiederholungsbereich.</p>' : ''}
+      ${abschnitte.map(e => `<div class="zeile"><span>${abschnittName(e)}: ${esc(e.titel)}<small>${bereichText(e)}</small></span><span class="st">${Z.STUFEN[Z.karte(e.id).st]}</span></div>`).join('')}
+      <a class="knopf haupt klein" href="#mushaf/${p}" style="text-decoration:none;margin-top:4px">Zur Seite ${p}</a>`;
+    b.closest('.licht-juz').after(box);
+  };
   stellenWahlBinden();
   const info = app.querySelector('#stufeninfo');
   app.querySelector('.stufenwahl').onclick = ev => {

@@ -296,6 +296,13 @@ body.im-vollbild{overflow:hidden}
 .vb-pfeil.links{left:calc(env(safe-area-inset-left,0px) + 2px)}
 .vb-pfeil.rechts{right:calc(env(safe-area-inset-right,0px) + 2px)}
 @media (hover:none){.vb-pfeil{opacity:.22}}
+.licht-seiten button.gewaehlt{outline:2px solid var(--text);outline-offset:1px;position:relative;z-index:1}
+.seiteninfo{background:var(--karte);border:1px solid var(--akzent);border-radius:14px;padding:12px 14px;margin:4px 0 10px;display:grid;gap:8px}
+.seiteninfo .kopf b{font-family:var(--kopf);font-size:21px;font-weight:600;margin-right:8px}
+.seiteninfo .kopf span{font-size:15px;color:var(--leise)}
+.seiteninfo .zeile{display:flex;justify-content:space-between;gap:10px;font-size:15.5px;border-top:1px dotted var(--rand);padding-top:6px}
+.seiteninfo .zeile small{display:block;font-size:13.5px;color:var(--leise)}
+.seiteninfo .st{color:var(--akzent);white-space:nowrap}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
 .rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}
