@@ -17,6 +17,8 @@ function themaAnwenden() {
   document.querySelector('meta[name=theme-color]').content = modus === 'dunkel' ? '#0d2230' : '#f3e8d2';
 }
 dunkelMQ.addEventListener('change', themaAnwenden);
+// Wie eine App: kein Zoomen mit zwei Fingern (Safari hält sich nicht an user-scalable=no)
+for (const g of ['gesturestart', 'gesturechange']) document.addEventListener(g, e => e.preventDefault(), { passive: false });
 
 // ---------- Hilfen ----------
 function toast(text, ms = 2600) {

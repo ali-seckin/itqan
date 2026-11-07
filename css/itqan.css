@@ -10,7 +10,7 @@
  --text:#efe6d2;--leise:#a9b6b9;--akzent:#d4af6a;--akzent2:#e9cf95;--aufAkzent:#0d2230;--gut:#8fbf9a;--schlecht:#e08a6d;
  --seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
  --schatten:0 10px 30px rgba(0,0,0,.35);--seitenrand:1px solid #c9a45c;color-scheme:dark}
-html{background:var(--bg)}
+html{background:var(--bg);touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-variant-numeric:lining-nums;font-size:19px;line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
 [data-modus=hell] body{background:radial-gradient(900px 500px at 50% -120px,#fbf3e2 0%,var(--bg) 70%) fixed}
 [data-modus=dunkel] body{background:radial-gradient(900px 600px at 50% -100px,#17394a 0%,var(--bg) 65%) fixed}
