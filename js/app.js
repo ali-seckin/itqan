@@ -394,11 +394,13 @@ function lichtkarte() {
     zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="licht-seiten">${zellen.join('')}</div></div>`);
   }
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
+    ${stellenWahl()}
     <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s}</span></button>`).join('')}</div>
     <div class="hinweisbox verdeckt" id="stufeninfo"></div>
     <div style="margin-top:16px" id="licht">${zeilen.join('')}</div>
     <div class="legende"><span><i style="opacity:.12"></i>neu</span><span><i style="opacity:.45"></i>im Aufbau</span><span><i style="opacity:.7"></i>sicher</span><span><i></i>mutqan</span></div>`;
   app.querySelector('#licht').onclick = ev => { const p = ev.target.dataset.p; if (p) location.hash = '#mushaf/' + p; };
+  stellenWahlBinden();
   const info = app.querySelector('#stufeninfo');
   app.querySelector('.stufenwahl').onclick = ev => {
     const b = ev.target.closest('[data-st]'); if (!b) return;
@@ -420,7 +422,34 @@ function lageInfo(p) {
     <text x="33" y="42">${links <= 604 ? links : ''}</text><text x="87" y="42">${rechts >= 1 ? rechts : ''}</text></svg>`;
   return `${buch}<div><b>${r ? 'Rechte Seite' : 'Linke Seite'}</b><br>Im gedruckten Muṣḥaf liegt Seite ${p} ${r ? 'rechts' : 'links'}${links <= 604 && rechts >= 1 ? `, aufgeschlagen zusammen mit Seite ${r ? links : rechts} ${r ? 'links' : 'rechts'} daneben` : ''}. Ungerade Seiten liegen immer rechts, gerade immer links.</div>`;
 }
-async function mushaf(pText) {
+// Auswahl Sūra → Abschnitt, springt zur Stelle im Muṣḥaf
+function stellenWahl(sJetzt = 0) {
+  return `<div class="stellenwahl"><select id="wahl-sure" aria-label="Sūra"><option value="">Sūra wählen …</option>${Array.from({ length: 114 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
+    <select id="wahl-abschnitt" aria-label="Abschnitt"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt)}</select></div>`;
+}
+function abschnittOptionen(s) {
+  if (!s) return '<option value="">Abschnitt …</option>';
+  return '<option value="">Abschnitt wählen …</option>' + D.A.filter(e => e.von[0] <= s && e.bis[0] >= s)
+    .map(e => `<option value="${e.id}">${e.nr ? e.nr + '. ' : ''}${esc(e.titel)} (${bereichText(e)})</option>`).join('');
+}
+function stellenWahlBinden() {
+  const ss = app.querySelector('#wahl-sure'), sa = app.querySelector('#wahl-abschnitt');
+  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value); sa.disabled = !ss.value; if (ss.value) sa.focus(); };
+  sa.onchange = () => { const e = D.A[+sa.value]; if (e) location.hash = `#mushaf/${e.seiten[0]}/${e.id}`; };
+}
+// Seitenauswahl, nach Aǧzāʾ gruppiert
+function seitenOptionen(p) {
+  let h = '';
+  for (let j = 1; j <= 30; j++) {
+    const von = juzStart(j), bis = j < 30 ? juzStart(j + 1) - 1 : 604;
+    h += `<optgroup label="Ǧuzʾ ${j}">`;
+    for (let x = von; x <= bis; x++) h += `<option value="${x}"${x === p ? ' selected' : ''}>${x}</option>`;
+    h += '</optgroup>';
+  }
+  return h;
+}
+const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+async function mushaf(pText, aText) {
   navSetzen('mushaf');
   const p = Math.min(604, Math.max(1, +pText || 1));
   app.innerHTML = '<div class="lade">Seite wird geladen …</div>';
@@ -430,27 +459,85 @@ async function mushaf(pText) {
   const t = Z.tagesplan();
   const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>Seite ${p} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
-      <div class="reihe-k"><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><div class="pille"><input id="nr" type="number" min="1" max="604" value="${p}" style="width:58px;border:0;background:none;text-align:center" aria-label="Seite"></div></div></div>
+      <div class="reihe-k"><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><select id="nr" class="seitenwahl" aria-label="Seite">${seitenOptionen(p)}</select></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
-    <div class="reihe" style="margin:14px 0"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
-    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true })}</div>
+    ${stellenWahl(s)}
+    <div class="reihe" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
+    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true })}<button class="vollbild-knopf" id="vollbild" aria-label="Seite im Vollbild zeigen">${vollbildIcon}</button></div>
     <div class="titel-klein">Abschnitte auf dieser Seite</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
       return `<div class="karte tonk${e.id % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
     }).join('')}`;
-  zeilenEinpassen(app.querySelector('#seite')); grenzenZeichnen(app.querySelector('#seite'));
+  const seiteEl = app.querySelector('#seite');
+  zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
   app.querySelector('#vor').onclick = () => location.replace('#mushaf/' + Math.min(604, p + 1));
   app.querySelector('#zur').onclick = () => location.replace('#mushaf/' + Math.max(1, p - 1));
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
+  app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
+  stellenWahlBinden();
+  const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
-  app.querySelector('#seite').onclick = ev => {
+  seiteEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
-    const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (!k) return;
-    k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz');
+    const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (k) blitz(k);
   };
+  // aus der Auswahl angesprungen: Abschnitt auf der Seite kurz aufleuchten lassen
+  const ziel = aText != null ? D.A[+aText] : null;
+  if (ziel) {
+    const ws = [...seiteEl.querySelectorAll('.w')].filter(w => +w.dataset.v >= ziel.v[0] && +w.dataset.v <= ziel.v[1]);
+    ws.forEach(w => w.classList.add('angesprungen')); setTimeout(() => ws.forEach(w => w.classList.remove('angesprungen')), 2600);
+    ws[0]?.scrollIntoView({ block: 'center' });
+  }
   if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
+}
+
+// ---------- Vollbild: nur die Seite, Blättern nach rechts und links ----------
+async function vollbild(start) {
+  let p = start;
+  const v = document.createElement('div'); v.className = 'vollbild';
+  v.innerHTML = `<div class="vb-buehne"></div><button class="vb-zu" aria-label="Vollbild schließen">✕</button>
+    <button class="vb-pfeil links" aria-label="Nächste Seite">‹</button><button class="vb-pfeil rechts" aria-label="Vorige Seite">›</button>`;
+  document.body.appendChild(v); document.body.classList.add('im-vollbild');
+  try { document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch(() => {}); } catch (e) {}   // nicht abwarten: iPhone kennt es nicht
+  const buehne = v.querySelector('.vb-buehne');
+  async function zeige(neu, richtung = 0) {
+    if (neu < 1 || neu > 604) return;
+    p = neu; await schriftenLaden([p]);
+    buehne.innerHTML = seiteHTML(p);
+    const s = buehne.querySelector('.seite');
+    const breite = Math.min(innerWidth, 900), hoehe = innerHeight - 16;
+    s.style.width = breite + 'px';
+    if (s.offsetHeight > hoehe) s.style.width = Math.floor(breite * hoehe / s.offsetHeight) + 'px';
+    zeilenEinpassen(buehne);
+    if (richtung) { s.classList.add(richtung > 0 ? 'von-links' : 'von-rechts'); }
+    if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
+  }
+  // im Muṣḥaf liegt die nächste Seite links: nach rechts wischen oder links tippen = weiter
+  const weiter = () => zeige(p + 1, 1), zurueck = () => zeige(p - 1, -1);
+  v.querySelector('.vb-pfeil.links').onclick = weiter;
+  v.querySelector('.vb-pfeil.rechts').onclick = zurueck;
+  let x0 = null, y0 = null;
+  v.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  v.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  v.addEventListener('touchend', e => {
+    if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
+  });
+  const tasten = e => { if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); else if (e.key === 'Escape') schliessen(); };
+  addEventListener('keydown', tasten);
+  const anpassen = () => zeige(p);
+  addEventListener('resize', anpassen);
+  function schliessen() {
+    removeEventListener('keydown', tasten); removeEventListener('resize', anpassen);
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    v.remove(); document.body.classList.remove('im-vollbild');
+    if (p !== start) location.replace('#mushaf/' + p);
+  }
+  v.querySelector('.vb-zu').onclick = schliessen;
+  document.addEventListener('fullscreenchange', function f() { if (!document.fullscreenElement && v.isConnected) { document.removeEventListener('fullscreenchange', f); schliessen(); } });
+  await zeige(p);
 }
 
 // ---------- Ränge ----------

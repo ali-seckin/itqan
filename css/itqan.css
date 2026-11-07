@@ -270,6 +270,32 @@ button.karte:active{transform:scale(.99)}
 
 .stufenwahl .zahl{cursor:pointer;color:inherit;font:inherit}
 .stufenwahl .zahl.an{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent)}
+/* Sūra- und Abschnittsauswahl, Seitenauswahl */
+.stellenwahl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;margin:14px 0 0}
+.stellenwahl select{width:100%;font-size:16px;text-overflow:ellipsis}
+.stellenwahl select:disabled{opacity:.5}
+.seitenwahl{border-radius:999px;padding:7px 30px 7px 14px;font-size:17px;min-width:84px}
+.w.angesprungen{animation:angesprungen 2.6s ease}
+@keyframes angesprungen{0%,60%{background-color:rgba(217,154,78,.55)}}
+/* Vollbild */
+#seite{position:relative}
+[data-ansicht=mushaf] #seite .seite{padding-bottom:calc(1.4cqw + 16px)}
+.vollbild-knopf{position:absolute;right:16px;bottom:8px;width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,72,30,.25);background:rgba(255,250,240,.75);color:#7a5a2e;display:grid;place-items:center;opacity:.6;padding:0}
+.vollbild-knopf:hover,.vollbild-knopf:focus-visible{opacity:1}
+body.im-vollbild{overflow:hidden}
+.vollbild{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;touch-action:none;overscroll-behavior:none;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.vb-buehne{display:grid;place-items:center;width:100%;height:100%}
+.vb-buehne .seite{margin:0;border-radius:4px}
+.vb-buehne .seite.von-links{animation:vonLinks .28s ease}
+.vb-buehne .seite.von-rechts{animation:vonRechts .28s ease}
+@keyframes vonLinks{from{opacity:0;transform:translateX(-24px)}}
+@keyframes vonRechts{from{opacity:0;transform:translateX(24px)}}
+.vb-zu{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:36px;height:36px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:var(--leise);font-size:16px;opacity:.75;z-index:2}
+.vb-pfeil{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:64px;border:0;background:none;color:var(--leise);font-size:34px;opacity:.35;z-index:2}
+.vb-pfeil.links{left:calc(env(safe-area-inset-left,0px) + 2px)}
+.vb-pfeil.rechts{right:calc(env(safe-area-inset-right,0px) + 2px)}
+@media (hover:none){.vb-pfeil{opacity:.22}}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
 .rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}
