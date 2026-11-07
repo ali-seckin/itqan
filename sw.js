@@ -1,8 +1,8 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v3';
+const SCHALE = 'itqan-schale-v4';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/mushaf.js',
-  'daten/layout_v1.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
+  'daten/layout_v1.json', 'daten/layout_misch.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
   'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
 self.addEventListener('install', e => e.waitUntil((async () => {
   const c = await caches.open(SCHALE);
@@ -18,7 +18,7 @@ self.addEventListener('activate', e => e.waitUntil((async () => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
-  if (url.pathname.includes('/schriften/v1/')) {      // Seitenschriften: einmal laden, dann aus dem Speicher
+  if (/\/schriften\/v[12]\//.test(url.pathname)) {      // Seitenschriften: einmal laden, dann aus dem Speicher
     e.respondWith(caches.open(SEITEN).then(async c => (await c.match(e.request)) || fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; })));
     return;
   }

@@ -1,7 +1,7 @@
 // Itqān · Oberfläche
 import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
 import * as Z from './zustand.js';
-import { seiteHTML, schriftenLaden, schrift, glyphen } from './mushaf.js';
+import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen } from './mushaf.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -187,9 +187,9 @@ async function ueben(idText, quelle) {
   const vorVi = e.v[0] - 1;
   const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler');
   const kWoerter = kontext ? ayaWoerter(vorVi) : [];
-  const kSeiten = [...new Set(kWoerter.map(x => x[4]))];
+  const kSeiten = [...new Set(kWoerter.map(x => x[5]))];
   const kBox = kontext && kSeiten.some(p => !e.seiten.includes(p));
-  await schriftenLaden([...new Set([...e.seiten, ...kSeiten])]);
+  await Promise.all([schriftenLaden(e.seiten), ...kWoerter.map(x => schrift(x[4]))]);
   const k = Z.karte(id);
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
@@ -209,6 +209,7 @@ async function ueben(idText, quelle) {
   einbl.onclick = einblWeg;
   const seitenEl = app.querySelector('#seiten');
   seitenEl.innerHTML = e.seiten.map(p => seiteHTML(p, { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() })).join('');
+  zeilenEinpassen(seitenEl);
   app.querySelector('#zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#heute');
   const spans = vi => [...seitenEl.querySelectorAll(`.w[data-v="${vi}"]`)];
   const K = app.querySelector('#knoepfe'), H = app.querySelector('#hinweis'), A = app.querySelector('#arten'), Zl = app.querySelector('#zaehler');
@@ -338,7 +339,7 @@ async function ueben(idText, quelle) {
   }
   zeichne();
   // nächste Seiten schon laden
-  const t3 = Z.tagesplan(); t3.plan.filter(x => !t3.fertig.includes(x) && x !== id).slice(0, 2).forEach(x => D.A[x].seiten.forEach(schrift));
+  const t3 = Z.tagesplan(); t3.plan.filter(x => !t3.fertig.includes(x) && x !== id).slice(0, 2).forEach(x => schriftenLaden(D.A[x].seiten));
 }
 
 // ---------- Wird vollbracht ----------
@@ -391,7 +392,7 @@ async function mushaf(pText) {
   navSetzen('mushaf');
   const p = Math.min(604, Math.max(1, +pText || 1));
   app.innerHTML = '<div class="lade">Seite wird geladen …</div>';
-  await schrift(p);
+  await schriftenLaden([p]);
   const abschnitte = D.A.filter(e => e.seiten.includes(p));
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
   const t = Z.tagesplan();
@@ -405,6 +406,7 @@ async function mushaf(pText) {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
       return `<div class="karte tonk${i % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
     }).join('')}`;
+  zeilenEinpassen(app.querySelector('#seite'));
   app.querySelector('#vor').onclick = () => location.replace('#mushaf/' + Math.min(604, p + 1));
   app.querySelector('#zur').onclick = () => location.replace('#mushaf/' + Math.max(1, p - 1));
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
@@ -414,7 +416,7 @@ async function mushaf(pText) {
     const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (!k) return;
     k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz');
   };
-  if (p < 604) schrift(p + 1); if (p > 1) schrift(p - 1);
+  if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
 }
 
 // ---------- Profil ----------
@@ -428,8 +430,8 @@ function profil() {
   const orn = P.meilen.filter(m => m.startsWith('sure-')).map(m => { const [, st, sn] = m.split('-'); return `${sureName(+sn)} ${st}`; });
   const ketten = P.meilen.filter(m => m.startsWith('kette-')).map(m => m.split('-')[1] + ' Tage');
   const fl = Z.fehlerstellenListe(12);
-  for (const f of fl) { const w = D.W.get(f.s); if (w) schrift(w[0]); }
-  const wortHTML = k => { const w = D.W.get(k); return w ? `<span style="font-family:qp${w[0]}">${glyphen(w[1], w[2])}</span>` : ''; };
+  for (const f of fl) for (const d of [-1, 0, 1]) { const w = D.W.get(f.vi + '.' + (f.i + d)); if (w) schrift(w[3]); }
+  const wortHTML = k => { const w = D.W.get(k); return w ? `<span style="font-family:qp${w[3]}">${glyphen(w[1], w[2])}</span>` : ''; };
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : 'Dein Profil'}<small>dabei seit ${new Date(P.erstellt).toLocaleDateString('de-AT')} · ${P.zyklus.khatma} ${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'} vollendet</small></div>
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>Itqān-Punkte</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>Ḥasanāt</span></div><div class="zahl"><b>${quote} %</b><span>Āyāt sicher</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>Kette jetzt</span></div><div class="zahl"><b>${P.kette.beste}</b><span>längste Kette</span></div><div class="zahl"><b>${s.abschnitte}</b><span>Abschnitte</span></div></div>
@@ -483,6 +485,8 @@ function einstellungen() {
     <div class="marke">Einstellungen</div>
     <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema">${[['hell', 'Hell'], ['dunkel', 'Dunkel'], ['auto', 'Wie Gerät']].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>Schriftbild des Muṣḥaf</h3><p class="unter">Seiten und Zeilen bleiben immer wie im Druck 1405. Wählbar ist die Schrift.</p>
+      <div class="wahl" id="ausgabe" style="margin-top:10px">${[['misch', 'Schrift 1421'], ['v1', 'Schrift 1405']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'misch') === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
     <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag.</p>
       <label class="auswahl stark"><span>Alle Tage</span><select id="alle">${gleich() ? '' : '<option value="" selected>verschieden</option>'}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
       <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen(bis(E.pensum[i]), E.pensum[i])}</select></label>`).join('')}</div>
@@ -508,6 +512,7 @@ function einstellungen() {
   wahl('reihenfolge', w => { E.reihenfolge = w; app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer(); toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('zufall', w => { E.zufall = w; toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
+  wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
   alle.onchange = () => {
@@ -541,7 +546,7 @@ function einstellungen() {
     const cache = 'caches' in window ? await caches.open('itqan-seiten-v1') : null;
     for (let p = 1; p <= 604; p += 8) {
       await Promise.all(Array.from({ length: 8 }, (_, k) => p + k).filter(x => x <= 604).map(async x => {
-        const url = `schriften/v1/p${x}.woff2`;
+        const url = `schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${x}.woff2`;
         try { if (cache && !(await cache.match(url))) await cache.add(url); } catch (e) {}
         n++;
       }));
@@ -594,7 +599,7 @@ function lehrer() {
 // ---------- Start der App ----------
 (async () => {
   Z.laden(); themaAnwenden();
-  try { await ladeDaten(); }
+  try { await ladeDaten(Z.P?.einst.ausgabe || 'misch'); }
   catch (e) { app.innerHTML = '<div class="lade">Die Daten konnten nicht geladen werden. Bitte mit Internet erneut öffnen.</div>'; return; }
   zeige();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

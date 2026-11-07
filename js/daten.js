@@ -1,18 +1,27 @@
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
-export const D = { L: null, V: null, A: null, S: null, W: null };
+export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'misch' };
 
-export async function ladeDaten() {
+// ausgabe: 'v1' = Druck 1405, 'misch' = Schrift 1421 auf den Seiten und Zeilen von 1405
+export async function ladeDaten(ausgabe = 'misch') {
   const j = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
-  const [L, V, A, S] = await Promise.all([j('daten/layout_v1.json'), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
-  Object.assign(D, { L, V, A, S });
+  const [L, V, A, S] = await Promise.all([j(ausgabe === 'v1' ? 'daten/layout_v1.json' : 'daten/layout_misch.json'), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
+  Object.assign(D, { L, V, A, S, ausgabe });
   for (const e of A) e.juz = juzVonSeite(e.seiten[0]);
-  // Wortindex je Āya (Eintrag[3]) und Fundort jedes Wortes: D.W 'vi.i' → [Seite, Glyphen, Typen]
+  // Einträge vereinheitlichen zu [Glyphen, vi, Typen, Wortindex in der Āya, Schriftseite]
+  // und Fundort jedes Wortes merken: D.W 'vi.i' → [Seite, Glyphen, Typen, Schriftseite]
   const zaehler = new Map(); D.W = new Map();
   L.forEach((seite, pi) => { for (const z of seite) if (z?.w) for (const e of z.w) {
-    const i = zaehler.get(e[1]) || 0; zaehler.set(e[1], i + 1); e[3] = i; D.W.set(e[1] + '.' + i, [pi + 1, e[0], e[2]]);
+    const fp = e[3] ?? pi + 1, i = zaehler.get(e[1]) || 0; zaehler.set(e[1], i + 1);
+    e[2] = e[2] || null; e[3] = i; e[4] = fp; D.W.set(e[1] + '.' + i, [pi + 1, e[0], e[2], fp]);
   } });
 }
-// alle Worteinträge einer Āya mit Seite: [[code, vi, typen, i, p], …]
+// Schriftdateien, die eine Seite braucht (bei der Mischform manchmal auch die Nachbarseite)
+export function schriftSeiten(p) {
+  const s = new Set([p]);
+  for (const z of D.L[p - 1]) if (z?.w) for (const e of z.w) s.add(e[4]);
+  return [...s];
+}
+// alle Worteinträge einer Āya mit Seite: [[code, vi, typen, i, schriftseite, p], …]
 export function ayaWoerter(vi) {
   const aus = [], p0 = D.V[vi][3];
   for (let p = p0; p <= Math.min(604, p0 + 1); p++) for (const z of D.L[p - 1]) if (z?.w) for (const e of z.w) if (e[1] === vi) aus.push([...e, p]);
