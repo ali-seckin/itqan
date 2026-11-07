@@ -5,13 +5,13 @@
  --text:#3a2a1d;--leise:#86705a;--akzent:#b7772f;--akzent2:#d99a4e;--aufAkzent:#fff;--gut:#6f8f5a;--schlecht:#b5543a;
  --seite:#fffaf0;--seite2:#f7ecd6;--seitetext:#2a2018;--hi:rgba(217,154,78,.16);--schleier:#e8d9bb;--glow:rgba(255,190,110,.55);
  --schatten:0 2px 0 #e7d5b2,0 14px 30px rgba(80,50,20,.18);--seitenrand:none;
- --kopf:'Cormorant Garamond',Georgia,serif;--fliess:'EB Garamond',Georgia,serif;color-scheme:light}
+ --kopf:'Alegreya',Georgia,serif;--fliess:'Alegreya Sans',system-ui,sans-serif;color-scheme:light}
 [data-modus=dunkel]{--bg:#0d2230;--bg2:#12303f;--karte:rgba(255,255,255,.045);--karte2:rgba(255,255,255,.07);--rand:rgba(212,175,106,.26);
  --text:#efe6d2;--leise:#a9b6b9;--akzent:#d4af6a;--akzent2:#e9cf95;--aufAkzent:#0d2230;--gut:#8fbf9a;--schlecht:#e08a6d;
  --seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
  --schatten:0 10px 30px rgba(0,0,0,.35);--seitenrand:1px solid #c9a45c;color-scheme:dark}
 html{background:var(--bg)}
-body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-size:17px;line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-variant-numeric:lining-nums;font-size:19px;line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
 [data-modus=hell] body{background:radial-gradient(900px 500px at 50% -120px,#fbf3e2 0%,var(--bg) 70%) fixed}
 [data-modus=dunkel] body{background:radial-gradient(900px 600px at 50% -100px,#17394a 0%,var(--bg) 65%) fixed}
 button,input,select{font:inherit;color:inherit}
@@ -24,12 +24,12 @@ a{color:var(--akzent)}
 .kopfzeile{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .marke{font-family:var(--kopf);font-weight:500;font-size:32px;line-height:1;color:var(--akzent)}
 [data-modus=dunkel] .marke{color:var(--akzent2)}
-.marke small{display:block;font:400 13px var(--fliess);color:var(--leise);margin-top:7px}
-.pille{display:inline-flex;align-items:center;gap:6px;font-size:15px;padding:6px 12px;border-radius:999px;background:var(--karte);border:1px solid var(--rand);white-space:nowrap}
+.marke small{display:block;font:400 14.5px var(--fliess);color:var(--leise);margin-top:7px}
+.pille{display:inline-flex;align-items:center;gap:6px;font-size:17px;padding:6px 12px;border-radius:999px;background:var(--karte);border:1px solid var(--rand);white-space:nowrap}
 h1,h2,h3{font-family:var(--kopf);font-weight:500;line-height:1.2}
-.gruss{font-size:26px;margin:24px 0 2px}
-.unter{color:var(--leise);font-size:15px}
-.titel-klein{font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--leise);margin:26px 0 10px;font-family:var(--fliess)}
+.gruss{font-size:29px;margin:24px 0 2px}
+.unter{color:var(--leise);font-size:17px}
+.titel-klein{font-size:14px;letter-spacing:1.6px;text-transform:uppercase;color:var(--leise);margin:26px 0 10px;font-family:var(--fliess)}
 
 /* Ring */
 .ring{position:relative;width:210px;height:210px;margin:20px auto 6px}
@@ -37,26 +37,26 @@ h1,h2,h3{font-family:var(--kopf);font-weight:500;line-height:1.2}
 .ring .mitte{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ring .gross{font-family:var(--kopf);font-size:56px;line-height:1}
 .ring .gross span{opacity:.45}
-.ring .klein{font-size:14px;color:var(--leise);margin-top:4px}
+.ring .klein{font-size:15.5px;color:var(--leise);margin-top:4px}
 .ring circle.fort{transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
 
 .zahlen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
 .zahl{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:11px 6px;text-align:center}
-.zahl b{display:block;font-family:var(--kopf);font-size:22px;font-weight:600;color:var(--akzent)}
+.zahl b{display:block;font-family:var(--kopf);font-size:24.5px;font-weight:600;color:var(--akzent)}
 [data-modus=dunkel] .zahl b{color:var(--akzent2)}
-.zahl span{font-size:12px;color:var(--leise)}
+.zahl span{font-size:14px;color:var(--leise)}
 
 /* Karten */
 .karte{display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px;margin-bottom:8px;width:100%;text-align:left}
 button.karte:active{transform:scale(.99)}
-.karte .nr{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:14px;border:1px solid var(--rand)}
+.karte .nr{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:15.5px;border:1px solid var(--rand)}
 .karte.fertig .nr{background:var(--gut);border-color:transparent;color:#fff}
 .karte.jetzt{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent),0 8px 24px var(--glow)}
 .karte.jetzt .nr{background:var(--akzent);color:var(--aufAkzent);border-color:transparent}
 .karte .t{flex:1;min-width:0}
-.karte .t b{display:block;font-weight:500;font-size:16px;line-height:1.25}
-.karte .t span{font-size:13px;color:var(--leise)}
-.marke-art{display:inline-block;font-size:11px;letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.karte .t b{display:block;font-weight:500;font-size:18px;line-height:1.25}
+.karte .t span{font-size:14.5px;color:var(--leise)}
+.marke-art{display:inline-block;font-size:13px;letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
 .marke-art.fehler{background:rgba(181,84,58,.14);color:var(--schlecht)}
 .marke-art.qadaa{background:rgba(183,119,47,.16);color:var(--akzent)}
 .marke-art.bonus{background:rgba(111,143,90,.16);color:var(--gut)}
@@ -65,30 +65,30 @@ button.karte:active{transform:scale(.99)}
 .stufe i.an{background:var(--akzent)}
 .balken{height:8px;border-radius:9px;background:var(--rand);overflow:hidden;margin:8px 0 6px}
 .balken div{height:100%;border-radius:9px;background:linear-gradient(90deg,var(--akzent),var(--akzent2));transition:width 1s}
-.klein-zeile{display:flex;justify-content:space-between;font-size:13px;color:var(--leise);gap:10px}
-.hinweisbox{background:var(--karte);border:1px dashed var(--akzent);border-radius:16px;padding:12px 14px;font-size:15px;margin:14px 0}
+.klein-zeile{display:flex;justify-content:space-between;font-size:14.5px;color:var(--leise);gap:10px}
+.hinweisbox{background:var(--karte);border:1px dashed var(--akzent);border-radius:16px;padding:12px 14px;font-size:17px;margin:14px 0}
 .hinweisbox b{color:var(--akzent)}
-.leer{color:var(--leise);font-style:italic;font-size:15px}
+.leer{color:var(--leise);font-style:italic;font-size:17px}
 
 /* Knöpfe */
-.knopf{display:block;width:100%;border:0;border-radius:14px;padding:14px 12px;font-size:17px;font-weight:500;text-align:center;transition:transform .1s,opacity .2s}
+.knopf{display:block;width:100%;border:0;border-radius:14px;padding:14px 12px;font-size:19px;font-weight:500;text-align:center;transition:transform .1s,opacity .2s}
 .knopf:active{transform:scale(.97)}
 .knopf.haupt{background:var(--akzent);color:var(--aufAkzent);box-shadow:0 8px 20px var(--glow)}
 .knopf.gut{background:var(--gut);color:#fff}
 .knopf.schlecht{background:transparent;color:var(--schlecht);border:1.5px solid var(--schlecht)}
 .knopf.leise{background:transparent;color:var(--leise);border:1px solid var(--rand)}
-.knopf.klein{padding:9px 12px;font-size:15px}
+.knopf.klein{padding:9px 12px;font-size:17px}
 .knopf:disabled{opacity:.4}
 .reihe{display:flex;gap:10px}
 .reihe>*{flex:1}
-.textlink{background:none;border:0;color:var(--leise);font-size:15px;text-decoration:underline;text-underline-offset:3px;padding:8px}
+.textlink{background:none;border:0;color:var(--leise);font-size:17px;text-decoration:underline;text-underline-offset:3px;padding:8px}
 
 /* Navigation */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;background:var(--bg);border-top:1px solid var(--rand);padding:8px 0 calc(env(safe-area-inset-bottom) + 8px)}
 [data-modus=hell] .nav{background:rgba(251,244,228,.94);backdrop-filter:blur(10px)}
 [data-modus=dunkel] .nav{background:rgba(13,34,48,.94);backdrop-filter:blur(10px)}
 .nav div{display:flex;justify-content:space-around;width:100%;max-width:560px}
-.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--leise);text-decoration:none;padding:4px 10px;min-width:64px}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:14px;color:var(--leise);text-decoration:none;padding:4px 10px;min-width:64px}
 .nav a.an{color:var(--akzent)}
 [data-modus=dunkel] .nav a.an{color:var(--akzent2)}
 .nav svg{width:23px;height:23px}
@@ -118,10 +118,10 @@ button.karte:active{transform:scale(.99)}
 @keyframes puls{50%{background-color:rgba(183,119,47,.88)}}
 
 /* Üben */
-.ab-kopf .ueber{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--akzent)}
-.ab-kopf h2{font-size:24px;margin:4px 0 6px}
-.ab-kopf p{font-size:14px;color:var(--leise)}
-.zurueck{display:inline-flex;align-items:center;gap:8px;font-size:15px;color:var(--leise);background:none;border:0;padding:4px 0;margin-bottom:8px}
+.ab-kopf .ueber{font-size:14.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--akzent)}
+.ab-kopf h2{font-size:27px;margin:4px 0 6px}
+.ab-kopf p{font-size:15.5px;color:var(--leise)}
+.zurueck{display:inline-flex;align-items:center;gap:8px;font-size:17px;color:var(--leise);background:none;border:0;padding:4px 0;margin-bottom:8px}
 .steuerung{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 18px calc(env(safe-area-inset-bottom) + 12px);background:var(--bg);border-top:1px solid var(--rand)}
 [data-modus=hell] .steuerung{background:rgba(243,232,210,.96);backdrop-filter:blur(10px)}
 [data-modus=dunkel] .steuerung{background:rgba(13,34,48,.96);backdrop-filter:blur(10px)}
@@ -143,44 +143,44 @@ button.karte:active{transform:scale(.99)}
 .feier>p{margin:6px 0 18px}
 .ernte{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
 .ernte div{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px}
-.ernte b{display:block;font-family:var(--kopf);font-size:26px;font-weight:600}
-.ernte span{font-size:13px;color:var(--leise)}
-.niyya{font-size:13px;color:var(--leise);margin:10px 4px 0;text-align:center}
-.aufschl{font-size:14px;color:var(--leise);margin:10px 0;text-align:left}
+.ernte b{display:block;font-family:var(--kopf);font-size:29px;font-weight:600}
+.ernte span{font-size:14.5px;color:var(--leise)}
+.niyya{font-size:14.5px;color:var(--leise);margin:10px 4px 0;text-align:center}
+.aufschl{font-size:15.5px;color:var(--leise);margin:10px 0;text-align:left}
 .aufschl div{display:flex;justify-content:space-between;padding:3px 2px;border-bottom:1px dotted var(--rand)}
-.band{margin:12px 0;padding:12px 14px;border-radius:16px;display:flex;gap:12px;align-items:center;text-align:left;border:1px dashed var(--akzent);font-size:15px;background:var(--karte)}
+.band{margin:12px 0;padding:12px 14px;border-radius:16px;display:flex;gap:12px;align-items:center;text-align:left;border:1px dashed var(--akzent);font-size:17px;background:var(--karte)}
 .angebot{background:linear-gradient(135deg,var(--akzent),var(--akzent2));color:var(--aufAkzent);border-radius:20px;padding:16px;text-align:left;box-shadow:0 12px 28px var(--glow);margin-top:14px}
-.angebot b{font-family:var(--kopf);font-size:22px;font-weight:600;display:block}
-.angebot p{font-size:15px;margin:4px 0 12px;opacity:.92}
-.angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
+.angebot b{font-family:var(--kopf);font-size:24.5px;font-weight:600;display:block}
+.angebot p{font-size:17px;margin:4px 0 12px;opacity:.92}
+.angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:18px;font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
 
 /* Lichtkarte */
 .licht-juz{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.licht-juz>span{width:24px;font-size:12px;color:var(--leise);text-align:right;flex:none}
+.licht-juz>span{width:24px;font-size:14px;color:var(--leise);text-align:right;flex:none}
 .licht-seiten{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;flex:1}
 .licht-seiten button{aspect-ratio:1/1.35;border:0;border-radius:2px;background:var(--akzent);padding:0}
 .licht-seiten button.aus{background:var(--rand);opacity:.35}
-.legende{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--leise);margin:12px 0}
+.legende{display:flex;flex-wrap:wrap;gap:12px;font-size:14.5px;color:var(--leise);margin:12px 0}
 .legende i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--akzent);margin-right:5px;vertical-align:-1px}
 
 /* Formulare */
 .feld{margin:14px 0}
-.feld label{display:block;font-size:15px;margin-bottom:6px}
+.feld label{display:block;font-size:17px;margin-bottom:6px}
 .feld input[type=text],.feld input[type=time],.feld select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2)}
 .wahl{display:flex;gap:6px;background:var(--karte);border:1px solid var(--rand);padding:4px;border-radius:999px}
-.wahl button{flex:1;border:0;background:none;padding:8px 6px;border-radius:999px;font-size:15px}
+.wahl button{flex:1;border:0;background:none;padding:8px 6px;border-radius:999px;font-size:17px}
 .wahl button.an{background:var(--akzent);color:var(--aufAkzent)}
 .zaehler{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
-.zaehler button{width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);font-size:22px}
+.zaehler button{width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);font-size:24.5px}
 .zaehler b{font-family:var(--kopf);font-size:46px;min-width:64px;text-align:center}
 .wochentage{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.wochentage div{text-align:center;font-size:13px;color:var(--leise)}
+.wochentage div{text-align:center;font-size:14.5px;color:var(--leise)}
 .wochentage input{width:100%;text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--rand);background:var(--karte2)}
 .juzwahl{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.juzwahl button{padding:9px 0;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:15px}
+.juzwahl button{padding:9px 0;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:17px}
 .juzwahl button.an{background:var(--akzent);color:var(--aufAkzent);border-color:transparent}
 .abschnitt{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:16px;margin:12px 0}
-.abschnitt h3{font-size:21px;margin-bottom:6px}
+.abschnitt h3{font-size:23.5px;margin-bottom:6px}
 
 /* Diagramm */
 .diagramm{display:flex;align-items:flex-end;gap:3px;height:90px;margin:10px 0 4px}
@@ -188,7 +188,7 @@ button.karte:active{transform:scale(.99)}
 .diagramm div.leer{background:var(--rand);opacity:.5}
 
 /* Toast */
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:14px;font-size:15px;opacity:0;transition:all .3s;z-index:50;max-width:90vw;text-align:center;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:14px;font-size:17px;opacity:0;transition:all .3s;z-index:50;max-width:90vw;text-align:center;pointer-events:none}
 .toast.an{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Start */
@@ -196,8 +196,8 @@ button.karte:active{transform:scale(.99)}
 .start .qandil{width:96px;height:136px}
 .start h1{font-size:44px;color:var(--akzent);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}
-.start .ar{font-family:'Uthmani',serif;font-size:26px;color:var(--leise)}
-.lade{display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:17px}
+.start .ar{font-family:'Uthmani',serif;font-size:29px;color:var(--leise)}
+.lade{display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:19px}
 @media (min-width:700px){#app{padding-top:36px}}
 
 /* Stoppzeichen bleiben beim Verdecken sichtbar */
@@ -223,13 +223,13 @@ button.karte:active{transform:scale(.99)}
 [data-ansicht=ueben] .seite{padding:3.2cqw 1.8cqw 1.4cqw}
 .ueb-kopf{display:flex;align-items:center;gap:4px;padding:0 6px;margin-bottom:6px}
 .ueb-kopf .zurueck{margin:0;padding:6px 6px 6px 0}
-.ueb-kopf .info{font-size:14px;color:var(--leise)}
+.ueb-kopf .info{font-size:15.5px;color:var(--leise)}
 .kontext{background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:8px 12px 10px;margin:0 4px 10px}
-.kontext>span{font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leise)}
+.kontext>span{font-size:14px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leise)}
 .kontext .kz{direction:rtl;display:flex;flex-wrap:wrap;gap:.1em .32em;justify-content:center;font-size:clamp(22px,6.6vw,34px);line-height:1.7;color:var(--text)}
 .einblendung{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;text-align:center;background:var(--bg);animation:einbl 3s ease forwards}
 .einblendung>div{animation:einbltext 3s ease forwards}
-.einblendung .ueber{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--akzent)}
+.einblendung .ueber{font-size:15.5px;letter-spacing:2px;text-transform:uppercase;color:var(--akzent)}
 .einblendung h2{font-size:34px;margin:10px 0 12px;color:var(--text)}
 .einblendung .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--leise)}
 .einblendung.weg{animation:weg .35s ease forwards}
@@ -238,9 +238,9 @@ button.karte:active{transform:scale(.99)}
 @keyframes weg{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.einblendung,.einblendung>div{animation-duration:1.8s}}
 .arten{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 10px}
-.arten button{border:1px solid var(--rand);background:var(--karte);border-radius:999px;padding:6px 12px;font-size:14px}
+.arten button{border:1px solid var(--rand);background:var(--karte);border-radius:999px;padding:6px 12px;font-size:15.5px}
 .arten button.an{background:var(--schlecht);color:#fff;border-color:transparent}
-.textlink.mini{padding:4px 0;margin:2px 16px 0 0;font-size:14px}
+.textlink.mini{padding:4px 0;margin:2px 16px 0 0;font-size:15.5px}
 .steuerung .zeile2{align-items:flex-start;gap:10px}
 .steuerung #zaehler{white-space:nowrap}
 
@@ -250,13 +250,13 @@ button.karte:active{transform:scale(.99)}
 .fstelle .textlink{white-space:nowrap}
 
 /* Auswahllisten */
-select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a08a6e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 11px center/12px 8px;border:1px solid var(--rand);border-radius:12px;padding:9px 30px 9px 12px;font-size:17px;min-width:0;max-width:100%}
-.auswahl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px}
+select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a08a6e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 11px center/12px 8px;border:1px solid var(--rand);border-radius:12px;padding:9px 30px 9px 12px;font-size:19px;min-width:0;max-width:100%}
+.auswahl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:18px}
 .auswahl.stark{margin:12px 0;padding-bottom:12px;border-bottom:1px dotted var(--rand);font-weight:500}
 .tagesliste{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px 18px}
 .tagesliste select{width:74px}
 .auswahl.stark select{width:118px}
 .zeitwahl{display:flex;align-items:center;gap:8px;margin:14px 0}
-.zeitwahl select{width:80px;font-size:20px}
+.zeitwahl select{width:80px;font-size:22.5px}
 .zeitwahl span{color:var(--leise)}
 .wahl button{line-height:1.2}
