@@ -101,6 +101,7 @@ button.karte:active{transform:scale(.99)}
 .reihe-k{display:flex;align-items:center;gap:8px}
 .seitenlage{width:38px;height:38px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzent);font:600 17px var(--fliess);display:grid;place-items:center;padding:0}
 [data-modus=dunkel] .seitenlage{color:var(--akzent2)}
+.seitenlage.klein{display:inline-grid;width:24px;height:24px;font-size:13px;margin:0 3px 0 5px;vertical-align:1px}
 .lageinfo:not(.verdeckt){display:flex;gap:14px;align-items:center;border-style:solid}
 .buch{width:96px;flex:none}
 .buch path{stroke:var(--akzent);stroke-width:1.5;stroke-linejoin:round}

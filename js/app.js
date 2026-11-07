@@ -192,7 +192,8 @@ async function ueben(idText, quelle) {
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
   const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
-      <div class="info">${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen · S. ${e.seiten.join(', ')}</div></div>
+      <div class="info">${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen · S. ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="Seite ${p}: ${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button>`).join(' ')}</div></div>
+    <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([c, , ty, , p]) => `<span style="font-family:qp${p}">${glyphen(c, ty)}</span>`).join('')}</div></div>` : ''}
     <div class="seiten" id="seiten"></div><div style="height:190px"></div>
     <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
@@ -207,6 +208,13 @@ async function ueben(idText, quelle) {
   seitenEl.innerHTML = e.seiten.map(p => seiteHTML(p, { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() })).join('');
   zeilenEinpassen(seitenEl);
   app.querySelector('#zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#heute');
+  const lage = app.querySelector('#lageinfo');
+  app.querySelector('.ueb-kopf .info').onclick = ev => {
+    const b = ev.target.closest('[data-lage]'); if (!b) return;
+    const zu = !lage.classList.contains('verdeckt') && lage.dataset.p === b.dataset.lage;
+    lage.classList.toggle('verdeckt', zu);
+    if (!zu) { lage.dataset.p = b.dataset.lage; lage.innerHTML = lageInfo(+b.dataset.lage); }
+  };
   const spans = vi => [...seitenEl.querySelectorAll(`.w[data-v="${vi}"]`)];
   const K = app.querySelector('#knoepfe'), H = app.querySelector('#hinweis'), A = app.querySelector('#arten'), Zl = app.querySelector('#zaehler');
   // Āya in Teile bis zum jeweils nächsten Stoppzeichen zerlegen (Lā zählt nicht als Halt)
