@@ -363,6 +363,14 @@ function fertig() {
 }
 
 // ---------- Lichtkarte ----------
+const STUFEN_TEXT = [
+  'Noch nicht wiederholt oder nach Fehlern ganz zurückgefallen. Diese Seiten leuchten kaum. Hier liegt die meiste Arbeit.',
+  'Einmal ohne Fehler gekommen. Der Abschnitt ist da, aber noch nicht belastbar. Ein Fehler wirft ihn wieder auf „neu“ zurück.',
+  'Zwei Stufen aufgebaut, meist zwei Durchgänge in Folge ohne Fehler. Der Abschnitt hält, auch wenn einige Zeit vergeht.',
+  'Drei Stufen: mehrere Runden fehlerfrei. Du kannst hier ohne Anlauf einsteigen und sicher weiterrezitieren.',
+  'Die höchste Stufe: mindestens vier Durchgänge in Folge ohne Fehler und ohne Hilfe. Itqān im eigentlichen Sinn, diese Seiten leuchten am hellsten.'
+];
+const STUFEN_REGEL = 'So entstehen die Stufen: Jeder Durchgang ohne Fehler hebt einen Abschnitt um eine Stufe. Jeder Fehler setzt ihn eine Stufe zurück, bei vielen Fehlern (mehr als 30 % der Āyāt) zwei. Mit „Anfang zeigen“ bleibt die Stufe gleich. Eine Seite leuchtet so hell wie der Mittelwert ihrer Abschnitte.';
 function lichtkarte() {
   navSetzen('karte');
   const zeilen = [];
@@ -378,10 +386,19 @@ function lichtkarte() {
     zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="licht-seiten">${zellen.join('')}</div></div>`);
   }
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
-    <div class="zahlen" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<div class="zahl"><b style="font-size:19px">${zaehl[i]}</b><span>${s}</span></div>`).join('')}</div>
+    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s}</span></button>`).join('')}</div>
+    <div class="hinweisbox verdeckt" id="stufeninfo"></div>
     <div style="margin-top:16px" id="licht">${zeilen.join('')}</div>
     <div class="legende"><span><i style="opacity:.12"></i>neu</span><span><i style="opacity:.45"></i>im Aufbau</span><span><i style="opacity:.7"></i>sicher</span><span><i></i>mutqan</span></div>`;
   app.querySelector('#licht').onclick = ev => { const p = ev.target.dataset.p; if (p) location.hash = '#mushaf/' + p; };
+  const info = app.querySelector('#stufeninfo');
+  app.querySelector('.stufenwahl').onclick = ev => {
+    const b = ev.target.closest('[data-st]'); if (!b) return;
+    const an = !b.classList.contains('an');
+    app.querySelectorAll('.stufenwahl .zahl').forEach(x => x.classList.toggle('an', an && x === b));
+    info.classList.toggle('verdeckt', !an);
+    if (an) { const i = +b.dataset.st; info.innerHTML = `<b>${Z.STUFEN[i]}</b> · ${zaehl[i]} ${zaehl[i] === 1 ? 'Abschnitt' : 'Abschnitte'}<br>${STUFEN_TEXT[i]}<p class="unter" style="margin-top:8px">${STUFEN_REGEL}</p>`; }
+  };
 }
 
 // ---------- Muṣḥaf ----------

@@ -259,6 +259,8 @@ button.karte:active{transform:scale(.99)}
 .fstelle .wortbild .nb{opacity:.35;font-size:.78em}
 .fstelle .textlink{white-space:nowrap}
 
+.stufenwahl .zahl{cursor:pointer;color:inherit;font:inherit}
+.stufenwahl .zahl.an{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent)}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
 .rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}
