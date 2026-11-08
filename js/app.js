@@ -78,7 +78,7 @@ function einfuehrung() {
       text: 'Itqān begleitet dich bei der Murāǧaʿa des ganzen Qurʾān. Es ist für Ḥuffāẓ, für alle, die gerade auswendig lernen, und für ihre Lehrer.<br><br><b>Itqān</b> heißt: etwas so sicher beherrschen, dass es hält.' },
     { bild: `<div class="tb-seite">${[3, 4, 5, 3].map((n, g) => linien(n, 'g' + g)).join('')}</div>`,
       titel: 'Sinnabschnitte statt Seiten',
-      text: 'Der Qurʾān ist in kleine Sinnabschnitte geteilt, jeder mit einem eigenen Titel. Jeden Tag wiederholst du einige davon, dein <b>Wird</b>. Abschnitt für Abschnitt entsteht so eine ganze Ḫatma.' },
+      text: 'Der Qurʾān ist in kleine Sinnabschnitte geteilt, jeder mit einem eigenen Titel. Jeden Tag wiederholst du einige davon, dein <b>Wird</b>: die feste Menge, die du dir für jeden Tag vornimmst. Abschnitt für Abschnitt entsteht so eine ganze Ḫatma.' },
     { bild: `<div class="tb-ayat">${Array.from({ length: 4 }, (_, i) => `<div class="tb-aya" style="--i:${i}"><span class="tb-schleier"></span><span class="tb-schrift"></span><b class="${i === 2 ? 'nein' : 'ja'}">${i === 2 ? '✗' : '✓'}</b></div>`).join('')}</div>`,
       titel: 'Aufdecken und ehrlich prüfen',
       text: 'Die Āyāt sind verdeckt. Du rezitierst aus dem Gedächtnis, deckst auf und sagst ehrlich <b>Richtig</b> oder <b>Fehler</b>. Diese Ehrlichkeit ist eine Amāna: Nur so zeigt dir Itqān, wo du wirklich stehst.<br><br>Dazu kannst du bis zum nächsten Stoppzeichen aufdecken, dich kurz selbst aufnehmen und die Stelle eines Fehlers aufs Wort genau markieren.' },
@@ -90,14 +90,14 @@ function einfuehrung() {
       text: 'Je sicherer eine Seite sitzt, desto heller leuchtet sie auf deiner Lichtkarte. Dazu gibt es Ränge von <b>Mubtadiʾ</b> bis <b>Mutqin Muṭlaq</b>.<br><br>Es gibt keine Bestenliste. Du misst dich nur an dir selbst, damit die Absicht rein bleibt.' },
     { bild: `<div class="tb-kette">${Array.from({ length: 7 }, (_, i) => `<span style="--i:${i}">${lampeKlein}<small>${i + 1}</small></span>`).join('')}</div>`,
       titel: 'Beständigkeit vor Menge',
-      text: 'Jeder Tag mit erfülltem Wird zündet eine Lampe deiner Kette an. Fällt ein Tag aus, holst du ihn am nächsten Tag nach (<b>Qaḍāʾ</b>) und die Kette bleibt ganz.<br><br>Das Liebste bei Allāh ist das Beständige, auch wenn es wenig ist.' },
+      text: 'Jeder Tag mit erfülltem Wird zündet eine Lampe deiner Kette an. Fällt ein Tag aus, holst du ihn am nächsten Tag nach (<b>Qaḍāʾ</b>) und die Kette bleibt ganz.<br><br>Der Prophet ﷺ sagte: „Die liebsten Taten bei Allāh sind die beständigsten, auch wenn sie wenig sind.“ (Muslim 783, ähnlich bei al-Buḫārī)' },
     { bild: `<div class="tb-liste">${['Abschnittslänge wählen', 'Nur sichere Aǧzāʾ', 'Wenig, aber jeden Tag', 'Profil sichern'].map((t, i) => `<div style="--i:${i}"><b>✓</b>${t}</div>`).join('')}</div>`,
       titel: 'Bevor du dein Profil anlegst',
       text: `<ul class="tb-punkte">
-        <li><b>Abschnittslänge:</b> Wer erst seit kurzem wiederholt, beginnt mit <b>Anfänger</b> (höchstens eine halbe Seite). <b>Fortgeschritten</b> ist für ganze Seiten. Wechseln geht jederzeit, der Fortschritt bleibt.</li>
+        <li><b>Abschnittslänge:</b> Wer erst seit kurzem wiederholt, beginnt mit <b>Anfänger</b> (höchstens eine halbe Seite). <b>Fortgeschritten</b> ist für Personen, die geübt sind, ganze Seiten zu wiederholen. Wechseln geht jederzeit, der Fortschritt bleibt.</li>
         <li><b>Aǧzāʾ:</b> Wähle nur die Aǧzāʾ, die du schon auswendig kannst. Die Wiederholung ist für Bewahrtes, nicht für neues Lernen.</li>
         <li><b>Abschnitte am Tag:</b> Lieber wenig und jeden Tag als viel und selten. Die App zeigt dir, wie lange eine Ḫatma damit dauert.</li>
-        <li><b>Sichern:</b> Dein Fortschritt liegt nur auf diesem Gerät. Sichere ihn regelmäßig unter Profil, „Profil sichern“, besonders bevor du das App-Symbol löschst.</li></ul>` }
+        <li><b>Sichern:</b> Solange die App in der Testphase ist, wird dein Fortschritt nicht auf einem Server gespeichert. Er bleibt auf diesem Gerät und lässt sich unter Profil mit „Profil sichern“ sichern.</li></ul>` }
   ];
   let i = 0;
   app.innerHTML = `<div class="tutorial">
@@ -136,7 +136,7 @@ function start() {
   const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto', modus: 'fort' };
   const tageText = () => {
     const ids = D.A.filter(e => s.juz.has(e.juz)).length;
-    return `${ids} Abschnitte · eine Ḫatma dauert damit etwa ${Math.ceil(ids / s.pensum)} Tage`;
+    return `${ids} Abschnitte · eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Math.ceil(ids / s.pensum)} Tage</b>`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>Itqān</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">Die Murāǧaʿa des ganzen Qurʾāns, Abschnitt für Abschnitt.</p>
@@ -154,11 +154,11 @@ function start() {
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema"><button data-w="hell">Hell</button><button data-w="dunkel">Dunkel</button><button data-w="auto" class="an">Wie Gerät</button></div></div>
     <button class="knopf haupt" id="los" style="margin-top:18px">Bismillāh, beginnen</button>`;
   const juzEl = app.querySelector('#juz');
-  const juzZeichnen = () => { juzEl.innerHTML = Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${s.juz.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join(''); app.querySelector('#dauer').textContent = tageText(); };
+  const juzZeichnen = () => { juzEl.innerHTML = Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${s.juz.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join(''); app.querySelector('#dauer').innerHTML = tageText(); };
   juzEl.onclick = e => { const j = +e.target.dataset.j; if (!j) return; s.juz.has(j) ? s.juz.delete(j) : s.juz.add(j); juzZeichnen(); };
   app.querySelector('#alle').onclick = () => { for (let i = 1; i <= 30; i++) s.juz.add(i); juzZeichnen(); };
   app.querySelector('#keine').onclick = () => { s.juz.clear(); juzZeichnen(); };
-  const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').textContent = tageText(); };
+  const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
   for (const id of ['reihenfolge', 'zufall', 'thema', 'modus']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.dataset.w; if (!w) return; s[id] = w;
@@ -518,7 +518,7 @@ function lichtkarte() {
       const s = Z.seitenStufe(p);
       zellen.push(`<button data-p="${p}" class="${s == null ? 'aus' : ''}" title="Seite ${p}" style="${s != null ? `opacity:${(0.12 + 0.88 * s / 4.6).toFixed(2)}` : ''}"></button>`);
     }
-    zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="licht-seiten">${zellen.join('')}</div></div>`);
+    zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="lk-reihen"><div class="licht-seiten lk-reihe">${zellen.slice(0, 10).join('')}</div><div class="licht-seiten lk-reihe">${zellen.slice(10).join('')}</div></div><span class="lk-anz" title="Seiten in Ǧuzʾ ${j}">${zellen.length}</span></div>`);
   }
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
     ${stellenWahl()}
@@ -799,7 +799,7 @@ function einstellungen() {
     <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag.</p>
       <label class="auswahl stark"><span>Alle Tage</span><select id="alle">${gleich() ? '' : '<option value="" selected>verschieden</option>'}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
       <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen(bis(E.pensum[i]), E.pensum[i])}</select></label>`).join('')}</div>
-      <p class="unter" style="margin-top:10px" id="dauer">Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.</p></div>
+      <p class="unter" style="margin-top:10px" id="dauer">Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma()} Tage</b></p></div>
     <div class="abschnitt"><h3>Reihenfolge</h3><div class="wahl" id="reihenfolge">${[['vorwaerts', 'Ab al-Fātiḥah'], ['rueckwaerts', 'Ab an-Nās'], ['zufall', 'Zufällig']].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">Bei mehreren Abschnitten am Tag:</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', 'Verstreute Stellen'], ['block', 'Eine Stelle am Stück']].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
@@ -814,7 +814,7 @@ function einstellungen() {
       <button class="knopf leise" id="ics">In den Kalender eintragen</button></div>
     <div class="abschnitt"><h3>Offline</h3><p class="unter">Lädt alle 604 Seiten (etwa 48 MB), damit Itqān auch ohne Internet jede Seite zeigt.</p><button class="knopf leise" id="offline" style="margin-top:10px">Alle Seiten speichern</button></div>
     <div class="abschnitt"><h3>Neu beginnen</h3><p class="unter">Löscht dein Profil auf diesem Gerät. Sichere es vorher.</p><button class="knopf schlecht" id="reset" style="margin-top:10px">Profil löschen</button></div>`;
-  const dauer = () => app.querySelector('#dauer').textContent = `Eine Ḫatma dauert damit etwa ${Z.tageProKhatma()} Tage.`;
+  const dauer = () => app.querySelector('#dauer').innerHTML = `Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma()} Tage</b>`;
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });
