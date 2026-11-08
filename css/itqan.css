@@ -262,15 +262,15 @@ button.karte:active{transform:scale(.99)}
 .einblendung h2{font-size:34px;margin:10px 0 12px;color:var(--text)}
 .skizze{display:flex;flex-direction:row-reverse;justify-content:center;gap:14px;margin-top:22px}
 .sk-paar{display:flex;flex-direction:row-reverse;gap:3px}
-.sk-seite{width:74px;padding:7px 6px 4px;background:var(--seite);border:1px solid rgba(201,164,92,.6);display:flex;flex-direction:column;gap:3px;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.sk-seite{width:74px;padding:8px 6px 5px;background:var(--seite);border:1px solid rgba(201,164,92,.6);display:flex;flex-direction:column;gap:4.5px;box-shadow:0 4px 10px rgba(0,0,0,.12)}
 .sk-seite.r{border-radius:2px 5px 5px 2px}.sk-seite.l{border-radius:5px 2px 2px 5px}
 .sk-seite.hier{border-color:var(--akzent);box-shadow:0 0 0 1.5px var(--akzent),0 6px 14px var(--glow)}
-.sk-seite i{display:block;height:3px;border-radius:2px;background:rgba(58,42,29,.18)}
-.sk-seite i.an{background:var(--akzent);height:3.5px}
-.sk-seite i.kopf{height:4px;background:none;border:1px solid rgba(201,164,92,.8)}
+.sk-seite i{display:block;box-sizing:border-box;height:3.5px;flex:none;border-radius:2px;background:rgba(58,42,29,.18)}
+.sk-seite i.an{background:var(--akzent)}
+.sk-seite i.kopf{background:none;border:1px solid rgba(201,164,92,.8)}
 .sk-seite i.bas{width:60%;margin:0 auto;background:rgba(58,42,29,.14)}
 .sk-seite i.leer{background:none}
-.sk-seite span{font-size:10px;color:#7a6449;text-align:center;margin-top:2px}
+.sk-seite span{font-size:14px;font-weight:700;color:#4a3826;text-align:center;margin-top:auto;padding-top:6px;line-height:1}
 .einblendung .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--leise)}
 .einblendung.weg{animation:weg .35s ease forwards}
 @keyframes einbl{0%,76%{opacity:1}100%{opacity:0;visibility:hidden}}
