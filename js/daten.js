@@ -1,13 +1,17 @@
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
-export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2' };
+export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2', modus: 'fort', gliederung: 'fort-2' };
+// Gliederungen: Fortgeschritten (bis etwa eine Seite) und Anfänger (höchstens eine halbe Seite); Name = Fassung für die Umstellung
+export const GLIEDERUNG = { fort: { datei: 'daten/abschnitte.json', name: 'fort-2' }, anf: { datei: 'daten/abschnitte_anf.json', name: 'anf-1' } };
 
 // ausgabe: 'v1' = Druck 1405, 'v2' = Druck 1421, jeweils mit eigenen Seiten und Zeilen
 const LAYOUT = { v1: 'daten/layout_v1.json', v2: 'daten/layout_v2.json' };
-export async function ladeDaten(ausgabe = 'v2') {
+export async function ladeDaten(ausgabe = 'v2', modus = 'fort') {
   if (!LAYOUT[ausgabe]) ausgabe = 'v2';
-  const j = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
-  const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
-  Object.assign(D, { L, V, A, S, ausgabe });
+  if (!GLIEDERUNG[modus]) modus = 'fort';
+  const holen = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
+  const j = u => holen(u).catch(() => holen(u));   // ein zweiter Versuch bei abgebrochener Verbindung
+  const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j(GLIEDERUNG[modus].datei), j('daten/suren.json')]);
+  Object.assign(D, { L, V, A, S, ausgabe, modus, gliederung: GLIEDERUNG[modus].name });
   for (const e of A) e.juz = juzVonSeite(e.seiten[0]);   // Ǧuzʾ immer nach 1405, damit der gewählte Bereich gleich bleibt
   if (ausgabe === 'v2') {   // Seiten, Zeilen und Āya-Seite nach den Umbrüchen von 1421 neu bestimmen
     const seiten = new Map(), zeilen = new Map();

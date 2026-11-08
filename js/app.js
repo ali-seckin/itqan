@@ -68,7 +68,7 @@ addEventListener('hashchange', zeige);
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto', modus: 'fort' };
   const tageText = () => {
     const ids = D.A.filter(e => s.juz.has(e.juz)).length;
     return `${ids} Abschnitte · eine Ḫatma dauert damit etwa ${Math.ceil(ids / s.pensum)} Tage`;
@@ -79,7 +79,8 @@ function start() {
     <div class="abschnitt"><h3>Was wiederholst du?</h3><p class="unter">Wähle die Aǧzāʾ, die du auswendig kannst.</p>
       <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">Alle 30</button><button class="knopf leise klein" id="keine">Keinen</button></div>
       <div class="juzwahl" id="juz"></div></div>
-    <div class="abschnitt"><h3>Wie viele Abschnitte am Tag?</h3><p class="unter">Ein Abschnitt hat meist 10 bis 15 Zeilen. Pro Wochentag kannst du es später anpassen.</p>
+    <div class="abschnitt"><h3>Wie lang sollen die Abschnitte sein?</h3>${modusWahl('fort')}</div>
+    <div class="abschnitt"><h3>Wie viele Abschnitte am Tag?</h3><p class="unter">Pro Wochentag kannst du es später anpassen.</p>
       <div class="zaehler"><button id="minus" aria-label="weniger">−</button><b id="pensum">3</b><button id="plus" aria-label="mehr">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
     <div class="abschnitt"><h3>In welcher Reihenfolge?</h3><div class="wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">Ab al-Fātiḥah</button><button data-w="rueckwaerts">Ab an-Nās</button><button data-w="zufall">Zufällig</button></div>
@@ -93,7 +94,7 @@ function start() {
   app.querySelector('#keine').onclick = () => { s.juz.clear(); juzZeichnen(); };
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').textContent = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
-  for (const id of ['reihenfolge', 'zufall', 'thema']) app.querySelector('#' + id).onclick = e => {
+  for (const id of ['reihenfolge', 'zufall', 'thema', 'modus']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
     if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
@@ -102,8 +103,13 @@ function start() {
   app.querySelector('#los').onclick = () => {
     if (!s.juz.size) { toast('Wähle mindestens einen Ǧuzʾ.'); return; }
     const bereich = s.juz.size === 30 ? null : D.A.filter(e => s.juz.has(e.juz)).map(e => e.id);
-    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich, thema: s.thema });
-    Z.P.einst.zufall = s.zufall; Z.speichern();
+    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
+    Z.P.einst.zufall = s.zufall;
+    // Bereich als Aǧzāʾ merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Neustart
+    if (bereich) Z.P.einst.bereichJuz = [...s.juz];
+    Z.speichern();
+    if (s.modus !== D.modus) { location.hash = '#heute'; location.reload(); return; }
+    if (bereich) { Z.P.einst.bereich = bereich; delete Z.P.einst.bereichJuz; Z.speichern(); }
     navigator.storage?.persist?.();
     location.hash = '#heute';
   };
@@ -116,6 +122,13 @@ function abschnittMarke(e) {
   const st = Z.abschnittStand(e.id);
   if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}</strong>`;
   return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span></strong>`;
+}
+
+// Wahl zwischen Fortgeschritten und Anfänger
+function modusWahl(jetzt) {
+  return `<div class="wahl" id="modus" style="margin-top:4px">${[['anf', 'Anfänger'], ['fort', 'Fortgeschritten']].map(([w, l]) => `<button data-w="${w}" class="${jetzt === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+    <p class="unter" style="margin-top:8px"><b>Anfänger:</b> Jeder Abschnitt ist höchstens eine halbe Seite lang, jede kurze Sūra ist ein eigener Abschnitt (1.595 Abschnitte).<br><b>Fortgeschritten:</b> Für alle, die geübt sind, ganze Seiten zu wiederholen. Ein Abschnitt hat meist 10 bis 15 Zeilen (739 Abschnitte).</p>
+    <p class="unter" style="margin-top:6px">Beim Wechsel bleibt dein Fortschritt erhalten: Jeder neue Abschnitt übernimmt den Stand der Āyāt, die er enthält.</p>`;
 }
 
 // ---------- Heute ----------
@@ -180,6 +193,22 @@ function heute() {
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
 }
 
+// Kleine Doppelseite für die Einblendung: Zeilen des Abschnitts markiert, ungerade Seite rechts
+function doppelseiteSkizze(e) {
+  const erste = Math.min(...e.seiten), letzte = Math.max(...e.seiten);
+  const von = erste % 2 ? erste : erste - 1, bis = Math.min(604, letzte % 2 ? letzte + 1 : letzte);
+  const seiten = []; for (let x = von; x <= bis; x++) if (x >= 1) seiten.push(x);
+  const seite = x => `<div class="sk-seite ${x % 2 ? 'r' : 'l'}${e.seiten.includes(x) ? ' hier' : ''}">${D.L[x - 1].map(z => {
+      if (!z) return '<i class="leer"></i>';
+      if (z.kopf) return '<i class="kopf"></i>';
+      if (z.basmala) return '<i class="bas"></i>';
+      return `<i class="${z.w.some(w => w[1] >= e.v[0] && w[1] <= e.v[1]) ? 'an' : ''}"></i>`;
+    }).join('')}<span>${x}</span></div>`;
+  // je Doppelseite ein Paar, rechts die ungerade Seite
+  const paare = []; for (let x = von; x <= bis; x += 2) paare.push(`<div class="sk-paar">${seite(x)}${x + 1 <= 604 ? seite(x + 1) : ''}</div>`);
+  return `<div class="skizze">${paare.join('')}</div>`;
+}
+
 // ---------- Üben ----------
 const zurueckPfeil = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>';
 async function ueben(idText, quelle) {
@@ -198,6 +227,21 @@ async function ueben(idText, quelle) {
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
+  // Aufnahme nur im Arbeitsspeicher: nach der Bewertung der Āya wird sie verworfen, nichts wird gespeichert
+  const AUFNAHME = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+  let mikro = null, rec = null, stuecke = [], aufnahme = null, spieler = null;
+  async function aufnahmeStart() {
+    try { mikro ??= await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { toast('Ohne Zugriff auf das Mikrofon geht keine Aufnahme.'); return; }
+    stuecke = []; rec = new MediaRecorder(mikro);
+    rec.ondataavailable = ev => { if (ev.data.size) stuecke.push(ev.data); };
+    rec.onstop = () => { if (stuecke.length) aufnahme = URL.createObjectURL(new Blob(stuecke, { type: rec.mimeType || 'audio/mp4' })); stuecke = []; zeichne(); };
+    rec.start(); zeichne();
+  }
+  const aufnahmeStopp = () => { if (rec?.state === 'recording') rec.stop(); };
+  function aufnahmeWeg() { spieler?.pause(); spieler = null; if (aufnahme) URL.revokeObjectURL(aufnahme); aufnahme = null; }
+  function mikroAus() { if (rec) rec.onstop = null; aufnahmeStopp(); aufnahmeWeg(); mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
+  addEventListener('hashchange', mikroAus, { once: true });
   const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
       <div class="info">${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen · S. ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="Seite ${p}: ${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button>`).join(' ')}</div></div>
@@ -207,7 +251,7 @@ async function ueben(idText, quelle) {
     <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span><span class="unter" id="zaehler"></span></div></div></div>
     <div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b> von <b>${e.von_n}</b>` : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
-      <div class="ar">${sureArabisch(e.von[0])}</div></div></div>`;
+      <div class="ar">${sureArabisch(e.von[0])}</div>${doppelseiteSkizze(e)}</div></div>`;
   const einbl = app.querySelector('#einbl');
   const einblWeg = () => { if (!einbl.isConnected) return; einbl.classList.add('weg'); setTimeout(() => einbl.remove(), 350); };
   einbl.addEventListener('animationend', ev => { if (ev.target === einbl) einbl.remove(); });
@@ -260,11 +304,13 @@ async function ueben(idText, quelle) {
       teile.slice(ti).flat().forEach(x => x.classList.add('naechste'));
       const grenze = ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
       grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
-      K.innerHTML = `${grenze ? '<button class="knopf leise" id="teil">Bis zum Zeichen</button>' : ''}<button class="knopf haupt" id="auf">${ti ? 'Rest aufdecken' : `Āya ${D.V[vi][1]} aufdecken`}</button>`;
+      const nimmt = rec?.state === 'recording';
+      K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? 'Aufnahme beenden' : 'Eigene Rezitation aufnehmen'}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? '<button class="knopf leise" id="teil">Bis zum Zeichen</button>' : ''}<button class="knopf haupt" id="auf">${ti ? 'Rest aufdecken' : `Āya ${D.V[vi][1]} aufdecken`}</button>`;
+      const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
       const links = [];
       if (E.hilfe && !hilfe) links.push('<button class="textlink mini" id="hilfe">Anfang zeigen</button>');
       if (E.vorueben && pos === 0 && ti === 0) links.push('<button class="textlink mini" id="ansehen">Erst ansehen</button>');
-      H.innerHTML = (alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.') + (links.length ? '<br>' + links.join('') : '');
+      H.innerHTML = (nimmt ? '<b class="nimmt-text">● Aufnahme läuft.</b> Beim Aufdecken endet sie.' : alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.') + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
       const hb = app.querySelector('#hilfe'); if (hb) hb.onclick = () => {
@@ -275,13 +321,19 @@ async function ueben(idText, quelle) {
       const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
       sichtbar(teile[ti]?.[0]);
     } else {
-      K.innerHTML = '<button class="knopf schlecht" id="f">Fehler</button><button class="knopf gut" id="r">Richtig</button>';
-      H.textContent = hilfe ? 'Mit Hilfe: zählt als halb sicher.' : 'Warst du sicher und fehlerfrei?';
+      K.innerHTML = `${aufnahme ? '<button class="knopf leise rund" id="hoeren" aria-label="Aufnahme anhören">▶</button>' : ''}<button class="knopf schlecht" id="f">Fehler</button><button class="knopf gut" id="r">Richtig</button>`;
+      H.textContent = aufnahme ? 'Hör dir deine Rezitation an und vergleiche. Danach wird sie gelöscht.' : hilfe ? 'Mit Hilfe: zählt als halb sicher.' : 'Warst du sicher und fehlerfrei?';
+      const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
+        if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
+        spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
+        spieler.onended = () => { hb2.textContent = '▶'; };
+      };
       app.querySelector('#r').onclick = () => bewerte(hilfe ? 'hilfe' : 'ok');
       app.querySelector('#f').onclick = () => bewerte('fehler');
     }
   }
   function aufdecken() {
+    aufnahmeStopp();
     const vi = ayat[pos]; zu.delete(vi);
     spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
     offen = true; zeichne();
@@ -298,7 +350,7 @@ async function ueben(idText, quelle) {
     if (x === 'fehler') { markieren = true; fArt = null; return zeichne(); }
     naechsteAya();
   }
-  function naechsteAya() { pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
+  function naechsteAya() { aufnahmeWeg(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
   function markierenFertig() {
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
     if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
@@ -324,6 +376,7 @@ async function ueben(idText, quelle) {
   };
   addEventListener('keydown', tasten);
   function abschluss() {
+    mikroAus();
     removeEventListener('keydown', tasten);
     const res = Z.abschnittAbschliessen(id, erg, art === 'frei' || art === 'bonus' ? art : undefined);
     letzteEreignisse.push(...res.ereignisse);
@@ -501,6 +554,13 @@ async function mushaf(pText, aText) {
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
   app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
+  // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige
+  let sx = null, sy = null;
+  seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  seiteEl.addEventListener('touchend', e => {
+    if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) location.replace('#mushaf/' + (dx > 0 ? Math.min(604, p + 1) : Math.max(1, p - 1)));
+  });
   stellenWahlBinden();
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
@@ -529,7 +589,7 @@ async function vollbild(start) {
   const buehne = v.querySelector('.vb-buehne');
   const quer = () => innerWidth > innerHeight;
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
-  const farben = x => { const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
+  const farben = x => { const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;
     const doppel = quer();
@@ -645,7 +705,7 @@ function profil() {
     try {
       const { profil: neu, echt } = await Z.importDatei(text);
       if (!confirm(`Profil „${neu.name || 'ohne Namen'}“ laden? Dein aktueller Stand auf diesem Gerät wird ersetzt.${echt ? '' : '\n\nAchtung: Die Datei wurde nach dem Sichern verändert.'}`)) return;
-      Z.ersetzeProfil(neu); themaAnwenden(); toast('Profil geladen.'); location.hash = '#heute';
+      Z.ersetzeProfil(neu); location.hash = '#heute'; location.reload();
     } catch (e) { toast('Das ist keine gültige Itqān-Profildatei.'); }
   };
 }
@@ -666,6 +726,7 @@ function einstellungen() {
     <div class="marke">Einstellungen</div>
     <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema">${[['hell', 'Hell'], ['dunkel', 'Dunkel'], ['auto', 'Wie Gerät']].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>Länge der Abschnitte</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt"><h3>Druckausgabe des Muṣḥaf</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', 'Druck 1405'], ['v2', 'Druck 1421']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">Beide Madanī-Drucke mit ihren eigenen Seiten und Zeilen. Abschnitte, Fortschritt und Fehlerstellen gelten für beide.</p></div>
@@ -695,6 +756,7 @@ function einstellungen() {
   wahl('zufall', w => { E.zufall = w; toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
   wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
+  wahl('modus', w => { if (w === (E.modus || 'fort')) return; E.modus = w; Z.speichern(); toast('Abschnitte werden umgestellt …'); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
   alle.onchange = () => {
@@ -742,10 +804,16 @@ function einstellungen() {
 // ---------- Lehreransicht ----------
 function schuelerLaden() { try { return JSON.parse(localStorage.getItem('itqan-schueler') || '[]'); } catch (e) { return []; } }
 function schuelerSpeichern(l) { try { localStorage.setItem('itqan-schueler', JSON.stringify(l)); } catch (e) { toast('Speicher voll.'); } }
-function lehrer() {
+async function lehrer() {
   navSetzen('profil');
   const liste = schuelerLaden();
-  const karten = liste.map((x, i) => Z.mitProfil(x.profil, () => {
+  // Schülerdateien aus der anderen Gliederung (Anfänger/Fortgeschritten, ältere Fassung) für die Anzeige umrechnen
+  const alt = {};
+  for (const x of liste) { const g = x.profil.gliederung || 'fort-1'; if (g !== D.gliederung && !alt[g]) { try { alt[g] = await Z.gliederungLaden(g); } catch (e) {} } }
+  const karten = liste.map((x, i) => {
+    const kopie = Z.ergaenzen(JSON.parse(JSON.stringify(x.profil)));
+    return Z.mitProfil(kopie, () => {
+    if (kopie.gliederung !== D.gliederung && alt[kopie.gliederung]) Z.gliederungUmstellen(alt[kopie.gliederung], D.gliederung, false);
     const s = x.profil.summe, q = s.r + s.f + s.h ? Math.round(100 * (s.r + s.h * .5) / (s.r + s.f + s.h)) : 0;
     const kf = Z.khatmaFortschritt(), schwach = Z.schwaechste(3);
     const juz = Array.from({ length: 30 }, (_, j) => {
@@ -757,8 +825,8 @@ function lehrer() {
       <p class="unter">Rang: <b>${Z.RAENGE[Z.rangJetzt()].n}</b> · Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
       <div class="zahlen"><div class="zahl"><b>${x.profil.kette.n}</b><span>Kette</span></div><div class="zahl"><b>${q} %</b><span>Āyāt sicher</span></div><div class="zahl"><b>${Math.floor(kf.anteil * 100)} %</b><span>${x.profil.zyklus.khatma + 1}. Ḫatma</span></div></div>
       <div class="licht-seiten" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
-      <p class="unter" style="margin-top:10px">${schwach.length ? 'Schwach: ' + schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ') : 'Noch keine Wiederholungen.'}</p></div>`;
-  })).join('');
+      <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? 'Übt im Anfänger-Modus. ' : ''}${schwach.length ? 'Schwach: ' + schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ') : 'Noch keine Wiederholungen.'}</p></div>`;
+  }); }).join('');
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>Profil</button>
     <div class="marke">Lehreransicht<small>Deine Schüler schicken dir ihre Profildatei. Sie bleibt nur auf diesem Gerät.</small></div>
     <button class="knopf haupt" id="import" style="margin:18px 0">Profildateien hinzufügen</button>
@@ -781,7 +849,11 @@ function lehrer() {
 // ---------- Start der App ----------
 (async () => {
   Z.laden(); themaAnwenden();
-  try { await ladeDaten(Z.P?.einst.ausgabe || 'v2'); }
+  try {
+    await ladeDaten(Z.P?.einst.ausgabe || 'v2', Z.P?.einst.modus || 'fort');
+    if (await Z.gliederungAbgleichen()) toast('Abschnitte umgestellt, dein Fortschritt ist übernommen.');
+    if (Z.P?.einst.bereichJuz) { const j = new Set(Z.P.einst.bereichJuz); Z.P.einst.bereich = D.A.filter(e => j.has(e.juz)).map(e => e.id); delete Z.P.einst.bereichJuz; Z.speichern(); }
+  }
   catch (e) { app.innerHTML = '<div class="lade">Die Daten konnten nicht geladen werden. Bitte mit Internet erneut öffnen.</div>'; return; }
   zeige();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

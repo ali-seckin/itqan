@@ -1,5 +1,5 @@
 // Itqān · Profil, Tagesplan (Wird), Karteisystem, Punkte, Kette
-import { D } from './daten.js';
+import { D, GLIEDERUNG } from './daten.js';
 
 const SCHLUESSEL = 'itqan-profil-v1';
 export const STUFEN = ['neu', 'im Aufbau', 'gefestigt', 'sicher', 'mutqan'];
@@ -27,16 +27,18 @@ export function laden() {
 }
 // ältere Profile um neue Felder ergänzen
 export function ergaenzen(p) {
-  p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421 p.fstellen ??= {};
+  p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.fstellen ??= {};
+  if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
+  p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1';
   return p;
 }
 export function speichern() {
   try { localStorage.setItem(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
 }
-export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto' } = {}) {
+export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort' } = {}) {
   P = {
     format: 'itqan', version: 1, erstellt: new Date().toISOString(), name,
-    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2' },
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
     meilen: [], fstellen: {}
@@ -45,6 +47,43 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
 }
 export function ersetzeProfil(neu) { P = ergaenzen(neu); speichern(); }
 export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL); } catch (e) {} }
+
+// ---------- Wechsel der Gliederung (neue Fassung oder Anfänger/Fortgeschritten) ----------
+// Der Fortschritt wird über die Āya-Bereiche übertragen: ein geteilter Abschnitt erbt den Stand des alten,
+// ein zusammengelegter bekommt den schwächsten Stand seiner Teile.
+const gliederungen = new Map();
+export function gliederungLaden(name) {
+  if (!gliederungen.has(name)) gliederungen.set(name, fetch(`daten/gliederungen/${name}.json`).then(r => { if (!r.ok) throw new Error(name); return r.json(); }));
+  return gliederungen.get(name);
+}
+export function gliederungUmstellen(alt, ziel = D.gliederung, sichern = true) {
+  const neu = D.A, M = neu.map(n => { const r = []; alt.forEach(([a, b], i) => { if (a <= n.v[1] && b >= n.v[0]) r.push(i); }); return r; });
+  const R = alt.map(() => []); M.forEach((os, nid) => os.forEach(o => R[o].push(nid)));
+  const altK = P.karten, karten = {};
+  neu.forEach((n, nid) => {
+    const os = M[nid], ks = os.map(o => altK[o]).filter(Boolean);
+    if (!ks.length) return;
+    const fa = [...new Set(ks.flatMap(k => k.fa || []))].filter(v => v >= n.v[0] && v <= n.v[1]);
+    const faes = ks.map(k => k.fae).filter(Boolean).sort();
+    karten[nid] = { st: os.some(o => !altK[o]) ? 0 : Math.min(...ks.map(k => k.st)), n: Math.max(...ks.map(k => k.n)), fe: Math.max(...ks.map(k => k.fe || 0)),
+      zul: ks.map(k => k.zul).filter(Boolean).sort().pop() || null, fae: fa.length ? (faes[0] || null) : null, fs: 0, fa, lf: fa.length && ks.some(k => (k.lf ?? 1) > 0) ? 1 : 0 };
+  });
+  P.karten = karten;
+  const erl = new Set(P.zyklus.erledigt);
+  P.zyklus.erledigt = neu.map((n, nid) => nid).filter(nid => M[nid].length && M[nid].every(o => erl.has(o)));
+  if (P.einst.bereich) { const b = new Set(P.einst.bereich); P.einst.bereich = neu.map((n, nid) => nid).filter(nid => M[nid].some(o => b.has(o))); }
+  for (const t of Object.values(P.tage)) {
+    const plan = [...new Set(t.plan.flatMap(o => R[o] || []))], fertig = new Set(t.fertig), art = {};
+    for (const nid of plan) { const o = M[nid].find(x => t.plan.includes(x)); art[nid] = t.art[o] || 'zyklus'; }
+    t.fertig = plan.filter(nid => M[nid].every(o => !t.plan.includes(o) || fertig.has(o)));
+    t.plan = plan; t.art = art;
+  }
+  P.gliederung = ziel; if (sichern) speichern();
+}
+export async function gliederungAbgleichen() {
+  if (!P || P.gliederung === D.gliederung) return false;
+  gliederungUmstellen(await gliederungLaden(P.gliederung)); return true;
+}
 
 // ---------- Karteikarten ----------
 export const karte = id => P.karten[id] || { st: 0, n: 0, fe: 0, zul: null, fae: null, fs: 0, fa: [] };
@@ -242,7 +281,7 @@ export const RAENGE = [
   { n: 'Rāsiḫ', ar: 'رَاسِخ', de: 'der fest Verwurzelte', hifz: 'Wie „ar-rāsiḫūna fī l-ʿilm“ (3:7). Fehler sind selten, die Hälfte aller Abschnitte ist mehrere Runden in Folge fehlerfrei.', b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
   { n: 'Mutqin', ar: 'مُتْقِن', de: 'der Meisterhafte', hifz: 'Vom selben Stamm wie Itqān. Der Qurʾān sitzt fast überall ohne Fehler, ein Drittel der Abschnitte ist schon vier Runden in Folge fehlerfrei.', b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
   { n: 'Ṯabt', ar: 'ثَبْت', de: 'der Verlässliche', hifz: 'Ṯiqa ṯabt ist das höchste Lob für einen Überlieferer. Auf jede deiner Rezitationen ist Verlass, drei Viertel aller Abschnitte sind vier Runden in Folge fehlerfrei.', b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
-  { n: 'Mutqin Muṭlaq', ar: 'مُتْقِنٌ مُطْلَق', de: 'der uneingeschränkt Meisterhafte', hifz: 'Jede Stelle des ganzen Qurʾān sitzt ohne Fehler und ohne Hilfe. Jeder der 734 Abschnitte war in den letzten vier Durchgängen fehlerfrei, keine Fehlerwiederholung steht offen.', b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
+  { n: 'Mutqin Muṭlaq', ar: 'مُتْقِنٌ مُطْلَق', de: 'der uneingeschränkt Meisterhafte', hifz: 'Jede Stelle des ganzen Qurʾān sitzt ohne Fehler und ohne Hilfe. Jeder Abschnitt war in den letzten vier Durchgängen fehlerfrei, keine Fehlerwiederholung steht offen.', b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
 ];
 export function kennzahlen() {
   const ids = reihe(); let ay = 0, ok = 0, offen = 0; const st = [0, 0, 0, 0, 0];

@@ -115,18 +115,26 @@ button.karte:active{transform:scale(.99)}
 .seite.zier .mz{height:11cqw}
 .mz.kopfz{justify-content:center;font-family:'Uthmani',serif;font-size:5.2cqw;color:#6b4a22;border:1px solid #c9a45c;border-radius:4px;height:8.4cqw;margin:.4cqw 0;background:linear-gradient(90deg,transparent,rgba(201,164,92,.16),transparent)}
 .mz.bas{justify-content:center;font-family:'Uthmani',serif;font-size:5.4cqw}
-.snr{text-align:center;font:400 3.6cqw 'Uthmani',serif;color:#8a7a62;margin-top:1.2cqw}
-.w{position:relative;border-radius:3px;transition:color .3s,background .3s,opacity .3s,filter .3s}
+.snr{text-align:center;margin-top:1.4cqw;line-height:1}
+.snr-k{display:inline-flex;align-items:center;gap:.55em;font:500 3.2cqw/1 var(--fliess);color:#7a6449;border:1px solid #c9a45c;border-radius:3px;padding:.35em .9em;background:rgba(201,164,92,.08)}
+.snr-k .ar{font-family:system-ui,'Geeza Pro','Noto Naskh Arabic',sans-serif;font-size:1.05em}
+.snr-k i{font-style:normal;color:#c9a45c}
+.snr-k b{font-weight:700;color:#9a6a2a}
+.mz{isolation:isolate}
+.w{position:relative;transition:color .3s,opacity .3s,filter .3s}
+/* Hintergrund als eigene Ebene hinter aller Schrift: kein Wort verdeckt das überhängende Ende des vorigen */
+.w::before{content:'';position:absolute;top:0;bottom:0;right:0;left:-.1em;z-index:-1;border-radius:3px;background:var(--wbg,transparent);transition:background .3s}
 .w.vor{opacity:.38}
 .w.nach{opacity:.22;filter:blur(2.2px)}
-.w.in{background:var(--hi)}
-.w.zu{color:transparent!important;background:var(--schleier);cursor:pointer}
-.w.zu.naechste{background:rgba(183,119,47,.6);animation:puls 1.6s ease-in-out infinite}
-.w.ok{background:rgba(111,160,120,.20)}
-.w.hilfe{background:rgba(217,154,78,.28)}
-.w.fehler{background:rgba(200,90,60,.25)}
+.w.in{--wbg:var(--hi)}
+.w.zu{color:transparent!important;--wbg:var(--schleier);cursor:pointer}
+.w.zu.naechste{--wbg:rgba(183,119,47,.6)}
+.w.zu.naechste::before{animation:puls 1.6s ease-in-out infinite}
+.w.ok{--wbg:rgba(111,160,120,.20)}
+.w.hilfe{--wbg:rgba(217,154,78,.28)}
+.w.fehler{--wbg:rgba(200,90,60,.25)}
 .w.alt{box-shadow:inset 0 -2px 0 rgba(200,90,60,.55)}
-.w.erstes{color:var(--seitetext)!important;background:rgba(217,154,78,.35)}
+.w.erstes{color:var(--seitetext)!important;--wbg:rgba(217,154,78,.35)}
 @keyframes puls{50%{background-color:rgba(183,119,47,.88)}}
 
 /* Üben */
@@ -221,14 +229,15 @@ button.karte:active{transform:scale(.99)}
 .w.zu .wq,.w.zu .wo{color:rgba(58,38,18,.85)!important}
 .w .wq.ziel{display:inline-block;color:#c2410c!important;text-shadow:0 0 .1em #fff,0 0 .25em #fff,0 0 .5em #ffc56b;transform:scale(1.3);animation:ziel 1.6s ease-in-out infinite}
 @keyframes ziel{0%,100%{opacity:.5;text-shadow:0 0 .1em #fff}50%{opacity:1;text-shadow:0 0 .1em #fff,0 0 .3em #fff,0 0 .6em #ffb05a}}
-.vorschau .w.zu{color:inherit!important;background:var(--hi)!important;animation:none!important}
+.vorschau .w.zu{color:inherit!important;--wbg:var(--hi)!important}
+.vorschau .w.zu::before{animation:none!important}
 .vorschau .w.zu .wq,.vorschau .w.zu .wo{color:inherit!important}
-.w.klar{background:rgba(90,140,200,.16)}
+.w.klar{--wbg:rgba(90,140,200,.16)}
 /* Fehlerstellen */
 .w.fs::after{content:'';position:absolute;left:50%;bottom:-.1em;width:.17em;height:.17em;margin-left:-.085em;border-radius:50%;background:#c0563b}
-.w.fmark{outline:2px solid var(--schlecht);outline-offset:1px;background:rgba(200,90,60,.35)!important}
+.w.fmark{outline:2px solid var(--schlecht);outline-offset:1px;--wbg:rgba(200,90,60,.35)!important}
 /* Abschnitte farbig im Muṣḥaf */
-.w.ton0{background:rgba(217,154,78,.22)}.w.ton1{background:rgba(111,160,120,.22)}.w.ton2{background:rgba(90,140,200,.18)}.w.ton3{background:rgba(190,100,130,.16)}
+.w.ton0{--wbg:rgba(217,154,78,.22)}.w.ton1{--wbg:rgba(111,160,120,.22)}.w.ton2{--wbg:rgba(90,140,200,.18)}.w.ton3{--wbg:rgba(190,100,130,.16)}
 .karte .farbe{width:9px;align-self:stretch;border-radius:6px;flex:none}
 .tonk0 .farbe{background:rgba(217,154,78,.8)}.tonk1 .farbe{background:rgba(111,160,120,.8)}.tonk2 .farbe{background:rgba(90,140,200,.75)}.tonk3 .farbe{background:rgba(190,100,130,.7)}
 .karte.blitz{animation:blitz 1.3s ease}
@@ -246,14 +255,25 @@ button.karte:active{transform:scale(.99)}
 .kontext{background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:8px 12px 10px;margin:0 4px 10px}
 .kontext>span{font-size:14px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leise)}
 .kontext .kz{direction:rtl;display:flex;flex-wrap:wrap;gap:.1em .32em;justify-content:center;font-size:clamp(22px,6.6vw,34px);line-height:1.7;color:var(--text)}
-.einblendung{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;text-align:center;background:var(--bg);animation:einbl 3s ease forwards}
-.einblendung>div{animation:einbltext 3s ease forwards}
+.einblendung{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;text-align:center;background:var(--bg);animation:einbl 3.8s ease forwards}
+.einblendung>div{animation:einbltext 3.8s ease forwards}
 .einblendung .ueber{font-size:15.5px;letter-spacing:2px;text-transform:uppercase;color:var(--akzent)}
 .einblendung .ueber b{font-weight:800;color:var(--text);font-size:1.2em;letter-spacing:1px}
 .einblendung h2{font-size:34px;margin:10px 0 12px;color:var(--text)}
+.skizze{display:flex;flex-direction:row-reverse;justify-content:center;gap:14px;margin-top:22px}
+.sk-paar{display:flex;flex-direction:row-reverse;gap:3px}
+.sk-seite{width:74px;padding:7px 6px 4px;background:var(--seite);border:1px solid rgba(201,164,92,.6);display:flex;flex-direction:column;gap:3px;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.sk-seite.r{border-radius:2px 5px 5px 2px}.sk-seite.l{border-radius:5px 2px 2px 5px}
+.sk-seite.hier{border-color:var(--akzent);box-shadow:0 0 0 1.5px var(--akzent),0 6px 14px var(--glow)}
+.sk-seite i{display:block;height:3px;border-radius:2px;background:rgba(58,42,29,.18)}
+.sk-seite i.an{background:var(--akzent);height:3.5px}
+.sk-seite i.kopf{height:4px;background:none;border:1px solid rgba(201,164,92,.8)}
+.sk-seite i.bas{width:60%;margin:0 auto;background:rgba(58,42,29,.14)}
+.sk-seite i.leer{background:none}
+.sk-seite span{font-size:10px;color:#7a6449;text-align:center;margin-top:2px}
 .einblendung .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--leise)}
 .einblendung.weg{animation:weg .35s ease forwards}
-@keyframes einbl{0%,70%{opacity:1}100%{opacity:0;visibility:hidden}}
+@keyframes einbl{0%,76%{opacity:1}100%{opacity:0;visibility:hidden}}
 @keyframes einbltext{0%{opacity:0;transform:translateY(10px)}22%{opacity:1;transform:none}100%{opacity:1}}
 @keyframes weg{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.einblendung,.einblendung>div{animation-duration:1.8s}}
@@ -276,7 +296,7 @@ button.karte:active{transform:scale(.99)}
 .stellenwahl select{width:100%;font-size:16px;text-overflow:ellipsis}
 .stellenwahl select:disabled{opacity:.5}
 .seitenwahl{border-radius:999px;padding:7px 30px 7px 14px;font-size:17px;min-width:84px}
-.w.angesprungen{animation:angesprungen 2.6s ease}
+.w.angesprungen::before{animation:angesprungen 2.6s ease}
 @keyframes angesprungen{0%,60%{background-color:rgba(217,154,78,.55)}}
 /* Vollbild */
 #seite{position:relative}
@@ -318,6 +338,11 @@ body.im-vollbild{overflow:hidden}
 .karte .t .ab-name .ab-nr.st-sicher{color:var(--st-dunkelblau)}
 .karte .t .ab-name .ab-nr.st-mutqan{color:var(--st-gruen)}
 .karte .t .ab-name .ab-nr.st-fehler{color:var(--st-rot)}
+.knopf.rund{flex:0 0 52px;padding:0;font-size:20px;display:grid;place-items:center;color:var(--schlecht)}
+.knopf.rund.nimmt{background:var(--schlecht);color:#fff;border-color:transparent;animation:nimmt 1.2s ease-in-out infinite}
+#hoeren.knopf.rund{color:var(--akzent)}
+.nimmt-text{color:var(--schlecht);font-weight:600}
+@keyframes nimmt{50%{opacity:.7}}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
 .rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}
