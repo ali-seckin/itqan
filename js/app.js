@@ -79,7 +79,7 @@ function start() {
     <div class="abschnitt"><h3>Was wiederholst du?</h3><p class="unter">Wähle die Aǧzāʾ, die du auswendig kannst.</p>
       <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">Alle 30</button><button class="knopf leise klein" id="keine">Keinen</button></div>
       <div class="juzwahl" id="juz"></div></div>
-    <div class="abschnitt"><h3>Wie lang sollen die Abschnitte sein?</h3>${modusWahl('fort')}</div>
+    <div class="abschnitt"><h3>Wie lang sollen die Abschnitte sein?</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>Wie viele Abschnitte am Tag?</h3><p class="unter">Pro Wochentag kannst du es später anpassen.</p>
       <div class="zaehler"><button id="minus" aria-label="weniger">−</button><b id="pensum">3</b><button id="plus" aria-label="mehr">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
@@ -125,10 +125,10 @@ function abschnittMarke(e) {
 }
 
 // Wahl zwischen Fortgeschritten und Anfänger
-function modusWahl(jetzt) {
+function modusWahl(jetzt, mitHinweis = true) {
   return `<div class="wahl" id="modus" style="margin-top:4px">${[['anf', 'Anfänger'], ['fort', 'Fortgeschritten']].map(([w, l]) => `<button data-w="${w}" class="${jetzt === w ? 'an' : ''}">${l}</button>`).join('')}</div>
     <p class="unter" style="margin-top:8px"><b>Anfänger:</b> Jeder Abschnitt ist höchstens eine halbe Seite lang, jede kurze Sūra ist ein eigener Abschnitt (1.595 Abschnitte).<br><b>Fortgeschritten:</b> Für alle, die geübt sind, ganze Seiten zu wiederholen. Ein Abschnitt hat meist 10 bis 15 Zeilen (739 Abschnitte).</p>
-    <p class="unter" style="margin-top:6px">Beim Wechsel bleibt dein Fortschritt erhalten: Jeder neue Abschnitt übernimmt den Stand der Āyāt, die er enthält.</p>`;
+    ${mitHinweis ? '<p class="unter" style="margin-top:6px">Beim Wechsel bleibt dein Fortschritt erhalten: Jeder neue Abschnitt übernimmt den Stand der Āyāt, die er enthält.</p>' : ''}`;
 }
 
 // ---------- Heute ----------

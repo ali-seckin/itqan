@@ -116,7 +116,7 @@ button.karte:active{transform:scale(.99)}
 .mz.kopfz{justify-content:center;font-family:'Uthmani',serif;font-size:5.2cqw;color:#6b4a22;border:1px solid #c9a45c;border-radius:4px;height:8.4cqw;margin:.4cqw 0;background:linear-gradient(90deg,transparent,rgba(201,164,92,.16),transparent)}
 .mz.bas{justify-content:center;font-family:'Uthmani',serif;font-size:5.4cqw}
 .snr{text-align:center;margin-top:1.4cqw;line-height:1}
-.snr-k{display:inline-flex;align-items:center;gap:.55em;font:500 3.2cqw/1 var(--fliess);color:#7a6449;border:1px solid #c9a45c;border-radius:3px;padding:.35em .9em;background:rgba(201,164,92,.08)}
+.snr-k{display:inline-flex;align-items:center;gap:.6em;font:500 4cqw/1 var(--fliess);color:#6b5338;border:1.5px solid #c9a45c;border-radius:4px;padding:.3em 1em;background:rgba(201,164,92,.08)}
 .snr-k .ar{font-family:system-ui,'Geeza Pro','Noto Naskh Arabic',sans-serif;font-size:1.05em}
 .snr-k i{font-style:normal;color:#c9a45c}
 .snr-k b{font-weight:700;color:#9a6a2a}
