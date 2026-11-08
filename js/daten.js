@@ -1,12 +1,27 @@
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
-export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'misch' };
+export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2' };
 
-// ausgabe: 'v1' = Druck 1405, 'misch' = Schrift 1421 auf den Seiten und Zeilen von 1405
-export async function ladeDaten(ausgabe = 'misch') {
+// ausgabe: 'v1' = Druck 1405, 'v2' = Druck 1421, jeweils mit eigenen Seiten und Zeilen
+const LAYOUT = { v1: 'daten/layout_v1.json', v2: 'daten/layout_v2.json' };
+export async function ladeDaten(ausgabe = 'v2') {
+  if (!LAYOUT[ausgabe]) ausgabe = 'v2';
   const j = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
-  const [L, V, A, S] = await Promise.all([j(ausgabe === 'v1' ? 'daten/layout_v1.json' : 'daten/layout_misch.json'), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
+  const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j('daten/abschnitte.json'), j('daten/suren.json')]);
   Object.assign(D, { L, V, A, S, ausgabe });
-  for (const e of A) e.juz = juzVonSeite(e.seiten[0]);
+  for (const e of A) e.juz = juzVonSeite(e.seiten[0]);   // Ǧuzʾ immer nach 1405, damit der gewählte Bereich gleich bleibt
+  if (ausgabe === 'v2') {   // Seiten, Zeilen und Āya-Seite nach den Umbrüchen von 1421 neu bestimmen
+    const seiten = new Map(), zeilen = new Map();
+    L.forEach((seite, pi) => seite.forEach((z, zi) => { if (z?.w) for (const e of z.w) {
+      if (!seiten.has(e[1])) seiten.set(e[1], new Set()); seiten.get(e[1]).add(pi + 1);
+      if (!zeilen.has(e[1])) zeilen.set(e[1], new Set()); zeilen.get(e[1]).add((pi + 1) * 100 + zi);
+    } }));
+    seiten.forEach((s, vi) => { V[vi][3] = Math.min(...s); });
+    for (const e of A) {
+      const ps = new Set(), zs = new Set();
+      for (let vi = e.v[0]; vi <= e.v[1]; vi++) { seiten.get(vi)?.forEach(x => ps.add(x)); zeilen.get(vi)?.forEach(x => zs.add(x)); }
+      e.seiten = [...ps].sort((a, b) => a - b); e.zeilen = zs.size;
+    }
+  }
   // Einträge vereinheitlichen zu [Glyphen, vi, Typen, Wortindex in der Āya, Schriftseite]
   // und Fundort jedes Wortes merken: D.W 'vi.i' → [Seite, Glyphen, Typen, Schriftseite]
   const zaehler = new Map(); D.W = new Map();
@@ -24,7 +39,7 @@ export function schriftSeiten(p) {
 // alle Worteinträge einer Āya mit Seite: [[code, vi, typen, i, schriftseite, p], …]
 export function ayaWoerter(vi) {
   const aus = [], p0 = D.V[vi][3];
-  for (let p = p0; p <= Math.min(604, p0 + 1); p++) for (const z of D.L[p - 1]) if (z?.w) for (const e of z.w) if (e[1] === vi) aus.push([...e, p]);
+  for (let p = Math.max(1, p0 - 1); p <= Math.min(604, p0 + 1); p++) for (const z of D.L[p - 1]) if (z?.w) for (const e of z.w) if (e[1] === vi) aus.push([...e, p]);
   return aus;
 }
 

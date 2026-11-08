@@ -17,9 +17,8 @@ export function schrift(p) {
   return geladen.get(p);
 }
 export const schriftenLaden = seiten => Promise.all([...new Set(seiten.flatMap(schriftSeiten))].map(schrift));
-// Zeilen, die in der Mischform länger als die 1405-Zeile sind, passend verkleinern
+// Zeilen, die breiter als die Seite sind, passend verkleinern (Sicherheitsnetz, bei den Originaldrucken selten nötig)
 export function zeilenEinpassen(el) {
-  if (D.ausgabe === 'v1') return;
   for (const z of el.querySelectorAll('.mz')) {
     if (!z.querySelector('.w')) continue;
     z.style.fontSize = '';

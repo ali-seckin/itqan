@@ -519,20 +519,29 @@ async function vollbild(start) {
   document.body.appendChild(v); document.body.classList.add('im-vollbild');
   try { document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch(() => {}); } catch (e) {}   // nicht abwarten: iPhone kennt es nicht
   const buehne = v.querySelector('.vb-buehne');
+  const quer = () => innerWidth > innerHeight;
+  // Abschnitte farbig wie in der Muṣḥaf-Ansicht
+  const farben = x => { const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;
-    p = neu; await schriftenLaden([p]);
-    buehne.innerHTML = seiteHTML(p);
-    const s = buehne.querySelector('.seite');
-    const breite = Math.min(innerWidth, 900), hoehe = innerHeight - 16;
-    s.style.width = breite + 'px';
-    if (s.offsetHeight > hoehe) s.style.width = Math.floor(breite * hoehe / s.offsetHeight) + 'px';
-    zeilenEinpassen(buehne);
-    if (richtung) { s.classList.add(richtung > 0 ? 'von-links' : 'von-rechts'); }
-    if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
+    const doppel = quer();
+    // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
+    const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
+    const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
+    p = erste; await schriftenLaden(seiten);
+    buehne.innerHTML = `<div class="vb-seiten${doppel ? ' doppel' : ''}">${seiten.map(x => seiteHTML(x, farben(x))).join('')}</div>`;
+    const ss = [...buehne.querySelectorAll('.seite')];
+    const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 16;
+    ss.forEach(s => s.style.width = breite + 'px');
+    const h = Math.max(...ss.map(s => s.offsetHeight));
+    if (h > hoehe) ss.forEach(s => s.style.width = Math.floor(breite * hoehe / h) + 'px');
+    zeilenEinpassen(buehne); grenzenZeichnen(buehne);
+    if (richtung) buehne.firstElementChild.classList.add(richtung > 0 ? 'von-links' : 'von-rechts');
+    const nach = Math.max(...seiten), vor = Math.min(...seiten);
+    if (nach < 604) schriftenLaden([nach + 1]); if (vor > 1) schriftenLaden([vor - 1]);
   }
   // im Muṣḥaf liegt die nächste Seite links: nach rechts wischen oder links tippen = weiter
-  const weiter = () => zeige(p + 1, 1), zurueck = () => zeige(p - 1, -1);
+  const weiter = () => zeige(p + (quer() ? 2 : 1), 1), zurueck = () => zeige(p - (quer() ? 2 : 1), -1);
   v.querySelector('.vb-pfeil.links').onclick = weiter;
   v.querySelector('.vb-pfeil.rechts').onclick = zurueck;
   let x0 = null, y0 = null;
@@ -544,10 +553,12 @@ async function vollbild(start) {
   });
   const tasten = e => { if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); else if (e.key === 'Escape') schliessen(); };
   addEventListener('keydown', tasten);
-  const anpassen = () => zeige(p);
-  addEventListener('resize', anpassen);
+  // Drehen des Handys: neu aufbauen (einzeln hoch, Doppelseite quer)
+  let warte = null; const anpassen = () => { clearTimeout(warte); warte = setTimeout(() => zeige(p), 120); };
+  const lageMQ = matchMedia('(orientation: landscape)');
+  addEventListener('resize', anpassen); lageMQ.addEventListener('change', anpassen);
   function schliessen() {
-    removeEventListener('keydown', tasten); removeEventListener('resize', anpassen);
+    removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); lageMQ.removeEventListener('change', anpassen);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     v.remove(); document.body.classList.remove('im-vollbild');
     if (p !== start) location.replace('#mushaf/' + p);
@@ -647,8 +658,9 @@ function einstellungen() {
     <div class="marke">Einstellungen</div>
     <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema">${[['hell', 'Hell'], ['dunkel', 'Dunkel'], ['auto', 'Wie Gerät']].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
-    <div class="abschnitt"><h3>Schriftbild des Muṣḥaf</h3><p class="unter">Seiten und Zeilen bleiben immer wie im Druck 1405. Wählbar ist die Schrift.</p>
-      <div class="wahl" id="ausgabe" style="margin-top:10px">${[['misch', 'Schrift 1421'], ['v1', 'Schrift 1405']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'misch') === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>Druckausgabe des Muṣḥaf</h3>
+      <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', 'Druck 1405'], ['v2', 'Druck 1421']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <p class="unter" style="margin-top:8px">Beide Madanī-Drucke mit ihren eigenen Seiten und Zeilen. Abschnitte, Fortschritt und Fehlerstellen gelten für beide.</p></div>
     <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag.</p>
       <label class="auswahl stark"><span>Alle Tage</span><select id="alle">${gleich() ? '' : '<option value="" selected>verschieden</option>'}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
       <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen(bis(E.pensum[i]), E.pensum[i])}</select></label>`).join('')}</div>
@@ -761,7 +773,7 @@ function lehrer() {
 // ---------- Start der App ----------
 (async () => {
   Z.laden(); themaAnwenden();
-  try { await ladeDaten(Z.P?.einst.ausgabe || 'misch'); }
+  try { await ladeDaten(Z.P?.einst.ausgabe || 'v2'); }
   catch (e) { app.innerHTML = '<div class="lade">Die Daten konnten nicht geladen werden. Bitte mit Internet erneut öffnen.</div>'; return; }
   zeige();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

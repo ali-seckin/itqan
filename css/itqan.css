@@ -286,9 +286,14 @@ body.im-vollbild{overflow:hidden}
 .vollbild{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;touch-action:none;overscroll-behavior:none;
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 .vb-buehne{display:grid;place-items:center;width:100%;height:100%}
-.vb-buehne .seite{margin:0;border-radius:4px}
-.vb-buehne .seite.von-links{animation:vonLinks .28s ease}
-.vb-buehne .seite.von-rechts{animation:vonRechts .28s ease}
+.vb-buehne .seite{margin:0;border-radius:4px;flex:none}
+.vb-seiten{display:flex;justify-content:center;align-items:center}
+.vb-seiten.doppel{flex-direction:row-reverse;gap:4px}
+.vb-seiten.doppel .seite.rechts{border-radius:2px 6px 6px 2px;box-shadow:inset 10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
+.vb-seiten.doppel .seite.links{border-radius:6px 2px 2px 6px;box-shadow:inset -10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
+[data-modus=dunkel] .vb-seiten.doppel .seite{outline-offset:2px;margin:3px}
+.vb-seiten.von-links{animation:vonLinks .28s ease}
+.vb-seiten.von-rechts{animation:vonRechts .28s ease}
 @keyframes vonLinks{from{opacity:0;transform:translateX(-24px)}}
 @keyframes vonRechts{from{opacity:0;transform:translateX(24px)}}
 .vb-zu{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:36px;height:36px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:var(--leise);font-size:16px;opacity:.75;z-index:2}
@@ -339,3 +344,4 @@ select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("dat
 .zeitwahl select{width:80px;font-size:22.5px}
 .zeitwahl span{color:var(--leise)}
 .wahl button{line-height:1.2}
+.wahl.drei button{font-size:14.5px;padding:8px 4px}

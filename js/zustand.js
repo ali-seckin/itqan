@@ -27,7 +27,7 @@ export function laden() {
 }
 // ältere Profile um neue Felder ergänzen
 export function ergaenzen(p) {
-  p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.einst.ausgabe ??= 'misch'; p.fstellen ??= {};
+  p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421 p.fstellen ??= {};
   return p;
 }
 export function speichern() {
@@ -36,7 +36,7 @@ export function speichern() {
 export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto' } = {}) {
   P = {
     format: 'itqan', version: 1, erstellt: new Date().toISOString(), name,
-    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'misch' },
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2' },
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
     meilen: [], fstellen: {}
