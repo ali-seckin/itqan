@@ -226,9 +226,11 @@ button.karte:active{transform:scale(.99)}
 @media (min-width:700px){#app{padding-top:36px}}
 
 /* Stoppzeichen bleiben beim Verdecken sichtbar */
-.w.zu .wq,.w.zu .wo{color:rgba(58,38,18,.85)!important}
-.w .wq.ziel{display:inline-block;color:#c2410c!important;text-shadow:0 0 .1em #fff,0 0 .25em #fff,0 0 .5em #ffc56b;transform:scale(1.3);animation:ziel 1.6s ease-in-out infinite}
-@keyframes ziel{0%,100%{opacity:.5;text-shadow:0 0 .1em #fff}50%{opacity:1;text-shadow:0 0 .1em #fff,0 0 .3em #fff,0 0 .6em #ffb05a}}
+.w.zu .wq,.w.zu .wo{color:rgba(58,38,18,.85)}
+.w .wq.ziel{color:#c2410c;animation:ziel 1.6s ease-in-out infinite}
+/* nur Farbe und Leuchten animieren: Opazität oder Skalierung lassen den Browser eine eigene Ebene bilden,
+   die das weit über der Zeile gezeichnete Stoppzeichen beschneidet */
+@keyframes ziel{0%,100%{color:rgba(194,65,12,.45);text-shadow:0 0 .1em rgba(255,255,255,.6)}50%{color:#c2410c;text-shadow:0 0 .1em #fff,0 0 .3em #fff,0 0 .6em #ffb05a}}
 .vorschau .w.zu{color:inherit!important;--wbg:var(--hi)!important}
 .vorschau .w.zu::before{animation:none!important}
 .vorschau .w.zu .wq,.vorschau .w.zu .wo{color:inherit!important}
