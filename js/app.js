@@ -206,7 +206,7 @@ async function ueben(idText, quelle) {
     <div class="seiten" id="seiten"></div><div style="height:190px"></div>
     <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span><span class="unter" id="zaehler"></span></div></div></div>
-    <div class="einblendung" id="einbl"><div><div class="ueber">${abschnittName(e)}${e.nr ? ' von ' + e.von_n : ''}${zusatz}</div><h2>${esc(e.titel)}</h2>
+    <div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b> von <b>${e.von_n}</b>` : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
       <div class="ar">${sureArabisch(e.von[0])}</div></div></div>`;
   const einbl = app.querySelector('#einbl');
   const einblWeg = () => { if (!einbl.isConnected) return; einbl.classList.add('weg'); setTimeout(() => einbl.remove(), 350); };

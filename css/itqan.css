@@ -249,6 +249,7 @@ button.karte:active{transform:scale(.99)}
 .einblendung{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;text-align:center;background:var(--bg);animation:einbl 3s ease forwards}
 .einblendung>div{animation:einbltext 3s ease forwards}
 .einblendung .ueber{font-size:15.5px;letter-spacing:2px;text-transform:uppercase;color:var(--akzent)}
+.einblendung .ueber b{font-weight:800;color:var(--text);font-size:1.2em;letter-spacing:1px}
 .einblendung h2{font-size:34px;margin:10px 0 12px;color:var(--text)}
 .einblendung .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--leise)}
 .einblendung.weg{animation:weg .35s ease forwards}
