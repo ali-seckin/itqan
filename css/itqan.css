@@ -180,12 +180,18 @@ button.karte:active{transform:scale(.99)}
 .angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:18px;font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
 
 /* Lichtkarte */
-.licht-juz{display:grid;grid-template-columns:22px 1fr 26px;align-items:center;gap:8px;margin-bottom:12px}
+.licht-juz{display:grid;grid-template-columns:34px 1fr 44px;align-items:center;gap:8px;margin-bottom:12px}
 .licht-juz>span{font-size:14px;color:var(--leise);text-align:right}
 .licht-juz>span.lk-anz{text-align:left;font-size:13.5px;font-variant-numeric:tabular-nums}
 .lk-reihen{display:grid;gap:4px}
-/* 13 Spalten: die erste Reihe hat immer 10 Seiten, die zweite 9 bis 13 (Ǧuzʾ 30 hat 23 Seiten) */
-.licht-seiten.lk-reihe{grid-template-columns:repeat(13,1fr);gap:4px}
+/* 12 Spalten: oben 10 Seiten, unten 9 bis 11; Ǧuzʾ 30 (23 Seiten) oben 11, unten 12 */
+.licht-seiten.lk-reihe{grid-template-columns:repeat(12,1fr);gap:4px}
+.lk-erklaerung{font-size:15px;color:var(--leise);margin:20px 0 10px}
+.lk-erklaerung b{color:var(--text);font-weight:600}
+.licht-juz.lk-kopf{margin-bottom:6px}
+.licht-juz.lk-kopf span{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--leise);text-align:left}
+.licht-juz.lk-kopf span:first-child{text-align:right}
+.licht-juz.lk-kopf span.lk-anz{font-size:12px}
 .licht-seiten.lk-reihe button{border-radius:3px}
 .licht-seiten{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;flex:1}
 .licht-seiten button{aspect-ratio:1/1.35;border:0;border-radius:2px;background:var(--akzent);padding:0}

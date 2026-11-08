@@ -518,13 +518,17 @@ function lichtkarte() {
       const s = Z.seitenStufe(p);
       zellen.push(`<button data-p="${p}" class="${s == null ? 'aus' : ''}" title="Seite ${p}" style="${s != null ? `opacity:${(0.12 + 0.88 * s / 4.6).toFixed(2)}` : ''}"></button>`);
     }
-    zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="lk-reihen"><div class="licht-seiten lk-reihe">${zellen.slice(0, 10).join('')}</div><div class="licht-seiten lk-reihe">${zellen.slice(10).join('')}</div></div><span class="lk-anz" title="Seiten in Ǧuzʾ ${j}">${zellen.length}</span></div>`);
+    const oben = zellen.length > 22 ? Math.floor(zellen.length / 2) : 10;   // Ǧuzʾ 30 (23 Seiten): 11 und 12
+    zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="lk-reihen"><div class="licht-seiten lk-reihe">${zellen.slice(0, oben).join('')}</div><div class="licht-seiten lk-reihe">${zellen.slice(oben).join('')}</div></div><span class="lk-anz" title="Seiten in Ǧuzʾ ${j}">${zellen.length}</span></div>`);
   }
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
     ${stellenWahl()}
-    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:18px">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s === 'im Aufbau' ? 'Aufbau' : s}</span></button>`).join('')}</div>
+    <div class="titel-klein" style="margin:18px 0 8px">Abschnitte nach Stufe</div>
+    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:0">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s === 'im Aufbau' ? 'Aufbau' : s}</span></button>`).join('')}</div>
     <div class="hinweisbox verdeckt" id="stufeninfo"></div>
-    <div style="margin-top:16px" id="licht">${zeilen.join('')}</div>
+    <div class="lk-erklaerung">Darunter jede Zeile ein <b>Ǧuzʾ</b>, jedes Feld eine <b>Muṣḥaf-Seite</b>. Die Zahlen oben zählen dagegen <b>Abschnitte</b>.</div>
+    <div class="licht-juz lk-kopf"><span>Ǧuzʾ</span><span class="mitte">Muṣḥaf-Seiten</span><span class="lk-anz">Seiten</span></div>
+    <div id="licht">${zeilen.join('')}</div>
     <div class="legende"><span><i style="opacity:.12"></i>neu</span><span><i style="opacity:.45"></i>Aufbau</span><span><i style="opacity:.7"></i>sicher</span><span><i></i>mutqan</span></div>`;
   // Tippen auf eine Seite: kleines Infokästchen unter dem Ǧuzʾ, erst der Knopf darin führt zur Seite
   const licht = app.querySelector('#licht');
@@ -544,6 +548,14 @@ function lichtkarte() {
       <a class="knopf haupt klein" href="#mushaf/${p}" style="text-decoration:none;margin-top:4px">Zur Seite ${p}</a>`;
     b.closest('.licht-juz').after(box);
   };
+  // Tippen irgendwo außerhalb des Kästchens schließt es (Scrollen löst keinen Klick aus)
+  const aussen = ev => {
+    if (!licht.isConnected) { document.removeEventListener('click', aussen); return; }
+    const box = licht.querySelector('#seiteninfo');
+    if (!box || box.contains(ev.target) || ev.target.closest('#licht [data-p]')) return;
+    box.remove(); licht.querySelectorAll('.gewaehlt').forEach(x => x.classList.remove('gewaehlt'));
+  };
+  document.addEventListener('click', aussen);
   stellenWahlBinden();
   const info = app.querySelector('#stufeninfo');
   app.querySelector('.stufenwahl').onclick = ev => {
