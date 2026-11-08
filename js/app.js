@@ -90,7 +90,7 @@ function einfuehrung() {
       text: 'Je sicherer eine Seite sitzt, desto heller leuchtet sie auf deiner Lichtkarte. Dazu gibt es Ränge von <b>Mubtadiʾ</b> bis <b>Mutqin Muṭlaq</b>.<br><br>Es gibt keine Bestenliste. Du misst dich nur an dir selbst, damit die Absicht rein bleibt.' },
     { bild: `<div class="tb-kette">${Array.from({ length: 7 }, (_, i) => `<span style="--i:${i}">${lampeKlein}<small>${i + 1}</small></span>`).join('')}</div>`,
       titel: 'Beständigkeit vor Menge',
-      text: 'Jeder Tag mit erfülltem Wird zündet eine Lampe deiner Kette an. Fällt ein Tag aus, holst du ihn am nächsten Tag nach (<b>Qaḍāʾ</b>) und die Kette bleibt ganz.<br><br>Der Prophet ﷺ sagte: „Die liebsten Taten bei Allāh sind die beständigsten, auch wenn sie wenig sind.“ (Muslim 783, ähnlich bei al-Buḫārī)' },
+      text: 'Jeder Tag mit erfülltem Wird zündet eine Lampe deiner Kette an. Fällt ein Tag aus, holst du ihn am nächsten Tag nach (<b>Qaḍāʾ</b>) und die Kette bleibt ganz.<br><br>Der Prophet ﷺ sagte: „Die liebsten Taten bei Allāh sind die beständigsten, auch wenn sie wenig sind.“ (Bei al-Buḫārī und Muslim überliefert)' },
     { bild: `<div class="tb-liste">${['Abschnittslänge wählen', 'Nur sichere Aǧzāʾ', 'Wenig, aber jeden Tag', 'Profil sichern'].map((t, i) => `<div style="--i:${i}"><b>✓</b>${t}</div>`).join('')}</div>`,
       titel: 'Bevor du dein Profil anlegst',
       text: `<ul class="tb-punkte">
@@ -116,6 +116,15 @@ function einfuehrung() {
     weiter.textContent = i === SCHRITTE.length - 1 ? (Z.P ? 'Fertig' : 'Profil erstellen') : 'Weiter';
     window.scrollTo(0, 0);
   }
+  function hoeheFestlegen() {
+    const mess = document.createElement('div'); mess.className = 'tut-mess';
+    mess.style.width = buehne.clientWidth + 'px';
+    mess.innerHTML = SCHRITTE.slice(0, -1).map(s => `<div class="tut-schritt"><div class="tut-bild">${s.bild}</div><h2>${s.titel}</h2><div class="tut-text">${s.text}</div></div>`).join('');
+    document.body.appendChild(mess);
+    buehne.style.minHeight = Math.ceil(Math.max(...[...mess.children].map(x => x.offsetHeight))) + 'px';
+    mess.remove();
+  }
+  hoeheFestlegen(); addEventListener('resize', function r() { if (!buehne.isConnected) return removeEventListener('resize', r); hoeheFestlegen(); });
   weiter.onclick = () => i === SCHRITTE.length - 1 ? fertig() : zeigeSchritt(i + 1, 1);
   zurueck.onclick = () => zeigeSchritt(i - 1, -1);
   app.querySelector('#tut-weg').onclick = fertig;
@@ -224,7 +233,7 @@ function heute() {
   const sicherungFaellig = !P.einst.letzteSicherung || Z.tageZwischen(P.einst.letzteSicherung.slice(0, 10), Z.heute()) > 14;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">Itqān<small>${datumText()}</small></div>
-      <a class="pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
+      <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
     <h2 class="gruss">Assalāmu ʿalaikum${P.name ? ', ' + esc(P.name) : ''}</h2><p class="unter">${unter}</p>
     ${t.qadaa && !t.voll ? `<div class="hinweisbox"><b>Qaḍāʾ:</b> Gestern ist dein Wird ausgefallen. Holst du es heute mit nach, bleibt deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} ganz.</div>` : ''}
     <div class="ring"><svg width="210" height="210" viewBox="0 0 210 210">
@@ -544,7 +553,7 @@ function lichtkarte() {
     const box = document.createElement('div'); box.id = 'seiteninfo'; box.className = 'seiteninfo'; box.dataset.p = p;
     box.innerHTML = `<div class="kopf"><b>Seite ${p}</b><span>${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)} · ${p % 2 ? 'rechte' : 'linke'} Seite</span></div>
       ${st == null ? '<p class="unter">Diese Seite gehört nicht zu deinem Wiederholungsbereich.</p>' : ''}
-      ${abschnitte.map(e => `<div class="zeile"><span>${abschnittName(e)}: ${esc(e.titel)}<small>${bereichText(e)}</small></span><span class="st">${Z.STUFEN[Z.karte(e.id).st]}</span></div>`).join('')}
+      ${abschnitte.map(e => `<div class="zeile"><span>${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b>` : abschnittName(e)}: ${esc(e.titel)}<small>${bereichText(e)}</small></span><span class="st">${Z.STUFEN[Z.karte(e.id).st]}</span></div>`).join('')}
       <a class="knopf haupt klein" href="#mushaf/${p}" style="text-decoration:none;margin-top:4px">Zur Seite ${p}</a>`;
     b.closest('.licht-juz').after(box);
   };
