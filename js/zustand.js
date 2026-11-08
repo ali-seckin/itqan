@@ -186,6 +186,19 @@ export function fehlerstellenMerken(schluessel, art) {
   speichern();
 }
 export function fehlerstelleLoeschen(s) { delete P.fstellen[s]; speichern(); }
+// Gezieltes Üben einer Fehlerstelle: dreimal in Folge richtig, dann ist sie erledigt
+export const STELLE_ZIEL = 3;
+export function fehlerstelleGeuebt(vi, ergebnis) {
+  const keys = Object.keys(P.fstellen).filter(s => +s.split('.')[0] === vi);
+  let erledigt = 0, gut = 0;
+  for (const s of keys) {
+    const f = P.fstellen[s];
+    if (ergebnis === 'ok') { f.gut = (f.gut || 0) + 1; gut = Math.max(gut, f.gut); if (f.gut >= STELLE_ZIEL) { delete P.fstellen[s]; erledigt++; } }
+    else f.gut = 0;
+  }
+  speichern();
+  return { erledigt, gut, rest: keys.length - erledigt };
+}
 export const fehlerstellenSet = () => new Set(Object.keys(P.fstellen || {}));
 export function fehlerstellenListe(n = 12) {
   return Object.entries(P.fstellen || {}).map(([s, f]) => ({ s, vi: +s.split('.')[0], i: +s.split('.')[1], ...f }))
