@@ -54,16 +54,81 @@ function navSetzen(aktiv) {
 const rangBand = r => `<div class="band rang-band"><span class="ar">${Z.RAENGE[r].ar}</span><span><b>Neuer Rang: ${Z.RAENGE[r].n}</b><br>${Z.RAENGE[r].de}. <a href="#raenge">Was das bedeutet</a></span></div>`;
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung };
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
-  if (!Z.P && name !== 'start') { location.replace('#start'); return; }
+  // Erstes Öffnen: zuerst die Einführung, dann das Profil
+  if (!Z.P && name !== 'start' && name !== 'einfuehrung') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   const f = ROUTEN[name] || heute;
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
   window.scrollTo(0, 0);
   await f(...arg);
 }
 addEventListener('hashchange', zeige);
+
+// ---------- Einführung (beim ersten Öffnen, später über Profil oder Start erneut) ----------
+const EINF_KEY = 'itqan-einfuehrung';
+const einfuehrungGesehen = () => { try { return localStorage.getItem(EINF_KEY) === '1'; } catch (e) { return true; } };
+function einfuehrung() {
+  navSetzen(null);
+  const linien = (n, klasse = '') => Array.from({ length: n }, (_, i) => `<i class="${klasse}" style="--i:${i}"></i>`).join('');
+  const SCHRITTE = [
+    { bild: `<div class="tb-laterne">${qandil()}</div><div class="tb-ar">إِتْقَان</div>`,
+      titel: 'Assalāmu ʿalaikum',
+      text: 'Itqān begleitet dich bei der Murāǧaʿa des ganzen Qurʾān. Es ist für Ḥuffāẓ, für alle, die gerade auswendig lernen, und für ihre Lehrer.<br><br><b>Itqān</b> heißt: etwas so sicher beherrschen, dass es hält.' },
+    { bild: `<div class="tb-seite">${[3, 4, 5, 3].map((n, g) => linien(n, 'g' + g)).join('')}</div>`,
+      titel: 'Sinnabschnitte statt Seiten',
+      text: 'Der Qurʾān ist in kleine Sinnabschnitte geteilt, jeder mit einem eigenen Titel. Jeden Tag wiederholst du einige davon, dein <b>Wird</b>. Abschnitt für Abschnitt entsteht so eine ganze Ḫatma.' },
+    { bild: `<div class="tb-ayat">${Array.from({ length: 4 }, (_, i) => `<div class="tb-aya" style="--i:${i}"><span class="tb-schleier"></span><span class="tb-schrift"></span><b class="${i === 2 ? 'nein' : 'ja'}">${i === 2 ? '✗' : '✓'}</b></div>`).join('')}</div>`,
+      titel: 'Aufdecken und ehrlich prüfen',
+      text: 'Die Āyāt sind verdeckt. Du rezitierst aus dem Gedächtnis, deckst auf und sagst ehrlich <b>Richtig</b> oder <b>Fehler</b>. Diese Ehrlichkeit ist eine Amāna: Nur so zeigt dir Itqān, wo du wirklich stehst.<br><br>Dazu kannst du bis zum nächsten Stoppzeichen aufdecken, dich kurz selbst aufnehmen und die Stelle eines Fehlers aufs Wort genau markieren.' },
+    { bild: `<div class="tb-stufen">${['neu', 'Aufbau', 'gefestigt', 'sicher', 'mutqan'].map((s, i) => `<span style="--i:${i}">${s}</span>`).join('')}<div class="tb-zurueck"><span>1 Tag</span><span>3 Tage</span><span>7 Tage</span></div></div>`,
+      titel: 'Was nicht sitzt, kommt wieder',
+      text: 'Jeder fehlerfreie Durchgang hebt einen Abschnitt eine Stufe höher, bis er <b>mutqan</b> ist. Ein Fehler setzt ihn zurück, und der Abschnitt kommt nach 1, 3 und 7 Tagen wieder, bis er hält.' },
+    { bild: `<div class="tb-licht">${Array.from({ length: 40 }, (_, i) => `<i style="--i:${i};--o:${[.15, .35, .55, .8, 1][(i * 7) % 5]}"></i>`).join('')}</div>`,
+      titel: 'Deine Lichtkarte',
+      text: 'Je sicherer eine Seite sitzt, desto heller leuchtet sie auf deiner Lichtkarte. Dazu gibt es Ränge von <b>Mubtadiʾ</b> bis <b>Mutqin Muṭlaq</b>.<br><br>Es gibt keine Bestenliste. Du misst dich nur an dir selbst, damit die Absicht rein bleibt.' },
+    { bild: `<div class="tb-kette">${Array.from({ length: 7 }, (_, i) => `<span style="--i:${i}">${lampeKlein}<small>${i + 1}</small></span>`).join('')}</div>`,
+      titel: 'Beständigkeit vor Menge',
+      text: 'Jeder Tag mit erfülltem Wird zündet eine Lampe deiner Kette an. Fällt ein Tag aus, holst du ihn am nächsten Tag nach (<b>Qaḍāʾ</b>) und die Kette bleibt ganz.<br><br>Das Liebste bei Allāh ist das Beständige, auch wenn es wenig ist.' },
+    { bild: `<div class="tb-liste">${['Abschnittslänge wählen', 'Nur sichere Aǧzāʾ', 'Wenig, aber jeden Tag', 'Profil sichern'].map((t, i) => `<div style="--i:${i}"><b>✓</b>${t}</div>`).join('')}</div>`,
+      titel: 'Bevor du dein Profil anlegst',
+      text: `<ul class="tb-punkte">
+        <li><b>Abschnittslänge:</b> Wer erst seit kurzem wiederholt, beginnt mit <b>Anfänger</b> (höchstens eine halbe Seite). <b>Fortgeschritten</b> ist für ganze Seiten. Wechseln geht jederzeit, der Fortschritt bleibt.</li>
+        <li><b>Aǧzāʾ:</b> Wähle nur die Aǧzāʾ, die du schon auswendig kannst. Die Wiederholung ist für Bewahrtes, nicht für neues Lernen.</li>
+        <li><b>Abschnitte am Tag:</b> Lieber wenig und jeden Tag als viel und selten. Die App zeigt dir, wie lange eine Ḫatma damit dauert.</li>
+        <li><b>Sichern:</b> Dein Fortschritt liegt nur auf diesem Gerät. Sichere ihn regelmäßig unter Profil, „Profil sichern“, besonders bevor du das App-Symbol löschst.</li></ul>` }
+  ];
+  let i = 0;
+  app.innerHTML = `<div class="tutorial">
+    <button class="textlink tut-weg" id="tut-weg">Überspringen</button>
+    <div class="tut-buehne" id="tut-buehne"></div>
+    <div class="tut-punkte" id="tut-punkte">${SCHRITTE.map((_, k) => `<i data-k="${k}"></i>`).join('')}</div>
+    <div class="reihe tut-knoepfe"><button class="knopf leise" id="tut-zurueck">Zurück</button><button class="knopf haupt" id="tut-weiter">Weiter</button></div></div>`;
+  const buehne = app.querySelector('#tut-buehne'), weiter = app.querySelector('#tut-weiter'), zurueck = app.querySelector('#tut-zurueck');
+  const fertig = () => { try { localStorage.setItem(EINF_KEY, '1'); } catch (e) {} location.hash = Z.P ? '#profil' : '#start'; };
+  function zeigeSchritt(neu, richtung = 1) {
+    i = Math.max(0, Math.min(SCHRITTE.length - 1, neu));
+    const s = SCHRITTE[i];
+    buehne.innerHTML = `<div class="tut-schritt ${richtung < 0 ? 'rueckwaerts' : ''}"><div class="tut-bild">${s.bild}</div><h2>${s.titel}</h2><div class="tut-text">${s.text}</div></div>`;
+    app.querySelectorAll('#tut-punkte i').forEach((p, k) => p.classList.toggle('an', k === i));
+    zurueck.style.visibility = i ? 'visible' : 'hidden';
+    weiter.textContent = i === SCHRITTE.length - 1 ? (Z.P ? 'Fertig' : 'Profil erstellen') : 'Weiter';
+    window.scrollTo(0, 0);
+  }
+  weiter.onclick = () => i === SCHRITTE.length - 1 ? fertig() : zeigeSchritt(i + 1, 1);
+  zurueck.onclick = () => zeigeSchritt(i - 1, -1);
+  app.querySelector('#tut-weg').onclick = fertig;
+  app.querySelector('#tut-punkte').onclick = ev => { const k = ev.target.dataset.k; if (k != null) zeigeSchritt(+k, +k > i ? 1 : -1); };
+  // Wischen: nach links weiter, nach rechts zurück
+  let sx = null, sy = null;
+  buehne.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  buehne.addEventListener('touchend', e => {
+    if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) dx < 0 ? weiter.click() : (i && zurueck.click());
+  });
+  zeigeSchritt(0);
+}
 
 // ---------- Start ----------
 function start() {
@@ -74,7 +139,8 @@ function start() {
     return `${ids} Abschnitte · eine Ḫatma dauert damit etwa ${Math.ceil(ids / s.pensum)} Tage`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>Itqān</h1><div class="ar">إِتْقَان</div>
-    <p class="unter" style="margin-top:8px">Die Murāǧaʿa des ganzen Qurʾāns, Abschnitt für Abschnitt.</p></div>
+    <p class="unter" style="margin-top:8px">Die Murāǧaʿa des ganzen Qurʾāns, Abschnitt für Abschnitt.</p>
+    <a class="textlink" href="#einfuehrung">Einführung noch einmal ansehen</a></div>
     <div class="abschnitt"><h3>Wie heißt du?</h3><div class="feld"><input type="text" id="name" placeholder="Dein Name (für deine Profildatei)" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>Was wiederholst du?</h3><p class="unter">Wähle die Aǧzāʾ, die du auswendig kannst.</p>
       <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">Alle 30</button><button class="knopf leise klein" id="keine">Keinen</button></div>
@@ -693,7 +759,7 @@ function profil() {
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei.${P.einst.letzteSicherung ? ` Letzte Sicherung: ${new Date(P.einst.letzteSicherung).toLocaleDateString('de-AT')}.` : ''}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
-    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a></div>`;
+    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a></div>`;
   app.querySelectorAll('[data-fweg]').forEach(b => b.onclick = () => { Z.fehlerstelleLoeschen(b.dataset.fweg); toast('Alḥamdu li-llāh.'); profil(); });
   app.querySelector('#sichern').onclick = async () => {
     const name = `Itqan-${(P.name || 'Profil').replace(/[^\p{L}\p{N}]+/gu, '_')}-${Z.heute()}.itqan`;
