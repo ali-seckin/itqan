@@ -308,6 +308,15 @@ body.im-vollbild{overflow:hidden}
 .seiteninfo .zeile{display:flex;justify-content:space-between;gap:10px;font-size:15.5px;border-top:1px dotted var(--rand);padding-top:6px}
 .seiteninfo .zeile small{display:block;font-size:13.5px;color:var(--leise)}
 .seiteninfo .st{color:var(--akzent);white-space:nowrap}
+/* Abschnittsname auf der Startseite: Nummer nach Stand */
+:root,[data-modus=hell]{--st-hellblau:#4f8fd0;--st-dunkelblau:#1d4f91;--st-gruen:#3e8f5c;--st-rot:#c62828}
+[data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#5b8fe0;--st-gruen:#7fcf98;--st-rot:#ff6b6b}
+.karte .t span .ab-name{font-weight:700;color:var(--text)}
+.karte .t .ab-name .ab-nr{font-weight:700;font-size:inherit;color:var(--text)}
+.karte .t .ab-name .ab-nr.st-gefestigt{color:var(--st-hellblau)}
+.karte .t .ab-name .ab-nr.st-sicher{color:var(--st-dunkelblau)}
+.karte .t .ab-name .ab-nr.st-mutqan{color:var(--st-gruen)}
+.karte .t .ab-name .ab-nr.st-fehler{color:var(--st-rot)}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
 .rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}

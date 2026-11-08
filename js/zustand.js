@@ -48,6 +48,13 @@ export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL)
 
 // ---------- Karteikarten ----------
 export const karte = id => P.karten[id] || { st: 0, n: 0, fe: 0, zul: null, fae: null, fs: 0, fa: [] };
+// Stand eines Abschnitts für die Anzeige: nie gelesen, Fehler im letzten Durchgang, sonst die Stufe
+export function abschnittStand(id) {
+  const k = karte(id);
+  if (!k.n) return 'nie';
+  if ((k.lf ?? (k.fae ? 1 : 0)) > 0) return 'fehler';
+  return ['neu', 'aufbau', 'gefestigt', 'sicher', 'mutqan'][k.st];
+}
 export function imBereich(id) { return !P.einst.bereich || P.einst.bereich.includes(id); }
 export function reihe() {
   const ids = D.A.map(e => e.id).filter(imBereich);
@@ -171,7 +178,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
     k.st = Math.min(4, k.st + 1);
     if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < FEHLER_ABSTAND.length ? plusTage(datum, FEHLER_ABSTAND[k.fs]) : null; if (!k.fae) k.fs = 0; }
   }
-  k.n++; k.fe += f; k.zul = datum;
+  k.n++; k.fe += f; k.zul = datum; k.lf = f;   // lf: Fehler im letzten Durchgang
   k.fa = ergebnisse.map((x, i) => x !== 'ok' ? e.v[0] + i : -1).filter(i => i >= 0);
   P.karten[id] = k;
   // Tag und Summen

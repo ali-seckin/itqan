@@ -1,5 +1,5 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v20';
+const SCHALE = 'itqan-schale-v22';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/mushaf.js',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
@@ -23,6 +23,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   // App-Gerüst: erst Netz (für Updates), sonst Speicher
-  e.respondWith(fetch(e.request).then(r => { if (r.ok) { const k = r.clone(); caches.open(SCHALE).then(c => c.put(e.request, k)); } return r; })
+  // immer beim Server nachfragen (ETag), damit nie alte und neue Programmdateien gemischt werden
+  e.respondWith(fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }).then(r => { if (r.ok) { const k = r.clone(); caches.open(SCHALE).then(c => c.put(e.request, k)); } return r; })
     .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
 });

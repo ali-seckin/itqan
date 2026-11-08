@@ -110,6 +110,14 @@ function start() {
   juzZeichnen();
 }
 
+// Sūrenname und Abschnittsnummer fett; die Nummer zeigt farbig, wie gut der Abschnitt sitzt
+const STAND_TEXT = { nie: 'noch nie wiederholt', neu: 'neu', aufbau: 'im Aufbau', gefestigt: 'gefestigt', sicher: 'sicher', mutqan: 'mutqan', fehler: 'Fehler im letzten Durchgang' };
+function abschnittMarke(e) {
+  const st = Z.abschnittStand(e.id);
+  if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}</strong>`;
+  return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span></strong>`;
+}
+
 // ---------- Heute ----------
 function heute() {
   navSetzen('heute');
@@ -129,7 +137,7 @@ function heute() {
     const art = t.art[id];
     const marke = art === 'fehler' ? '<span class="marke-art fehler">Wiederholung nach Fehler</span>' : art === 'qadaa' ? '<span class="marke-art qadaa">Qaḍāʾ</span>' : art === 'bonus' ? '<span class="marke-art bonus">Bonus</span>' : '';
     return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
-      <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${e.zeilen} Zeilen ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
+      <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${e.zeilen} Zeilen ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
   }).join('');
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
