@@ -2,7 +2,7 @@
 import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
 import * as Z from './zustand.js';
 import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
-import { ornamentSVG, klasse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
+import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -914,7 +914,7 @@ const ornBand = x => `<div class="band orn-band">${ornamentSVG(x.s, x.stufe === 
 function ornamentDetail(s) {
   const o = Z.ornamentStand(s), info = ornamentInfo(s), e0 = Z.sureAbschnitte(s)[0];
   const art = s === 1 ? 'Umm al-Kitāb: eine große Šamsa mit sieben Blättern für die sieben Āyāt.'
-    : info.klasse === 1 && info.blaetter === info.ayat ? `Eine Rosette mit ${info.ayat} Blättern, eines für jede Āya.` : KLASSEN_TEXT[info.klasse] + '.';
+    : info.klasse === 1 && info.blaetter === info.ayat ? `Eine Blüte mit ${info.ayat} Blättern, eines für jede Āya.` : KLASSEN_TEXT[info.klasse] + '.';
   const stand = o.stufe >= 4 ? `Vergoldet${o.datum ? ' am ' + new Date(o.datum).toLocaleDateString('de-AT') : ''}. Die ganze Sūra ist mutqan.`
     : o.stufe >= 2 ? `Gesammelt${o.erst ? ' am ' + new Date(o.erst).toLocaleDateString('de-AT') : ''}. Vergoldet wird es, wenn alle ${o.gesamt} ${o.gesamt === 1 ? 'Abschnitt' : 'Abschnitte'} mutqan sind (jetzt ${o.mutqan}).`
     : !o.imBereich ? 'Diese Sūra liegt nicht ganz in deinem Wiederholungsbereich.'
@@ -943,15 +943,22 @@ function ornamenteSeite() {
     <div class="marke">Ornamente<small>Für jede Sūra ein eigenes Ornament. Du bekommst es, wenn alle Abschnitte der Sūra gefestigt sind. Ist die ganze Sūra mutqan, wird es vergoldet. Je länger die Sūra, desto prächtiger das Ornament.</small></div>
     <div class="zahlen"><div class="zahl"><b>${ges}</b><span>von 114 gesammelt</span></div><div class="zahl"><b>${gold}</b><span>vergoldet</span></div><div class="zahl"><b>${P.zyklus.khatma}</b><span>${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'}</span></div></div>
     <div class="wahl" id="ofilter" style="margin-top:16px"><button data-w="alle" class="an">Alle 114</button><button data-w="hat">Gesammelt</button><button data-w="offen">Noch offen</button></div>
-    <div class="orn-gitter" id="og"></div>
+    <div class="orn-feld" id="og"></div>
     <div class="titel-klein">Meilensteine der Kette</div>
     <div class="meilensteine">${ketten}</div>
     <p class="unter" style="margin-top:8px">Längste Kette: ${P.kette.beste} ${P.kette.beste === 1 ? 'Tag' : 'Tage'} · höchster Rang: ${Z.RAENGE[P.rangBeste?.r ?? 0].n}</p>`;
   const og = app.querySelector('#og');
+  // Größe 1 bis 5 nach der Länge der Sūra, al-Fātiḥah ausnahmsweise 3. Eine Reihe hat 12 Teile:
+  // Größe 5 = 6 Teile (zwei je Reihe), 4 = 4, 3 = 3, 2 = 2, 1 = 1,5. Die Reihenfolge des Muṣḥaf bleibt immer erhalten.
+  const kachel = s => `<button class="orn-kachel g${s === 1 ? 3 : groesse(s)}${st[s].stufe ? '' : ' offen'}" data-s="${s}" aria-label="${s}. ${esc(sureName(s))}">${ornamentSVG(s, st[s].stufe)}<span><b>${s}</b><i>. ${esc(sureName(s))}</i></span></button>`;
   const zeichnen = () => {
     const liste = Array.from({ length: 114 }, (_, i) => i + 1).filter(s => filter === 'alle' || (filter === 'hat') === (st[s].stufe >= 2));
-    og.innerHTML = liste.length ? liste.map(s => `<button class="orn-kachel k${klasse(s)}${st[s].stufe ? '' : ' offen'}" data-s="${s}" aria-label="${esc(sureName(s))}">${ornamentSVG(s, st[s].stufe)}<span>${s}. ${esc(sureName(s))}</span></button>`).join('')
-      : `<p class="leer" style="grid-column:1/-1">${filter === 'hat' ? 'Dein erstes Ornament bekommst du, wenn alle Abschnitte einer Sūra gefestigt sind.' : 'Alle 114 Ornamente sind gesammelt. Allāhumma bārik.'}</p>`;
+    if (!liste.length) { og.innerHTML = `<p class="leer">${filter === 'hat' ? 'Dein erstes Ornament bekommst du, wenn alle Abschnitte einer Sūra gefestigt sind.' : 'Alle 114 Ornamente sind gesammelt. Allāhumma bārik.'}</p>`; return; }
+    // feste Reihen oben: al-Fātiḥah allein in der Mitte, dann die langen Sūren paarweise, al-Anfāl neben at-Taubah
+    const reihen = [[1], [2, 3], [4, 5], [6, 7], [8, 9]].map(r => r.filter(s => liste.includes(s))).filter(r => r.length);
+    const fest = new Set(reihen.flat());
+    og.innerHTML = reihen.map(r => `<div class="orn-reihe">${r.map(kachel).join('')}</div>`).join('')
+      + `<div class="orn-reihe">${liste.filter(s => !fest.has(s)).map(kachel).join('')}</div>`;
   };
   zeichnen();
   og.onclick = ev => { const b = ev.target.closest('[data-s]'); if (b) ornamentDetail(+b.dataset.s); };

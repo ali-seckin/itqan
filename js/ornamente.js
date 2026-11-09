@@ -1,5 +1,5 @@
 // Itqān · 114 Ornamente, eines je Sūra. Jedes wird aus Sūra-Nummer und Länge erzeugt (kein Bild, reines SVG):
-// kurze Sūren eine Rosette (so viele Blätter wie Āyāt, wenn es höchstens zwölf sind), mittlere ein Medaillon mit Bögen,
+// kurze Sūren eine Blüte (so viele Blätter wie Āyāt, wenn es höchstens zwölf sind), mittlere ein Medaillon mit Bögen,
 // lange ein Medaillon mit Sternflechtband und Strahlen, die sieben längsten eine große Šamsa wie im Tezhip.
 import { D, arZahl } from './daten.js';
 
@@ -26,18 +26,13 @@ const f = x => Math.round(x * 100) / 100;
 const pol = (r, w) => `${f(r * Math.cos(w))} ${f(r * Math.sin(w))}`;   // w im Bogenmaß, 0 = oben (siehe -PI/2 unten)
 const RAD = Math.PI / 180;
 
-// Länge der Sūren in Wörtern (aus dem Layout), daraus die Klasse 1 bis 4
-let woerter = null;
-export function sureWoerter(s) {
-  if (!woerter) { woerter = Array(115).fill(0); for (const k of D.W.keys()) woerter[D.V[+k.slice(0, k.indexOf('.'))][0]]++; }
-  return woerter[s];
-}
-export function klasse(s) {
-  if (s === 1) return 4;   // Umm al-Kitāb: große Šamsa mit sieben Blättern
-  const w = sureWoerter(s);
-  return w >= 2400 ? 4 : w >= 1000 ? 3 : w >= 250 ? 2 : 1;
-}
-export const KLASSEN_TEXT = ['', 'Rosette', 'Medaillon mit Bögen', 'Medaillon mit Sternflechtband und Strahlen', 'Große Šamsa (Sonnenmedaillon) für eine der sieben längsten Sūren'];
+// Größe 1 bis 5 je Sūra nach ihrer Länge im Druck 1405 (Zeilen durch 15, auf ganze Seiten gerundet):
+// 1 = unter einer Seite, 2 = 1 bis 4 Seiten, 3 = 5 bis 9, 4 = 10 bis 20, 5 = über 20 Seiten. al-Fātiḥah hat ausnahmsweise Größe 3.
+const GROESSE = '155555545444333444344434343433224333333433322322222222222222222222222222222222221121111121111111111111111111111111';
+export const groesse = s => +GROESSE[s - 1];
+// Gestalt des Ornaments: 1 Blüte, 2 Medaillon mit Bögen, 3 Medaillon mit Sternflechtband und Strahlen, 4 große Šamsa
+export const klasse = s => s === 1 ? 4 : [0, 1, 2, 3, 3, 4][groesse(s)];
+export const KLASSEN_TEXT = ['', 'Eine Blüte', 'Ein Medaillon mit Bögen', 'Ein Medaillon mit Sternflechtband und Strahlen', 'Eine große Šamsa (Sonnenmedaillon) für eine der sieben längsten Sūren'];
 
 // Parameter je Sūra, so verteilt, dass keine zwei Ornamente gleich sind und Nachbarn verschiedene Farben haben
 let PARAM = null;

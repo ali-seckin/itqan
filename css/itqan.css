@@ -518,12 +518,19 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 [data-modus=hell] .ornament.zu{opacity:.26}
 .ornament.gold{filter:drop-shadow(0 0 5px rgba(243,213,143,.75))}
 .ornament.gold.mini{filter:drop-shadow(0 0 2px rgba(243,213,143,.8))}
-.orn-gitter{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));grid-auto-flow:dense;gap:14px 10px;margin-top:16px}
-.orn-kachel{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
-.orn-kachel span{font-size:13.5px;line-height:1.2;color:var(--text);overflow-wrap:anywhere}
+.orn-feld{container-type:inline-size;margin-top:20px}
+.orn-reihe{display:flex;flex-wrap:wrap;justify-content:center;align-items:center}
+.orn-kachel{background:none;border:0;padding:0 1.1cqw;margin:0 0 3.2cqw;display:flex;flex-direction:column;align-items:center;gap:.9cqw;text-align:center;min-width:0}
+.orn-kachel.g1{width:12.5%}.orn-kachel.g2{width:16.6667%}.orn-kachel.g3{width:25%}.orn-kachel.g4{width:33.3333%}.orn-kachel.g5{width:50%}
+.orn-kachel span{font-size:13.5px;line-height:1.2;color:var(--text);overflow-wrap:anywhere;max-width:100%;height:2.6em;display:block}
+/* gleich hohe Beschriftung, damit die Ornamente einer Reihe genau auf einer Mittellinie liegen */
+.orn-kachel.g1 span,.orn-kachel.g2 span,.orn-kachel.g3 span,.orn-kachel.g4 span,.orn-kachel.g5 span{height:36px}
+.orn-kachel span i{font-style:normal}
 .orn-kachel.offen span{color:var(--leise)}
-.orn-kachel.k4{grid-column:span 2;grid-row:span 2}
-.orn-kachel.k4 span{font-size:16px;font-weight:600;font-family:var(--kopf)}
+.orn-kachel.g4 span{font-size:15px}
+.orn-kachel.g5 span{font-size:17px;font-weight:600;font-family:var(--kopf)}
+.orn-kachel.g1 span,.orn-kachel.g2 span{font-size:12.5px}
+@container (max-width:560px){.orn-kachel.g1 span i,.orn-kachel.g2 span i{display:none}.orn-kachel{padding:0 .7cqw}}
 .orn-kachel .ornament{transition:transform .2s}
 .orn-kachel:active .ornament{transform:scale(.96)}
 .orn-detail{position:fixed;inset:0;z-index:70;background:rgba(10,20,28,.62);backdrop-filter:blur(4px);display:grid;place-items:center;padding:18px;animation:ornAuf .25s ease}
@@ -546,4 +553,4 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .meilenstein.hat{opacity:1;filter:none;border-color:var(--akzent)}
 .meilenstein b{font-family:var(--kopf);font-size:19px;line-height:1.1;margin-top:3px}
 .meilenstein span{font-size:12px;color:var(--leise)}
-@media (min-width:700px){.orn-gitter{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}}
+@media (min-width:700px){[data-ansicht=ornamente] #app{max-width:800px}[data-ansicht=ornamente] .meilensteine,[data-ansicht=ornamente] #ofilter,[data-ansicht=ornamente] .zahlen{max-width:560px;margin-left:auto;margin-right:auto}}
