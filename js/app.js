@@ -266,7 +266,7 @@ async function gespeicherteSeiten() {
 }
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
@@ -442,12 +442,17 @@ function heute() {
   const quote = t.r + t.f + t.h ? Math.round(100 * (t.r + t.h * .5) / (t.r + t.f + t.h)) : null;
   const kf = Z.khatmaFortschritt();
   const istFreitag = Z.wochentag(Z.heute()) === 4;
-  let unter = t.voll ? 'Dein Wird für heute ist vollbracht. Allāhumma bārik.' : `Dein Wird für heute: noch ${pflicht.length - erledigt} ${pflicht.length - erledigt === 1 ? 'Abschnitt' : 'Abschnitte'}.`;
+  // Ruhetag oder Pause: kein Wird, die Kette wartet
+  const ps = t.ruhe === 'pause' ? Z.pauseJetzt() : null;
+  const ruheHTML = t.ruhe ? `<div class="ruhe-karte">${ps ? `<b>Pause bis ${tagLang(ps.bis)}</b><p>Kein Wird, keine Fehlerwiederholung. ${P.kette.n ? `Deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} wartet und läuft danach weiter.` : 'Danach geht es dort weiter, wo du aufgehört hast.'}</p>`
+      : `<b>Heute ist Ruhetag</b><p>Dein Wird ruht heute. ${P.kette.n ? 'Deine Kette läuft am nächsten Wird-Tag weiter.' : ''}</p>`}
+    <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="trotzdem">Trotzdem üben</button>${ps ? '<button class="knopf leise klein" id="pause-ende">Pause beenden</button>' : ''}</div></div>` : '';
+  let unter = t.ruhe ? (ps ? 'Du machst gerade eine Pause.' : 'Heute ist dein Ruhetag.') : t.voll ? 'Dein Wird für heute ist vollbracht. Allāhumma bārik.' : `Dein Wird für heute: noch ${pflicht.length - erledigt} ${pflicht.length - erledigt === 1 ? 'Abschnitt' : 'Abschnitte'}.`;
   const karten = t.plan.map((id, i) => {
     const e = D.A[id], fertig = t.fertig.includes(id), jetzt = !fertig && id === offen[0];
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">angefangen · ${zwh.erg.length}/${e.ayat}</span>` : '';
-    const marke = angefangen + (art === 'fehler' ? '<span class="marke-art fehler">Wiederholung nach Fehler</span>' : art === 'qadaa' ? '<span class="marke-art qadaa">Qaḍāʾ</span>' : art === 'bonus' ? '<span class="marke-art bonus">Bonus</span>' : '');
+    const marke = angefangen + (art === 'fehler' ? '<span class="marke-art fehler">Wiederholung nach Fehler</span>' : art === 'qadaa' ? '<span class="marke-art qadaa">Qaḍāʾ</span>' : art === 'festigen' ? '<span class="marke-art festigen">Festigen</span>' : art === 'bonus' ? '<span class="marke-art bonus">Bonus</span>' : '');
     return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${e.zeilen} Zeilen ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
   }).join('');
@@ -470,8 +475,8 @@ function heute() {
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">Jetzt sichern</button><button class="knopf leise klein" id="sichern-spaeter">Morgen erinnern</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis"><b>Itqān als App nutzen.</b> Auf dem Home-Bildschirm startet Itqān schneller und im Vollbild.
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">So geht’s</a><button class="knopf leise klein" id="install-weg">Nicht mehr zeigen</button></div></div>` : ''}
-    ${t.qadaa && !t.voll ? `<div class="hinweisbox"><b>Qaḍāʾ:</b> Gestern ist dein Wird ausgefallen. Holst du es heute mit nach, bleibt deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} ganz.</div>` : ''}
-    <div class="ring"><svg width="210" height="210" viewBox="0 0 210 210">
+    ${t.qadaa && !t.voll ? `<div class="hinweisbox"><b>Qaḍāʾ:</b> ${qadaaTag()} ist dein Wird ausgefallen. Holst du es heute mit nach, bleibt deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} ganz.</div>` : ''}
+    ${t.ruhe ? ruheHTML : `<div class="ring"><svg width="210" height="210" viewBox="0 0 210 210">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="10"/>
       <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/>
@@ -482,7 +487,7 @@ function heute() {
       <div class="zahl"><b>${quote == null ? '·' : quote + ' %'}</b><span>Āyāt sicher</span></div></div>
     ${t.voll && bonusId != null ? `<div class="angebot"><b>Allāhumma bārik. Noch Kraft für mehr?</b><p>Ein Bonusabschnitt bringt dir 50 % mehr Itqān-Punkte. Vorschlag: ${abschnittName(D.A[bonusId])}, „${esc(D.A[bonusId].titel)}“.</p><button id="bonus">Bonusabschnitt beginnen</button></div>` : ''}
     <div class="titel-klein">Heute dran</div>${karten}
-    <div class="klein-zeile" style="justify-content:center;gap:4px"><button class="textlink" id="weniger">− ein Abschnitt</button><button class="textlink" id="mehr">+ ein Abschnitt</button></div>
+    <div class="klein-zeile" style="justify-content:center;gap:4px"><button class="textlink" id="weniger">− ein Abschnitt</button><button class="textlink" id="mehr">+ ein Abschnitt</button></div>`}
     ${istFreitag ? `<div class="titel-klein">Ǧumuʿa mubāraka · deine Woche</div><div class="abschnitt" style="margin-top:0">
       <p>${wSum.v} von 7 Tagen erfüllt · ${wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0} % der Āyāt sicher · ${zahl(wSum.p)} Itqān-Punkte</p>
       <p class="unter" style="margin-top:6px">Eine neue Woche ist ein guter Neuanfang. ${Z.schwaechste(1)[0] ? `Schwächster Abschnitt gerade: ${abschnittName(D.A[Z.schwaechste(1)[0].id])}.` : ''}</p></div>` : ''}
@@ -497,12 +502,22 @@ function heute() {
       return `<button onclick="location.hash='#karte'" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1;border-radius:6px;font-size:13px;color:rgba(0,0,0,.5);${o != null ? `opacity:${o.toFixed(2)}` : ''}">${i + 1}</button>`;
     }).join('')}</div>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
-  app.querySelector('#mehr').onclick = () => { Z.pensumHeuteAendern(1); heute(); };
-  app.querySelector('#weniger').onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
+  const mehr = app.querySelector('#mehr'); if (mehr) mehr.onclick = () => { Z.pensumHeuteAendern(1); heute(); };
+  const weniger = app.querySelector('#weniger'); if (weniger) weniger.onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
+  const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
+  const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast('Die Pause ist beendet. Willkommen zurück.'); heute(); };
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
   const js = app.querySelector('#jetzt-sichern'); if (js) js.onclick = async () => { if (await profilSichern()) heute(); };
   const sp = app.querySelector('#sichern-spaeter'); if (sp) sp.onclick = () => { try { localStorage.setItem('itqan-sicherung-spaeter', Z.heute()); } catch (e) {} heute(); };
   const iw = app.querySelector('#install-weg'); if (iw) iw.onclick = () => { try { localStorage.setItem('itqan-install-weg', '1'); } catch (e) {} heute(); };
+}
+
+// Datum ausgeschrieben, z. B. „Freitag, 20. November“
+const tagLang = d => new Date(d + 'T12:00').toLocaleDateString('de-AT', { weekday: 'long', day: 'numeric', month: 'long' });
+// welcher Wird-Tag für das Qaḍāʾ ausgefallen ist
+function qadaaTag() {
+  const w = Z.vorigerWirdTag(Z.heute());
+  return w === Z.plusTage(Z.heute(), -1) ? 'Gestern' : `Am ${TAGE[Z.wochentag(w)]}`;
 }
 
 // ---------- Doppelseite auf PC und Tablet ----------
@@ -566,6 +581,12 @@ async function ueben(idText, quelle, fokusText) {
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
+  // Übungszeit für die Auswertung: zählt nur, solange die Seite sichtbar ist; fortgesetzte Übungen werden nicht gemessen
+  let zeitAktiv = 0, zeitSeit = document.hidden ? null : Date.now(), zeitGanz = true;
+  const zeitTick = () => { if (document.hidden) { if (zeitSeit) zeitAktiv += Date.now() - zeitSeit; zeitSeit = null; } else if (!zeitSeit) zeitSeit = Date.now(); };
+  const zeitSekunden = () => { zeitTick(); return Math.min(3600, (zeitAktiv + (zeitSeit ? Date.now() - zeitSeit : 0)) / 1000); };
+  document.addEventListener('visibilitychange', zeitTick);
+  addEventListener('hashchange', () => document.removeEventListener('visibilitychange', zeitTick), { once: true });
   // Aufnahme nur im Arbeitsspeicher: nach der Bewertung der Āya wird sie verworfen, nichts wird gespeichert
   const AUFNAHME = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   // Jede Aufnahme hat ihren eigenen Rekorder und ihre eigenen Daten. Eine Aufnahme, deren Āya schon bewertet ist
@@ -606,7 +627,7 @@ async function ueben(idText, quelle, fokusText) {
   function imHintergrund() { if (!document.hidden) return; if (rec?.state === 'recording') aufnahmeStopp(); else mikroFrei(); }
   document.addEventListener('visibilitychange', imHintergrund);
   addEventListener('hashchange', mikroAus, { once: true });
-  const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
+  const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : art === 'festigen' ? ' · Festigen' : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
       <div class="info">${art === 'stelle' ? `<b>Fehlerstelle</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen`} · S. ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="Seite ${p}: ${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button>`).join(' ')}</div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
@@ -883,7 +904,7 @@ async function ueben(idText, quelle, fokusText) {
     if (art === 'stelle') return stelleAbschluss();
     mikroAus(); Z.zwischenstandLoeschen();
     removeEventListener('keydown', tasten);
-    const res = Z.abschnittAbschliessen(id, erg, art === 'frei' || art === 'bonus' ? art : undefined);
+    const res = Z.abschnittAbschliessen(id, erg, art === 'frei' || art === 'bonus' ? art : undefined, zeitGanz ? zeitSekunden() : 0);
     letzteEreignisse.push(...res.ereignisse);
     const t2 = Z.tagesplan();
     const wirdJetzt = res.ereignisse.some(x => x.typ === 'wird');
@@ -914,7 +935,7 @@ async function ueben(idText, quelle, fokusText) {
     const weiter = await dialog({ titel: 'Weitermachen?', html: `<p>Du hast diesen Abschnitt heute schon begonnen: ${zw.erg.length} von ${ayat.length} Āyāt sind bewertet.</p>`, ja: zw.erg.length < ayat.length ? `Bei Āya ${zw.erg.length + 1} weiter` : 'Weiter', nein: 'Neu beginnen' });
     if (weiter) {
       zw.erg.forEach((x, i) => { const vi = ayat[i]; erg[i] = x; status.set(vi, x); zu.delete(vi); spans(vi).forEach(s => { s.classList.remove('zu', 'alt'); s.classList.add(x); }); });
-      pos = zw.erg.length;
+      pos = zw.erg.length; zeitGanz = false;
       einbl?.remove();
     } else Z.zwischenstandLoeschen();
   }
@@ -1225,7 +1246,8 @@ function profil() {
     <div class="titel-klein">Itqān-Punkte der letzten 30 Tage</div>
     <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
-    <div class="unterseiten"><a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
+    <div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>Auswertung</b><span>Fehlerarten, Sūren, Quote und Zeit</span></div><span class="pfeil">›</span></a>
+      <a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>Ornamente und Meilensteine</b><span>${gesammelt.length} von 114 Ornamenten${vergoldet ? ` · ${vergoldet} vergoldet` : ''}</span></div><span class="pfeil">›</span></a></div>
     <div class="titel-klein">Sicherung</div>
@@ -1305,6 +1327,40 @@ function fortschrittSeite() {
     <div style="margin-top:16px">${schwach.length ? schwach.map(({ id, k }) => `<a class="karte" href="#ueben/${id}/frei" style="text-decoration:none;color:inherit"><div class="t"><b>${esc(D.A[id].titel)}</b><span>${abschnittMarke(D.A[id])} · ${k.fe} Fehler in ${k.n} Durchgängen${k.fae ? ' · kommt wieder' : ''}</span></div>${stufePunkte(k.st)}</a>`).join('') : '<p class="leer">Noch keine Daten. Nach den ersten Tagen siehst du hier deine schwächsten Abschnitte.</p>'}</div>`;
 }
 
+// ---------- Auswertung: Fehlerarten, Sūren, Quote, Zeit ----------
+const dauerText = sek => sek == null ? '·' : sek < 60 ? `${Math.round(sek)} s` : sek < 3600 ? `${Math.floor(sek / 60)}:${String(Math.floor(sek % 60)).padStart(2, '0')} min` : `${Math.floor(sek / 3600)}:${String(Math.floor(sek % 3600 / 60)).padStart(2, '0')} h`;
+function auswertungSeite() {
+  navSetzen('profil');
+  const a = Z.auswertung(30);
+  const zeile = (name, wert, max, rechts, klasse = '') => `<div class="aw-zeile ${klasse}"><span>${name}</span><div class="aw-balken"><i style="width:${max ? (100 * wert / max).toFixed(1) : 0}%"></i></div><b>${rechts}</b></div>`;
+  const maxArt = Math.max(1, ...a.arten.map(x => x.n), a.ohneArt);
+  const mitArt = a.arten.reduce((s, x) => s + x.n, 0);
+  const schwach = a.suren.filter(x => x.sicher < x.ayat).slice(0, 10);
+  const wo = a.wochen;
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Auswertung<small>Wo du sicher bist und wo es noch hakt. Gezählt wird jeweils der letzte Durchgang eines Abschnitts.</small></div>
+    <div class="titel-klein">Quote</div>
+    <div class="zahlen"><div class="zahl"><b>${a.quoteGeprueft == null ? '·' : Math.floor(a.quoteGeprueft) + ' %'}</b><span>der geprüften Āyāt sicher</span></div>
+      <div class="zahl"><b>${zahl(a.geprueft)}</b><span>Āyāt geprüft</span></div>
+      <div class="zahl"><b>${Math.floor(a.quote)} %</b><span>des ganzen Bereichs sicher</span></div></div>
+    <div class="diagramm aw-wochen">${wo.map(w => `<div class="${w.quote == null ? 'leer' : ''}" style="height:${w.quote == null ? 3 : Math.max(4, (w.quote - 50) * 2)}%" title="Woche bis ${w.bis}: ${w.quote == null ? 'nicht geübt' : Math.round(w.quote) + ' % sicher'}"></div>`).join('')}</div>
+    <div class="klein-zeile"><span>vor 8 Wochen</span><span>diese Woche</span></div>
+    <p class="unter" style="margin-top:6px">Anteil der Āyāt ohne Fehler und ohne Hilfe je Woche, von 50 bis 100 %.${(() => { const z = wo.filter(w => w.quote != null); return z.length ? ` Diese Woche: <b>${z.at(-1) === wo.at(-1) ? Math.floor(wo.at(-1).quote) + ' %' : 'noch nicht geübt'}</b>.` : ''; })()}</p>
+    <div class="titel-klein">Fehlerarten</div>
+    ${mitArt + a.ohneArt ? `<div class="aw-liste">${a.arten.map(x => zeile(x.name, x.n, maxArt, x.n)).join('')}${a.ohneArt ? zeile('ohne Angabe', a.ohneArt, maxArt, a.ohneArt, 'leise') : ''}</div>
+      <p class="unter" style="margin-top:8px">Gezählt wird jede Āya, bei der du nach „Fehler“ eine Art gewählt hast. ${(() => { const top = [...a.arten].sort((x, y) => y.n - x.n)[0]; return top.n ? `Am häufigsten: <b>${top.name}</b>. ${Z.FEHLERARTEN_TEXT[top.art]}` : ''; })()}</p>`
+      : '<p class="leer">Noch keine Fehler gezählt. Wähle nach „Fehler“ die Art, dann siehst du hier, was dir am häufigsten passiert.</p>'}
+    <div class="titel-klein">Sūren mit Fehlern</div>
+    ${schwach.length ? `<div class="aw-liste">${schwach.map(x => zeile(`${x.s}. ${esc(sureName(x.s))}`, x.quote, 100, `${x.sicher}/${x.ayat}`)).join('')}</div>
+      <p class="unter" style="margin-top:8px">Sichere Āyāt von allen geprüften der Sūra, die schwächste zuerst.</p>`
+      : `<p class="leer">${a.geprueft ? 'Im letzten Durchgang war jede geprüfte Sūra fehlerfrei. Allāhumma bārik.' : 'Nach den ersten Abschnitten siehst du hier, welche Sūren noch Fehler haben.'}</p>`}
+    <div class="titel-klein">Zeit · letzte 30 Tage</div>
+    ${a.zeit.abschnitte ? `<div class="zahlen"><div class="zahl"><b>${dauerText(a.zeit.jeAbschnitt)}</b><span>je Abschnitt</span></div><div class="zahl"><b>${dauerText(a.zeit.jeAya)}</b><span>je Āya</span></div><div class="zahl"><b>${dauerText(a.zeit.summe)}</b><span>insgesamt</span></div></div>
+      ${a.zeit.langsam.length ? `<p class="unter" style="margin:14px 0 8px">Am längsten gebraucht, gemessen an der Länge:</p>${a.zeit.langsam.map(x => `<a class="karte" href="#ueben/${x.id}/frei" style="text-decoration:none;color:inherit"><div class="t"><b>${esc(D.A[x.id].titel)}</b><span>${abschnittMarke(D.A[x.id])} · ${D.A[x.id].zeilen} Zeilen · ${dauerText(x.z)}</span></div><span class="pfeil">›</span></a>`).join('')}` : ''}
+      <p class="unter" style="margin-top:8px">Gemessen wird nur, solange die Übung auf dem Bildschirm ist.</p>`
+      : '<p class="leer">Seit Version 1.6 misst Itqān beim Üben die Zeit. Nach den ersten Abschnitten stehen hier deine Werte.</p>'}`;
+}
+
 // ---------- Fehlerstellen ----------
 function fehlerstellenSeite() {
   navSetzen('profil');
@@ -1327,6 +1383,29 @@ function fehlerstellenSeite() {
 
 // ---------- Einstellungen ----------
 const TAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const SCHWACH_TEXT = {
+  khatma: 'Nur die Wiederholung nach Fehlern (nach 1, 3 und 7 Tagen). Die Ḫatma geht am schnellsten.',
+  ausgewogen: 'Schwache Abschnitte kommen zwischen zwei Runden ab und zu zusätzlich dran. Die Ḫatma dauert etwa 3 % länger.',
+  schwaechen: 'Schwache Abschnitte kommen etwa doppelt so oft dran. Die Ḫatma dauert etwa 7 % länger.'
+};
+// Pause: bis zu 30 Tage ohne Wird
+function pauseHTML() {
+  const p = Z.pauseJetzt(), kuenftig = (Z.P.pausen || []).find(x => x.von > Z.heute());
+  if (p || kuenftig) { const x = p || kuenftig; return `<p class="unter">${p ? 'Deine Pause läuft' : `Deine Pause beginnt am ${tagLang(x.von)} und läuft`} bis <b>${tagLang(x.bis)}</b>. Die Kette wartet, Fehlerwiederholungen verschieben sich mit.</p><button class="knopf leise" id="pause-ende" style="margin-top:10px">Pause beenden</button>`; }
+  return `<p class="unter">Für Reisen, Krankheit oder volle Wochen: bis zu ${Z.PAUSE_MAX} Tage ohne Wird. Die Kette wartet und läuft danach weiter, Fehlerwiederholungen verschieben sich mit.</p>
+    <label class="auswahl" style="margin-top:10px"><span>Dauer</span><select id="pause-tage">${optionen([3, 7, 10, 14, 21, 30], 7, x => `${x} Tage`)}</select></label>
+    <button class="knopf leise" id="pause-los" style="margin-top:10px">Pause beginnen</button>`;
+}
+function pauseBinden() {
+  const los = app.querySelector('#pause-los'), ende = app.querySelector('#pause-ende');
+  if (los) los.onclick = async () => {
+    const n = +app.querySelector('#pause-tage').value, t = Z.P.tage[Z.heute()];
+    const ab = t && !t.ruhe && t.fertig.length ? Z.plusTage(Z.heute(), 1) : Z.heute();
+    if (!await dialog({ titel: 'Pause beginnen?', html: `<p>${n} Tage ohne Wird, ${ab === Z.heute() ? 'ab heute' : 'ab morgen'} bis ${tagLang(Z.plusTage(ab, n - 1))}. Du kannst sie jederzeit früher beenden.</p>`, ja: 'Pause beginnen' })) return;
+    Z.pauseBeginnen(n); toast('Pause eingetragen.'); einstellungen();
+  };
+  if (ende) ende.onclick = () => { Z.pauseBeenden(); toast('Die Pause ist beendet.'); einstellungen(); };
+}
 const optionen = (werte, wahl, text = x => x) => werte.map(x => `<option value="${x}"${x === wahl ? ' selected' : ''}>${text(x)}</option>`).join('');
 function einstellungen() {
   navSetzen('profil');
@@ -1345,10 +1424,14 @@ function einstellungen() {
     <div class="abschnitt"><h3>Druckausgabe des Muṣḥaf</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', 'Druck 1405'], ['v2', 'Druck 1421']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">Beide Madanī-Drucke mit ihren eigenen Seiten und Zeilen. Abschnitte, Fortschritt und Fehlerstellen gelten für beide.</p></div>
-    <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag.</p>
+    <div class="abschnitt"><h3>Abschnitte pro Tag</h3><p class="unter">Für alle Tage gleich oder pro Wochentag. An einem Ruhetag gibt es keinen Wird, die Kette läuft darüber weiter.</p>
       <label class="auswahl stark"><span>Alle Tage</span><select id="alle">${gleich() ? '' : '<option value="" selected>verschieden</option>'}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
-      <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen(bis(E.pensum[i]), E.pensum[i])}</select></label>`).join('')}</div>
-      <p class="unter" style="margin-top:10px" id="dauer">Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma()} Tage</b></p></div>
+      <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen([0, ...bis(E.pensum[i])], E.pensum[i], x => x ? x : 'Ruhetag')}</select></label>`).join('')}</div>
+      <p class="unter" style="margin-top:10px" id="dauer">Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma(true)} Tage</b></p></div>
+    <div class="abschnitt"><h3>Schwache Abschnitte</h3><p class="unter">Abschnitte, in denen du dich zuletzt vertan hast, können zwischen zwei Runden zusätzlich drankommen. Sie stehen dann mit „Festigen“ im Tagesplan.</p>
+      <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', 'Ḫatma zuerst'], ['ausgewogen', 'Ausgewogen'], ['schwaechen', 'Schwächen zuerst']].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
+    <div class="abschnitt"><h3>Pause</h3>${pauseHTML()}</div>
     <div class="abschnitt"><h3>Reihenfolge</h3><div class="wahl" id="reihenfolge">${[['vorwaerts', 'Ab al-Fātiḥah'], ['rueckwaerts', 'Ab an-Nās'], ['zufall', 'Zufällig']].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">Bei mehreren Abschnitten am Tag:</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', 'Verstreute Stellen'], ['block', 'Eine Stelle am Stück']].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
@@ -1373,7 +1456,7 @@ function einstellungen() {
     <div class="abschnitt"><h3>Schnappschüsse</h3><p class="unter">Itqān legt einmal am Tag und vor wichtigen Schritten eine Kopie deines Profils auf diesem Gerät ab. Damit holst du einen früheren Stand zurück. Gegen das Löschen der App oder einen Gerätewechsel hilft nur „Profil sichern“.</p>
       <div style="margin-top:10px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>Neu beginnen</h3><p class="unter">Löscht dein Profil auf diesem Gerät. Sichere es vorher.</p><button class="knopf schlecht" id="reset" style="margin-top:10px">Profil löschen</button></div>`;
-  const dauer = () => app.querySelector('#dauer').innerHTML = `Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma()} Tage</b>`;
+  const dauer = () => app.querySelector('#dauer').innerHTML = `Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma(true)} Tage</b>`;
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });
@@ -1383,6 +1466,8 @@ function einstellungen() {
   wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast('Abschnitte werden umgestellt …'); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
+  wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast('Gilt ab dem nächsten Tagesplan.'); });
+  pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
   app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast('Gilt ab sofort.'); };
@@ -1393,6 +1478,7 @@ function einstellungen() {
     alle.querySelector('option[value=""]')?.remove(); Z.speichern(); dauer();
   };
   tage.forEach(x => x.onchange = () => {
+    if (+x.value === 0 && E.pensum.filter((v, i) => v > 0 && i !== +x.dataset.i).length === 0) { x.value = String(E.pensum[+x.dataset.i]); toast('Mindestens ein Tag braucht einen Wird.'); return; }
     E.pensum[+x.dataset.i] = +x.value; Z.speichern(); dauer();
     if (gleich()) { alle.querySelector('option[value=""]')?.remove(); alle.value = String(E.pensum[0]); }
     else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', '<option value="">verschieden</option>'); alle.value = ''; }

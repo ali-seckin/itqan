@@ -1,10 +1,15 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.5';
+export const VERSION = '1.6';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.6', datum: '2026-11-09', titel: 'Klug planen', punkte: [
+    'Schwache Abschnitte: wähle in den Einstellungen zwischen „Ḫatma zuerst“, „Ausgewogen“ und „Schwächen zuerst“. Zusätzliche Wiederholungen stehen als „Festigen“ im Tagesplan.',
+    'Ruhetage pro Wochentag und eine Pause bis zu 30 Tage. Die Kette wartet und läuft danach weiter.',
+    'Neue Auswertung im Profil: Fehlerarten, Sūren mit Fehlern, Quote je Woche und Zeit je Abschnitt.'
+  ] },
   { v: '1.5', datum: '2026-11-09', titel: 'Feinschliff der Überschriften', punkte: [
     'ʿAin und Hamza in der Umschrift kräftiger und deutlicher, etwa in „ʿalaikum“ oder „Juzʾ“.',
     'Große Überschriften etwas enger gesetzt und dadurch ruhiger.'

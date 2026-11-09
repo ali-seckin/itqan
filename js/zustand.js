@@ -37,6 +37,8 @@ export function ergaenzen(p) {
   if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
   p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1'; p.meilenD ??= {};
   p.einst.sofort ??= true; p.einst.abhoeren ??= true; p.einst.tagesbeginn ??= 0;
+  p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0;
+  p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   return p;
 }
 export function speichern() {
@@ -48,8 +50,9 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
     einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
-    meilen: [], meilenD: {}, fstellen: {}
+    meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }
   };
+  P.einst.schwaechen = 'ausgewogen'; P.zyklus.konto = 0;
   speichern(); return P;
 }
 export function ersetzeProfil(neu) { P = ergaenzen(neu); speichern(); }
@@ -143,29 +146,91 @@ export function reihe() {
   return gruppen.reverse().flat();
 }
 
+// ---------- Ruhetage und Pause ----------
+// Ruhetag: Wochentag mit 0 Abschnitten. Pause: höchstens 30 Tage am Stück. An beiden Tagen gibt es keinen Wird,
+// die Kette ruht und läuft danach weiter, Qaḍāʾ bezieht sich auf den letzten echten Wird-Tag.
+export const PAUSE_MAX = 30;
+export const pauseJetzt = (datum = heute()) => (P.pausen || []).find(x => datum >= x.von && datum <= x.bis) || null;
+export const inPause = (datum = heute()) => !!pauseJetzt(datum);
+export const ruhetag = (datum = heute()) => !(P.einst.pensum[wochentag(datum)] > 0) || inPause(datum);
+export function vorigerWirdTag(datum) {
+  for (let i = 1; i <= 60; i++) { const d = plusTage(datum, -i); if (!ruhetag(d)) return d; }
+  return plusTage(datum, -1);
+}
+function faeVerschieben(ab, n) {
+  for (const k of Object.values(P.karten)) if (k.fae && k.fae >= ab) k.fae = plusTage(k.fae, n);
+}
+export function pauseBeginnen(tage) {
+  tage = Math.max(1, Math.min(PAUSE_MAX, Math.round(tage)));
+  const d = heute(), t = P.tage[d];
+  const von = t && !t.ruhe && t.fertig.length ? plusTage(d, 1) : d;   // heute schon geübt: Pause ab morgen
+  if (P.tage[von] && !P.tage[von].fertig.length) delete P.tage[von];
+  const bis = plusTage(von, tage - 1);
+  P.pausen = [...(P.pausen || []).filter(x => x.bis < von), { von, bis }].slice(-12);
+  faeVerschieben(von, tage);
+  speichern(); return { von, bis };
+}
+export function pauseBeenden() {
+  const d = heute(), p = pauseJetzt(d); if (!p) return false;
+  faeVerschieben(d, -(tageZwischen(d, p.bis) + 1));   // nicht genutzte Pausentage zurückgeben
+  if (p.von >= d) P.pausen = P.pausen.filter(x => x !== p); else p.bis = plusTage(d, -1);
+  if (P.tage[d]?.ruhe) delete P.tage[d];
+  speichern(); return true;
+}
+
 // ---------- Tagesplan ----------
-export function pensumAm(datum) { return Math.max(1, P.einst.pensum[wochentag(datum)] || 1); }
+export function pensumAm(datum) { return ruhetag(datum) ? 0 : Math.max(1, P.einst.pensum[wochentag(datum)] || 1); }
+// übliches Pensum, wenn man an einem Ruhetag trotzdem übt
+function pensumUeblich() { const t = P.einst.pensum.filter(x => x > 0); return Math.max(1, Math.round(t.reduce((a, b) => a + b, 0) / Math.max(1, t.length))); }
 export function ketteAktiv(datum = heute()) {
   const z = P.kette.zuletzt; if (!z || !P.kette.n) return false;
-  return z === datum || z === plusTage(datum, -1) || z === plusTage(datum, -2);
+  return z >= vorigerWirdTag(vorigerWirdTag(datum));
 }
-export function tagesplan(datum = heute()) {
-  if (P.tage[datum]) return P.tage[datum];
-  let n = pensumAm(datum), qadaa = 0;
-  // Qaḍāʾ: gestern verpasst, vorgestern erfüllt, Kette läuft → gestriges Pensum nachholen
-  if (P.kette.n > 0 && P.kette.zuletzt === plusTage(datum, -2)) qadaa = pensumAm(plusTage(datum, -1));
+// Anteil des Pensums für zusätzliches Festigen schwacher Abschnitte (Regler in den Einstellungen).
+// Eingestellt mit tests/simulation.mjs (200 Tage, 8 Läufe): „Schwächen zuerst“ verlängert die Ḫatma um etwa 7 %,
+// schwache Abschnitte kommen außerhalb der Fehlerwiederholung gut doppelt so oft dran.
+export const SCHWAECHEN = { khatma: 0, ausgewogen: 0.03, schwaechen: 0.065 };
+// schwach: ein Fehler innerhalb der letzten zwei Runden (fz: Tag des letzten Fehlers) oder im Schnitt viele Fehler je Durchgang
+const istSchwach = (k, seit) => k.n > 0 && k.fe > 0 && ((k.fz && k.fz >= seit) || k.fe / k.n >= 0.5);
+export const schwachWert = k => (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0);
+export function tagesplan(datum = heute(), trotzdem = false) {
+  if (P.tage[datum] && !(trotzdem && P.tage[datum].ruhe)) return P.tage[datum];
+  if (ruhetag(datum) && !trotzdem) {
+    P.tage[datum] = { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ruhe: inPause(datum) ? 'pause' : 'ruhetag' };
+    speichern(); return P.tage[datum];
+  }
+  const frei = ruhetag(datum);
+  let n = frei ? pensumUeblich() : pensumAm(datum), qadaa = 0;
+  // Qaḍāʾ: der letzte Wird-Tag ist ausgefallen, der davor war erfüllt, die Kette läuft → dessen Pensum nachholen
+  const w1 = vorigerWirdTag(datum), w2 = vorigerWirdTag(w1), z = P.kette.zuletzt;
+  if (!frei && P.kette.n > 0 && z && z >= w2 && z < w1) qadaa = pensumAm(w1);
   const plan = [], art = {};
   const faellig = Object.entries(P.karten)
     .filter(([id, k]) => k.fae && k.fae <= datum && imBereich(+id))
     .sort((a, b) => a[1].fae.localeCompare(b[1].fae) || a[1].st - b[1].st)
     .map(([id]) => +id);
   for (const id of faellig.slice(0, Math.ceil((n + qadaa) / 2))) { plan.push(id); art[id] = 'fehler'; }
+  // Festigen: schwache Abschnitte, deren letzte Wiederholung mindestens eine halbe Runde zurückliegt
+  const anteil = SCHWAECHEN[P.einst.schwaechen] ?? SCHWAECHEN.ausgewogen;
+  if (anteil > 0) {
+    P.zyklus.konto = (P.zyklus.konto || 0) + n * anteil;
+    const runde = tageProKhatma(), grenze = plusTage(datum, -Math.max(14, Math.round(runde / 4))), seit = plusTage(datum, -2 * runde);
+    const platz = n + qadaa - plan.length - 1;    // mindestens ein Abschnitt der Runde bleibt
+    const kand = Object.entries(P.karten).map(([id, k]) => [+id, k])
+      .filter(([id, k]) => !plan.includes(id) && !k.fae && k.zul && k.zul <= grenze && istSchwach(k, seit) && imBereich(id))
+      .sort((a, b) => schwachWert(b[1]) - schwachWert(a[1]) || a[1].zul.localeCompare(b[1].zul));
+    const zahl = Math.max(0, Math.min(Math.floor(P.zyklus.konto), platz, kand.length));
+    for (const [id] of kand.slice(0, zahl)) { plan.push(id); art[id] = 'festigen'; }
+    P.zyklus.konto = kand.length > zahl ? P.zyklus.konto - zahl : Math.min(P.zyklus.konto - zahl, 1);   // ohne Kandidaten kein Stau
+  }
   const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan), datum);
   naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
-  P.tage[datum] = { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa };
+  P.tage[datum] = { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(frei ? { freiwillig: true } : {}) };
   aufraeumen(); speichern();
   return P.tage[datum];
 }
+// an einem Ruhetag oder in der Pause trotzdem üben
+export function trotzdemUeben() { return tagesplan(heute(), true); }
 // Zufallszahlen mit Startwert: derselbe Tag ergibt denselben Vorschlag
 function zufall(text) {
   let h = 1779033703 ^ text.length;
@@ -223,7 +288,13 @@ export const FEHLERARTEN_TEXT = {
   haraka: 'Falscher Vokal oder falsches Zeichen.',
   haenger: 'Hängen geblieben, erst nach einer Pause weiter.'
 };
+function artenAusStellen(fst) {
+  const a = {}; for (const f of Object.values(fst || {})) for (const [x, n] of Object.entries(f.t || {})) a[x] = (a[x] || 0) + n;
+  return a;
+}
+// je markierte Āya zählt die gewählte Fehlerart einmal (dauerhaft, auch wenn die Stelle später erledigt ist)
 export function fehlerstellenMerken(schluessel, art) {
+  if (art && schluessel.length) { P.statistik ??= { arten: {} }; P.statistik.arten[art] = (P.statistik.arten[art] || 0) + 1; }
   for (const s of schluessel) {
     const f = P.fstellen[s] || { n: 0, t: {}, d: null };
     f.n++; f.d = heute(); if (art) f.t[art] = (f.t[art] || 0) + 1;
@@ -233,8 +304,12 @@ export function fehlerstellenMerken(schluessel, art) {
 }
 export function fehlerstelleLoeschen(s) { delete P.fstellen[s]; speichern(); }
 // Stand der Fehlerstellen merken und wiederherstellen (für „Vorige Āya neu bewerten“)
-export const fehlerstellenStand = () => JSON.parse(JSON.stringify(P.fstellen || {}));
-export function fehlerstellenSetzen(stand) { P.fstellen = JSON.parse(JSON.stringify(stand || {})); speichern(); }
+export const fehlerstellenStand = () => JSON.parse(JSON.stringify({ f: P.fstellen || {}, a: P.statistik?.arten || {} }));
+export function fehlerstellenSetzen(stand) {
+  stand = JSON.parse(JSON.stringify(stand || {}));
+  if (stand.f && stand.a) { P.fstellen = stand.f; (P.statistik ??= {}).arten = stand.a; } else P.fstellen = stand;
+  speichern();
+}
 // Abhören: jede Āya mit mindestens einem markierten Wort zählt als Fehler, alle anderen als richtig
 export const abhoerErgebnis = (ayat, fehlerVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : 'ok');
 
@@ -268,7 +343,8 @@ function aufraeumen() { // alte Tage verdichten, Statistik behalten
 
 // ---------- Ergebnis eines Abschnitts ----------
 // ergebnisse: Array von 'ok' | 'hilfe' | 'fehler' je Āya (in Reihenfolge v[0]..v[1])
-export function abschnittAbschliessen(id, ergebnisse, quelle) {
+// dauer: aktive Übungszeit in Sekunden (ohne Zeit im Hintergrund), fehlt bei fortgesetzten Übungen
+export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const datum = heute(), t = tagesplan(datum), e = D.A[id], k = { ...karte(id) };
   const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
   const art = quelle || t.art[id] || 'frei';
@@ -282,13 +358,14 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
   const hasanat = e.buchstaben * 10;
   // Karteisystem
   const vorher = k.st;
-  if (f) { k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
+  if (f) { k.fz = datum; k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
   else if (h) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
   else {
     k.st = Math.min(4, k.st + 1);
     if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < FEHLER_ABSTAND.length ? plusTage(datum, FEHLER_ABSTAND[k.fs]) : null; if (!k.fae) k.fs = 0; }
   }
   k.n++; k.fe += f; k.zul = datum; k.lf = f;   // lf: Fehler im letzten Durchgang
+  if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
   k.fa = ergebnisse.map((x, i) => x !== 'ok' ? e.v[0] + i : -1).filter(i => i >= 0);
   P.karten[id] = k;
   // Tag und Summen
@@ -310,10 +387,11 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
   const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
   if (!t.voll && pflicht.every(x => t.fertig.includes(x))) {
     t.voll = true;
-    const z = P.kette.zuletzt;
-    if (z === plusTage(datum, -1)) P.kette.n++;
-    else if (z === plusTage(datum, -2) && t.qadaa) P.kette.n += 2;
-    else if (z !== datum) P.kette.n = 1;
+    const z = P.kette.zuletzt, w1 = vorigerWirdTag(datum);
+    if (z === datum) { /* schon gezählt */ }
+    else if (z && z >= w1) P.kette.n++;
+    else if (z && t.qadaa && z >= vorigerWirdTag(w1)) P.kette.n += 2;
+    else P.kette.n = 1;
     P.kette.zuletzt = datum; P.kette.beste = Math.max(P.kette.beste, P.kette.n);
     ereignisse.push({ typ: 'wird' });
     for (const m of KETTEN_MEILEN) if (P.kette.n >= m && !P.meilen.includes('kette-' + m)) { P.meilen.push('kette-' + m); P.meilenD['kette-' + m] = datum; ereignisse.push({ typ: 'kette', n: m }); }
@@ -419,9 +497,40 @@ export function letzteTage(n = 30) {
   for (let i = n - 1; i >= 0; i--) { const d = plusTage(heute(), -i); aus.push({ d, t: P.tage[d] || null }); }
   return aus;
 }
+// Auswertung: Fehlerarten, Sūren, Quote, Zeit
+export function auswertung(tage = 30) {
+  const arten = FEHLERARTEN.map(([w, l]) => ({ art: w, name: l, n: P.statistik?.arten?.[w] || 0 }));
+  const getippt = arten.reduce((s, x) => s + x.n, 0);
+  // Sūren: letzter Durchgang je Abschnitt, Āya für Āya der jeweiligen Sūra zugeordnet
+  const su = new Map();
+  for (const [id, k] of Object.entries(P.karten)) {
+    if (!k.n || !imBereich(+id)) continue;
+    const e = D.A[+id], fa = new Set(k.fa || []);
+    for (let vi = e.v[0]; vi <= e.v[1]; vi++) {
+      const s = D.V[vi][0], x = su.get(s) || { s, ayat: 0, sicher: 0 };
+      x.ayat++; if (!fa.has(vi)) x.sicher++; su.set(s, x);
+    }
+  }
+  const suren = [...su.values()].map(x => ({ ...x, quote: 100 * x.sicher / x.ayat })).sort((a, b) => a.quote - b.quote || b.ayat - a.ayat || a.s - b.s);
+  // Quote: letzter Durchgang über den Bereich, dazu je Woche (die letzten 8, Āyāt ohne Fehler und ohne Hilfe)
+  const wochen = [];
+  for (let w = 7; w >= 0; w--) {
+    let r = 0, f = 0, h = 0;
+    for (let i = 0; i < 7; i++) { const t = P.tage[plusTage(heute(), -(w * 7 + i))]; if (t) { r += t.r; f += t.f; h += t.h; } }
+    wochen.push({ bis: plusTage(heute(), -w * 7), ayat: r + f + h, quote: r + f + h ? 100 * r / (r + f + h) : null });
+  }
+  // Zeit: gemessene Übungen der letzten Tage
+  let zeit = 0, zn = 0, za = 0;
+  for (let i = 0; i < tage; i++) { const t = P.tage[plusTage(heute(), -i)]; if (t?.zn) { zeit += t.zeit; zn += t.zn; za += t.za; } }
+  const langsam = Object.entries(P.karten).filter(([id, k]) => k.z && imBereich(+id))
+    .map(([id, k]) => ({ id: +id, z: k.z, jeZeile: k.z / D.A[+id].zeilen })).sort((a, b) => b.jeZeile - a.jeZeile).slice(0, 5);
+  const geprueft = suren.reduce((s, x) => s + x.ayat, 0), sicher = suren.reduce((s, x) => s + x.sicher, 0);
+  return { arten, ohneArt: Math.max(0, P.summe.f - getippt), suren, quote: kennzahlen().quote, quoteGeprueft: geprueft ? 100 * sicher / geprueft : null, geprueft, wochen,
+    zeit: { summe: zeit, abschnitte: zn, ayat: za, jeAbschnitt: zn ? zeit / zn : null, jeAya: za ? zeit / za : null, langsam } };
+}
 export function schwaechste(n = 8) {
   return Object.entries(P.karten).filter(([id, k]) => k.n && imBereich(+id))
-    .map(([id, k]) => ({ id: +id, k, w: (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0) }))
+    .map(([id, k]) => ({ id: +id, k, w: schwachWert(k) }))
     .sort((a, b) => b.w - a.w).slice(0, n);
 }
 export function khatmaFortschritt() {
@@ -429,9 +538,10 @@ export function khatmaFortschritt() {
   const zeilen = r.reduce((s, id) => s + D.A[id].zeilen, 0), fertig = r.filter(id => erl.has(id)).reduce((s, id) => s + D.A[id].zeilen, 0);
   return { anteil: zeilen ? fertig / zeilen : 0, fertig: r.filter(id => erl.has(id)).length, gesamt: r.length };
 }
-export function tageProKhatma() {
+// Dauer einer Ḫatma in Tagen; mit Regler: Zuschlag für das Festigen (Simulation: etwa 1,1 × Anteil)
+export function tageProKhatma(mitRegler = false) {
   const woche = P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
-  return Math.ceil(reihe().length / Math.max(0.1, woche));
+  return Math.ceil(reihe().length / Math.max(0.1, woche) * (mitRegler ? 1 + 1.1 * (SCHWAECHEN[P.einst.schwaechen] ?? 0) : 1));
 }
 
 // Auswertung eines fremden Profils (Lehreransicht), ohne das eigene zu verändern

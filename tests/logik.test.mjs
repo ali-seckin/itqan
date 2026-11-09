@@ -190,9 +190,11 @@ test('Neu bewerten: Fehlerstellen lassen sich auf den Stand davor zurücksetzen'
   const vorher = Z.fehlerstellenStand();
   Z.fehlerstellenMerken(['11.0', '10.2'], 'abweichung');
   assert.equal(Z.P.fstellen['10.2'].n, 2);
+  assert.equal(Z.P.statistik.arten.abweichung, 1);
   Z.fehlerstellenSetzen(vorher);
-  assert.deepEqual(Z.P.fstellen, vorher);
+  assert.deepEqual(Z.P.fstellen, vorher.f);
   assert.equal(Z.P.fstellen['11.0'], undefined);
+  assert.deepEqual(Z.P.statistik.arten, { haraka: 1 });   // auch die Zählung der Fehlerarten geht zurück
 });
 
 test('Abhören: Āyāt mit markiertem Wort sind Fehler, die übrigen richtig', () => {

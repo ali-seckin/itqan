@@ -69,3 +69,10 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 46. „Erstes Wort“, dann „Noch ein Wort“ deckt Wort für Wort auf, die Āya zählt als „mit Hilfe“.
 47. „Jemand hört ab“: Text offen, Wörter antippen, „Fertig“ speichert Fehler und Stellen; „Abbrechen“ verdeckt wieder.
 48. Tageswechsel 3 Uhr: ein Wird um 1 Uhr nachts zählt zum Vortag, die Kette bleibt.
+
+## Etappe 3: Klug planen
+49. Einstellungen › Schwache Abschnitte: drei Stufen, Text und Ḫatma-Dauer ändern sich mit; „Festigen“ erscheint im Tagesplan erst, wenn ein schwacher Abschnitt lange nicht dran war.
+50. Wochentag auf „Ruhetag“: an diesem Tag zeigt Heute „Heute ist Ruhetag“, die Kette bleibt; „Trotzdem üben“ bringt einen normalen Plan; alle sieben Tage auf Ruhetag lässt sich nicht einstellen.
+51. Pause 7 Tage: Dialog nennt Beginn und Ende; schon geübt heißt Beginn morgen; Heute zeigt die Pausenkarte; „Pause beenden“ auf Heute und in den Einstellungen.
+52. Nach der Pause: Kette läuft weiter, kein Qaḍāʾ, Fehlerwiederholungen kommen um die Pausentage später.
+53. Profil › Auswertung: Quote, Wochenbalken, Fehlerarten, Sūren mit Fehlern, Zeit je Abschnitt; ein frisch geübter Abschnitt erscheint mit seiner Zeit; App im Hintergrund zählt nicht mit.

@@ -469,9 +469,9 @@ body.im-vollbild{overflow:hidden}
 select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a08a6e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 11px center/12px 8px;border:1px solid var(--rand);border-radius:12px;padding:9px 30px 9px 12px;font-size:var(--s-text);min-width:0;max-width:100%}
 .auswahl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:var(--s-text)}
 .auswahl.stark{margin:12px 0;padding-bottom:12px;border-bottom:1px dotted var(--rand);font-weight:500}
-.tagesliste{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px 18px}
-.tagesliste select{width:74px}
-.auswahl.stark select{width:118px}
+.tagesliste{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 22px}
+.tagesliste select{width:118px}
+.auswahl.stark select{width:136px}
 .zeitwahl{display:flex;align-items:center;gap:8px;margin:14px 0}
 .zeitwahl select{width:80px;font-size:var(--s-unter)}
 .zeitwahl span{color:var(--leise)}
@@ -670,3 +670,18 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .marke,.start h1,.einblendung h2{letter-spacing:-.015em}
 .marke small{letter-spacing:0}
 .gruss,.ab-kopf h2,.feier h2,.tut-schritt h2,.orn-karte h2,.rangkarte b,.rangstufe .kopf b{letter-spacing:-.01em}
+/* Etappe 3: Festigen, Ruhetag und Pause, Auswertung */
+.marke-art.festigen{background:rgba(90,120,170,.16);color:var(--text)}
+.ruhe-karte{background:var(--karte);border:1px solid var(--rand);border-radius:20px;padding:20px 18px;margin:22px 0 8px;text-align:center}
+.ruhe-karte b{display:block;font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzent);margin-bottom:6px}
+.ruhe-karte p{color:var(--leise);font-size:var(--s-text)}
+.ruhe-karte .reihe{justify-content:center}
+.aw-liste{display:grid;gap:9px;margin-top:6px}
+.aw-zeile{display:grid;grid-template-columns:minmax(0,9em) 1fr auto;align-items:center;gap:10px;font-size:var(--s-klein)}
+.aw-zeile span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-zeile b{font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right;font-weight:500}
+.aw-balken{height:10px;border-radius:999px;background:var(--rand);overflow:hidden}
+.aw-balken i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--akzent),var(--akzent2))}
+.aw-zeile.leise .aw-balken i{background:var(--leise);opacity:.6}
+.aw-zeile.leise span{color:var(--leise)}
+.aw-wochen{height:70px}
