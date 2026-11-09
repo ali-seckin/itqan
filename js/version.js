@@ -1,10 +1,17 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.7';
+export const VERSION = '1.8';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.8', datum: '2026-11-10', titel: 'Mutašābihāt nachschlagen', punkte: [
+    'Ähnliche Stellen unter Profil sind jetzt ein Nachschlagewerk: 300 Gruppen ähnlicher Verse mit 750 Stellen, auch die wortgleichen Āyāt.',
+    'Suche nach Stelle (2:48), Sūra oder arabischen Wörtern. Filter nach Art des Unterschieds, nach seinem Ort in der Āya und nach Größe der Gruppe.',
+    'Unter jeder Stelle steht, wie die folgende Āya beginnt. Gruppen, die meist aufeinander folgen, sind miteinander verknüpft.',
+    'Neuer Bereich „Reihenfolge“: 81 Fälle, in denen dieselben Wörter in anderer Reihenfolge stehen, mit Regel und Ausnahmen.',
+    'Von den Fehlerstellen führt ein Verweis direkt zur passenden Gruppe.'
+  ] },
   { v: '1.7', datum: '2026-11-09', titel: 'Suche und ähnliche Stellen', punkte: [
     'Suche im ganzen Qurʾān ohne Vokale, auch offline: im Muṣḥaf oben auf die Lupe. Eine Stelle wie 2:255 springt direkt dorthin.',
     'Ähnliche Stellen (Mutašābihāt) unter Profil: zwei Āyāt nebeneinander, die Unterschiede markiert.',

@@ -6,6 +6,7 @@ import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
+import * as NL from './aehnlich.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -1248,7 +1249,7 @@ function profil() {
     <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>Auswertung</b><span>Fehlerarten, Sūren, Quote und Zeit</span></div><span class="pfeil">›</span></a>
-      <a class="karte" href="#aehnlich"><div class="t"><b>Ähnliche Stellen</b><span>Mutašābihāt vergleichen und unterscheiden</span></div><span class="pfeil">›</span></a>
+      <a class="karte" href="#aehnlich"><div class="t"><b>Ähnliche Stellen</b><span>Mutašābihāt nachschlagen, vergleichen und unterscheiden</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>Ornamente und Meilensteine</b><span>${gesammelt.length} von 114 Ornamenten${vergoldet ? ` · ${vergoldet} vergoldet` : ''}</span></div><span class="pfeil">›</span></a></div>
@@ -1416,37 +1417,177 @@ async function sucheSeite(qText = '') {
   if (start) suchen(); else if (!istTouch()) q.focus();
 }
 
-// ---------- Ähnliche Stellen (Mutašābihāt) ----------
+// ---------- Ähnliche Stellen (Mutašābihāt): nachschlagen, vergleichen, unterscheiden ----------
 function vonAbschnitt(vi) { const e = abschnittVon(vi); return e ? e.id : -1; }
-async function aehnlichSeite() {
+// Stand der Nachschlageseite: bleibt beim Wechsel in den Muṣḥaf, zu einer Gruppe oder zum Unterscheiden erhalten
+const NA = { tab: 'f', q: '', sure: 0, bereich: 'mein', art: '', was: '', wo: '', gr: '', sort: 'mushaf', zahl: 20, filterAuf: false, y: null };
+const NA_SEITE = 20;
+const mitAr = s => esc(s).replace(/[؀-ۿ]+(?:[\s…]+[؀-ۿ]+)*/g, m => `<bdi class="ah-arw" lang="ar">${m}</bdi>`);
+const mushafOrt = vi => `#mushaf/${seiteVon(vi)}${abschnittVon(vi) ? '/' + abschnittVon(vi).id : ''}`;
+// teil: 'f' = Gruppen ähnlicher Verse, 't' = Reihenfolge-Fälle; mit key nur diese eine Gruppe oder dieser eine Fall
+async function aehnlichSeite(teil, key) {
   navSetzen('profil');
   app.innerHTML = '<div class="lade">Ähnliche Stellen werden geladen …</div>';
-  let paare;
-  try { paare = await S.paareLaden(); } catch (e) { app.innerHTML = '<p class="leer">Die Liste ließ sich nicht laden. Bitte einmal mit Internet öffnen.</p>'; return; }
+  let A, t;
+  try { [A, t] = await Promise.all([NL.laden(), S.textLaden()]); } catch (e) { app.innerHTML = '<p class="leer">Die Liste ließ sich nicht laden. Bitte einmal mit Internet öffnen.</p>'; return; }
   const P = Z.P;
-  // Āyāt mit „Verwechslung“ bei den Fehlerstellen zuerst
+  // Āyāt mit „Verwechslung“ bei den Fehlerstellen: ihre Gruppen stehen oben
   const verw = new Set(Object.entries(P.fstellen || {}).filter(([, f]) => f.t?.verwechslung).map(([k]) => +k.split('.')[0]));
-  const mein = x => Z.imBereich(vonAbschnitt(x.a)) || Z.imBereich(vonAbschnitt(x.b));
-  let filter = 'mein';
-  const reihe = () => paare.filter(x => filter === 'alle' || mein(x))
-    .map(x => ({ ...x, v: verw.has(x.a) || verw.has(x.b), st: P.mutash?.[x.key] }))
-    .sort((x, y) => (y.v - x.v) || x.a - y.a || x.b - y.b);
-  const zeichnen = () => {
-    const l = reihe();
-    app.querySelector('#aliste').innerHTML = l.length ? l.slice(0, 120).map(x => `<a class="karte paar-karte" href="#vergleich/${x.key}"><div class="t"><b>${D.V[x.a][0]}:${D.V[x.a][1]} und ${D.V[x.b][0]}:${D.V[x.b][1]}</b>
-        <span>${esc(sureName(D.V[x.a][0]))}${D.V[x.a][0] !== D.V[x.b][0] ? ' · ' + esc(sureName(D.V[x.b][0])) : ''} · ${x.s} % gleich${x.v ? ' <span class="marke-art fehler">Verwechslung</span>' : ''}${x.st ? ` <span class="marke-art ${x.st.letzt ? 'bonus' : 'qadaa'}">${x.st.ok}/${x.st.n} unterschieden</span>` : ''}</span></div><span class="pfeil">›</span></a>`).join('')
-      + (l.length > 120 ? `<p class="unter" style="margin-top:10px">Die ersten 120 von ${l.length}.</p>` : '')
-      : '<p class="leer">In deinem Bereich gibt es keine ähnlichen Stellen.</p>';
-    app.querySelector('#azahl').textContent = `${l.length} ${l.length === 1 ? 'Paar' : 'Paare'}`;
+  const imB = vi => Z.imBereich(vonAbschnitt(vi));
+  let a = NL.anfrage();
+  const tr = vi => a.aktiv && NL.trifft(vi, a, t);
+
+  // ----- Bausteine -----
+  const text = (vi, klasse, nr = true) => `<div class="vk-text" dir="rtl"><span class="uthmani">${t.u[vi].map((w, j) => { const c = klasse(j); return c ? `<mark class="${c}">${esc(w)}</mark>` : esc(w); }).join(' ')}${nr ? ` <span class="aya-nr">${D.V[vi][1].toLocaleString('ar-EG')}</span>` : ''}</span></div>`;
+  const danach = vi => { const d = NL.danach(t, vi); return `<span>danach</span>${d ? `<span class="ah-ar" lang="ar" dir="rtl">${esc(d)}</span>` : '<i>Ende der Sūra</i>'}`; };
+  const kopf = vi => `<div class="vk-kopf${tr(vi) ? ' ah-treffer' : ''}"><b>${esc(sureName(D.V[vi][0]))}</b> ${NL.stelleKurz(vi)}<a href="${mushafOrt(vi)}">S. ${seiteVon(vi)}</a></div>`;
+  const stellenKurz = s => { const l = [...s].sort((x, y) => x - y); return l.length <= 3 ? l.map(NL.stelleKurz).join(' · ') : `${NL.stelleKurz(l[0])} · ${NL.stelleKurz(l[1])} und ${l.length - 2} weitere`; };
+  const verweisF = k => `<a class="ah-verweis" href="#aehnlich/f/${k}">${stellenKurz(A.FK[k].s)}</a>`;
+  const verweisT = k => `<a class="ah-verweis" href="#aehnlich/t/${k}"><bdi class="ah-ar" lang="ar">${esc(A.TK[k].ta)}</bdi> ⇄ <bdi class="ah-ar" lang="ar">${esc(A.TK[k].tb)}</bdi></a>`;
+  const variante = (v, art) => {
+    const d = new Set(v.d), n = v.g.length, vi = v.g[0], mark = j => art !== 'gleich' && d.has(j) ? 'anders' : '';
+    if (n === 1) return `<div class="ah-stelle">${kopf(vi)}${text(vi, mark)}<div class="ah-danach">${danach(vi)}</div></div>`;
+    return `<div class="ah-stelle"><div class="vk-kopf"><b>${n} Stellen</b> mit diesem Wortlaut</div>${text(vi, mark, false)}
+      <ul class="ah-orte${n > 7 ? ' zu' : ''}">${v.g.map(x => `<li${tr(x) ? ' class="ah-treffer"' : ''}><a href="${mushafOrt(x)}">${NL.stelleKurz(x)}</a><span class="sn">${esc(sureName(D.V[x][0]))}</span>${danach(x)}</li>`).join('')}</ul>
+      ${n > 7 ? `<button class="ah-mehr" data-auf>alle ${n} Stellen zeigen</button>` : ''}</div>`;
   };
+  const familie = f => {
+    const n = f.s.length, w = f.v.length, z = [];
+    if (f.vor) z.push(`<div><span>Davor steht meist die Gruppe</span>${f.vor.map(([k]) => verweisF(k)).join('')}</div>`);
+    if (f.nach) z.push(`<div><span>Darauf folgt meist die Gruppe</span>${f.nach.map(([k]) => verweisF(k)).join('')}</div>`);
+    if (f.auch) z.push(`<div><span>Eine Stelle steht auch in der Gruppe</span>${f.auch.map(verweisF).join('')}</div>`);
+    if (f.verw) z.push(`<div><span>Verwandte Gruppe</span>${f.verw.map(verweisF).join('')}</div>`);
+    if (f.t) z.push(`<div><span>Als Reihenfolge-Fall</span>${f.t.filter(k => A.TK[k]).map(verweisT).join('')}</div>`);
+    if (f.paare.length) z.push(`<div><span>Unterscheiden üben</span>${f.paare.map(p => { const st = P.mutash?.[p.key]; return `<a class="ah-verweis ueben" href="#vergleich/${p.key}/ueben">${NL.stelleKurz(p.a)} und ${NL.stelleKurz(p.b)}${st ? `<small>${st.ok}/${st.n}</small>` : ''}</a>`; }).join('')}</div>`);
+    return `<article class="ah-karte" id="${f.k}">
+      <div class="ah-kopf"><span class="ah-art ${f.art}">${NL.ART[f.art]}</span><span class="ah-nr">${n} Stellen${w > 1 ? `, ${w} Wortlaute` : ''}</span>${f.s.some(vi => verw.has(vi)) ? '<span class="marke-art fehler">Verwechslung</span>' : ''}</div>
+      ${f.was.length ? `<div class="ah-marken">${f.was.map(x => `<span>${mitAr(NL.WAS[x])}</span>`).join('')}</div>` : ''}
+      <p class="ah-merk">${NL.merksatz(f)}</p>
+      ${f.v.map(x => variante(x, f.art)).join('')}
+      ${z.length ? `<div class="ah-verweise">${z.join('')}</div>` : ''}</article>`;
+  };
+  const chips = (x, seite) => {
+    const l = x[seite], zu = l.length > 14;
+    return `<div class="ah-chips${zu ? ' zu' : ''}">${l.map((o, i) => `<button class="ah-chip${tr(o[0]) ? ' ah-treffer' : ''}" data-k="${x.k}" data-o="${seite}${i}" title="${esc(sureName(D.V[o[0]][0]))}" aria-pressed="false">${NL.stelleKurz(o[0])}</button>`).join('')}${zu ? `<button class="ah-mehr" data-auf>alle ${l.length} zeigen</button>` : ''}</div>`;
+  };
+  const fall = x => {
+    const na = x.ab.length, nb = x.ba.length, { satz, regel } = NL.fallSatz(x);
+    return `<div class="ah-fall" id="${x.k}">
+      <div class="ah-gegen"><div class="ah-folge eins"><div class="uthmani" lang="ar">${esc(x.ta)}</div><div class="anz"><b>${na}</b> ${na === 1 ? 'Stelle' : 'Stellen'}${regel ? ' · die Regel' : ''}</div></div>
+        <div class="ah-tausch" aria-hidden="true">⇄</div>
+        <div class="ah-folge zwei"><div class="uthmani" lang="ar">${esc(x.tb)}</div><div class="anz"><b>${nb}</b> ${nb === 1 ? 'Stelle' : 'Stellen'}${regel ? (nb === 1 ? ' · die Ausnahme' : ' · die Ausnahmen') : ''}</div></div></div>
+      <div class="ah-balken" aria-hidden="true"><i style="width:${(100 * na / (na + nb)).toFixed(1)}%"></i><i></i></div>
+      <p class="ah-merk">${esc(satz)}</p>
+      <div class="ah-spalten"><div class="eins">${chips(x, 'ab')}</div><div class="zwei">${chips(x, 'ba')}</div></div>
+      <div class="ah-ayat"></div>
+      ${x.f.some(k => A.FK[k]) ? `<div class="ah-verweise"><div><span>Als Gruppe ähnlicher Verse</span>${x.f.filter(k => A.FK[k]).map(verweisF).join('')}</div></div>` : ''}</div>`;
+  };
+  const ayaBlock = (x, o) => `<div class="ah-stelle" data-aya="${o[0]}">${kopf(o[0])}${text(o[0], NL.markFuer(x, o))}<div class="ah-danach">${danach(o[0])}</div></div>`;
+  const fallKarte = (gr, l) => `<article class="ah-karte">${gr.titel ? `<h3>${mitAr(gr.titel)}</h3>` : ''}${gr.notiz ? `<p class="ah-merk">${mitAr(gr.notiz)}</p>` : ''}${l.map(fall).join('')}</article>`;
+  // Tippen innerhalb der Karten: Stellen aufklappen, Āya eines Reihenfolge-Falls ein- und ausblenden
+  const kartenKlick = b => {
+    if ('auf' in b.dataset) { b.previousElementSibling?.classList.remove('zu'); b.parentElement.classList.remove('zu'); b.remove(); return true; }
+    if (b.classList.contains('ah-chip')) {
+      const x = A.TK[b.dataset.k], o = x[b.dataset.o.slice(0, 2)][+b.dataset.o.slice(2)];
+      const ort = b.closest('.ah-fall').querySelector('.ah-ayat'), da = ort.querySelector(`[data-aya="${o[0]}"]`);
+      if (da) da.remove(); else ort.insertAdjacentHTML('beforeend', ayaBlock(x, o));
+      b.classList.toggle('an', !da); b.setAttribute('aria-pressed', String(!da));
+      return true;
+    }
+    return false;
+  };
+
+  // ----- eine einzelne Gruppe oder ein einzelner Fall -----
+  if (key) {
+    const f = teil === 'f' ? A.FK[key] : null, x = teil === 't' ? A.TK[key] : null;
+    if (!f && !x) { location.replace('#aehnlich'); return; }
+    const th = x && A.t[x.thema], gr = x && th.gruppen.find(g => g.faelle.includes(x));
+    app.innerHTML = `<button class="zurueck" onclick="history.length > 1 ? history.back() : (location.hash = '#aehnlich')">${zurueckPfeil}Zurück</button>
+      <div class="marke">${f ? 'Ähnliche Verse' : 'Reihenfolge'}<small>${f ? 'Eine Gruppe ähnlicher Verse. Markiert ist, was ein Wortlaut anders hat als die übrigen.' : `${mitAr(th.thema)}. Tippe auf eine Stelle, um die Āya zu lesen.`}</small></div>
+      <div id="ah" class="ah-stapel">${f ? familie(f) : fallKarte(gr, [x])}</div>
+      <a class="knopf leise" href="#aehnlich/${teil}" style="text-decoration:none;margin-top:16px">Alle ${f ? 'Gruppen' : 'Reihenfolge-Fälle'} zeigen</a>`;
+    app.querySelector('#ah').onclick = ev => { const b = ev.target.closest('button'); if (b) kartenKlick(b); };
+    return;
+  }
+
+  // ----- Nachschlagen: Suche, zwei Bereiche -----
+  if (teil === 'f' || teil === 't') NA.tab = teil;
+  const begrenzt = !!P.einst.bereich;
+  const wahlen = (feld, l) => `<select data-feld="${feld}" aria-label="${esc(l[0][1])}">${l.map(([w, n]) => `<option value="${w}"${String(NA[feld]) === String(w) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
-    <div class="marke">Ähnliche Stellen<small>Mutašābihāt: Āyāt, die sich fast gleichen. Im Vergleich sind die Wörter markiert, in denen sie sich unterscheiden. Beim Unterscheiden sind genau diese Wörter verdeckt.</small></div>
-    <div class="wahl" id="afilter" style="margin-top:16px"><button data-w="mein" class="an">In deinem Bereich</button><button data-w="alle">Alle</button></div>
-    <p class="unter" style="margin:10px 0 4px"><span id="azahl"></span>. Stellen, die du als Verwechslung markiert hast, stehen oben.</p>
-    <div id="aliste"></div>
-    <p class="unter" style="margin-top:16px">Die Liste ist automatisch erstellt (gemeinsame Wortfolgen, Wort für Wort verglichen) und wird noch von einem Gelehrten gegengelesen. Wortgleiche Āyāt sind nicht aufgenommen.</p>`;
-  app.querySelector('#afilter').onclick = ev => { const w = ev.target.dataset.w; if (!w) return; filter = w; app.querySelectorAll('#afilter button').forEach(b => b.classList.toggle('an', b.dataset.w === w)); zeichnen(); };
+    <div class="marke">Ähnliche Stellen<small>Mutašābihāt zum Nachschlagen: ${A.f.length} Gruppen ähnlicher Verse mit ${A.stellen} Stellen und ${A.faelle.length} Fälle, in denen dieselben Wörter in anderer Reihenfolge stehen.</small></div>
+    <div class="suchfeld"><input id="q" class="ah-q" type="search" dir="auto" autocomplete="off" spellcheck="false" placeholder="2:48, Sūra oder Wörter" value="${esc(NA.q)}" aria-label="Stelle, Sūra oder arabische Wörter">
+      <button class="seitenlage" id="tast" aria-label="Arabische Buchstaben einblenden" aria-expanded="false">ا ب</button></div>
+    <div class="tastatur verdeckt" id="tastatur" dir="rtl">${ARABISCH.map(b => `<button data-b="${b}">${b}</button>`).join('')}<button data-b=" " class="breit">Leerzeichen</button><button data-b="⌫" aria-label="Löschen">⌫</button></div>
+    <div class="ah-zeile">${wahlen('sure', [[0, 'Alle Sūren'], ...A.suren.map(([s, n]) => [s, `${s} · ${sureName(s)} (${n})`])])}
+      ${begrenzt ? `<div class="wahl" id="abereich"><button data-w="mein">Dein Bereich</button><button data-w="alle">Alle</button></div>` : ''}</div>
+    <div class="ah-reiter" role="tablist"><button role="tab" data-tab="f">Ähnliche Verse<small id="anz-f"></small></button><button role="tab" data-tab="t">Reihenfolge<small id="anz-t"></small></button></div>
+    <div id="ah"></div>`;
+  const feld = app.querySelector('#ah'), q = app.querySelector('#q'), tast = app.querySelector('#tastatur');
+  const zeichnen = () => {
+    a = NL.anfrage(NA.q, NA.sure);
+    const nur = begrenzt && NA.bereich === 'mein' ? imB : null;
+    const fl = NL.familienListe(A, t, a, { art: NA.art, was: NA.was, wo: NA.wo, gr: NA.gr, sort: NA.sort, nur, zuerst: verw });
+    const tl = NL.faelleListe(A, t, a, nur);
+    // Zähler an den Reitern: Treffer der Suche, ohne die übrigen Filter
+    const fz = NL.familienListe(A, t, a, { nur }).length, tz = tl.length;
+    app.querySelector('#anz-f').textContent = fz; app.querySelector('#anz-t').textContent = tz;
+    app.querySelectorAll('.ah-reiter button').forEach(b => { b.classList.toggle('an', b.dataset.tab === NA.tab); b.setAttribute('aria-selected', String(b.dataset.tab === NA.tab)); });
+    app.querySelectorAll('#abereich button').forEach(b => b.classList.toggle('an', b.dataset.w === NA.bereich));
+    const wonach = a.vi != null ? (a.vi >= 0 ? NL.stelleKurz(a.vi) : 'dieser Stelle') : a.text ? 'diesen Wörtern' : 'dieser Auswahl';
+    // außerhalb des eigenen Bereichs gäbe es Treffer: darauf hinweisen
+    const draussen = n => nur && n ? ` Außerhalb deines Bereichs: ${n}. <button class="ah-verweis" data-alle>Alle zeigen</button>` : '';
+    if (NA.tab === 'f') {
+      const st = new Set(fl.flatMap(e => e.f.s)).size, rest = fl.length - NA.zahl, oben = fl.filter(e => e.oben).length;
+      const gefiltert = NA.art || NA.was || NA.wo || NA.gr;
+      feld.innerHTML = `<div class="wahl vier" id="f-art">${[['', 'Alle'], ...Object.entries(NL.ART)].map(([w, n]) => `<button data-w="${w}"${NA.art === w ? ' class="an"' : ''}>${n}</button>`).join('')}</div>
+        <details class="ah-filter"${NA.filterAuf ? ' open' : ''}><summary>Weitere Filter${NA.was || NA.wo || NA.gr || NA.sort !== 'mushaf' ? ' · aktiv' : ''}</summary><div class="ah-wahlen">
+          ${wahlen('was', [['', 'Jeder Unterschied'], ...Object.entries(NL.WAS).map(([k, n]) => [k, `${n} (${A.f.filter(f => f.was.includes(k)).length})`])])}
+          ${wahlen('wo', [['', 'An jeder Stelle der Āya'], ...Object.entries(NL.WO).map(([k, n]) => [k, 'Unterschied ' + n])])}
+          ${wahlen('gr', [['', 'Jede Größe'], ['2', 'Paare'], ['3', '3 bis 5 Stellen'], ['6', '6 und mehr Stellen']])}
+          ${wahlen('sort', [['mushaf', 'Reihenfolge des Muṣḥaf'], ['gross', 'Größte Gruppen zuerst']])}</div></details>
+        <p class="unter ah-klein"><mark class="ah-probe anders">Unterlegt</mark> ist, was ein Wortlaut anders hat als die übrigen seiner Gruppe. Unter jeder Stelle steht, wie die folgende Āya beginnt, denn dort entscheidet sich, ob du richtig weiterliest.</p>
+        ${fl.length ? `<p class="unter ah-klein" aria-live="polite"><b>${fl.length} ${fl.length === 1 ? 'Gruppe' : 'Gruppen'}</b> mit ${st} Stellen.${oben ? ' Gruppen mit einer Stelle, die du als Verwechslung markiert hast, stehen oben.' : ''}</p>
+          <div class="ah-stapel">${fl.slice(0, NA.zahl).map(e => familie(e.f)).join('')}</div>
+          ${rest > 0 ? `<button class="knopf leise" id="f-mehr" style="margin-top:14px">Weitere ${Math.min(NA_SEITE, rest)} zeigen (noch ${rest})</button>` : ''}`
+        : `<p class="leer" style="margin-top:16px" aria-live="polite">${gefiltert ? 'Mit diesen Filtern' : `Zu ${esc(wonach)}`} ist${nur ? ' in deinem Bereich' : ''} keine Gruppe ähnlicher Verse verzeichnet.${draussen(NL.familienListe(A, t, a, { art: NA.art, was: NA.was, wo: NA.wo, gr: NA.gr }).length)}${tz ? ` Im Bereich Reihenfolge gibt es dazu ${tz} ${tz === 1 ? 'Fall' : 'Fälle'}. <button class="ah-verweis" data-tab="t">Zeigen</button>` : ''}</p>`}`;
+    } else {
+      const drin = new Set(tl.map(x => x.k)), teile = [], nav = [];
+      A.t.forEach((th, ti) => {
+        const karten = th.gruppen.map(gr => { const l = gr.faelle.filter(x => drin.has(x.k)); return l.length ? fallKarte(gr, l) : ''; }).filter(Boolean);
+        if (!karten.length) return;
+        const n = th.gruppen.reduce((s, gr) => s + gr.faelle.filter(x => drin.has(x.k)).length, 0);
+        nav.push(`<button class="ah-verweis" data-thema="${ti}">${mitAr(th.thema)}<small>${n}</small></button>`);
+        teile.push(`<section class="ah-thema" id="thema-${ti}"><div><h2>${mitAr(th.thema)}</h2><p class="unter ah-klein">${mitAr(th.hinweis)}</p></div>${karten.join('')}</section>`);
+      });
+      feld.innerHTML = `<p class="unter ah-klein">Dieselben Wörter in zwei Reihenfolgen. Links steht die häufigere, rechts die seltenere. Tippe auf eine Stelle, um die Āya zu lesen. <mark class="ah-probe kern">Umrandet</mark> sind die Wörter, die den Platz tauschen.</p>
+        ${teile.length ? `<div class="ah-themen">${nav.join('')}</div>${a.aktiv ? `<p class="unter ah-klein" aria-live="polite"><b>${tz} ${tz === 1 ? 'Fall' : 'Fälle'}</b> zu ${esc(wonach)}.</p>` : ''}${teile.join('')}`
+        : `<p class="leer" style="margin-top:16px" aria-live="polite">Zu ${esc(wonach)} ist${nur ? ' in deinem Bereich' : ''} kein Reihenfolge-Fall verzeichnet.${draussen(NL.faelleListe(A, t, a).length)}${fz ? ` Im Bereich Ähnliche Verse gibt es dazu ${fz} ${fz === 1 ? 'Gruppe' : 'Gruppen'}. <button class="ah-verweis" data-tab="f">Zeigen</button>` : ''}</p>`}`;
+    }
+  };
+  const neu = () => { NA.zahl = NA_SEITE; zeichnen(); };
+  const reiter = tab => { NA.tab = tab; history.replaceState(null, '', '#aehnlich/' + tab); vorherigeAnsicht = location.hash; zeichnen(); };
+  let warte = null;
+  q.oninput = () => { clearTimeout(warte); warte = setTimeout(() => { NA.q = q.value; neu(); }, 200); };
+  app.querySelector('#tast').onclick = ev => { const zu = tast.classList.toggle('verdeckt'); ev.currentTarget.setAttribute('aria-expanded', String(!zu)); };
+  tast.onclick = ev => { const b = ev.target.closest('[data-b]')?.dataset.b; if (b == null) return; q.value = b === '⌫' ? q.value.slice(0, -1) : q.value + b; q.oninput(); };
+  app.querySelector('.ah-zeile select').onchange = ev => { NA.sure = +ev.target.value; neu(); };
+  app.querySelector('#abereich')?.addEventListener('click', ev => { const w = ev.target.dataset.w; if (w) { NA.bereich = w; neu(); } });
+  app.querySelector('.ah-reiter').onclick = ev => { const b = ev.target.closest('[data-tab]'); if (b) reiter(b.dataset.tab); };
+  feld.onchange = ev => { const f = ev.target.dataset.feld; if (f) { NA[f] = ev.target.value; neu(); } };
+  feld.addEventListener('toggle', ev => { if (ev.target.matches?.('.ah-filter')) NA.filterAuf = ev.target.open; }, true);
+  feld.onclick = ev => {
+    // vor dem Wechsel zu einer Gruppe, in den Muṣḥaf oder zum Unterscheiden die Stelle in der Liste merken
+    if (ev.target.closest('a[href]')) { NA.y = window.scrollY; return; }
+    const b = ev.target.closest('button'); if (!b || kartenKlick(b)) return;
+    if (b.id === 'f-mehr') { NA.zahl += NA_SEITE; zeichnen(); }
+    else if (b.closest('#f-art')) { NA.art = b.dataset.w; neu(); }
+    else if (b.dataset.tab) reiter(b.dataset.tab);
+    else if ('alle' in b.dataset) { NA.bereich = 'alle'; neu(); }
+    else if (b.dataset.thema) feld.querySelector('#thema-' + b.dataset.thema)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   zeichnen();
+  if (NA.y != null) { const y = NA.y; NA.y = null; window.scrollTo(0, y); }
 }
 async function vergleichSeite(key, modus) {
   navSetzen(null);
@@ -1500,10 +1641,14 @@ function fehlerstellenSeite() {
           ${ab ? `<a class="knopf haupt klein" href="#ueben/${ab.id}/stelle/${f.vi}" style="width:auto;text-decoration:none">Üben</a>` : ''}</div></div>`;
     }).join('') : '<p class="leer">Wenn du nach „Fehler“ auf das Wort tippst, bei dem du dich vertan hast, sammelt Itqān diese Stellen hier.</p>'}</div>`;
   // ähnliche Stellen nachtragen, sobald die Liste geladen ist
-  S.paareLaden().then(paare => app.querySelectorAll('.fs-karte[data-vi]').forEach(k => {
-    const vi = +k.dataset.vi, p = paare.find(x => x.a === vi || x.b === vi); if (!p) return;
-    const ander = p.a === vi ? p.b : p.a;
-    k.querySelector('.t')?.insertAdjacentHTML('beforeend', `<a class="fs-aehnlich" href="#vergleich/${p.key}">Ähnlich wie ${D.V[ander][0]}:${D.V[ander][1]} · vergleichen</a>`);
+  // Paar: zum Vergleich. Größere Gruppe, wortgleiche Stelle oder Reihenfolge-Fall: zum Nachschlagen
+  Promise.all([NL.laden(), S.paareLaden()]).then(([A, paare]) => app.querySelectorAll('.fs-karte[data-vi]').forEach(k => {
+    const vi = +k.dataset.vi, bei = A.vonVi.get(vi), f = bei?.f.length ? A.FK[bei.f[0]] : null, p = paare.find(x => x.a === vi || x.b === vi);
+    const zeile = (ziel, text) => k.querySelector('.t')?.insertAdjacentHTML('beforeend', `<a class="fs-aehnlich" href="${ziel}">${text}</a>`);
+    if (f && f.s.length > 2) zeile(`#aehnlich/f/${f.k}`, `Eine von ${f.s.length} ähnlichen Stellen · nachschlagen`);
+    else if (p) { const ander = p.a === vi ? p.b : p.a; zeile(`#vergleich/${p.key}`, `Ähnlich wie ${NL.stelleKurz(ander)} · vergleichen`); }
+    else if (f) { const ander = f.s.find(x => x !== vi); zeile(`#aehnlich/f/${f.k}`, `${f.art === 'gleich' ? 'Gleicher Wortlaut wie' : 'Ähnlich wie'} ${NL.stelleKurz(ander)} · nachschlagen`); }
+    if (bei?.t.length) zeile(`#aehnlich/t/${bei.t[0]}`, 'Wörter in anderer Reihenfolge an anderer Stelle · nachschlagen');
   })).catch(() => {});
 }
 

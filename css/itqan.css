@@ -710,3 +710,86 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .vk-kopf a{margin-left:auto;color:var(--leise)}
 .vk-text .uthmani{font-size:26px}
 .fs-aehnlich{display:block;font-size:var(--s-klein);color:var(--akzent);margin-top:4px}
+/* Etappe 5: Mutašābihāt nachschlagen (Gruppen ähnlicher Verse, Reihenfolge-Fälle) */
+:root,[data-modus=hell]{--ah-eins:#2f6f78;--ah-zwei:#b04f36;--ah-kern:rgba(176,79,54,.14)}
+[data-modus=dunkel]{--ah-eins:#7cc3c9;--ah-zwei:#e08a6d;--ah-kern:rgba(224,138,109,.2)}
+.suchfeld input.ah-q{font-size:var(--s-text)}
+.ah-zeile{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.ah-zeile select{flex:1 1 170px}
+.ah-zeile .wahl{flex:1 1 210px}
+.ah-reiter{display:flex;gap:4px;border-bottom:1px solid var(--rand);margin:18px 0 14px}
+.ah-reiter button{flex:1;border:0;background:none;padding:10px 4px 9px;font:600 var(--s-unter)/1.15 var(--kopf);color:var(--leise);border-bottom:3px solid transparent;margin-bottom:-1px}
+.ah-reiter button.an{color:var(--akzent);border-bottom-color:var(--akzent)}
+.ah-reiter small{font:400 var(--s-klein) var(--fliess);margin-left:6px;font-variant-numeric:tabular-nums}
+.wahl.vier button{font-size:var(--s-klein);padding:8px 2px;white-space:nowrap}
+.ah-filter{margin-top:10px}
+.ah-filter summary{font-size:var(--s-klein);color:var(--leise);cursor:pointer;padding:6px 2px}
+.ah-wahlen{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px}
+.ah-wahlen select{width:100%}
+.unter.ah-klein{font-size:var(--s-klein);margin-top:12px}
+mark.ah-probe{color:var(--text);padding:0 4px;border-radius:6px;background:rgba(212,175,106,.22);box-shadow:inset 0 -2px 0 var(--akzent)}
+mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset 0 0 0 1.5px var(--ah-zwei);border-radius:7px}
+.uthmani mark.zw{background:var(--hi);box-shadow:none}
+.ah-stapel{display:grid;gap:14px;margin-top:12px;min-width:0}
+.ah-karte{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:14px 14px 12px;display:grid;gap:10px;min-width:0}
+.ah-karte h3{font-size:var(--s-unter)}
+.ah-kopf{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.ah-art{font-size:var(--s-etikett);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--akzent)}
+.ah-art.gleich{color:var(--ah-eins)}
+.ah-nr{font-size:var(--s-klein);color:var(--leise);font-variant-numeric:tabular-nums}
+.ah-kopf .marke-art{margin-left:auto}
+.ah-marken{display:flex;flex-wrap:wrap;gap:6px}
+.ah-marken span{border:1px solid var(--rand);border-radius:999px;padding:1px 10px;font-size:var(--s-etikett);color:var(--leise);white-space:nowrap}
+.ah-merk{font-size:var(--s-klein);color:var(--leise)}
+.ah-stelle{border:1px solid var(--rand);border-radius:14px;padding:8px 12px;background:var(--karte2);min-width:0}
+.ah-stelle .vk-kopf{flex-wrap:wrap}
+.ah-stelle .uthmani{overflow-wrap:anywhere}
+.ah-danach,.ah-orte li{font-size:var(--s-etikett);color:var(--leise);display:flex;gap:2px 8px;align-items:baseline;flex-wrap:wrap}
+.ah-ar{font:19px/1.7 'Uthmani',serif;color:var(--text)}
+.ah-arw{font-family:system-ui,'Segoe UI','Noto Naskh Arabic','Geeza Pro',sans-serif}
+.ah-orte{list-style:none;display:grid;gap:2px;margin-top:2px}
+.ah-orte li{border-top:1px dotted var(--rand);padding-top:3px}
+.ah-orte li a{font:600 var(--s-klein) var(--kopf);color:var(--akzent);text-decoration:none;min-width:3.4em;font-variant-numeric:tabular-nums}
+.ah-orte .sn{min-width:6.5em}
+.ah-orte.zu li:nth-child(n+7){display:none}
+.vk-kopf.ah-treffer b,li.ah-treffer>a{background:var(--hi);border-radius:6px;padding:0 5px}
+.ah-mehr{border:1px dashed var(--rand);background:none;border-radius:12px;padding:6px 12px;color:var(--leise);font-size:var(--s-klein);margin-top:6px}
+.ah-verweise{display:grid;gap:8px;font-size:var(--s-klein);color:var(--leise);border-top:1px solid var(--rand);padding-top:10px}
+.ah-verweise div{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap}
+.ah-verweis{display:inline-block;border:1px solid var(--rand);background:var(--karte2);border-radius:999px;padding:4px 12px;font:400 var(--s-klein) var(--fliess);font-style:normal;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums}
+.ah-verweis small{margin-left:6px;color:var(--leise);font-size:var(--s-etikett)}
+.ah-verweis.ueben{border-color:var(--akzent)}
+.ah-verweis .ah-ar{line-height:1.4}
+.ah-themen{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.ah-thema{display:grid;gap:12px;margin-top:24px;min-width:0;scroll-margin-top:12px}
+.ah-thema h2{font-size:var(--s-titel);color:var(--akzent)}
+.ah-thema .unter.ah-klein{margin-top:4px}
+.ah-fall{display:grid;gap:10px;min-width:0}
+.ah-fall+.ah-fall{border-top:1px solid var(--rand);padding-top:14px}
+.ah-gegen{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:stretch}
+.ah-folge{border-radius:14px;padding:6px 8px;text-align:center;border:1.5px solid var(--rand);background:var(--karte2);min-width:0;display:grid;align-content:center}
+.ah-folge .uthmani{text-align:center;line-height:1.9;overflow-wrap:anywhere}
+.ah-folge.eins{border-color:var(--ah-eins)}
+.ah-folge.zwei{border-color:var(--ah-zwei)}
+.ah-folge .anz{font-size:var(--s-etikett);color:var(--leise);font-variant-numeric:tabular-nums}
+.ah-folge.eins .anz b{color:var(--ah-eins)}
+.ah-folge.zwei .anz b{color:var(--ah-zwei)}
+.ah-tausch{align-self:center;color:var(--leise);font-size:20px}
+.ah-balken{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--rand)}
+.ah-balken i{display:block;height:100%}
+.ah-balken i:first-child{background:var(--ah-eins)}
+.ah-balken i:last-child{background:var(--ah-zwei);flex:1}
+.ah-spalten{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}
+.ah-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ah-chips.zu .ah-chip:nth-child(n+13){display:none}
+.ah-chips .ah-mehr{margin-top:0;padding:5px 10px}
+.ah-chip{border:1px solid var(--rand);border-radius:999px;padding:5px 11px;font-size:var(--s-klein);background:var(--karte2);font-variant-numeric:tabular-nums}
+.eins>.ah-chips .ah-chip{border-color:color-mix(in srgb,var(--ah-eins) 45%,var(--rand))}
+.zwei>.ah-chips .ah-chip{border-color:color-mix(in srgb,var(--ah-zwei) 45%,var(--rand))}
+.eins>.ah-chips .ah-chip.an{background:var(--ah-eins);border-color:var(--ah-eins);color:var(--bg)}
+.zwei>.ah-chips .ah-chip.an{background:var(--ah-zwei);border-color:var(--ah-zwei);color:var(--bg)}
+.ah-chip.ah-treffer{box-shadow:0 0 0 2px var(--akzent2)}
+.ah-ayat{display:grid;gap:8px}
+.ah-ayat:empty{display:none}
+@media (max-width:440px){.ah-reiter button{font-size:var(--s-text)}.ah-reiter small{font-size:var(--s-etikett);margin-left:4px}}
+@media (max-width:400px){.ah-gegen{grid-template-columns:minmax(0,1fr)}.ah-tausch{transform:rotate(90deg);justify-self:center}.ah-wahlen{grid-template-columns:minmax(0,1fr)}}
