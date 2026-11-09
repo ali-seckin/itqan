@@ -30,5 +30,3 @@ jobs:
           path: .
       - id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          timeout: 1800000   # GitHub braucht für die rund 150 MB manchmal länger als die üblichen 10 Minuten
