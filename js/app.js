@@ -2,6 +2,7 @@
 import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
 import * as Z from './zustand.js';
 import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
+import { ornamentSVG, klasse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -24,6 +25,38 @@ for (const g of ['gesturestart', 'gesturechange']) document.addEventListener(g, 
 function toast(text, ms = 2600) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add('an')); setTimeout(() => { t.classList.remove('an'); setTimeout(() => t.remove(), 400); }, ms);
+}
+const ruhig = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Itqān-Punkte steigen kurz über der bewerteten Āya auf
+function punktePop(text, el) {
+  const r = el?.getBoundingClientRect(), p = document.createElement('div');
+  p.className = 'punkt-pop'; p.textContent = text;
+  p.style.left = (r ? Math.min(innerWidth - 36, Math.max(36, r.left + r.width / 2)) : innerWidth / 2) + 'px';
+  p.style.top = (r && r.top > 50 && r.top < innerHeight - 200 ? r.top : innerHeight - 230) + 'px';
+  document.body.appendChild(p); setTimeout(() => p.remove(), 1500);
+}
+// Zahlen auf der Abschlussseite zählen kurz hoch
+function hochzaehlen(wurzel) {
+  for (const b of wurzel.querySelectorAll('[data-hoch]')) {
+    const ziel = +b.dataset.hoch, vor = b.dataset.vor || '', t0 = performance.now(), dauer = 900;
+    if (ruhig() || !ziel) continue;
+    const schritt = t => { const x = Math.min(1, (t - t0) / dauer); b.textContent = vor + zahl(ziel * (1 - Math.pow(1 - x, 3))); if (x < 1 && b.isConnected) requestAnimationFrame(schritt); };
+    b.textContent = vor + '0'; requestAnimationFrame(schritt);
+  }
+}
+// Abschluss des Wird: feine Goldfunken, die langsam fallen. Stärke 3 = fehlerfrei, 2 = mit Hilfe, 1 = mit Fehlern (schwächer)
+function funkeln(staerke) {
+  if (ruhig()) return;
+  const n = [0, 9, 20, 34][staerke], f = document.createElement('div');
+  f.className = 'funken s' + staerke;
+  const FORM = ['stern', 'raute', 'punkt'];
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('i'), gr = (staerke === 1 ? 4 : 5) + Math.random() * (staerke === 1 ? 4 : 8);
+    s.className = FORM[i % 3];
+    s.style.cssText = `left:${(3 + Math.random() * 94).toFixed(1)}%;width:${gr.toFixed(1)}px;height:${gr.toFixed(1)}px;--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dr:${(Math.random() * 300 - 150).toFixed(0)}deg;--ziel:${(55 + Math.random() * 40).toFixed(0)}vh;animation-delay:${(Math.random() * (staerke === 1 ? 1.4 : 1.1)).toFixed(2)}s;animation-duration:${((staerke === 1 ? 3.6 : 3) + Math.random() * 1.8).toFixed(2)}s`;
+    f.appendChild(s);
+  }
+  document.body.appendChild(f); setTimeout(() => f.remove(), 7500);
 }
 function datumText(d = new Date()) {
   const g = d.toLocaleDateString('de-AT', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -54,7 +87,7 @@ function navSetzen(aktiv) {
 const rangBand = r => `<div class="band rang-band"><span class="ar">${Z.RAENGE[r].ar}</span><span><b>Neuer Rang: ${Z.RAENGE[r].n}</b><br>${Z.RAENGE[r].de}. <a href="#raenge">Was das bedeutet</a></span></div>`;
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, fehlerstellen: fehlerstellenSeite };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite };
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
@@ -62,6 +95,7 @@ async function zeige() {
   if (!Z.P && name !== 'start' && name !== 'einfuehrung') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   const f = ROUTEN[name] || heute;
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
+  document.body.classList.remove('doppelt');
   const y = scrollBehalten; scrollBehalten = null;
   if (y == null) window.scrollTo(0, 0);
   await f(...arg);
@@ -271,6 +305,24 @@ function heute() {
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
 }
 
+// ---------- Doppelseite auf PC und Tablet ----------
+// Überall, wo der Muṣḥaf erscheint, zeigen PC und Tablet die aufgeschlagene Doppelseite (ungerade Seite rechts, gerade links).
+// Als Handy gilt ein Gerät, dessen kürzere Bildschirmseite unter 600 px liegt; es bleibt einseitig.
+const doppelseitig = () => Math.min(screen.width, screen.height) >= 600 && innerWidth >= 700;
+const paarVon = p => (p % 2 ? [p, p + 1] : [p - 1, p]).filter(x => x >= 1 && x <= 604);
+// Seiten zu ganzen Doppelseiten ergänzen und paarweise gruppieren
+function doppelseiten(seiten) {
+  const paare = new Map();
+  for (const x of [...new Set(seiten.flatMap(paarVon))].sort((a, b) => a - b)) { const r = x % 2 ? x : x - 1; if (!paare.has(r)) paare.set(r, []); paare.get(r).push(x); }
+  return [...paare.values()];
+}
+const paarHTML = (seiten, opt) => `<div class="paar">${seiten.map(x => seiteHTML(x, typeof opt === 'function' ? opt(x) : opt)).join('')}</div>`;
+let warDoppelt = null;
+addEventListener('resize', () => {
+  const d = doppelseitig(); if (warDoppelt === null) { warDoppelt = d; return; }
+  if (d !== warDoppelt) { warDoppelt = d; if (document.body.dataset.ansicht === 'mushaf' && !document.body.classList.contains('im-vollbild')) zeige(); }
+});
+
 // Kleine Doppelseite für die Einblendung: Zeilen des Abschnitts markiert, ungerade Seite rechts
 function doppelseiteSkizze(e) {
   const erste = Math.min(...e.seiten), letzte = Math.max(...e.seiten);
@@ -304,26 +356,47 @@ async function ueben(idText, quelle, fokusText) {
   const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler' || art === 'stelle');
   const kWoerter = kontext ? ayaWoerter(vorVi) : [];
   const kSeiten = [...new Set(kWoerter.map(x => x[5]))];
-  const kBox = kontext && kSeiten.some(p => !e.seiten.includes(p));
-  await Promise.all([schriftenLaden(e.seiten), ...kWoerter.map(x => schrift(x[4]))]);
+  const dop = doppelseitig(), gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]), alleSeiten = gezeigt.flat();
+  const kBox = kontext && kSeiten.some(p => !alleSeiten.includes(p));
+  document.body.classList.toggle('doppelt', dop);
+  await Promise.all([schriftenLaden(alleSeiten), ...kWoerter.map(x => schrift(x[4]))]);
   const k = Z.karte(id);
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
   // Aufnahme nur im Arbeitsspeicher: nach der Bewertung der Āya wird sie verworfen, nichts wird gespeichert
   const AUFNAHME = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
-  let mikro = null, rec = null, stuecke = [], aufnahme = null, spieler = null;
+  // Jede Aufnahme hat ihren eigenen Rekorder und ihre eigenen Daten. Eine Aufnahme, deren Āya schon bewertet ist
+  // oder die von einer neuen abgelöst wurde, wird verworfen (Nummer passt nicht mehr).
+  let mikro = null, rec = null, aufnahme = null, spieler = null, aufnahmeNr = 0, startet = false;
+  // iPhone: Nach dem Abspielen schaltet Safari das Mikrofon oft stumm, dann liefert es nur noch leere Aufnahmen
+  const mikroLebt = () => !!mikro && mikro.getAudioTracks().some(t => t.readyState === 'live' && !t.muted);
   async function aufnahmeStart() {
-    try { mikro ??= await navigator.mediaDevices.getUserMedia({ audio: true }); }
-    catch (e) { toast('Ohne Zugriff auf das Mikrofon geht keine Aufnahme.'); return; }
-    stuecke = []; rec = new MediaRecorder(mikro);
-    rec.ondataavailable = ev => { if (ev.data.size) stuecke.push(ev.data); };
-    rec.onstop = () => { if (stuecke.length) aufnahme = URL.createObjectURL(new Blob(stuecke, { type: rec.mimeType || 'audio/mp4' })); stuecke = []; zeichne(); };
-    rec.start(); zeichne();
+    if (startet || rec?.state === 'recording') return;
+    startet = true; aufnahmeVerwerfen();   // eine neue Aufnahme ersetzt die vorige
+    try { if (!mikroLebt()) { mikro?.getTracks().forEach(t => t.stop()); mikro = await navigator.mediaDevices.getUserMedia({ audio: true }); } }
+    catch (e) { startet = false; mikro = null; toast('Ohne Zugriff auf das Mikrofon geht keine Aufnahme.'); return; }
+    if (offen || pos >= ayat.length) { startet = false; return; }   // inzwischen aufgedeckt
+    const nr = ++aufnahmeNr, daten = [];
+    let r;
+    try { r = new MediaRecorder(mikro); } catch (e) { startet = false; toast('Die Aufnahme ließ sich nicht starten.'); return; }
+    r.ondataavailable = ev => { if (ev.data?.size) daten.push(ev.data); };
+    r.onstop = () => {
+      if (nr !== aufnahmeNr) return;
+      if (rec === r) rec = null;
+      if (daten.length) { aufnahmeWeg(); aufnahme = URL.createObjectURL(new Blob(daten, { type: r.mimeType || daten[0].type || 'audio/mp4' })); }
+      else { mikro?.getTracks().forEach(t => t.stop()); mikro = null; toast('Die Aufnahme ist leer geblieben. Bitte noch einmal aufnehmen.'); }
+      zeichne();
+    };
+    rec = r; startet = false;
+    r.start(1000);   // Daten jede Sekunde abholen, damit beim Beenden nichts verloren geht
+    zeichne();
   }
   const aufnahmeStopp = () => { if (rec?.state === 'recording') rec.stop(); };
   function aufnahmeWeg() { spieler?.pause(); spieler = null; if (aufnahme) URL.revokeObjectURL(aufnahme); aufnahme = null; }
-  function mikroAus() { if (rec) rec.onstop = null; aufnahmeStopp(); aufnahmeWeg(); mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
+  // laufende und fertige Aufnahme verwerfen (nach der Bewertung oder vor einer neuen Aufnahme)
+  function aufnahmeVerwerfen() { aufnahmeNr++; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); }
+  function mikroAus() { aufnahmeVerwerfen(); mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
   addEventListener('hashchange', mikroAus, { once: true });
   const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
@@ -342,7 +415,9 @@ async function ueben(idText, quelle, fokusText) {
     einbl.onclick = einblWeg;
   }
   const seitenEl = app.querySelector('#seiten');
-  seitenEl.innerHTML = e.seiten.map(p => seiteHTML(p, { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() })).join('');
+  const sOpt = { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() };
+  seitenEl.classList.toggle('doppel', dop);
+  seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
   zeilenEinpassen(seitenEl);
   app.querySelector('#zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#heute');
   const lage = app.querySelector('#lageinfo');
@@ -431,11 +506,12 @@ async function ueben(idText, quelle, fokusText) {
   }
   function bewerte(x) {
     const vi = ayat[pos]; erg[pos] = x; status.set(vi, x);
-    spans(vi).forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
+    const sp = spans(vi); sp.forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
+    if (x !== 'fehler' && art !== 'stelle') punktePop(x === 'ok' ? '+10' : '+5', sp[sp.length - 1]);
     if (x === 'fehler') { markieren = true; fArt = null; return zeichne(); }
     naechsteAya();
   }
-  function naechsteAya() { aufnahmeWeg(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
+  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
   function markierenFertig() {
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
     if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
@@ -443,7 +519,11 @@ async function ueben(idText, quelle, fokusText) {
     if (marken.length) toast(marken.length === 1 ? 'Stelle gemerkt.' : `${marken.length} Stellen gemerkt.`, 1600);
     naechsteAya();
   }
-  A.onclick = ev => { const a = ev.target.dataset.a; if (!a) return; fArt = fArt === a ? null : a; A.querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.a === fArt)); };
+  A.onclick = ev => {
+    const a = ev.target.dataset.a; if (!a) return; fArt = fArt === a ? null : a;
+    A.querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.a === fArt));
+    H.innerHTML = fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : 'Tippe auf das Wort, bei dem du dich vertan hast. Freiwillig.';
+  };
   seitenEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
     if (markieren) { if (+w.dataset.v === ayat[pos]) w.classList.toggle('fmark'); return; }
@@ -481,14 +561,14 @@ async function ueben(idText, quelle, fokusText) {
     const t2 = Z.tagesplan();
     const wirdJetzt = res.ereignisse.some(x => x.typ === 'wird');
     const naechster = t2.plan.find(x => !t2.fertig.includes(x));
-    const orn = res.ereignisse.filter(x => x.typ === 'ornament').map(x => `<div class="band">✦ <span><b>Neues Ornament:</b> ${sureName(x.s)} ist jetzt „${x.stufe}“.</span></div>`).join('')
+    const orn = res.ereignisse.filter(x => x.typ === 'ornament').map(ornBand).join('')
       + res.ereignisse.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('');
     document.querySelector('.steuerung').remove();
     app.innerHTML = `<div class="feier">${qandil()}
       <h2>${res.f ? 'Abschnitt beendet' : res.h ? 'Gut gemacht' : 'Fehlerfrei, mā šāʾa llāh'}</h2>
       <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)} · Stufe: ${Z.STUFEN[res.stufe]}${res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : ''}</span></p>
-      <div class="ernte"><div><b>${res.r + res.h}/${ayat.length}</b><span>Āyāt gekonnt</span></div><div><b>+${zahl(res.punkte)}</b><span>Itqān-Punkte</span></div>
-        <div style="grid-column:1/-1"><b>+${zahl(res.hasanat)}</b><span>Ḥasanāt</span></div></div>
+      <div class="ernte"><div><b>${res.r + res.h}/${ayat.length}</b><span>Āyāt gekonnt</span></div><div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>Itqān-Punkte</span></div>
+        <div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>Ḥasanāt</span></div></div>
       <p class="niyya">Jeder Buchstabe zehnfach, bei aufrichtiger Niyya, in šāʾa llāh.</p>
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
       ${res.f ? `<div class="hinweisbox">Die ${res.f === 1 ? 'Fehler-Āya kommt' : res.f + ' Fehler-Āyāt kommen'} morgen wieder dran. Dann mit Markierung.</div>` : ''}
@@ -499,7 +579,7 @@ async function ueben(idText, quelle, fokusText) {
     const w = app.querySelector('#weiter'); if (w) w.onclick = () => location.hash = '#fertig';
     const n = app.querySelector('#naechster'); if (n) n.onclick = () => location.replace(`#ueben/${naechster}`);
     const u = app.querySelector('#uebersicht'); if (u) u.onclick = () => location.hash = '#heute';
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); hochzaehlen(app);
   }
   zeichne();
   // nächste Seiten schon laden
@@ -515,18 +595,22 @@ function fertig() {
   const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
     x.typ === 'kette' ? `<div class="band">✦ <span><b>${x.n} Tage in Folge.</b> ${x.n === 66 ? 'Im Mittel wird eine Gewohnheit nach etwa 66 Tagen zur Selbstverständlichkeit.' : x.n === 40 ? 'Vierzig Tage Beständigkeit.' : 'Beständigkeit ist das Liebste bei Allāh, auch wenn es wenig ist.'}</span></div>`
     : x.typ === 'khatma' ? `<div class="band">✦ <span><b>Ḫatma ${x.n} vollendet.</b> Allāhumma rḥamnī bi-l-Qurʾān.</span></div>`
-    : `<div class="band">✦ <span><b>Neues Ornament:</b> ${sureName(x.s)} ist jetzt „${x.stufe}“.</span></div>`).join('');
+    : ornBand(x)).join('');
   app.innerHTML = `<div class="feier">${qandil()}
     <div class="ar">اللَّهُمَّ بَارِكْ</div><h2>Allāhumma bārik</h2>
     <p>Dein Wird für heute ist vollbracht.<br>Die ${P.kette.n}. Lampe deiner Kette brennt.</p>
-    <div class="ernte"><div><b>${quote}</b><span>Āyāt gekonnt</span></div><div><b>+${zahl(t.punkte)}</b><span>Itqān-Punkte heute</span></div>
-      <div><b>+${zahl(t.hasanat)}</b><span>Ḥasanāt heute</span></div><div><b>${P.kette.n}</b><span>Tage Kette</span></div></div>
+    <div class="ernte"><div><b>${quote}</b><span>Āyāt gekonnt</span></div><div><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>Itqān-Punkte heute</span></div>
+      <div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>Ḥasanāt heute</span></div><div><b>${P.kette.n}</b><span>Tage Kette</span></div></div>
     <p class="niyya">Ḥasanāt nach dem Ḥadīṯ: jeder Buchstabe zehnfach, bei aufrichtiger Niyya, in šāʾa llāh.</p>
     ${extra}
     ${bonusId != null ? `<div class="angebot"><b>Noch Kraft für mehr?</b><p>Ein Bonusabschnitt bringt dir heute 50 % mehr Itqān-Punkte. Vorschlag: ${abschnittName(D.A[bonusId])}, „${esc(D.A[bonusId].titel)}“.</p><button id="bonus">Bonusabschnitt beginnen</button></div>` : ''}
     <button class="textlink" id="genug" style="margin-top:12px">Für heute genug</button></div>`;
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
   app.querySelector('#genug').onclick = () => location.hash = '#heute';
+  hochzaehlen(app);
+  // fehlerfrei: volle Funken, mit Hilfe etwas weniger, mit Fehlern nur ein schwacher Schimmer
+  funkeln(t.f ? 1 : t.h ? 2 : 3);
+  app.querySelector('.feier').classList.add(t.f ? 'mit-fehlern' : 'strahlt');
 }
 
 // ---------- Lichtkarte ----------
@@ -639,28 +723,34 @@ function seitenOptionen(p) {
 const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 async function mushaf(pText, aText) {
   navSetzen('mushaf');
-  const p = Math.min(604, Math.max(1, +pText || 1));
+  const p = Math.min(604, Math.max(1, +pText || 1)), dop = doppelseitig();
+  const seiten = dop ? paarVon(p) : [p];
+  document.body.classList.toggle('doppelt', dop);
+  const naechste = Math.min(604, seiten[seiten.length - 1] + 1), vorige = Math.max(1, seiten[0] - 1);
+  const knopfText = x => dop ? `Seiten ${paarVon(x).join('–')}` : `Seite ${x}`;
   app.innerHTML = '<div class="lade">Seite wird geladen …</div>';
-  await schriftenLaden([p]);
-  const abschnitte = D.A.filter(e => e.seiten.includes(p));
+  await schriftenLaden(seiten);
+  const abschnitte = D.A.filter(e => e.seiten.some(x => seiten.includes(x)));
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
   const t = Z.tagesplan();
-  const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0];
-  app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>Seite ${p} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
+  const s = D.V[D.L[seiten[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
+  const opt = { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
+  app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>${seiten.length > 1 ? `Seiten ${seiten.join(' und ')}` : `Seite ${p}`} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
       <div class="reihe-k"><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><select id="nr" class="seitenwahl" aria-label="Seite">${seitenOptionen(p)}</select></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
     ${stellenWahl(s)}
-    <div class="reihe" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ Seite ${Math.min(604, p + 1)}</button><button class="knopf leise klein" id="zur">Seite ${Math.max(1, p - 1)} ›</button></div>
-    <div id="seite">${seiteHTML(p, { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true })}<button class="vollbild-knopf" id="vollbild" aria-label="Seite im Vollbild zeigen">${vollbildIcon}</button></div>
-    <div class="titel-klein">Abschnitte auf dieser Seite</div>
+    <div class="reihe blaettern" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
+    <div id="seite" class="${dop ? 'doppel' : ''}">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}<button class="vollbild-knopf" id="vollbild" aria-label="Seite im Vollbild zeigen">${vollbildIcon}</button></div>
+    <div class="titel-klein">Abschnitte auf ${seiten.length > 1 ? 'diesen Seiten' : 'dieser Seite'}</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
-      return `<div class="karte tonk${e.id % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
+      return `<div class="karte tonk${e.id % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${e.nr ? `${sureName(e.von[0])} <b class="nr-fett">${e.nr}</b>` : abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ' <span class="marke-art bonus">heute dran</span>' : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">Üben</a></div>`;
     }).join('')}`;
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
-  app.querySelector('#vor').onclick = () => { scrollBehalten = scrollY; location.replace('#mushaf/' + Math.min(604, p + 1)); };
-  app.querySelector('#zur').onclick = () => { scrollBehalten = scrollY; location.replace('#mushaf/' + Math.max(1, p - 1)); };
+  const blaettern = ziel => { if (seiten.includes(ziel)) return; scrollBehalten = scrollY; location.replace('#mushaf/' + ziel); };
+  app.querySelector('#vor').onclick = () => blaettern(naechste);
+  app.querySelector('#zur').onclick = () => blaettern(vorige);
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
   app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
@@ -669,8 +759,15 @@ async function mushaf(pText, aText) {
   seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
   seiteEl.addEventListener('touchend', e => {
     if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) { scrollBehalten = scrollY; location.replace('#mushaf/' + (dx > 0 ? Math.min(604, p + 1) : Math.max(1, p - 1))); }
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) blaettern(dx > 0 ? naechste : vorige);
   });
+  // Tastatur am PC: Pfeil links = weiter (wie im Buch), Pfeil rechts = zurück
+  const tasten = ev => {
+    if (!seiteEl.isConnected) { removeEventListener('keydown', tasten); return; }
+    if (document.body.classList.contains('im-vollbild') || ev.target.closest?.('select,input')) return;
+    if (ev.key === 'ArrowLeft') blaettern(naechste); else if (ev.key === 'ArrowRight') blaettern(vorige);
+  };
+  addEventListener('keydown', tasten);
   stellenWahlBinden();
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
@@ -685,7 +782,8 @@ async function mushaf(pText, aText) {
     ws.forEach(w => w.classList.add('angesprungen')); setTimeout(() => ws.forEach(w => w.classList.remove('angesprungen')), 2600);
     ws[0]?.scrollIntoView({ block: 'center' });
   }
-  if (p < 604) schriftenLaden([p + 1]); if (p > 1) schriftenLaden([p - 1]);
+  if (naechste > seiten[seiten.length - 1]) schriftenLaden(dop ? paarVon(naechste) : [naechste]);
+  if (vorige < seiten[0]) schriftenLaden(dop ? paarVon(vorige) : [vorige]);
 }
 
 // ---------- Vollbild: nur die Seite, Blättern nach rechts und links ----------
@@ -697,7 +795,7 @@ async function vollbild(start) {
   document.body.appendChild(v); document.body.classList.add('im-vollbild');
   try { document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch(() => {}); } catch (e) {}   // nicht abwarten: iPhone kennt es nicht
   const buehne = v.querySelector('.vb-buehne');
-  const quer = () => innerWidth > innerHeight;
+  const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
   const farben = x => { const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
   async function zeige(neu, richtung = 0) {
@@ -777,8 +875,11 @@ function profil() {
   const tage = Z.letzteTage(30);
   const max = Math.max(1, ...tage.map(x => x.t?.punkte || 0));
   const schwach = Z.schwaechste(6);
-  const orn = P.meilen.filter(m => m.startsWith('sure-')).map(m => { const [, st, sn] = m.split('-'); return `${sureName(+sn)} ${st}`; });
-  const ketten = P.meilen.filter(m => m.startsWith('kette-')).map(m => m.split('-')[1] + ' Tage');
+  Z.ornamenteNachtragen();
+  // zuletzt gesammelte Ornamente als kleine Vorschau
+  const gesammelt = [...new Set(P.meilen.filter(m => m.startsWith('sure-')).map(m => +m.split('-')[2]))];
+  const zuletzt = gesammelt.map(sn => ({ sn, o: Z.ornamentStand(sn) })).sort((a, b) => (b.o.datum || '').localeCompare(a.o.datum || '')).slice(0, 3);
+  const vergoldet = gesammelt.filter(sn => P.meilen.includes('sure-mutqan-' + sn)).length;
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : 'Dein Profil'}<small>dabei seit ${new Date(P.erstellt).toLocaleDateString('de-AT')} · ${P.zyklus.khatma} ${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'} vollendet</small></div>
     ${rangKarte()}
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>Itqān-Punkte</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>Ḥasanāt</span></div><div class="zahl"><b>${quote} %</b><span>Āyāt sicher</span></div>
@@ -787,9 +888,8 @@ function profil() {
     <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="unterseiten"><a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
-      <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a></div>
-    <div class="titel-klein">Ornamente und Meilensteine</div>
-    ${orn.length || ketten.length ? `<p>${[...ketten, ...orn].map(x => `<span class="pille" style="margin:0 6px 6px 0">✦ ${x}</span>`).join('')}</p>` : '<p class="leer">Dein erstes Ornament bekommst du, wenn eine ganze Sūra gefestigt ist.</p>'}
+      <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
+      <a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>Ornamente und Meilensteine</b><span>${gesammelt.length} von 114 Ornamenten${vergoldet ? ` · ${vergoldet} vergoldet` : ''}</span></div><span class="pfeil">›</span></a></div>
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei.${P.einst.letzteSicherung ? ` Letzte Sicherung: ${new Date(P.einst.letzteSicherung).toLocaleDateString('de-AT')}.` : ''}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
@@ -807,6 +907,55 @@ function profil() {
       Z.ersetzeProfil(neu); location.hash = '#heute'; location.reload();
     } catch (e) { toast('Das ist keine gültige Itqān-Profildatei.'); }
   };
+}
+
+// ---------- Ornamente und Meilensteine ----------
+const ornBand = x => `<div class="band orn-band">${ornamentSVG(x.s, x.stufe === 'mutqan' ? 4 : 2, 'mini')}<span>${x.stufe === 'mutqan' ? `<b>Vergoldet:</b> Das Ornament von ${sureName(x.s)} glänzt jetzt in Gold, die ganze Sūra ist mutqan.` : `<b>Neues Ornament:</b> ${sureName(x.s)} ist ganz gefestigt.`} <a href="#ornamente">Ansehen</a></span></div>`;
+function ornamentDetail(s) {
+  const o = Z.ornamentStand(s), info = ornamentInfo(s), e0 = Z.sureAbschnitte(s)[0];
+  const art = s === 1 ? 'Umm al-Kitāb: eine große Šamsa mit sieben Blättern für die sieben Āyāt.'
+    : info.klasse === 1 && info.blaetter === info.ayat ? `Eine Rosette mit ${info.ayat} Blättern, eines für jede Āya.` : KLASSEN_TEXT[info.klasse] + '.';
+  const stand = o.stufe >= 4 ? `Vergoldet${o.datum ? ' am ' + new Date(o.datum).toLocaleDateString('de-AT') : ''}. Die ganze Sūra ist mutqan.`
+    : o.stufe >= 2 ? `Gesammelt${o.erst ? ' am ' + new Date(o.erst).toLocaleDateString('de-AT') : ''}. Vergoldet wird es, wenn alle ${o.gesamt} ${o.gesamt === 1 ? 'Abschnitt' : 'Abschnitte'} mutqan sind (jetzt ${o.mutqan}).`
+    : !o.imBereich ? 'Diese Sūra liegt nicht ganz in deinem Wiederholungsbereich.'
+    : `Noch nicht gesammelt: ${o.gefestigt} von ${o.gesamt} ${o.gesamt === 1 ? 'Abschnitt' : 'Abschnitten'} gefestigt.`;
+  const anteil = o.stufe >= 2 ? o.mutqan / o.gesamt : o.gefestigt / o.gesamt;
+  const d = document.createElement('div'); d.className = 'orn-detail';
+  d.innerHTML = `<div class="orn-karte" role="dialog" aria-label="Ornament ${esc(sureName(s))}">
+    <div class="orn-gross">${ornamentSVG(s, o.stufe)}</div>
+    <div class="ar">${sureArabisch(s)}</div><h2>${s}. ${esc(sureName(s))}</h2>
+    <p class="unter">${art}</p><p>${stand}</p>
+    ${o.imBereich && o.stufe < 4 ? `<div class="balken"><div style="width:${(anteil * 100).toFixed(1)}%"></div></div><div class="klein-zeile"><span>${o.stufe >= 2 ? 'mutqan' : 'gefestigt'}</span><span>${o.stufe >= 2 ? o.mutqan : o.gefestigt} von ${o.gesamt}</span></div>` : ''}
+    <div class="reihe" style="margin-top:14px">${e0 ? `<a class="knopf leise klein" href="#mushaf/${e0.seiten[0]}/${e0.id}" style="text-decoration:none">Im Muṣḥaf</a>` : ''}<button class="knopf haupt klein" id="orn-zu">Schließen</button></div></div>`;
+  const zu = () => { d.classList.add('weg'); setTimeout(() => d.remove(), 250); removeEventListener('hashchange', zu); };
+  d.onclick = ev => { if (ev.target === d || ev.target.id === 'orn-zu') zu(); };
+  addEventListener('hashchange', zu);
+  document.body.appendChild(d);
+}
+function ornamenteSeite() {
+  navSetzen('profil');
+  Z.ornamenteNachtragen();
+  const P = Z.P, st = Array.from({ length: 115 }, (_, s) => s ? Z.ornamentStand(s) : null);
+  const ges = st.filter(x => x?.stufe >= 2).length, gold = st.filter(x => x?.stufe >= 4).length;
+  const ketten = Z.KETTEN_MEILEN.map(n => { const hat = P.meilen.includes('kette-' + n); return `<div class="meilenstein ${hat ? 'hat' : ''}">${lampeKlein}<b>${n}</b><span>Tage</span></div>`; }).join('');
+  let filter = 'alle';
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Ornamente<small>Für jede Sūra ein eigenes Ornament. Du bekommst es, wenn alle Abschnitte der Sūra gefestigt sind. Ist die ganze Sūra mutqan, wird es vergoldet. Je länger die Sūra, desto prächtiger das Ornament.</small></div>
+    <div class="zahlen"><div class="zahl"><b>${ges}</b><span>von 114 gesammelt</span></div><div class="zahl"><b>${gold}</b><span>vergoldet</span></div><div class="zahl"><b>${P.zyklus.khatma}</b><span>${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'}</span></div></div>
+    <div class="wahl" id="ofilter" style="margin-top:16px"><button data-w="alle" class="an">Alle 114</button><button data-w="hat">Gesammelt</button><button data-w="offen">Noch offen</button></div>
+    <div class="orn-gitter" id="og"></div>
+    <div class="titel-klein">Meilensteine der Kette</div>
+    <div class="meilensteine">${ketten}</div>
+    <p class="unter" style="margin-top:8px">Längste Kette: ${P.kette.beste} ${P.kette.beste === 1 ? 'Tag' : 'Tage'} · höchster Rang: ${Z.RAENGE[P.rangBeste?.r ?? 0].n}</p>`;
+  const og = app.querySelector('#og');
+  const zeichnen = () => {
+    const liste = Array.from({ length: 114 }, (_, i) => i + 1).filter(s => filter === 'alle' || (filter === 'hat') === (st[s].stufe >= 2));
+    og.innerHTML = liste.length ? liste.map(s => `<button class="orn-kachel k${klasse(s)}${st[s].stufe ? '' : ' offen'}" data-s="${s}" aria-label="${esc(sureName(s))}">${ornamentSVG(s, st[s].stufe)}<span>${s}. ${esc(sureName(s))}</span></button>`).join('')
+      : `<p class="leer" style="grid-column:1/-1">${filter === 'hat' ? 'Dein erstes Ornament bekommst du, wenn alle Abschnitte einer Sūra gefestigt sind.' : 'Alle 114 Ornamente sind gesammelt. Allāhumma bārik.'}</p>`;
+  };
+  zeichnen();
+  og.onclick = ev => { const b = ev.target.closest('[data-s]'); if (b) ornamentDetail(+b.dataset.s); };
+  app.querySelector('#ofilter').onclick = ev => { const w = ev.target.dataset.w; if (!w) return; filter = w; app.querySelectorAll('#ofilter button').forEach(b => b.classList.toggle('an', b.dataset.w === w)); zeichnen(); };
 }
 
 // ---------- Fortschritt (schwächste Abschnitte) ----------

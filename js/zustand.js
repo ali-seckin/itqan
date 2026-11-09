@@ -29,7 +29,7 @@ export function laden() {
 export function ergaenzen(p) {
   p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.fstellen ??= {};
   if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
-  p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1';
+  p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1'; p.meilenD ??= {};
   return p;
 }
 export function speichern() {
@@ -41,7 +41,7 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
     einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
-    meilen: [], fstellen: {}
+    meilen: [], meilenD: {}, fstellen: {}
   };
   speichern(); return P;
 }
@@ -176,7 +176,15 @@ export function bonusVorschlag() { return fortsetzung(tagesplan()); }
 
 // ---------- Fehlerstellen (einzelne Wörter) ----------
 // P.fstellen['vi.i'] = { n: Anzahl, t: { Art: Anzahl }, d: zuletzt }
-export const FEHLERARTEN = [['verwechslung', 'Verwechslung'], ['ausgelassen', 'Ausgelassen'], ['haraka', 'Ḥaraka'], ['haenger', 'Hänger']];
+export const FEHLERARTEN = [['verwechslung', 'Verwechslung'], ['abweichung', 'Abweichung'], ['ausgelassen', 'Ausgelassen'], ['haraka', 'Ḥaraka'], ['haenger', 'Hänger']];
+// kurze Erklärung, die beim Antippen einer Fehlerart erscheint
+export const FEHLERARTEN_TEXT = {
+  verwechslung: 'Mit einer ähnlichen Stelle verwechselt (Mutašābih).',
+  abweichung: 'Kleine Abweichung im Wort, z. B. ohne Wāw gelesen oder Fāʾ statt Wāw.',
+  ausgelassen: 'Ein Wort oder ein Stück übersprungen.',
+  haraka: 'Falscher Vokal oder falsches Zeichen.',
+  haenger: 'Hängen geblieben, erst nach einer Pause weiter.'
+};
 export function fehlerstellenMerken(schluessel, art) {
   for (const s of schluessel) {
     const f = P.fstellen[s] || { n: 0, t: {}, d: null };
@@ -258,22 +266,41 @@ export function abschnittAbschliessen(id, ergebnisse, quelle) {
     else if (z !== datum) P.kette.n = 1;
     P.kette.zuletzt = datum; P.kette.beste = Math.max(P.kette.beste, P.kette.n);
     ereignisse.push({ typ: 'wird' });
-    for (const m of KETTEN_MEILEN) if (P.kette.n >= m && !P.meilen.includes('kette-' + m)) { P.meilen.push('kette-' + m); ereignisse.push({ typ: 'kette', n: m }); }
+    for (const m of KETTEN_MEILEN) if (P.kette.n >= m && !P.meilen.includes('kette-' + m)) { P.meilen.push('kette-' + m); P.meilenD['kette-' + m] = datum; ereignisse.push({ typ: 'kette', n: m }); }
   }
-  // Ornamente: ganze Sūra gefestigt / mutqan
-  for (const s of new Set([e.von[0], e.bis[0]])) {
-    const ids = D.A.filter(x => x.von[0] === s && imBereich(x.id)).map(x => x.id);
-    for (const [st, name] of [[2, 'gefestigt'], [4, 'mutqan']]) {
-      const key = `sure-${name}-${s}`;
-      if (ids.length && !P.meilen.includes(key) && ids.every(x => karte(x).st >= st)) { P.meilen.push(key); ereignisse.push({ typ: 'ornament', s, stufe: name }); }
-    }
-  }
+  // Ornamente: ganze Sūra gefestigt / mutqan (alle Sūren, die der Abschnitt berührt, auch in Sammelkarten)
+  ornamentePruefen(Array.from({ length: e.bis[0] - e.von[0] + 1 }, (_, i) => e.von[0] + i), datum, ereignisse);
   if (k.st > vorher) ereignisse.push({ typ: 'stufe', st: k.st });
   // Rang: neu erreicht, wenn er höher ist als der bisher höchste
   const rg = rangJetzt();
   if (rg > (P.rangBeste?.r ?? 0)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
   speichern();
   return { punkte, teile, hasanat, r, f, h, ereignisse, stufe: k.st, vorher };
+}
+
+// ---------- Ornamente: eines je Sūra, sobald alle ihre Abschnitte gefestigt sind; vergoldet, wenn alle mutqan sind ----------
+export const sureAbschnitte = s => D.A.filter(x => x.von[0] <= s && x.bis[0] >= s);
+function ornamentePruefen(suren, datum, ereignisse) {
+  for (const s of suren) {
+    const ids = sureAbschnitte(s).map(x => x.id);
+    if (!ids.length || !ids.every(imBereich)) continue;   // nur Sūren, die ganz im eigenen Bereich liegen
+    for (const [st, name] of [[2, 'gefestigt'], [4, 'mutqan']]) {
+      const key = `sure-${name}-${s}`;
+      if (!P.meilen.includes(key) && ids.every(x => karte(x).st >= st)) { P.meilen.push(key); (P.meilenD ??= {})[key] = datum; ereignisse?.push({ typ: 'ornament', s, stufe: name }); }
+    }
+  }
+}
+// verpasste Ornamente nachtragen (früher bekamen Sūren in Sammelkarten keines)
+export function ornamenteNachtragen() {
+  const n = P.meilen.length;
+  ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), heute());
+  if (P.meilen.length !== n) speichern();
+}
+export function ornamentStand(s) {
+  const ids = sureAbschnitte(s).map(x => x.id), st = ids.map(x => karte(x).st);
+  const g = `sure-gefestigt-${s}`, m = `sure-mutqan-${s}`;
+  return { gesamt: ids.length, imBereich: ids.every(imBereich), gefestigt: st.filter(x => x >= 2).length, mutqan: st.filter(x => x >= 4).length,
+    stufe: P.meilen.includes(m) ? 4 : P.meilen.includes(g) ? 2 : 0, datum: P.meilenD?.[m] || P.meilenD?.[g] || null, erst: P.meilenD?.[g] || null };
 }
 
 // ---------- Ränge (Stufen des Itqān) ----------
