@@ -384,7 +384,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   if (art !== 'frei' && !P.zyklus.erledigt.includes(id)) {
     P.zyklus.erledigt.push(id);
     if (reihe().every(x => P.zyklus.erledigt.includes(x))) {
-      P.zyklus.khatma++; P.zyklus.erledigt = []; P.zyklus.beginn = datum;
+      P.zyklus.khatma++; P.zyklus.erledigt = []; P.zyklus.beginn = datum; (P.meilenD ??= {})['khatma-' + P.zyklus.khatma] = datum;
       if (!P.einst.bereich) P.zyklus.voll = (P.zyklus.voll || 0) + 1;   // Ḫatma über den ganzen Qurʾān
       ereignisse.push({ typ: 'khatma', n: P.zyklus.khatma });
     }
@@ -548,6 +548,78 @@ export function khatmaFortschritt() {
 export function tageProKhatma(mitRegler = false) {
   const woche = P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
   return Math.ceil(reihe().length / Math.max(0.1, woche) * (mitRegler ? 1 + 1.1 * (SCHWAECHEN[P.einst.schwaechen] ?? 0) : 1));
+}
+
+// ---------- Rückblick: eine Woche (Montag bis Sonntag) oder ein Kalendermonat in Zahlen ----------
+// versatz: 0 = der laufende Zeitraum, 1 = der davor und so weiter
+export function zeitraum(art = 'woche', versatz = 0, bezug = heute()) {
+  if (art === 'monat') {
+    const [y, m] = bezug.split('-').map(Number);
+    return { art, von: heute(new Date(y, m - 1 - versatz, 1)), bis: heute(new Date(y, m - versatz, 0)) };
+  }
+  const von = plusTage(bezug, -wochentag(bezug) - 7 * versatz);
+  return { art: 'woche', von, bis: plusTage(von, 6) };
+}
+// Stand eines Tages: voll (Wird erfüllt), teil (geübt, Wird nicht erfüllt), aus (Wird-Tag ohne Übung),
+// nach (nicht erfüllt, am nächsten Wird-Tag als Qaḍāʾ nachgeholt: die Kette zählt ihn mit),
+// ruhe (Ruhetag oder Pause), offen (heute noch nichts oder Zukunft), vor (vor dem Beginn des Profils)
+function nachgeholt(d, h) {
+  for (let i = 1; i <= 60; i++) {
+    const e = plusTage(d, i), t = P.tage[e];
+    if (e > h) return false;
+    if (t ? t.ruhe && !t.fertig.length : ruhetag(e)) continue;
+    return !!(t && t.qadaa && t.voll);
+  }
+  return false;
+}
+function tagStand(d, h, beginn) {
+  const t = P.tage[d];
+  if (t?.fertig.length && (t.voll || d === h)) return t.voll ? 'voll' : 'teil';
+  if (d > h) return 'offen';
+  if (!t?.fertig.length) {
+    if (d < beginn) return 'vor';
+    if (t ? t.ruhe : ruhetag(d)) return 'ruhe';
+    if (d === h) return 'offen';
+  }
+  return nachgeholt(d, h) ? 'nach' : t?.fertig.length ? 'teil' : 'aus';
+}
+function zeitraumZahlen(von, bis) {
+  const h = heute(), beginn = heute(new Date(P.erstellt)), tage = [];
+  const z = { ayat: 0, r: 0, f: 0, h: 0, punkte: 0, hasanat: 0, abschnitte: 0, zeilen: 0, zeit: 0, geuebt: 0, voll: 0, nach: 0, wird: 0, folge: 0 };
+  let lauf = 0;
+  for (let d = von; d <= bis; d = plusTage(d, 1)) {
+    const t = P.tage[d], stand = tagStand(d, h, beginn), ayat = t?.fertig.length ? t.r + t.f + t.h : 0;
+    if (ayat || t?.fertig.length) {
+      z.geuebt++; z.r += t.r; z.f += t.f; z.h += t.h; z.punkte += t.punkte; z.hasanat += t.hasanat; z.zeit += t.zeit || 0;
+      z.abschnitte += t.fertig.length; z.zeilen += t.fertig.reduce((s, id) => s + (D.A[id]?.zeilen || 0), 0);
+    }
+    if (stand === 'voll' || stand === 'nach') { z.voll++; lauf++; z.folge = Math.max(z.folge, lauf); if (stand === 'nach') z.nach++; }
+    else if (stand === 'aus' || (stand === 'teil' && d < h)) lauf = 0;
+    if (stand === 'voll' || stand === 'nach' || stand === 'teil' || stand === 'aus') z.wird++;
+    tage.push({ d, stand, ayat, punkte: t?.punkte || 0 });
+  }
+  z.ayat = z.r + z.f + z.h;
+  z.quote = z.ayat ? 100 * z.r / z.ayat : null;      // Āyāt ohne Fehler und ohne Hilfe
+  z.seiten = z.zeilen / 15;
+  return { ...z, tage };
+}
+// Rückblick über einen Zeitraum. neu: was in diesem Zeitraum erreicht wurde. vor: dieselben Zahlen des Zeitraums davor.
+export function rueckblick(art = 'woche', versatz = 0) {
+  const { von, bis } = zeitraum(art, versatz), h = heute(), z = zeitraumZahlen(von, bis);
+  const v = zeitraum(art, versatz + 1), vz = zeitraumZahlen(v.von, v.bis);
+  const drin = d => !!d && d >= von && d <= bis, md = Object.entries(P.meilenD || {}).filter(([, d]) => drin(d)).map(([k]) => k);
+  const neu = {
+    ornamente: md.filter(k => k.startsWith('sure-gefestigt-')).length,
+    vergoldet: md.filter(k => k.startsWith('sure-mutqan-')).length,
+    kette: Math.max(0, ...md.filter(k => k.startsWith('kette-')).map(k => +k.slice(6))),
+    khatma: md.filter(k => k.startsWith('khatma-')).length,
+    rang: drin(P.rangBeste?.d) ? P.rangBeste.r : 0
+  };
+  const beste = z.tage.reduce((a, t) => t.ayat > (a?.ayat || 0) ? t : a, null);
+  return { art, versatz, von, bis, laufend: bis >= h, ...z, leer: z.geuebt === 0,
+    kette: bis >= h ? (ketteAktiv() ? P.kette.n : 0) : null, bester: beste ? { d: beste.d, ayat: beste.ayat } : null, neu,
+    vor: { von: v.von, bis: v.bis, ayat: vz.ayat, quote: vz.quote, geuebt: vz.geuebt, abschnitte: vz.abschnitte },
+    frueher: von > heute(new Date(P.erstellt)) };   // es gibt einen Zeitraum davor, in dem das Profil schon bestand
 }
 
 // Auswertung eines fremden Profils (Lehreransicht), ohne das eigene zu verändern

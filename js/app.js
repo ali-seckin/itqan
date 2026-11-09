@@ -7,6 +7,7 @@ import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
+import * as RB from './rueckblick.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -268,7 +269,7 @@ async function gespeicherteSeiten() {
 }
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite };
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
@@ -1249,6 +1250,7 @@ function profil() {
     <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>Auswertung</b><span>Fehlerarten, Sūren, Quote und Zeit</span></div><span class="pfeil">›</span></a>
+      <a class="karte" href="#rueckblick"><div class="t"><b>Rückblick</b><span>Woche und Monat als Bild zum Aufheben und Teilen</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#aehnlich"><div class="t"><b>Ähnliche Stellen</b><span>Mutašābihāt nachschlagen, vergleichen und unterscheiden</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
@@ -1328,6 +1330,69 @@ function fortschrittSeite() {
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
     <div class="marke">Fortschritt<small>Die Abschnitte, in denen du dich am häufigsten vertan hast. Tippe auf einen, um ihn zu üben.</small></div>
     <div style="margin-top:16px">${schwach.length ? schwach.map(({ id, k }) => `<a class="karte" href="#ueben/${id}/frei" style="text-decoration:none;color:inherit"><div class="t"><b>${esc(D.A[id].titel)}</b><span>${abschnittMarke(D.A[id])} · ${k.fe} Fehler in ${k.n} Durchgängen${k.fae ? ' · kommt wieder' : ''}</span></div>${stufePunkte(k.st)}</a>`).join('') : '<p class="leer">Noch keine Daten. Nach den ersten Tagen siehst du hier deine schwächsten Abschnitte.</p>'}</div>`;
+}
+
+// ---------- Rückblick: eine Woche oder ein Monat als Bild zum Aufheben und Teilen ----------
+let rbLauf = 0, rbAdresse = '';
+async function rueckblickSeite(art, versatz) {
+  navSetzen('profil');
+  const P = Z.P, lauf = ++rbLauf;
+  // ohne Angabe: die laufende Woche, und wenn in ihr noch nichts geübt wurde, die Woche davor
+  if (!art) { const jetzt = Z.rueckblick('woche', 0); location.replace(`#rueckblick/woche/${jetzt.leer && jetzt.frueher && !Z.rueckblick('woche', 1).leer ? 1 : 0}`); return; }
+  art = art === 'monat' ? 'monat' : 'woche';
+  const v = Math.max(0, Math.min(art === 'monat' ? 13 : 57, parseInt(versatz) || 0)), R = Z.rueckblick(art, v);
+  const wort = art === 'monat' ? ['Dieser Monat', 'Letzter Monat', `vor ${v} Monaten`] : ['Diese Woche', 'Letzte Woche', `vor ${v} Wochen`];
+  const einheit = art === 'monat' ? 'Monat' : 'Woche';
+  let mitName = !!P.name && P.einst.rbName !== false, blob = null;
+  const name = () => mitName ? P.name : '';
+  // ob dieses Gerät Bilder an andere Apps weitergeben kann (iPhone, Android)
+  let kannTeilen = false;
+  try { kannTeilen = istTouch() && !!navigator.canShare?.({ files: [new File([new Blob(['x'], { type: 'image/png' })], 'x.png', { type: 'image/png' })] }); } catch (e) {}
+  const worte = () => RB.beschreibung(R, name());
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Rückblick<small>Eine Woche oder ein Monat als Bild: zum Aufheben oder zum Teilen mit Lehrer, Eltern und Freunden.</small></div>
+    <div class="wahl" id="rb-art" style="margin-top:16px" role="group" aria-label="Zeitraum"><button data-w="woche" class="${art === 'woche' ? 'an' : ''}" aria-pressed="${art === 'woche'}">Woche</button><button data-w="monat" class="${art === 'monat' ? 'an' : ''}" aria-pressed="${art === 'monat'}">Monat</button></div>
+    <div class="rb-zeit"><button class="rb-pfeil" id="rb-vor" aria-label="${einheit} davor"${R.frueher ? '' : ' disabled'}>‹</button>
+      <div class="mitte" aria-live="polite"><b>${RB.zeitraumTitel(R)}</b><span>${wort[Math.min(v, 2)]}${R.laufend && !R.leer ? ' · läuft noch' : ''}</span></div>
+      <button class="rb-pfeil" id="rb-nach" aria-label="${einheit} danach"${v ? '' : ' disabled'}>›</button></div>
+    ${R.leer ? `<p class="leer rb-leer">In ${art === 'monat' ? 'diesem Monat' : 'dieser Woche'} hast du ${R.laufend ? 'noch nicht' : 'nicht'} geübt.${R.frueher ? ` Mit dem Pfeil links kommst du zu${art === 'monat' ? 'm Monat' : 'r Woche'} davor.` : ''}</p>` : `
+    <div class="rb-bild"><img id="rb-img" alt="${esc(worte().join(' '))}"></div>
+    <div class="reihe" style="margin-top:14px">${kannTeilen ? '<button class="knopf haupt" id="rb-teilen" disabled>Teilen</button>' : ''}<button class="knopf ${kannTeilen ? 'leise' : 'haupt'}" id="rb-speichern" disabled>Bild speichern</button></div>
+    ${P.name ? `<label class="haken rb-name"><input type="checkbox" id="rb-name"${mitName ? ' checked' : ''}> Mein Name steht auf dem Bild</label>` : ''}
+    <div class="titel-klein">In Worten</div>
+    <ul class="rb-worte" id="rb-worte">${worte().slice(1).map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+    <p class="unter" style="margin-top:12px">Das Bild entsteht auf deinem Gerät. Es verlässt das Gerät erst, wenn du es teilst.</p>`}`;
+  const zu = (a, n) => location.replace(`#rueckblick/${a}/${n}`);
+  app.querySelector('#rb-art').onclick = ev => { const b = ev.target.closest('button'); if (b && b.dataset.w !== art) zu(b.dataset.w, 0); };
+  app.querySelector('#rb-vor').onclick = () => zu(art, v + 1);
+  app.querySelector('#rb-nach').onclick = () => zu(art, v - 1);
+  if (R.leer) return;
+  const img = app.querySelector('#rb-img'), knoepfe = app.querySelectorAll('#rb-teilen, #rb-speichern');
+  // Das Bild wird fertig gezeichnet, bevor jemand auf „Teilen“ tippt: das iPhone erlaubt das Teilen nur direkt im Tipp.
+  async function malen() {
+    knoepfe.forEach(k => k.disabled = true);
+    await RB.schriftenBereit(RB.zeitraumTitel(R) + worte().join(' '));
+    const fertig = await new Promise(res => RB.zeichnen(document.createElement('canvas'), R, RB.farbenLesen(), name()).toBlob(res, 'image/png'));
+    if (lauf !== rbLauf || !img.isConnected || !fertig) return;
+    blob = fertig;
+    if (rbAdresse) URL.revokeObjectURL(rbAdresse);
+    img.src = rbAdresse = URL.createObjectURL(blob); img.alt = worte().join(' ');
+    knoepfe.forEach(k => k.disabled = false);
+  }
+  const speichern = () => { herunterladen(RB.dateiName(R, name()), blob, 'image/png'); toast(geraet() === 'pc' ? 'Das Bild liegt bei deinen Downloads.' : 'Bild gespeichert.'); };
+  app.querySelector('#rb-speichern').onclick = () => { if (blob) speichern(); };
+  const teilen = app.querySelector('#rb-teilen');
+  if (teilen) teilen.onclick = async () => {
+    if (!blob) return;
+    try { await navigator.share({ files: [new File([blob], RB.dateiName(R, name()), { type: 'image/png' })], title: 'Itqān · Rückblick' }); }
+    catch (e) { if (e.name !== 'AbortError') speichern(); }   // Teilen nicht möglich: das Bild wenigstens speichern
+  };
+  const haken = app.querySelector('#rb-name');
+  if (haken) haken.onchange = () => {
+    mitName = haken.checked; P.einst.rbName = mitName; Z.speichern();
+    malen();
+  };
+  await malen();
 }
 
 // ---------- Auswertung: Fehlerarten, Sūren, Quote, Zeit ----------

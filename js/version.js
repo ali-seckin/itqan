@@ -1,10 +1,16 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.8';
+export const VERSION = '1.9';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.9', datum: '2026-11-10', titel: 'Rückblick als Bild', punkte: [
+    'Neu unter Profil: der Rückblick. Eine Woche oder ein Monat als Bild, mit Āyāt, erfüllten Tagen, Sicherheit, Kette und Punkten.',
+    'Teilen auf iPhone und Android direkt aus der App, am Computer als Bilddatei. Mit oder ohne deinen Namen.',
+    'Jeder Tag hat sein Zeichen: erfüllt, nachgeholt, zum Teil, Ruhetag oder ausgefallen. Darunter steht alles noch einmal in Worten.',
+    'Das Bild entsteht auf deinem Gerät und folgt deinem Erscheinungsbild, hell oder dunkel.'
+  ] },
   { v: '1.8', datum: '2026-11-10', titel: 'Mutašābihāt nachschlagen', punkte: [
     'Ähnliche Stellen unter Profil sind jetzt ein Nachschlagewerk: 300 Gruppen ähnlicher Verse mit 750 Stellen, auch die wortgleichen Āyāt.',
     'Suche nach Stelle (2:48), Sūra oder arabischen Wörtern. Filter nach Art des Unterschieds, nach seinem Ort in der Āya und nach Größe der Gruppe.',
