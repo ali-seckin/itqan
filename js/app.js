@@ -3,6 +3,7 @@ import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArab
 import * as Z from './zustand.js';
 import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
+import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 
 const app = document.getElementById('app');
@@ -75,8 +76,10 @@ function herunterladen(name, inhalt, typ) {
 }
 function dateiWaehlen(mehrere = false) {
   return new Promise(res => {
-    const i = document.createElement('input'); i.type = 'file'; i.accept = '.itqan,.json,application/json'; i.multiple = mehrere;
-    i.onchange = async () => res(await Promise.all([...i.files].map(f => f.text()))); i.click();
+    // ohne accept: das iPhone graut unbekannte Endungen wie .itqan sonst aus
+    const i = document.createElement('input'); i.type = 'file'; i.multiple = mehrere; i.style.display = 'none';
+    i.onchange = async () => { res(await Promise.all([...i.files].map(f => f.text()))); i.remove(); };
+    document.body.appendChild(i); i.click();
   });
 }
 function navSetzen(aktiv) {
@@ -87,14 +90,186 @@ function navSetzen(aktiv) {
 
 const rangBand = r => `<div class="band rang-band"><span class="ar">${Z.RAENGE[r].ar}</span><span><b>Neuer Rang: ${Z.RAENGE[r].n}</b><br>${Z.RAENGE[r].de}. <a href="#raenge">Was das bedeutet</a></span></div>`;
 
+// ---------- Dialog (statt confirm): Titel, Inhalt, zwei Knöpfe; liefert true oder false ----------
+function dialog({ titel, html = '', ja = 'OK', nein = 'Abbrechen', gefahr = false }) {
+  return new Promise(fertig => {
+    const d = document.createElement('div'); d.className = 'dialog';
+    d.innerHTML = `<div class="dialog-karte" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3><div class="dialog-text">${html}</div>
+      <div class="reihe">${nein ? `<button class="knopf leise klein" data-a="0">${esc(nein)}</button>` : ''}<button class="knopf ${gefahr ? 'schlecht' : 'haupt'} klein" data-a="1">${esc(ja)}</button></div></div>`;
+    const zu = wert => { d.classList.add('weg'); setTimeout(() => d.remove(), 200); removeEventListener('keydown', taste, true); fertig(wert); };
+    const taste = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); zu(false); } };
+    d.onclick = ev => { const a = ev.target.closest('[data-a]'); if (a) zu(a.dataset.a === '1'); else if (ev.target === d) zu(false); };
+    addEventListener('keydown', taste, true);
+    document.body.appendChild(d); d.querySelector('[data-a="1"]').focus();
+  });
+}
+
+// ---------- Gerät und Installation ----------
+const istInstalliert = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const istTouch = () => matchMedia('(pointer: coarse)').matches;
+function geraet() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPod/.test(ua)) return 'iphone';
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ipad';
+  if (/Android/.test(ua)) return 'android';
+  return 'pc';
+}
+let installHinweis = null;   // Chrome und Edge bieten Installieren mit einem Tipp an
+addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installHinweis = ev; });
+
+// ---------- Profil sichern und laden ----------
+// Am Handy öffnet „Profil sichern“ das Teilen-Menü (Dateien, iCloud Drive, WhatsApp), am PC wird die Datei heruntergeladen.
+async function profilSichern() {
+  const P = Z.P, name = `Itqan-${(P.name || 'Profil').replace(/[^\p{L}\p{N}]+/gu, '_')}-${Z.heute()}.itqan`;
+  const text = await Z.exportDatei();
+  let geteilt = false;
+  if (istTouch() && navigator.canShare) {
+    const datei = new File([text], name, { type: 'application/octet-stream' });
+    if (navigator.canShare({ files: [datei] })) {
+      try { await navigator.share({ files: [datei], title: 'Itqān-Profil' }); geteilt = true; }
+      catch (e) { if (e.name === 'AbortError') return false; }
+    }
+  }
+  if (!geteilt) herunterladen(name, text, 'application/octet-stream');
+  P.einst.letzteSicherung = new Date().toISOString(); Z.speichern();
+  toast('Profil gesichert.');
+  return true;
+}
+const datumKurz = d => d ? new Date(d.length === 10 ? d + 'T12:00' : d).toLocaleDateString('de-AT', { day: 'numeric', month: 'long', year: 'numeric' }) : 'noch nie';
+async function profilLaden() {
+  const [text] = await dateiWaehlen(); if (!text) return;
+  let r;
+  try { r = await Z.importDatei(text); } catch (e) { toast('Das ist keine gültige Itqān-Profildatei.'); return; }
+  const u = Z.profilUeberblick(r.profil);
+  const ok = await dialog({ titel: 'Dieses Profil laden?', ja: 'Laden', html: `<div class="ueberblick">
+      <div><span>Name</span><b>${esc(u.name || 'ohne Namen')}</b></div>
+      <div><span>Gesichert am</span><b>${datumKurz(r.exportiert)}</b></div>
+      <div><span>Zuletzt geübt</span><b>${datumKurz(u.letzterTag)}</b></div>
+      <div><span>Abschnitte geübt</span><b>${zahl(u.abschnitte)}</b></div>
+      <div><span>Itqān-Punkte</span><b>${zahl(u.punkte)}</b></div>
+      <div><span>Kette</span><b>${u.kette} ${u.kette === 1 ? 'Tag' : 'Tage'}</b></div></div>
+    ${r.echt ? '' : '<p class="warnung">Achtung: Die Datei wurde nach dem Sichern verändert.</p>'}
+    ${Z.P ? '<p class="unter">Dein jetziger Stand auf diesem Gerät wird ersetzt. Vorher legt Itqān einen Schnappschuss an, den du in den Einstellungen zurückholen kannst.</p>' : ''}` });
+  if (!ok) return;
+  if (Z.P) Z.schnappschuss('vor dem Laden einer Sicherung');
+  Z.ersetzeProfil(r.profil);
+  try { localStorage.setItem(EINF_KEY, '1'); } catch (e) {}
+  location.hash = '#heute'; location.reload();
+}
+
+// ---------- Installieren ----------
+const teilenSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>';
+const plusSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+const punkteSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
+function installieren() {
+  navSetzen(Z.P ? 'profil' : null);
+  const g = geraet();
+  const schritte = {
+    iphone: [`Öffne Itqān in <b>Safari</b>.`, `Tippe unten auf ${teilenSymbol} <b>Teilen</b>.`, `Wähle ${plusSymbol} <b>Zum Home-Bildschirm</b>, dann <b>Hinzufügen</b>.`],
+    ipad: [`Öffne Itqān in <b>Safari</b>.`, `Tippe oben auf ${teilenSymbol} <b>Teilen</b>.`, `Wähle ${plusSymbol} <b>Zum Home-Bildschirm</b>, dann <b>Hinzufügen</b>.`],
+    android: [`Öffne Itqān in <b>Chrome</b>.`, `Tippe oben rechts auf ${punkteSymbol} das Menü.`, `Wähle <b>App installieren</b> oder <b>Zum Startbildschirm hinzufügen</b>.`],
+    pc: [`Öffne Itqān in <b>Chrome</b> oder <b>Edge</b>.`, `Klicke rechts in der Adressleiste auf das Symbol <b>App installieren</b>.`, `Bestätige mit <b>Installieren</b>. Itqān öffnet sich dann in einem eigenen Fenster.`]
+  }[g];
+  app.innerHTML = `${Z.P ? `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>` : `<button class="zurueck" onclick="history.back()">${zurueckPfeil}Zurück</button>`}
+    <div class="marke">Itqān installieren<small>Als App auf dem Home-Bildschirm startet Itqān schneller, im Vollbild und auch ohne Internet.</small></div>
+    ${istInstalliert() ? '<div class="hinweisbox"><b>Itqān ist auf diesem Gerät bereits installiert.</b></div>' : ''}
+    ${installHinweis ? '<button class="knopf haupt" id="jetzt-installieren" style="margin-top:16px">Jetzt installieren</button>' : ''}
+    <ol class="install-schritte">${schritte.map(s => `<li><span>${s}</span></li>`).join('')}</ol>
+    <div class="hinweisbox"><b>Wichtig:</b> ${g === 'iphone' || g === 'ipad' ? 'Auf dem iPhone und iPad hat die App auf dem Home-Bildschirm einen eigenen Speicher, getrennt von Safari.' : 'Die installierte App und der Browser können getrennte Speicher haben.'} Wenn du schon im Browser geübt hast: erst dort <b>Profil sichern</b>, dann in der installierten App <b>Profil laden</b>. Wer das Symbol vom Home-Bildschirm löscht, löscht auch den Fortschritt darin, darum vorher sichern.</div>
+    ${Z.P ? '<button class="knopf leise" id="inst-sichern">Profil jetzt sichern</button>' : ''}`;
+  const j = app.querySelector('#jetzt-installieren');
+  if (j) j.onclick = async () => { installHinweis.prompt(); const w = await installHinweis.userChoice.catch(() => null); installHinweis = null; if (w?.outcome === 'accepted') toast('Itqān wird installiert.'); installieren(); };
+  const s = app.querySelector('#inst-sichern'); if (s) s.onclick = profilSichern;
+}
+
+// ---------- Was ist neu ----------
+const VERSION_KEY = 'itqan-version-gesehen';
+function neuigkeitenHTML(liste) {
+  return liste.map(n => `<div class="neu-eintrag"><div class="neu-kopf"><b>Version ${n.v}</b><span>${datumKurz(n.datum)}</span></div><h4>${esc(n.titel)}</h4><ul>${n.punkte.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('');
+}
+function neuigkeitenSeite() {
+  navSetzen('profil');
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Was ist neu<small>Itqān ${VERSION}. Jede Veröffentlichung mit ihren Änderungen.</small></div>
+    <div style="margin-top:16px">${neuigkeitenHTML(NEUIGKEITEN)}</div>`;
+}
+async function neuigkeitenPruefen() {
+  let gesehen = null; try { gesehen = localStorage.getItem(VERSION_KEY); } catch (e) {}
+  const merken = () => { try { localStorage.setItem(VERSION_KEY, VERSION); } catch (e) {} };
+  if (!Z.P) { merken(); return; }
+  if (gesehen === VERSION) return;
+  const vgl = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x.at(i) || 0) - (y.at(i) || 0); if (d) return d; } return 0; };
+  const neu = gesehen ? NEUIGKEITEN.filter(n => vgl(n.v, gesehen) > 0).slice(0, 3) : NEUIGKEITEN.slice(0, 1);
+  merken();
+  if (neu.length) await dialog({ titel: `Neu in Itqān ${VERSION}`, html: neuigkeitenHTML(neu), ja: 'Schön', nein: '' });
+}
+
+// ---------- Rückmeldung ----------
+let vorherigeAnsicht = '';
+function rueckmeldung() {
+  navSetzen('profil');
+  const P = Z.P;
+  const info = [`Itqān ${VERSION}`, `Gerät: ${geraet()}${istTouch() ? ', Touch' : ''}${istInstalliert() ? ', installiert' : ', im Browser'}`,
+    `Bildschirm: ${screen.width} × ${screen.height}, Fenster ${innerWidth} × ${innerHeight}`, `Browser: ${navigator.userAgent}`,
+    P ? `Druck ${P.einst.ausgabe === 'v1' ? '1405' : '1421'}, ${P.einst.modus === 'anf' ? 'Anfänger' : 'Fortgeschritten'}, ${P.summe.abschnitte} Abschnitte geübt` : 'noch kein Profil',
+    vorherigeAnsicht ? `Zuletzt geöffnet: ${vorherigeAnsicht}` : ''].filter(Boolean);
+  let art = 'Fehler';
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Rückmeldung<small>Was ist dir aufgefallen? Jede Rückmeldung hilft, Itqān besser zu machen.</small></div>
+    <div class="abschnitt"><h3>Worum geht es?</h3><div class="wahl" id="rm-art">${['Fehler', 'Wunsch', 'Frage', 'Lob'].map(a => `<button data-w="${a}" class="${a === art ? 'an' : ''}">${a}</button>`).join('')}</div>
+      <textarea id="rm-text" rows="6" placeholder="Beschreibe kurz, was passiert ist oder was du dir wünschst. Bei einem Fehler: Was hast du getan, was hast du erwartet?"></textarea>
+      <label class="haken"><input type="checkbox" id="rm-info" checked> Angaben zum Gerät mitschicken</label>
+      <p class="unter rm-info">${info.map(esc).join('<br>')}</p></div>
+    <button class="knopf haupt" id="rm-senden">Senden</button>
+    <p class="unter" style="margin-top:8px;text-align:center">${RUECKMELDUNG_AN ? 'Öffnet eine E-Mail an das Itqān-Team.' : istTouch() ? 'Öffnet das Teilen-Menü, z. B. für WhatsApp oder E-Mail.' : 'Öffnet dein E-Mail-Programm. Der Text wird zusätzlich kopiert.'}</p>`;
+  app.querySelector('#rm-art').onclick = ev => { const w = ev.target.dataset.w; if (!w) return; art = w; app.querySelectorAll('#rm-art button').forEach(b => b.classList.toggle('an', b.dataset.w === w)); };
+  app.querySelector('#rm-senden').onclick = async () => {
+    const text = app.querySelector('#rm-text').value.trim();
+    if (!text) { toast('Schreib bitte kurz, worum es geht.'); return; }
+    const voll = `Itqān · ${art}\n\n${text}${app.querySelector('#rm-info').checked ? '\n\n---\n' + info.join('\n') : ''}`;
+    const betreff = `Itqān ${VERSION} · ${art}`;
+    try { await navigator.clipboard?.writeText(voll); } catch (e) {}
+    if (!RUECKMELDUNG_AN && istTouch() && navigator.share) {
+      try { await navigator.share({ title: betreff, text: voll }); toast('Danke für deine Rückmeldung.'); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    location.href = `mailto:${RUECKMELDUNG_AN}?subject=${encodeURIComponent(betreff)}&body=${encodeURIComponent(voll)}`;
+    toast('Danke. Der Text ist auch kopiert.');
+  };
+}
+
+// ---------- Schnappschüsse (Einstellungen und Start) ----------
+const GRUND_TEXT = { 'täglich': 'täglich', 'vor dem Gliederungswechsel': 'vor dem Wechsel der Abschnittslänge' };
+function schnappschussListe() {
+  const l = Z.schnappschuesse();
+  if (!l.length) return '<p class="leer">Noch keine Schnappschüsse.</p>';
+  return `<div class="schnapp-liste">${l.map(x => `<div class="schnapp"><div><b>${new Date(x.zeit).toLocaleString('de-AT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</b><span>${esc(GRUND_TEXT[x.grund] || x.grund)} · ${zahl(x.abschnitte)} Abschnitte geübt</span></div><button class="knopf leise klein" data-zeit="${x.zeit}">Zurückholen</button></div>`).join('')}</div>`;
+}
+function schnappschussBinden(wurzel) {
+  wurzel.querySelectorAll('[data-zeit]').forEach(b => b.onclick = async () => {
+    const ok = await dialog({ titel: 'Diesen Stand zurückholen?', html: `<p>Itqān setzt dein Profil auf den Stand vom ${new Date(b.dataset.zeit).toLocaleString('de-AT')} zurück. Dein jetziger Stand wird vorher selbst als Schnappschuss abgelegt.</p>`, ja: 'Zurückholen' });
+    if (!ok) return;
+    Z.schnappschussZurueck(b.dataset.zeit); location.hash = '#heute'; location.reload();
+  });
+}
+
+// ---------- Alle Seiten offline speichern ----------
+const SEITEN_CACHE = 'itqan-seiten-v1';
+const seitenUrl = x => `schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${x}.woff2`;
+async function gespeicherteSeiten() {
+  if (!('caches' in window)) return null;
+  const c = await caches.open(SEITEN_CACHE), pfad = `/schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p`;
+  return new Set((await c.keys()).map(r => new URL(r.url).pathname).filter(p => p.includes(pfad)).map(p => +p.split(pfad)[1].replace('.woff2', '')));
+}
+
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'start' && name !== 'einfuehrung') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   const f = ROUTEN[name] || heute;
+  if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
   document.body.classList.remove('doppelt');
   const y = scrollBehalten; scrollBehalten = null;
@@ -188,6 +363,9 @@ function start() {
   app.innerHTML = `<div class="start">${qandil()}<h1>Itqān</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">Die Murāǧaʿa des ganzen Qurʾāns, Abschnitt für Abschnitt.</p>
     <a class="textlink" href="#einfuehrung">Einführung noch einmal ansehen</a></div>
+    <div class="abschnitt start-laden"><h3>Schon ein Profil?</h3><p class="unter">Wenn du Itqān auf einem anderen Gerät oder im Browser genutzt hast, lade hier deine gesicherte Datei.</p>
+      <div class="reihe" style="margin-top:10px"><button class="knopf leise klein" id="start-laden">Gesichertes Profil laden</button>${Z.schnappschuesse().length ? '<button class="knopf leise klein" id="start-schnapp">Schnappschuss zurückholen</button>' : ''}</div>
+      <div id="start-schnapp-liste" class="verdeckt" style="margin-top:12px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>Wie heißt du?</h3><div class="feld"><input type="text" id="name" placeholder="Dein Name (für deine Profildatei)" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>Was wiederholst du?</h3><p class="unter">Wähle die Aǧzāʾ, die du auswendig kannst.</p>
       <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">Alle 30</button><button class="knopf leise klein" id="keine">Keinen</button></div>
@@ -200,6 +378,9 @@ function start() {
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">Bei mehreren Abschnitten am Tag:</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">Verstreute Stellen</button><button data-w="block">Eine Stelle am Stück</button></div></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema"><button data-w="hell">Hell</button><button data-w="dunkel">Dunkel</button><button data-w="auto" class="an">Wie Gerät</button></div></div>
     <button class="knopf haupt" id="los" style="margin-top:18px">Bismillāh, beginnen</button>`;
+  app.querySelector('#start-laden').onclick = profilLaden;
+  const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
+  schnappschussBinden(app);
   const juzEl = app.querySelector('#juz');
   const juzZeichnen = () => { juzEl.innerHTML = Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${s.juz.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join(''); app.querySelector('#dauer').innerHTML = tageText(); };
   juzEl.onclick = e => { const j = +e.target.dataset.j; if (!j) return; s.juz.has(j) ? s.juz.delete(j) : s.juz.add(j); juzZeichnen(); };
@@ -268,11 +449,20 @@ function heute() {
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
   const wSum = woche.reduce((s, x) => ({ r: s.r + x.r, f: s.f + x.f, h: s.h + x.h, p: s.p + x.punkte, v: s.v + (x.voll ? 1 : 0) }), { r: 0, f: 0, h: 0, p: 0, v: 0 });
-  const sicherungFaellig = !P.einst.letzteSicherung || Z.tageZwischen(P.einst.letzteSicherung.slice(0, 10), Z.heute()) > 14;
+  // Erinnerung an die Sicherung: 7 Tage nach der letzten (oder nach dem Anlegen), höchstens einmal am Tag wegklickbar
+  const seitSicherung = Z.tageZwischen((P.einst.letzteSicherung || P.erstellt).slice(0, 10), Z.heute());
+  let spaeter = null; try { spaeter = localStorage.getItem('itqan-sicherung-spaeter'); } catch (e) {}
+  const sicherungFaellig = seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
+  let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
+  const installKarte = !istInstalliert() && istTouch() && !installWeg;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">Itqān<small>${datumText()}</small></div>
       <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
     <h2 class="gruss">Assalāmu ʿalaikum${P.name ? ', ' + esc(P.name) : ''}</h2><p class="unter">${unter}</p>
+    ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis"><b>Sichere dein Profil.</b> ${P.einst.letzteSicherung ? `Die letzte Sicherung ist ${seitSicherung} Tage her.` : 'Du hast dein Profil noch nie gesichert.'} Deine Fortschritte liegen nur auf diesem Gerät.
+      <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">Jetzt sichern</button><button class="knopf leise klein" id="sichern-spaeter">Morgen erinnern</button></div></div>` : ''}
+    ${installKarte ? `<div class="hinweisbox install-hinweis"><b>Itqān als App nutzen.</b> Auf dem Home-Bildschirm startet Itqān schneller und im Vollbild.
+      <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">So geht’s</a><button class="knopf leise klein" id="install-weg">Nicht mehr zeigen</button></div></div>` : ''}
     ${t.qadaa && !t.voll ? `<div class="hinweisbox"><b>Qaḍāʾ:</b> Gestern ist dein Wird ausgefallen. Holst du es heute mit nach, bleibt deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} ganz.</div>` : ''}
     <div class="ring"><svg width="210" height="210" viewBox="0 0 210 210">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
@@ -289,7 +479,6 @@ function heute() {
     ${istFreitag ? `<div class="titel-klein">Ǧumuʿa mubāraka · deine Woche</div><div class="abschnitt" style="margin-top:0">
       <p>${wSum.v} von 7 Tagen erfüllt · ${wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0} % der Āyāt sicher · ${zahl(wSum.p)} Itqān-Punkte</p>
       <p class="unter" style="margin-top:6px">Eine neue Woche ist ein guter Neuanfang. ${Z.schwaechste(1)[0] ? `Schwächster Abschnitt gerade: ${abschnittName(D.A[Z.schwaechste(1)[0].id])}.` : ''}</p></div>` : ''}
-    ${istFreitag && sicherungFaellig ? `<div class="hinweisbox">Deine Fortschritte liegen nur auf diesem Gerät. <b><a href="#profil">Profil jetzt sichern</a></b></div>` : ''}
     <div class="titel-klein">${P.zyklus.khatma + 1}. Ḫatma</div>
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${kf.fertig} von ${kf.gesamt} Abschnitten</span><span>${Math.floor(kf.anteil * 100)} %</span></div>
@@ -304,6 +493,9 @@ function heute() {
   app.querySelector('#mehr').onclick = () => { Z.pensumHeuteAendern(1); heute(); };
   app.querySelector('#weniger').onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
+  const js = app.querySelector('#jetzt-sichern'); if (js) js.onclick = async () => { if (await profilSichern()) heute(); };
+  const sp = app.querySelector('#sichern-spaeter'); if (sp) sp.onclick = () => { try { localStorage.setItem('itqan-sicherung-spaeter', Z.heute()); } catch (e) {} heute(); };
+  const iw = app.querySelector('#install-weg'); if (iw) iw.onclick = () => { try { localStorage.setItem('itqan-install-weg', '1'); } catch (e) {} heute(); };
 }
 
 // ---------- Doppelseite auf PC und Tablet ----------
@@ -946,23 +1138,13 @@ function profil() {
       <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>Ornamente und Meilensteine</b><span>${gesammelt.length} von 114 Ornamenten${vergoldet ? ` · ${vergoldet} vergoldet` : ''}</span></div><span class="pfeil">›</span></a></div>
     <div class="titel-klein">Sicherung</div>
-    <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei.${P.einst.letzteSicherung ? ` Letzte Sicherung: ${new Date(P.einst.letzteSicherung).toLocaleDateString('de-AT')}.` : ''}</p>
+    <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig${istTouch() ? ', am besten in Dateien, iCloud Drive oder per WhatsApp an dich selbst' : ' als Datei'}. Letzte Sicherung: <b>${datumKurz(P.einst.letzteSicherung)}</b>.</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
-    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button></div>`;
+    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button><a class="knopf leise" href="#installieren" style="text-decoration:none">Itqān installieren</a><a class="knopf leise" href="#rueckmeldung" style="text-decoration:none">Rückmeldung senden</a></div>
+    <p class="version-zeile">Itqān ${VERSION} · <a href="#neu">Was ist neu</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast('Beim nächsten Üben erscheint die Erklärung wieder.'); };
-  app.querySelector('#sichern').onclick = async () => {
-    const name = `Itqan-${(P.name || 'Profil').replace(/[^\p{L}\p{N}]+/gu, '_')}-${Z.heute()}.itqan`;
-    herunterladen(name, await Z.exportDatei(), 'application/json');
-    P.einst.letzteSicherung = new Date().toISOString(); Z.speichern(); toast('Profil gesichert.'); profil();
-  };
-  app.querySelector('#laden').onclick = async () => {
-    const [text] = await dateiWaehlen(); if (!text) return;
-    try {
-      const { profil: neu, echt } = await Z.importDatei(text);
-      if (!confirm(`Profil „${neu.name || 'ohne Namen'}“ laden? Dein aktueller Stand auf diesem Gerät wird ersetzt.${echt ? '' : '\n\nAchtung: Die Datei wurde nach dem Sichern verändert.'}`)) return;
-      Z.ersetzeProfil(neu); location.hash = '#heute'; location.reload();
-    } catch (e) { toast('Das ist keine gültige Itqān-Profildatei.'); }
-  };
+  app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
+  app.querySelector('#laden').onclick = profilLaden;
 }
 
 // ---------- Ornamente und Meilensteine ----------
@@ -1088,7 +1270,11 @@ function einstellungen() {
     <div class="abschnitt"><h3>Tägliche Erinnerung</h3><p class="unter">Ohne Server kann die App selbst keine Benachrichtigung schicken. Deshalb trägt sie dein Wird als täglichen Termin mit Erinnerung in deinen Kalender ein.</p>
       <div class="zeitwahl"><select id="std" aria-label="Stunde">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="Minute">${optionen(minuten, mm, zwei)}</select><span>Uhr</span></div>
       <button class="knopf leise" id="ics">In den Kalender eintragen</button></div>
-    <div class="abschnitt"><h3>Offline</h3><p class="unter">Lädt alle 604 Seiten (etwa 48 MB), damit Itqān auch ohne Internet jede Seite zeigt.</p><button class="knopf leise" id="offline" style="margin-top:10px">Alle Seiten speichern</button></div>
+    <div class="abschnitt"><h3>Offline</h3><p class="unter">Lädt alle 604 Seiten des Drucks ${D.ausgabe === 'v1' ? '1405 (etwa 48 MB)' : '1421 (etwa 95 MB)'}, damit Itqān auch ohne Internet jede Seite zeigt. Am besten im WLAN.</p>
+      <p class="offline-stand" id="offline-stand">Gespeicherte Seiten werden gezählt …</p><div class="balken verdeckt" id="offline-balken"><div style="width:0%"></div></div>
+      <button class="knopf leise" id="offline" style="margin-top:10px">Alle Seiten speichern</button></div>
+    <div class="abschnitt"><h3>Schnappschüsse</h3><p class="unter">Itqān legt einmal am Tag und vor wichtigen Schritten eine Kopie deines Profils auf diesem Gerät ab. Damit holst du einen früheren Stand zurück. Gegen das Löschen der App oder einen Gerätewechsel hilft nur „Profil sichern“.</p>
+      <div style="margin-top:10px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>Neu beginnen</h3><p class="unter">Löscht dein Profil auf diesem Gerät. Sichere es vorher.</p><button class="knopf schlecht" id="reset" style="margin-top:10px">Profil löschen</button></div>`;
   const dauer = () => app.querySelector('#dauer').innerHTML = `Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma()} Tage</b>`;
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };
@@ -1098,7 +1284,7 @@ function einstellungen() {
   wahl('zufall', w => { E.zufall = w; toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
   wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
-  wahl('modus', w => { if (w === (E.modus || 'fort')) return; E.modus = w; Z.speichern(); toast('Abschnitte werden umgestellt …'); setTimeout(() => location.reload(), 600); });
+  wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast('Abschnitte werden umgestellt …'); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
   alle.onchange = () => {
@@ -1127,20 +1313,38 @@ function einstellungen() {
       'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Zeit für dein Wird', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
     herunterladen('Itqan-Wird.ics', ics, 'text/calendar');
   };
-  app.querySelector('#offline').onclick = async ev => {
-    const b = ev.target; b.disabled = true; let n = 0;
-    const cache = 'caches' in window ? await caches.open('itqan-seiten-v1') : null;
-    for (let p = 1; p <= 604; p += 8) {
-      await Promise.all(Array.from({ length: 8 }, (_, k) => p + k).filter(x => x <= 604).map(async x => {
-        const url = `schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${x}.woff2`;
-        try { if (cache && !(await cache.match(url))) await cache.add(url); } catch (e) {}
-        n++;
-      }));
-      b.textContent = `${n} von 604 …`;
-    }
-    b.textContent = 'Alle Seiten gespeichert';
+  // Stand anzeigen, nur fehlende Seiten laden, Abbrüche zählen und „Erneut versuchen“ anbieten
+  const stand = app.querySelector('#offline-stand'), balken = app.querySelector('#offline-balken'), ob = app.querySelector('#offline');
+  const standZeigen = async () => {
+    const da = await gespeicherteSeiten();
+    if (!da) { stand.textContent = 'Dieser Browser kann keine Seiten speichern.'; ob.disabled = true; return null; }
+    stand.innerHTML = da.size >= 604 ? '<b>Alle 604 Seiten sind gespeichert.</b> Itqān funktioniert auch ohne Internet.' : `<b>${da.size} von 604 Seiten</b> sind auf diesem Gerät gespeichert.`;
+    ob.textContent = da.size >= 604 ? 'Alle Seiten gespeichert' : da.size ? 'Fehlende Seiten speichern' : 'Alle Seiten speichern';
+    ob.disabled = da.size >= 604; return da;
   };
-  app.querySelector('#reset').onclick = () => { if (confirm('Profil wirklich löschen? Das lässt sich nicht rückgängig machen, außer mit einer gesicherten Datei.')) { Z.loeschen(); location.hash = '#start'; } };
+  standZeigen();
+  schnappschussBinden(app);
+  ob.onclick = async () => {
+    const da = await standZeigen(); if (!da) return;
+    const fehlt = Array.from({ length: 604 }, (_, i) => i + 1).filter(x => !da.has(x));
+    const cache = await caches.open(SEITEN_CACHE);
+    ob.disabled = true; balken.classList.remove('verdeckt');
+    let fertig = 0, fehler = 0;
+    for (let i = 0; i < fehlt.length; i += 6) {
+      await Promise.all(fehlt.slice(i, i + 6).map(async x => { try { await cache.add(seitenUrl(x)); } catch (e) { fehler++; } fertig++; }));
+      balken.firstElementChild.style.width = (100 * fertig / fehlt.length).toFixed(1) + '%';
+      stand.innerHTML = `Speichere … <b>${da.size + fertig - fehler} von 604</b>`;
+      if (!app.contains(ob)) return;
+    }
+    balken.classList.add('verdeckt');
+    await standZeigen();
+    if (fehler) { stand.innerHTML += `<br>${fehler} Seiten konnten nicht geladen werden. Prüfe die Verbindung und versuche es erneut.`; ob.disabled = false; ob.textContent = 'Erneut versuchen'; }
+  };
+  app.querySelector('#reset').onclick = async () => {
+    const ok = await dialog({ titel: 'Profil wirklich löschen?', html: '<p>Dein Fortschritt auf diesem Gerät wird gelöscht. Zurück holst du ihn nur mit einer gesicherten Datei oder einem Schnappschuss.</p>', ja: 'Löschen', gefahr: true });
+    if (!ok) return;
+    Z.schnappschuss('vor dem Löschen'); Z.loeschen(); location.hash = '#start';
+  };
 }
 
 // ---------- Lehreransicht ----------
@@ -1197,7 +1401,9 @@ async function lehrer() {
     if (Z.P?.einst.bereichJuz) { const j = new Set(Z.P.einst.bereichJuz); Z.P.einst.bereich = D.A.filter(e => j.has(e.juz)).map(e => e.id); delete Z.P.einst.bereichJuz; Z.speichern(); }
   }
   catch (e) { app.innerHTML = '<div class="lade">Die Daten konnten nicht geladen werden. Bitte mit Internet erneut öffnen.</div>'; return; }
-  zeige();
+  Z.tagesSchnappschuss();
+  await zeige();
+  setTimeout(neuigkeitenPruefen, 600);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
   // Tageswechsel, wenn die App über Nacht offen bleibt
   let tag = Z.heute();

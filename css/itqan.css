@@ -592,3 +592,52 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .fh-knoepfe{display:flex;gap:8px;margin-top:12px}
 .fh-knoepfe .knopf{flex:1}
 @media (prefers-reduced-motion:reduce){.fh-loch,.fh-box{transition:none}.fh-box.neu{animation:none}}
+
+/* Dialog statt Browser-Rückfrage */
+.dialog{position:fixed;inset:0;z-index:95;background:rgba(6,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:18px;animation:fhAuf .2s ease}
+.dialog.weg{opacity:0;transition:opacity .2s}
+.dialog-karte{background:var(--bg);border:1px solid var(--akzent);border-radius:20px;padding:18px 18px 16px;width:min(420px,100%);max-height:88vh;overflow:auto;box-shadow:0 18px 44px rgba(0,0,0,.35)}
+[data-modus=hell] .dialog-karte{background:#fffaf0}
+.dialog-karte h3{font-family:var(--kopf);font-size:23px;font-weight:600;color:var(--akzent);margin-bottom:10px}
+[data-modus=dunkel] .dialog-karte h3{color:var(--akzent2)}
+.dialog-text{font-size:17px}
+.dialog-text p{margin:8px 0}
+.dialog-karte .reihe{margin-top:16px}
+.ueberblick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 6px}
+.ueberblick div{background:var(--karte);border:1px solid var(--rand);border-radius:12px;padding:8px 10px}
+.ueberblick span{display:block;font-size:13.5px;color:var(--leise)}
+.ueberblick b{font-weight:600}
+.warnung{color:var(--schlecht);font-weight:500}
+
+/* Installieren */
+.install-schritte{margin:18px 0 6px;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+.install-schritte li{counter-increment:s;display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:12px 14px;font-size:17.5px}
+.install-schritte li::before{content:counter(s);flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--akzent);color:var(--aufAkzent);font:600 16px var(--fliess)}
+.sym{width:22px;height:22px;vertical-align:-5px;color:var(--akzent);margin:0 2px}
+.install-hinweis,.sicherung-hinweis{border-style:solid}
+
+/* Was ist neu, Version */
+.neu-eintrag{border-bottom:1px dotted var(--rand);padding:10px 0 12px}
+.neu-eintrag:last-child{border-bottom:0}
+.neu-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.neu-kopf b{font-family:var(--kopf);font-size:19px;color:var(--akzent)}
+[data-modus=dunkel] .neu-kopf b{color:var(--akzent2)}
+.neu-kopf span{font-size:14px;color:var(--leise)}
+.neu-eintrag h4{font-size:17px;font-weight:600;margin:2px 0 6px}
+.neu-eintrag ul{margin:0 0 0 20px;font-size:16px;display:grid;gap:4px}
+.version-zeile{text-align:center;font-size:14px;color:var(--leise);margin-top:20px}
+
+/* Rückmeldung */
+textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:12px;background:var(--karte2);padding:10px 12px;font:inherit;font-size:17px;color:var(--text);resize:vertical}
+.haken{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:16px}
+.haken input{width:18px;height:18px;accent-color:var(--akzent)}
+.rm-info{margin-top:6px;font-size:13px;word-break:break-word}
+
+/* Schnappschüsse, Offline */
+.schnapp-liste{display:grid;gap:8px}
+.schnapp{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--karte);border:1px solid var(--rand);border-radius:12px;padding:8px 10px}
+.schnapp b{display:block;font-weight:600}
+.schnapp span{font-size:14px;color:var(--leise)}
+.schnapp .knopf{width:auto;flex:none}
+.offline-stand{margin-top:10px;font-size:16.5px}
+#offline-balken{margin-top:8px}

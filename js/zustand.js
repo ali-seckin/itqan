@@ -8,7 +8,11 @@ const FEHLER_ABSTAND = [1, 3, 7];      // Tage bis zur nächsten Fehlerwiederhol
 export let P = null;
 
 // ---------- Datum (lokal) ----------
-export function heute(d = new Date()) {
+// Die Uhr ist austauschbar: Tests stellen damit Tage vor, später kommt der eigene Tageswechsel dazu
+let uhr = () => new Date();
+export function uhrSetzen(f) { uhr = f || (() => new Date()); }
+export const jetzt = () => uhr();
+export function heute(d = uhr()) {
   const z = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
 }
@@ -37,7 +41,7 @@ export function speichern() {
 }
 export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort' } = {}) {
   P = {
-    format: 'itqan', version: 1, erstellt: new Date().toISOString(), name,
+    format: 'itqan', version: 1, erstellt: uhr().toISOString(), name,
     einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
@@ -46,6 +50,37 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
   speichern(); return P;
 }
 export function ersetzeProfil(neu) { P = ergaenzen(neu); speichern(); }
+
+// ---------- Schnappschüsse: automatische Kopien des Profils auf diesem Gerät ----------
+// Bis zu zwei tägliche und drei vor wichtigen Schritten (Gliederungswechsel, Laden einer Sicherung, Löschen).
+// Sie schützen vor eigenen Fehlgriffen, nicht vor dem Löschen der App: dafür ist „Profil sichern“ da.
+const SCHNAPP = 'itqan-schnappschuesse';
+export function schnappschuesse() { try { return JSON.parse(localStorage.getItem(SCHNAPP) || '[]'); } catch (e) { return []; } }
+export function schnappschuss(grund) {
+  if (!P) return false;
+  const neu = { zeit: uhr().toISOString(), tag: heute(), grund, name: P.name, abschnitte: P.summe.abschnitte, daten: JSON.stringify(P) };
+  const alle = [neu, ...schnappschuesse()];
+  let liste = [...alle.filter(x => x.grund === 'täglich').slice(0, 2), ...alle.filter(x => x.grund !== 'täglich').slice(0, 3)]
+    .sort((a, b) => b.zeit.localeCompare(a.zeit));
+  while (liste.length) { try { localStorage.setItem(SCHNAPP, JSON.stringify(liste)); return true; } catch (e) { liste = liste.slice(0, -1); } }
+  return false;
+}
+export function tagesSchnappschuss() {
+  if (!P || schnappschuesse().some(x => x.grund === 'täglich' && x.tag === heute())) return false;
+  return schnappschuss('täglich');
+}
+export function schnappschussZurueck(zeit) {
+  const s = schnappschuesse().find(x => x.zeit === zeit); if (!s) return false;
+  const daten = JSON.parse(s.daten);
+  if (P) schnappschuss('vor dem Zurückholen');
+  P = ergaenzen(daten); speichern(); return true;
+}
+// Kurzer Überblick über ein Profil, z. B. vor dem Laden einer Sicherung
+export function profilUeberblick(p) {
+  const tage = Object.entries(p.tage || {}).filter(([, t]) => t.fertig?.length).map(([d]) => d).sort();
+  return { name: p.name || '', erstellt: p.erstellt, abschnitte: p.summe?.abschnitte || 0, punkte: p.summe?.punkte || 0,
+    kette: p.kette?.n || 0, khatma: p.zyklus?.khatma || 0, letzterTag: tage.at(-1) || null, fstellen: Object.keys(p.fstellen || {}).length };
+}
 export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL); } catch (e) {} }
 
 // ---------- Wechsel der Gliederung (neue Fassung oder Anfänger/Fortgeschritten) ----------
@@ -394,7 +429,7 @@ async function pruefsumme(text) {
 }
 export async function exportDatei(profil = P) {
   const daten = JSON.stringify(profil);
-  return JSON.stringify({ format: 'itqan-profil', version: 1, exportiert: new Date().toISOString(), pruef: await pruefsumme(daten), profil }, null, 0);
+  return JSON.stringify({ format: 'itqan-profil', version: 1, exportiert: uhr().toISOString(), pruef: await pruefsumme(daten), profil }, null, 0);
 }
 export async function importDatei(text) {
   const o = JSON.parse(text);
