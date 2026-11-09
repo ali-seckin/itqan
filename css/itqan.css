@@ -1,4 +1,6 @@
 /* Itqān · Erscheinungsbild: Hell = Lesestube, Dunkel = Tezhip */
+/* ʿAin und Hamza der Umschrift aus Alegreya Sans 700: in Alegreya wirken sie wie ein verrutschtes Apostroph (Feinschliff 1.5) */
+@font-face{font-family:'Itqan Ain';font-weight:100 900;font-display:swap;src:url(../schriften/latein/AlegreyaSans-700-latin-ext.woff2) format('woff2');unicode-range:U+02BE-02BF;size-adjust:108%}
 @font-face{font-family:'Uthmani';src:url(../schriften/uthmanic_hafs.woff2) format('woff2');font-display:swap}
 /* Schriftskala (Schrift-Gutachten 9.11.2026): sieben Rollen statt 31 Größen */
 :root{--s-etikett:13px;--s-klein:15px;--s-text:18px;--s-unter:22px;--s-titel:28px;--s-seite:34px;--s-anzeige:48px}
@@ -7,7 +9,7 @@
  --text:#3a2a1d;--leise:#86705a;--akzent:#b7772f;--akzent2:#d99a4e;--aufAkzent:#fff;--gut:#6f8f5a;--schlecht:#b5543a;
  --seite:#fffaf0;--seite2:#f7ecd6;--seitetext:#2a2018;--hi:rgba(217,154,78,.16);--schleier:#e8d9bb;--glow:rgba(255,190,110,.55);
  --schatten:0 2px 0 #e7d5b2,0 14px 30px rgba(80,50,20,.18);--seitenrand:none;
- --kopf:'Alegreya',Georgia,serif;--fliess:'Alegreya Sans',system-ui,sans-serif;color-scheme:light}
+ --kopf:'Itqan Ain','Alegreya',Georgia,serif;--fliess:'Alegreya Sans',system-ui,sans-serif;color-scheme:light}
 [data-modus=dunkel]{--bg:#0d2230;--bg2:#12303f;--karte:rgba(255,255,255,.045);--karte2:rgba(255,255,255,.07);--rand:rgba(212,175,106,.26);
  --text:#efe6d2;--leise:#a9b6b9;--akzent:#d4af6a;--akzent2:#e9cf95;--aufAkzent:#0d2230;--gut:#8fbf9a;--schlecht:#e08a6d;
  --seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
@@ -664,3 +666,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 
 /* gleich breite Ziffern, wo Zahlen stehen oder sich ändern */
 .zahl b,.ernte b,.ring .gross,.zaehler b,.fort-zeile .zaehler,.meilenstein b,.kette-pille,.punkt-pop,.orn-legende b{font-variant-numeric:lining-nums tabular-nums}
+/* Große Überschriften minimal enger (Feinschliff 1.5): ab 34 Pixel −0,015em, 28 Pixel −0,01em */
+.marke,.start h1,.einblendung h2{letter-spacing:-.015em}
+.marke small{letter-spacing:0}
+.gruss,.ab-kopf h2,.feier h2,.tut-schritt h2,.orn-karte h2,.rangkarte b,.rangstufe .kopf b{letter-spacing:-.01em}

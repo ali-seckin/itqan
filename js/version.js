@@ -1,10 +1,14 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.4';
+export const VERSION = '1.5';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.5', datum: '2026-11-09', titel: 'Feinschliff der Überschriften', punkte: [
+    'ʿAin und Hamza in der Umschrift kräftiger und deutlicher, etwa in „ʿalaikum“ oder „Juzʾ“.',
+    'Große Überschriften etwas enger gesetzt und dadurch ruhiger.'
+  ] },
   { v: '1.4', datum: '2026-11-09', titel: 'Klarere Schrift', punkte: [
     'Echte fette Schnitte statt künstlich verdickter Buchstaben.',
     'Sieben feste Schriftgrößen statt 31, dadurch ruhiger und einheitlicher.',

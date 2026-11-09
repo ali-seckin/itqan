@@ -1,5 +1,5 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v44';
+const SCHALE = 'itqan-schale-v45';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/mushaf.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
