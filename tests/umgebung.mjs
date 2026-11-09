@@ -36,12 +36,14 @@ gliederungSetzen('fort');
 // Uhr: ein fester Tag um 12 Uhr Ortszeit
 let jetzt = new Date(2026, 0, 5, 12);
 Z.uhrSetzen(() => new Date(jetzt));
+// nach Tests mit eigener Uhr wieder auf die Testuhr umstellen
+export const tagSetzenZurueck = () => Z.uhrSetzen(() => new Date(jetzt));
 export function tagSetzen(datum) { const [y, m, d] = datum.split('-').map(Number); jetzt = new Date(y, m - 1, d, 12); }
 export const naechsterTag = (n = 1) => tagSetzen(Z.plusTage(Z.heute(), n));
 
 // frisches Profil an einem bestimmten Tag
 export function frisch({ datum = '2026-01-05', pensum = 3, modus = 'fort', ...rest } = {}) {
-  localStorage.clear(); gliederungSetzen(modus); tagSetzen(datum);
+  localStorage.clear(); gliederungSetzen(modus); tagSetzen(datum); tagSetzenZurueck();
   return Z.neuesProfil({ name: 'Test', pensum, modus, ...rest });
 }
 // den heutigen Wird mit einem Ergebnis je Āya abschließen ('ok', 'hilfe', 'fehler')

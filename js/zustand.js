@@ -12,7 +12,9 @@ export let P = null;
 let uhr = () => new Date();
 export function uhrSetzen(f) { uhr = f || (() => new Date()); }
 export const jetzt = () => uhr();
-export function heute(d = uhr()) {
+// Ohne Datum: der heutige Tag nach dem eigenen Tageswechsel (z. B. 3 Uhr: ein Wird um 1 Uhr nachts zählt zum Vortag)
+export function heute(d) {
+  if (!d) { d = uhr(); const v = P?.einst?.tagesbeginn || 0; if (v) d = new Date(d.getTime() - v * 36e5); }
   const z = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
 }
@@ -34,6 +36,7 @@ export function ergaenzen(p) {
   p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.fstellen ??= {};
   if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
   p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1'; p.meilenD ??= {};
+  p.einst.sofort ??= true; p.einst.abhoeren ??= true; p.einst.tagesbeginn ??= 0;
   return p;
 }
 export function speichern() {
@@ -229,6 +232,18 @@ export function fehlerstellenMerken(schluessel, art) {
   speichern();
 }
 export function fehlerstelleLoeschen(s) { delete P.fstellen[s]; speichern(); }
+// Stand der Fehlerstellen merken und wiederherstellen (für „Vorige Āya neu bewerten“)
+export const fehlerstellenStand = () => JSON.parse(JSON.stringify(P.fstellen || {}));
+export function fehlerstellenSetzen(stand) { P.fstellen = JSON.parse(JSON.stringify(stand || {})); speichern(); }
+// Abhören: jede Āya mit mindestens einem markierten Wort zählt als Fehler, alle anderen als richtig
+export const abhoerErgebnis = (ayat, fehlerVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : 'ok');
+
+// ---------- Zwischenstand einer angefangenen Übung (gilt nur am selben Tag und für dieselbe Gliederung) ----------
+const ZWISCHEN = 'itqan-zwischenstand';
+export function zwischenstand() { try { const z = JSON.parse(localStorage.getItem(ZWISCHEN) || 'null'); return z && z.tag === heute() && z.gliederung === D.gliederung ? z : null; } catch (e) { return null; } }
+export function zwischenstandLaden(id, quelle = '') { const z = zwischenstand(); return z && z.id === id && (z.quelle || '') === (quelle || '') ? z : null; }
+export function zwischenstandSpeichern(id, quelle, erg) { try { localStorage.setItem(ZWISCHEN, JSON.stringify({ id, quelle: quelle || '', erg, tag: heute(), gliederung: D.gliederung })); } catch (e) {} }
+export function zwischenstandLoeschen() { try { localStorage.removeItem(ZWISCHEN); } catch (e) {} }
 // Gezieltes Üben einer Fehlerstelle: dreimal in Folge richtig, dann ist sie erledigt
 export const STELLE_ZIEL = 3;
 export function fehlerstelleGeuebt(vi, ergebnis) {

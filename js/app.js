@@ -44,6 +44,8 @@ function hochzaehlen(wurzel) {
     if (ruhig() || !ziel) continue;
     const schritt = t => { const x = Math.min(1, (t - t0) / dauer); b.textContent = vor + zahl(ziel * (1 - Math.pow(1 - x, 3))); if (x < 1 && b.isConnected) requestAnimationFrame(schritt); };
     b.textContent = vor + '0'; requestAnimationFrame(schritt);
+    // falls der Browser Animationen anhält (App im Hintergrund): Endwert trotzdem setzen
+    setTimeout(() => { if (b.isConnected) b.textContent = vor + zahl(ziel); }, dauer + 200);
   }
 }
 // Abschluss des Wird: feine Goldfunken, die langsam fallen. Stärke 3 = fehlerfrei, 2 = mit Hilfe, 1 = mit Fehlern (schwächer)
@@ -442,7 +444,8 @@ function heute() {
   const karten = t.plan.map((id, i) => {
     const e = D.A[id], fertig = t.fertig.includes(id), jetzt = !fertig && id === offen[0];
     const art = t.art[id];
-    const marke = art === 'fehler' ? '<span class="marke-art fehler">Wiederholung nach Fehler</span>' : art === 'qadaa' ? '<span class="marke-art qadaa">Qaḍāʾ</span>' : art === 'bonus' ? '<span class="marke-art bonus">Bonus</span>' : '';
+    const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">angefangen · ${zwh.erg.length}/${e.ayat}</span>` : '';
+    const marke = angefangen + (art === 'fehler' ? '<span class="marke-art fehler">Wiederholung nach Fehler</span>' : art === 'qadaa' ? '<span class="marke-art qadaa">Qaḍāʾ</span>' : art === 'bonus' ? '<span class="marke-art bonus">Bonus</span>' : '');
     return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${e.zeilen} Zeilen ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
   }).join('');
@@ -559,6 +562,8 @@ async function ueben(idText, quelle, fokusText) {
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
+  // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
+  let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
   // Aufnahme nur im Arbeitsspeicher: nach der Bewertung der Āya wird sie verworfen, nichts wird gespeichert
   const AUFNAHME = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   // Jede Aufnahme hat ihren eigenen Rekorder und ihre eigenen Daten. Eine Aufnahme, deren Āya schon bewertet ist
@@ -641,7 +646,7 @@ async function ueben(idText, quelle, fokusText) {
   // ---------- Erklärung beim ersten Üben: drei Etappen, jede beim ersten Mal, wenn sie gebraucht wird ----------
   // 1 vor dem ersten Aufdecken, 2 nach dem ersten Aufdecken (Bewerten), 3 nach dem ersten „Fehler“ (Stelle markieren)
   const imAbschnitt = () => [...(seitenEl.querySelector('.seite') || seitenEl).querySelectorAll('.w.in')];
-  const jetzt = () => spans(ayat[pos]);
+  const jetzt = () => spans(liste[pos]);
   const TOUR = {
     'ueben-1': () => [
       { titel: 'Deine erste Übung', text: 'Willkommen. So läuft jede Übung ab: Du rezitierst eine Āya aus dem Gedächtnis, deckst sie auf und sagst ehrlich, ob sie richtig war. Dann kommt die nächste Āya.<br><br>Wir gehen die Seite und die Knöpfe einmal Schritt für Schritt durch.' },
@@ -653,7 +658,7 @@ async function ueben(idText, quelle, fokusText) {
       { ziel: () => app.querySelector('#mikro'), titel: 'Dich selbst aufnehmen', text: 'Freiwillig: Tippe auf den Punkt und rezitiere. Beim Aufdecken endet die Aufnahme und du kannst dich anhören und mit dem Text vergleichen. Die Aufnahme wird nirgends gespeichert und nach der Bewertung gelöscht.' },
       { ziel: () => app.querySelector('#teil'), titel: 'Bis zum Zeichen', text: 'Deckt die Āya nur bis zum nächsten Stoppzeichen auf. Bei langen Āyāt prüfst du dich so Stück für Stück.' },
       { ziel: () => app.querySelector('#auf'), titel: 'Aufdecken', text: 'Deckt die ganze Āya auf. Du kannst auch direkt auf ein verdecktes Wort tippen.' },
-      { ziel: () => app.querySelector('#hilfe'), titel: 'Anfang zeigen', text: 'Wenn du nicht weißt, wie die Āya beginnt, zeigt dir das ihr erstes Wort. Die Āya zählt dann nur halb.' },
+      { ziel: () => app.querySelector('#hilfe'), titel: 'Nächstes Wort', text: 'Wenn du hängst, deckt jedes Tippen ein weiteres Wort auf. Die Āya zählt dann nur halb.' },
       { ziel: () => app.querySelector('#ansehen'), titel: 'Erst ansehen', text: 'Du kannst den Abschnitt auch zuerst offen lesen und dich erst danach prüfen.' },
       { ziel: () => app.querySelector('.ueb-kopf .info'), titel: 'Wo du bist', text: 'Oben stehen Bereich, Zahl der Āyāt und Zeilen und die Seite. R oder L zeigt, ob die Seite im gedruckten Muṣḥaf rechts oder links liegt.' },
       { titel: 'Jetzt du', text: 'Rezitiere die erste Āya aus dem Gedächtnis und decke sie dann auf. Danach zeigen wir dir, wie du dich bewertest.', los: 'Los geht’s' }
@@ -661,7 +666,7 @@ async function ueben(idText, quelle, fokusText) {
     'ueben-2': () => [
       { ziel: jetzt, titel: 'Vergleichen', text: 'Jetzt siehst du die Āya. Vergleiche Wort für Wort mit dem, was du rezitiert hast. Die Ehrlichkeit dabei ist eine Amāna: Nur so zeigt dir Itqān, wo du wirklich stehst.' },
       { ziel: () => app.querySelector('#hoeren'), titel: 'Anhören', text: 'Hier hörst du deine Aufnahme. Danach wird sie gelöscht.' },
-      { ziel: () => app.querySelector('#r'), titel: 'Richtig', text: 'Die Āya war fehlerfrei und ohne Stocken. Das bringt 10 Itqān-Punkte, mit „Anfang zeigen“ 5.' },
+      { ziel: () => app.querySelector('#r'), titel: 'Richtig', text: 'Die Āya war fehlerfrei und ohne Stocken. Das bringt 10 Itqān-Punkte, mit Hilfe 5. Ein Fehltipp lässt sich bei der nächsten Āya mit „Vorige Āya neu bewerten“ zurücknehmen.' },
       { ziel: () => app.querySelector('#f'), titel: 'Fehler', text: 'Ein Wort verwechselt oder ausgelassen, ein falscher Vokal oder ein Hänger. Danach kannst du die Stelle markieren. Ein Abschnitt mit Fehlern kommt nach 1, 3 und 7 Tagen wieder, bis er sitzt.', los: 'Verstanden' }
     ],
     'ueben-3': () => [
@@ -673,7 +678,7 @@ async function ueben(idText, quelle, fokusText) {
   };
   let tourAktiv = false;
   function tourPruefen() {
-    if (tourAktiv || vorschau || pos >= ayat.length) return;
+    if (tourAktiv || vorschau || abhoeren || phase !== 'haupt' || pos >= liste.length) return;
     const name = markieren ? 'ueben-3' : offen ? 'ueben-2' : pos === 0 && ti === 0 ? 'ueben-1' : null;
     if (!name || tourGesehen(name)) return;
     tourAktiv = true;
@@ -687,13 +692,15 @@ async function ueben(idText, quelle, fokusText) {
   }
   function zeichne() { zeichneInnen(); tourPruefen(); }
   function zeichneInnen() {
-    app.querySelector('#punkte').innerHTML = ayat.map((a, i) => `<i class="${erg[i] || (i === pos ? 'jetzt' : '')}"></i>`).join('');
+    app.querySelector('#punkte').innerHTML = liste.map((a, i) => `<i class="${(phase === 'haupt' ? erg[i] : korr[i]) || (i === pos ? 'jetzt' : '')}"></i>`).join('');
+    app.querySelector('.fort-zeile').classList.toggle('korrektur', phase === 'korrektur');
     seitenEl.querySelectorAll('.naechste').forEach(x => x.classList.remove('naechste'));
     seitenEl.querySelectorAll('.ziel').forEach(x => x.classList.remove('ziel'));
     A.classList.add('verdeckt');
-    if (pos >= ayat.length) return abschluss();
-    const vi = ayat[pos];
-    Zl.textContent = `Āya ${pos + 1} von ${ayat.length}`;
+    if (abhoeren) return abhoerenZeichnen();
+    if (pos >= liste.length) return rundeFertig();
+    const vi = liste[pos];
+    Zl.textContent = phase === 'korrektur' ? `Korrektur ${pos + 1} von ${liste.length}` : `Āya ${pos + 1} von ${ayat.length}`;
     if (vorschau) {
       K.innerHTML = '<button class="knopf haupt" id="pruefen">Jetzt prüfen</button>';
       H.textContent = 'Lies den Abschnitt in Ruhe. Dann prüfe dich.';
@@ -704,8 +711,9 @@ async function ueben(idText, quelle, fokusText) {
       A.classList.remove('verdeckt');
       A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
       K.innerHTML = '<button class="knopf haupt" id="weiter">Weiter</button>';
-      H.textContent = 'Tippe auf das Wort, bei dem du dich vertan hast. Freiwillig.';
+      H.innerHTML = 'Tippe auf das Wort, bei dem du dich vertan hast. Freiwillig.<br><button class="textlink mini" id="doch-richtig">Doch kein Fehler</button>';
       app.querySelector('#weiter').onclick = markierenFertig;
+      app.querySelector('#doch-richtig').onclick = fehlerZurueck;
       return;
     }
     if (!offen) {
@@ -716,17 +724,24 @@ async function ueben(idText, quelle, fokusText) {
       const nimmt = rec?.state === 'recording';
       K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? 'Aufnahme beenden' : 'Eigene Rezitation aufnehmen'}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? '<button class="knopf leise" id="teil">Bis zum Zeichen</button>' : ''}<button class="knopf haupt" id="auf">${ti ? 'Rest aufdecken' : `Āya ${D.V[vi][1]} aufdecken`}</button>`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
-      const links = [];
-      if (E.hilfe && !hilfe) links.push('<button class="textlink mini" id="hilfe">Anfang zeigen</button>');
-      if (E.vorueben && pos === 0 && ti === 0) links.push('<button class="textlink mini" id="ansehen">Erst ansehen</button>');
-      H.innerHTML = (nimmt ? '<b class="nimmt-text">● Aufnahme läuft.</b> Beim Aufdecken endet sie.' : alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.') + (links.length ? '<br>' + links.join('') : '');
+      const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
+      if (E.hilfe) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? 'Noch ein Wort' : 'Nächstes Wort'}</button>`);
+      if (E.vorueben && start) links.push('<button class="textlink mini" id="ansehen">Erst ansehen</button>');
+      if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push('<button class="textlink mini" id="neu-bewerten">Vorige Āya neu bewerten</button>');
+      if (E.abhoeren !== false && start && art !== 'stelle') links.push('<button class="textlink mini leiser" id="abhoeren">Jemand hört zu</button>');
+      const satz = phase === 'korrektur' ? 'Sofortkorrektur: diese Āya noch einmal aus dem Gedächtnis. Zählt nicht für die Punkte.' : alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.';
+      H.innerHTML = (nimmt ? '<b class="nimmt-text">● Aufnahme läuft.</b> Beim Aufdecken endet sie.' : satz) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
+      // Hilfe Wort für Wort: jedes Tippen deckt das nächste verdeckte Wort auf, die Āya zählt dann als „mit Hilfe“
       const hb = app.querySelector('#hilfe'); if (hb) hb.onclick = () => {
         hilfe = true; const s = spans(vi).find(x => x.classList.contains('zu'));
         if (s) { s.classList.remove('zu', 'naechste'); s.classList.add('erstes'); }
+        if (!spans(vi).some(x => x.classList.contains('zu'))) return aufdecken();
         zeichne();
       };
+      const nb = app.querySelector('#neu-bewerten'); if (nb) nb.onclick = zuruecknehmen;
+      const ah = app.querySelector('#abhoeren'); if (ah) ah.onclick = abhoerenStart;
       const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
       sichtbar(teile[ti]?.[0]);
     } else {
@@ -743,7 +758,7 @@ async function ueben(idText, quelle, fokusText) {
   }
   function aufdecken() {
     aufnahmeStopp();
-    const vi = ayat[pos]; zu.delete(vi);
+    const vi = liste[pos]; zu.delete(vi);
     spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
     offen = true; zeichne();
   }
@@ -754,18 +769,78 @@ async function ueben(idText, quelle, fokusText) {
     zeichne();
   }
   function bewerte(x) {
-    const vi = ayat[pos]; erg[pos] = x; status.set(vi, x);
-    const sp = spans(vi); sp.forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
+    const vi = liste[pos];
+    const sp = spans(vi); sp.forEach(s => { s.classList.remove('alt', 'ok', 'hilfe', 'fehler'); s.classList.add(x); });
+    if (phase === 'korrektur') { korr[pos] = x; if (x !== 'fehler') punktePop('✓', sp[sp.length - 1]); return naechsteAya(); }
+    erg[pos] = x; status.set(vi, x);
     if (x !== 'fehler' && art !== 'stelle') punktePop(x === 'ok' ? '+10' : '+5', sp[sp.length - 1]);
-    if (x === 'fehler') { markieren = true; fArt = null; return zeichne(); }
+    if (x === 'fehler') { markieren = true; fArt = null; fsVorher = Z.fehlerstellenStand(); return zeichne(); }
+    verlauf.push({ pos, fs: null }); zwischenSpeichern();
     naechsteAya();
   }
-  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); }
+  // Fehltipp „Fehler“: zurück zu Richtig/Fehler, ohne etwas zu speichern
+  function fehlerZurueck() {
+    const vi = liste[pos]; markieren = false; erg.length = pos; status.delete(vi);
+    seitenEl.querySelectorAll('.w.fmark').forEach(s => s.classList.remove('fmark'));
+    spans(vi).forEach(s => { s.classList.remove('fehler'); if (alt.has(vi)) s.classList.add('alt'); });
+    zeichne();
+  }
+  // Vorige Āya neu bewerten: Bewertung und markierte Fehlerstellen dieser Āya zurücknehmen
+  function zuruecknehmen() {
+    const v = verlauf.pop(); if (!v) return;
+    aufnahmeVerwerfen();
+    pos = v.pos; const vi = ayat[pos], war = erg[pos];
+    erg.length = pos; status.delete(vi);
+    if (v.fs) { Z.fehlerstellenSetzen(v.fs); const fst = Z.fehlerstellenSet(); spans(vi).forEach(s => s.classList.toggle('fs', fst.has(s.dataset.v + '.' + s.dataset.i))); }
+    spans(vi).forEach(s => { s.classList.remove('ok', 'hilfe', 'fehler'); if (alt.has(vi)) s.classList.add('alt'); });
+    offen = true; hilfe = war === 'hilfe'; ti = 0; markieren = false;
+    zwischenSpeichern(); zeichne(); sichtbar(spans(vi)[0]);
+  }
+  const zwischenSpeichern = () => { if (art !== 'stelle') Z.zwischenstandSpeichern(id, quelle, erg.slice(0, erg.length)); };
+  // Ende einer Runde: nach der Hauptrunde die Fehler-Āyāt sofort noch einmal (wenn eingeschaltet), dann Abschluss
+  function rundeFertig() {
+    if (phase === 'haupt' && art !== 'stelle' && E.sofort !== false) {
+      const f = ayat.filter((vi, i) => erg[i] === 'fehler');
+      if (f.length) {
+        phase = 'korrektur'; liste = f; pos = 0; offen = false; hilfe = false; ti = 0; korr = [];
+        f.forEach(vi => { zu.add(vi); spans(vi).forEach(s => { s.classList.remove('fehler'); s.classList.add('zu'); }); });
+        toast(f.length === 1 ? 'Sofortkorrektur: die Āya mit Fehler noch einmal.' : `Sofortkorrektur: die ${f.length} Āyāt mit Fehler noch einmal.`, 2800);
+        zeichne(); sichtbar(spans(f[0])[0]); return;
+      }
+    }
+    abschluss();
+  }
+  // Abhören (Tasmīʿ): eine zweite Person sieht den Text offen und tippt Fehler aufs Wort; dezente Nebenfunktion
+  function abhoerenStart() {
+    aufnahmeVerwerfen(); abhoeren = true; fArt = null;
+    ayat.forEach(vi => { zu.delete(vi); spans(vi).forEach(s => s.classList.remove('zu', 'naechste', 'erstes')); });
+    zeichne();
+  }
+  function abhoerenZeichnen() {
+    Zl.textContent = `${ayat.length} Āyāt`;
+    app.querySelector('#punkte').innerHTML = '';
+    A.classList.remove('verdeckt');
+    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
+    K.innerHTML = '<button class="knopf leise" id="abh-ab">Abbrechen</button><button class="knopf haupt" id="abh-fertig">Fertig</button>';
+    H.innerHTML = '<b>Abhören:</b> Der Text ist offen. Wer zuhört, tippt auf jedes Wort, bei dem ein Fehler kommt, und am Ende auf „Fertig“.';
+    app.querySelector('#abh-ab').onclick = () => {
+      abhoeren = false; seitenEl.querySelectorAll('.w.fmark').forEach(s => s.classList.remove('fmark'));
+      ayat.forEach(vi => { zu.add(vi); spans(vi).forEach(s => s.classList.add('zu')); }); zeichne();
+    };
+    app.querySelector('#abh-fertig').onclick = () => {
+      const marken = [...seitenEl.querySelectorAll('.w.fmark')];
+      Z.abhoerErgebnis(ayat, new Set(marken.map(s => +s.dataset.v))).forEach((x, i) => { erg[i] = x; });
+      if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
+      pos = ayat.length; abschluss();
+    };
+  }
+  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
   function markierenFertig() {
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
     if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
     marken.forEach(s => { s.classList.remove('fmark'); s.classList.add('fs'); });
     if (marken.length) toast(marken.length === 1 ? 'Stelle gemerkt.' : `${marken.length} Stellen gemerkt.`, 1600);
+    verlauf.push({ pos, fs: fsVorher }); zwischenSpeichern();
     naechsteAya();
   }
   A.onclick = ev => {
@@ -775,12 +850,13 @@ async function ueben(idText, quelle, fokusText) {
   };
   seitenEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
-    if (markieren) { if (+w.dataset.v === ayat[pos]) w.classList.toggle('fmark'); return; }
-    if (w.classList.contains('zu') && +w.dataset.v === ayat[pos] && !offen && !vorschau) aufdecken();
+    if (abhoeren) { if (w.classList.contains('in')) w.classList.toggle('fmark'); return; }
+    if (markieren) { if (+w.dataset.v === liste[pos]) w.classList.toggle('fmark'); return; }
+    if (w.classList.contains('zu') && +w.dataset.v === liste[pos] && !offen && !vorschau) aufdecken();
   };
   const tasten = ev => {
     if (!document.body.contains(seitenEl)) { removeEventListener('keydown', tasten); return; }
-    if (pos >= ayat.length) return;
+    if (pos >= liste.length || abhoeren) return;
     if (vorschau) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
     if (markieren) { if (ev.key === 'Enter') { ev.preventDefault(); markierenFertig(); } return; }
     if (!offen && (ev.key === ' ' || ev.key === 'Enter')) { ev.preventDefault(); aufdecken(); }
@@ -803,7 +879,7 @@ async function ueben(idText, quelle, fokusText) {
   }
   function abschluss() {
     if (art === 'stelle') return stelleAbschluss();
-    mikroAus();
+    mikroAus(); Z.zwischenstandLoeschen();
     removeEventListener('keydown', tasten);
     const res = Z.abschnittAbschliessen(id, erg, art === 'frei' || art === 'bonus' ? art : undefined);
     letzteEreignisse.push(...res.ereignisse);
@@ -820,7 +896,7 @@ async function ueben(idText, quelle, fokusText) {
         <div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>Ḥasanāt</span></div></div>
       <p class="niyya">Jeder Buchstabe zehnfach, bei aufrichtiger Niyya, in šāʾa llāh.</p>
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
-      ${res.f ? `<div class="hinweisbox">Die ${res.f === 1 ? 'Fehler-Āya kommt' : res.f + ' Fehler-Āyāt kommen'} morgen wieder dran. Dann mit Markierung.</div>` : ''}
+      ${res.f ? `<div class="hinweisbox">${korr.length ? `<b>Sofortkorrektur:</b> ${korr.filter(x => x !== 'fehler').length} von ${korr.length} ${korr.length === 1 ? 'Āya sitzt' : 'Āyāt sitzen'} jetzt. ` : ''}Die ${res.f === 1 ? 'Fehler-Āya kommt' : res.f + ' Fehler-Āyāt kommen'} morgen wieder dran. Dann mit Markierung.</div>` : ''}
       ${orn}
       <div style="display:grid;gap:10px;margin-top:16px">
       ${wirdJetzt ? '<button class="knopf haupt" id="weiter">Weiter</button>' : naechster != null && art !== 'frei' ? `<button class="knopf haupt" id="naechster">Nächster Abschnitt</button><button class="knopf leise" id="uebersicht">Zur Übersicht</button>` : '<button class="knopf haupt" id="uebersicht">Zur Übersicht</button>'}
@@ -830,7 +906,18 @@ async function ueben(idText, quelle, fokusText) {
     const u = app.querySelector('#uebersicht'); if (u) u.onclick = () => location.hash = '#heute';
     window.scrollTo(0, 0); hochzaehlen(app);
   }
+  // angefangene Übung von heute fortsetzen?
+  const zw = art !== 'stelle' ? Z.zwischenstandLaden(id, quelle) : null;
+  if (zw?.erg?.length && zw.erg.length <= ayat.length && zw.erg.every(x => ['ok', 'hilfe', 'fehler'].includes(x))) {
+    const weiter = await dialog({ titel: 'Weitermachen?', html: `<p>Du hast diesen Abschnitt heute schon begonnen: ${zw.erg.length} von ${ayat.length} Āyāt sind bewertet.</p>`, ja: zw.erg.length < ayat.length ? `Bei Āya ${zw.erg.length + 1} weiter` : 'Weiter', nein: 'Neu beginnen' });
+    if (weiter) {
+      zw.erg.forEach((x, i) => { const vi = ayat[i]; erg[i] = x; status.set(vi, x); zu.delete(vi); spans(vi).forEach(s => { s.classList.remove('zu', 'alt'); s.classList.add(x); }); });
+      pos = zw.erg.length;
+      einbl?.remove();
+    } else Z.zwischenstandLoeschen();
+  }
   zeichne();
+  if (pos) sichtbar(spans(ayat[Math.min(pos, ayat.length - 1)])[0]);
   // nächste Seiten schon laden
   const t3 = Z.tagesplan(); t3.plan.filter(x => !t3.fertig.includes(x) && x !== id).slice(0, 2).forEach(x => schriftenLaden(D.A[x].seiten));
 }
@@ -1267,8 +1354,14 @@ function einstellungen() {
     <div class="abschnitt"><h3>Was du wiederholst</h3><div class="juzwahl" id="juz">${Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${juzAn.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join('')}</div></div>
     <div class="abschnitt"><h3>Erst ansehen, dann prüfen</h3><p class="unter">Vor der ersten Āya kannst du den Abschnitt offen lesen und dich danach prüfen.</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">Aus</button></div></div>
-    <div class="abschnitt"><h3>Hilfe beim Aufdecken</h3><p class="unter">„Anfang zeigen“ deckt das erste Wort einer Āya auf. Die Āya zählt dann als halb sicher.</p>
+    <div class="abschnitt"><h3>Hilfe beim Aufdecken</h3><p class="unter">„Nächstes Wort“ deckt bei jedem Tippen ein weiteres Wort der Āya auf. Die Āya zählt dann als halb sicher.</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">Erlaubt</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">Aus</button></div></div>
+    <div class="abschnitt"><h3>Sofortkorrektur</h3><p class="unter">Hattest du in einem Abschnitt Fehler, fragt Itqān die Āyāt mit Fehler am Ende gleich noch einmal ab. Das zählt nicht für die Punkte, die Wiederholung nach 1, 3 und 7 Tagen bleibt.</p>
+      <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">An</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">Aus</button></div></div>
+    <div class="abschnitt"><h3>Dein Tag beginnt um</h3><p class="unter">Wer sein Wird nach Mitternacht macht, kann den Tageswechsel später legen. Bei 3 Uhr zählt ein Wird um 1 Uhr nachts noch zum Vortag, die Kette bleibt ganz.</p>
+      <label class="auswahl" style="margin-top:10px"><span>Tageswechsel</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? `${x} Uhr` : 'Mitternacht')}</select></label></div>
+    <div class="abschnitt"><h3>Abhören durch eine zweite Person</h3><p class="unter">Zu Beginn eines Abschnitts steht klein „Jemand hört zu“. Dann sieht die zuhörende Person den Text offen und tippt Fehler direkt aufs Wort.</p>
+      <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Tägliche Erinnerung</h3><p class="unter">Ohne Server kann die App selbst keine Benachrichtigung schicken. Deshalb trägt sie dein Wird als täglichen Termin mit Erinnerung in deinen Kalender ein.</p>
       <div class="zeitwahl"><select id="std" aria-label="Stunde">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="Minute">${optionen(minuten, mm, zwei)}</select><span>Uhr</span></div>
       <button class="knopf leise" id="ics">In den Kalender eintragen</button></div>
@@ -1288,6 +1381,9 @@ function einstellungen() {
   wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast('Abschnitte werden umgestellt …'); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
+  wahl('sofort', w => { E.sofort = w === '1'; });
+  wahl('abhoeren', w => { E.abhoeren = w === '1'; });
+  app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast('Gilt ab sofort.'); };
   const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
   alle.onchange = () => {
     const n = +alle.value; if (!n) return;

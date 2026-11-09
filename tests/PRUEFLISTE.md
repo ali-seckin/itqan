@@ -59,3 +59,13 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 38. Erinnerung als Kalendereintrag.
 39. Lehreransicht: Schülerdateien hinzufügen, entfernen, Anzeige stimmt.
 40. Einführung und Erklärung beim Üben lassen sich wieder zeigen.
+
+## Etappe 2: Verlässlich prüfen
+41. Nach „Richtig“: bei der nächsten Āya „Vorige Āya neu bewerten“, Bewertung und Punkte der vorigen Āya stehen wieder offen.
+42. Nach „Fehler“ mit markiertem Wort: „Vorige Āya neu bewerten“ entfernt auch die markierte Stelle.
+43. „Doch kein Fehler“ führt zurück zu Richtig und Fehler.
+44. Übung mitten im Abschnitt verlassen, neu öffnen: „Weitermachen?“ setzt bei der richtigen Āya fort; am nächsten Tag kommt die Frage nicht mehr.
+45. Abschnitt mit Fehlern beenden: Sofortkorrektur fragt die Fehler-Āyāt noch einmal ab, Abschluss nennt das Ergebnis; in den Einstellungen abschaltbar.
+46. „Nächstes Wort“ deckt Wort für Wort auf, die Āya zählt als „mit Hilfe“.
+47. „Jemand hört zu“: Text offen, Wörter antippen, „Fertig“ speichert Fehler und Stellen; „Abbrechen“ verdeckt wieder.
+48. Tageswechsel 3 Uhr: ein Wird um 1 Uhr nachts zählt zum Vortag, die Kette bleibt.

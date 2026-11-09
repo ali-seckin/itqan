@@ -641,3 +641,13 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .schnapp .knopf{width:auto;flex:none}
 .offline-stand{margin-top:10px;font-size:16.5px}
 #offline-balken{margin-top:8px}
+
+/* Etappe 2: angefangene Übung, dezenter Abhör-Link, Sofortkorrektur */
+.marke-art.angefangen{background:rgba(90,140,200,.16);color:var(--text)}
+.textlink.mini.leiser{opacity:.6;font-size:13.5px}
+.fort-zeile.korrektur .zaehler{color:var(--akzent);font-weight:600}
+[data-modus=dunkel] .fort-zeile.korrektur .zaehler{color:var(--akzent2)}
+.fort-zeile.korrektur .punkte i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--schlecht)}
+.fort-zeile.korrektur .punkte i.ok,.fort-zeile.korrektur .punkte i.hilfe{background:var(--gut);box-shadow:none}
+.fort-zeile.korrektur .punkte i.fehler{background:var(--schlecht);box-shadow:none}
+.fort-zeile.korrektur .punkte i.jetzt{box-shadow:inset 0 0 0 1.5px var(--schlecht),0 0 0 3px var(--glow)}
