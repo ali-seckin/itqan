@@ -1382,7 +1382,7 @@ async function sucheSeite(qText = '') {
       <button class="seitenlage" id="tast" aria-label="Arabische Buchstaben einblenden" aria-expanded="false">ا ب</button></div>
     <div class="tastatur verdeckt" id="tastatur" dir="rtl">${ARABISCH.map(b => `<button data-b="${b}">${b}</button>`).join('')}<button data-b=" " class="breit">Leerzeichen</button><button data-b="⌫" aria-label="Löschen">⌫</button></div>
     <p class="unter such-stand" id="stand"></p><div id="treffer"></div>
-    <p class="quelle">Text: quran.com, Uthmani und gewöhnliche Schreibweise. Gesucht wird ohne Vokale; Hamza-Formen, Alif-Formen, ى und ة zählen wie ي, ا und ه.</p>`;
+    <p class="quelle">Text: quran.com, Uthmani und gewöhnliche Schreibweise. Gesucht wird ohne Vokale. Hamza- und Alif-Formen, Alif maqṣūra und Tāʾ marbūṭa werden dabei vereinheitlicht.</p>`;
   const q = app.querySelector('#q'), stand = app.querySelector('#stand'), liste = app.querySelector('#treffer'), tast = app.querySelector('#tastatur');
   let t = null;
   try { stand.textContent = 'Text wird geladen …'; t = await S.textLaden(); stand.textContent = ''; }
