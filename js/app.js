@@ -494,7 +494,7 @@ function heute() {
       const seiten = Array.from({ length: (i < 29 ? juzStart(i + 2) : 605) - juzStart(i + 1) }, (_, k) => juzStart(i + 1) + k);
       const w = seiten.map(Z.seitenStufe).filter(x => x != null);
       const o = w.length ? 0.14 + 0.86 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6 : null;
-      return `<button onclick="location.hash='#karte'" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1;border-radius:6px;font-size:11px;color:rgba(0,0,0,.5);${o != null ? `opacity:${o.toFixed(2)}` : ''}">${i + 1}</button>`;
+      return `<button onclick="location.hash='#karte'" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1;border-radius:6px;font-size:13px;color:rgba(0,0,0,.5);${o != null ? `opacity:${o.toFixed(2)}` : ''}">${i + 1}</button>`;
     }).join('')}</div>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#mehr').onclick = () => { Z.pensumHeuteAendern(1); heute(); };
@@ -978,7 +978,7 @@ function lichtkarte() {
   app.innerHTML = `<div class="marke">Lichtkarte<small>Jede Seite leuchtet so hell, wie sie sitzt. Tippe auf eine Seite.</small></div>
     ${stellenWahl()}
     <div class="titel-klein" style="margin:18px 0 8px">Abschnitte nach Stufe</div>
-    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:0">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:19px">${zaehl[i]}</b><span>${s === 'im Aufbau' ? 'Aufbau' : s}</span></button>`).join('')}</div>
+    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:0">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:var(--s-text)">${zaehl[i]}</b><span>${s === 'im Aufbau' ? 'Aufbau' : s}</span></button>`).join('')}</div>
     <div class="hinweisbox verdeckt" id="stufeninfo"></div>
     <div class="lk-erklaerung">Darunter jede Zeile ein <b>Ǧuzʾ</b>, jedes Feld eine <b>Muṣḥaf-Seite</b>. Die Zahlen oben zählen dagegen <b>Abschnitte</b>.</div>
     <div class="licht-juz lk-kopf"><span>Ǧuzʾ</span><span class="mitte">Muṣḥaf-Seiten</span><span class="lk-anz">Seiten</span></div>
