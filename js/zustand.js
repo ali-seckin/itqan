@@ -37,7 +37,7 @@ export function ergaenzen(p) {
   if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
   p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1'; p.meilenD ??= {};
   p.einst.sofort ??= true; p.einst.abhoeren ??= true; p.einst.tagesbeginn ??= 0;
-  p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0;
+  p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
   p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   return p;
 }
@@ -50,7 +50,7 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
     einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
-    meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }
+    meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }, mutash: {}
   };
   P.einst.schwaechen = 'ausgewogen'; P.zyklus.konto = 0;
   speichern(); return P;
@@ -309,6 +309,12 @@ export function fehlerstellenSetzen(stand) {
   stand = JSON.parse(JSON.stringify(stand || {}));
   if (stand.f && stand.a) { P.fstellen = stand.f; (P.statistik ??= {}).arten = stand.a; } else P.fstellen = stand;
   speichern();
+}
+// Mutašābihāt unterscheiden: je Paar (Schlüssel 'viA-viB') Anzahl, richtig, letztes Ergebnis, Tag
+export function unterscheidenMerken(key, ok) {
+  const x = (P.mutash ??= {})[key] || { n: 0, ok: 0 };
+  x.n++; if (ok) x.ok++; x.letzt = ok ? 1 : 0; x.d = heute();
+  P.mutash[key] = x; speichern(); return x;
 }
 // Abhören: jede Āya mit mindestens einem markierten Wort zählt als Fehler, alle anderen als richtig
 export const abhoerErgebnis = (ayat, fehlerVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : 'ok');

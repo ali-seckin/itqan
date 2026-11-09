@@ -76,3 +76,11 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 51. Pause 7 Tage: Dialog nennt Beginn und Ende; schon geübt heißt Beginn morgen; Heute zeigt die Pausenkarte; „Pause beenden“ auf Heute und in den Einstellungen.
 52. Nach der Pause: Kette läuft weiter, kein Qaḍāʾ, Fehlerwiederholungen kommen um die Pausentage später.
 53. Profil › Auswertung: Quote, Wochenbalken, Fehlerarten, Sūren mit Fehlern, Zeit je Abschnitt; ein frisch geübter Abschnitt erscheint mit seiner Zeit; App im Hintergrund zählt nicht mit.
+
+## Etappe 4: Text und Suche
+54. Muṣḥaf › Lupe: Suche „الحي القيوم“ zeigt 2:255, 3:2 und 20:111 mit markierten Wörtern; Tippen öffnet die Seite.
+55. Buchstabenleiste „ا ب“: Tippen schreibt ins Suchfeld, ⌫ löscht; „2:255“ springt direkt zur Āya.
+56. Flugmodus nach einmaligem Öffnen: Suche und ähnliche Stellen funktionieren weiter.
+57. Profil › Ähnliche Stellen: „In deinem Bereich“ und „Alle“; Paare mit eigener Verwechslung stehen oben.
+58. Vergleich: Unterschiede markiert; „Unterscheiden üben“ verdeckt genau diese Wörter, „Aufdecken“, dann „Beide richtig“ oder „Verwechselt“; danach „Nächstes Paar“.
+59. Fehlerstellen: Bei einer Stelle mit ähnlicher Āya steht „Ähnlich wie … · vergleichen“.

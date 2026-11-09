@@ -1,10 +1,15 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.6';
+export const VERSION = '1.7';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.7', datum: '2026-11-09', titel: 'Suche und ähnliche Stellen', punkte: [
+    'Suche im ganzen Qurʾān ohne Vokale, auch offline: im Muṣḥaf oben auf die Lupe. Eine Stelle wie 2:255 springt direkt dorthin.',
+    'Ähnliche Stellen (Mutašābihāt) unter Profil: zwei Āyāt nebeneinander, die Unterschiede markiert.',
+    'Neuer Modus „Unterscheiden“: Nur die abweichenden Wörter sind verdeckt, du rezitierst beide Stellen und prüfst dich.'
+  ] },
   { v: '1.6', datum: '2026-11-09', titel: 'Klug planen', punkte: [
     'Schwache Abschnitte: wähle in den Einstellungen zwischen „Ḫatma zuerst“, „Ausgewogen“ und „Schwächen zuerst“. Zusätzliche Wiederholungen stehen als „Festigen“ im Tagesplan.',
     'Ruhetage pro Wochentag und eine Pause bis zu 30 Tage. Die Kette wartet und läuft danach weiter.',

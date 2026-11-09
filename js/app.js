@@ -5,6 +5,7 @@ import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZe
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
+import * as S from './suche.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -266,7 +267,7 @@ async function gespeicherteSeiten() {
 }
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung };
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
@@ -1095,7 +1096,7 @@ async function mushaf(pText, aText) {
   const s = D.V[D.L[seiten[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   const opt = { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
   app.innerHTML = `<div class="kopfzeile"><div class="marke">Muṣḥaf<small>${seiten.length > 1 ? `Seiten ${seiten.join(' und ')}` : `Seite ${p}`} · ${sureName(s)} · Ǧuzʾ ${juzVonSeite(p)}</small></div>
-      <div class="reihe-k"><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><select id="nr" class="seitenwahl" aria-label="Seite">${seitenOptionen(p)}</select></div></div>
+      <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="Im Qurʾān suchen">${lupe}</a><button class="seitenlage" id="lage" aria-label="${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button><select id="nr" class="seitenwahl" aria-label="Seite">${seitenOptionen(p)}</select></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
     ${stellenWahl(s)}
     <div class="reihe blaettern" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
@@ -1247,6 +1248,7 @@ function profil() {
     <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>Auswertung</b><span>Fehlerarten, Sūren, Quote und Zeit</span></div><span class="pfeil">›</span></a>
+      <a class="karte" href="#aehnlich"><div class="t"><b>Ähnliche Stellen</b><span>Mutašābihāt vergleichen und unterscheiden</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fortschritt"><div class="t"><b>Fortschritt</b><span>Wo du am meisten übst</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#fehlerstellen"><div class="t"><b>Fehlerstellen</b><span>${Object.keys(P.fstellen || {}).length} markierte Stellen zum gezielten Üben</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>Ornamente und Meilensteine</b><span>${gesammelt.length} von 114 Ornamenten${vergoldet ? ` · ${vergoldet} vergoldet` : ''}</span></div><span class="pfeil">›</span></a></div>
@@ -1361,6 +1363,124 @@ function auswertungSeite() {
       : '<p class="leer">Seit Version 1.6 misst Itqān beim Üben die Zeit. Nach den ersten Abschnitten stehen hier deine Werte.</p>'}`;
 }
 
+// ---------- Suche ohne Vokale ----------
+const lupe = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>';
+const ARABISCH = 'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة ى'.split(' ');
+const stelleText = vi => `${sureName(D.V[vi][0])} ${D.V[vi][0]}:${D.V[vi][1]}`;
+const seiteVon = vi => D.W.get(vi + '.0')?.[0] || D.V[vi][3];
+const abschnittVon = vi => D.A.find(e => vi >= e.v[0] && vi <= e.v[1]);
+// Āya in Uthmani-Schrift, markierte Wörter hervorgehoben oder verdeckt
+function ayaText(t, vi, { mark = new Set(), zu = new Set(), klasse = 'treffer-wort' } = {}) {
+  return `<span class="uthmani">${t.u[vi].map((w, i) => zu.has(i) ? `<span class="wort-zu" data-i="${i}">${esc(w)}</span>` : mark.has(i) ? `<mark class="${klasse}">${esc(w)}</mark>` : esc(w)).join(' ')} <span class="aya-nr">${D.V[vi][1].toLocaleString('ar-EG')}</span></span>`;
+}
+async function sucheSeite(qText = '') {
+  navSetzen('mushaf');
+  const start = decodeURIComponent(qText || '');
+  app.innerHTML = `<button class="zurueck" onclick="history.length > 1 ? history.back() : (location.hash = '#mushaf')">${zurueckPfeil}Muṣḥaf</button>
+    <div class="marke">Suche<small>Im ganzen Qurʾān, ohne Vokale. Eine Stelle wie 2:255 springt direkt zur Āya.</small></div>
+    <div class="suchfeld"><input id="q" type="search" dir="rtl" lang="ar" autocomplete="off" spellcheck="false" placeholder="مثلا: الحي القيوم" value="${esc(start)}" aria-label="Suchbegriff">
+      <button class="seitenlage" id="tast" aria-label="Arabische Buchstaben einblenden" aria-expanded="false">ا ب</button></div>
+    <div class="tastatur verdeckt" id="tastatur" dir="rtl">${ARABISCH.map(b => `<button data-b="${b}">${b}</button>`).join('')}<button data-b=" " class="breit">Leerzeichen</button><button data-b="⌫" aria-label="Löschen">⌫</button></div>
+    <p class="unter such-stand" id="stand"></p><div id="treffer"></div>
+    <p class="quelle">Text: quran.com, Uthmani und gewöhnliche Schreibweise. Gesucht wird ohne Vokale; Hamza-Formen, Alif-Formen, ى und ة zählen wie ي, ا und ه.</p>`;
+  const q = app.querySelector('#q'), stand = app.querySelector('#stand'), liste = app.querySelector('#treffer'), tast = app.querySelector('#tastatur');
+  let t = null;
+  try { stand.textContent = 'Text wird geladen …'; t = await S.textLaden(); stand.textContent = ''; }
+  catch (e) { stand.textContent = 'Der Text ließ sich nicht laden. Bitte einmal mit Internet öffnen.'; return; }
+  let gezeigt = 0, ergebnis = null, lauf = 0;
+  const karte = x => { const e = abschnittVon(x.vi); return `<a class="treffer" href="#mushaf/${seiteVon(x.vi)}${e ? '/' + e.id : ''}"><span class="treffer-ort">${stelleText(x.vi)} · S. ${seiteVon(x.vi)}</span>${ayaText(t, x.vi, { mark: x.woerter })}</a>`; };
+  const mehr = () => {
+    const neu = ergebnis.liste.slice(gezeigt, gezeigt + 40); gezeigt += neu.length;
+    liste.querySelector('#mehr-treffer')?.remove();
+    liste.insertAdjacentHTML('beforeend', neu.map(karte).join('') + (gezeigt < ergebnis.liste.length ? `<button class="knopf leise" id="mehr-treffer" style="margin-top:12px">Weitere ${Math.min(40, ergebnis.liste.length - gezeigt)} zeigen</button>` : ''));
+    const m = liste.querySelector('#mehr-treffer'); if (m) m.onclick = mehr;
+  };
+  const suchen = async () => {
+    const nr = ++lauf, text = q.value;
+    history.replaceState(null, '', '#suche' + (text.trim() ? '/' + encodeURIComponent(text.trim()) : ''));
+    if (!text.trim()) { stand.textContent = ''; liste.innerHTML = ''; return; }
+    const r = await S.suchen(text); if (nr !== lauf) return;
+    ergebnis = r; gezeigt = 0; liste.innerHTML = '';
+    if (r.zuKurz) { stand.textContent = 'Mindestens zwei Buchstaben.'; return; }
+    if (r.stelle != null) { stand.innerHTML = 'Stelle gefunden.'; mehr(); return; }
+    stand.innerHTML = r.liste.length ? `<b>${zahl(r.anzahl)} ${r.anzahl === 1 ? 'Fundstelle' : 'Fundstellen'}</b> in ${zahl(r.liste.length)} ${r.liste.length === 1 ? 'Āya' : 'Āyāt'}` : 'Keine Treffer. Prüfe die Schreibweise oder suche nach weniger Wörtern.';
+    if (r.liste.length) mehr();
+  };
+  let warte = null;
+  q.oninput = () => { clearTimeout(warte); warte = setTimeout(suchen, 220); };
+  app.querySelector('#tast').onclick = ev => { const auf = tast.classList.toggle('verdeckt'); ev.currentTarget.setAttribute('aria-expanded', String(!auf)); };
+  tast.onclick = ev => {
+    const b = ev.target.closest('[data-b]')?.dataset.b; if (b == null) return;
+    q.value = b === '⌫' ? q.value.slice(0, -1) : q.value + b; q.oninput();
+  };
+  if (start) suchen(); else if (!istTouch()) q.focus();
+}
+
+// ---------- Ähnliche Stellen (Mutašābihāt) ----------
+function vonAbschnitt(vi) { const e = abschnittVon(vi); return e ? e.id : -1; }
+async function aehnlichSeite() {
+  navSetzen('profil');
+  app.innerHTML = '<div class="lade">Ähnliche Stellen werden geladen …</div>';
+  let paare;
+  try { paare = await S.paareLaden(); } catch (e) { app.innerHTML = '<p class="leer">Die Liste ließ sich nicht laden. Bitte einmal mit Internet öffnen.</p>'; return; }
+  const P = Z.P;
+  // Āyāt mit „Verwechslung“ bei den Fehlerstellen zuerst
+  const verw = new Set(Object.entries(P.fstellen || {}).filter(([, f]) => f.t?.verwechslung).map(([k]) => +k.split('.')[0]));
+  const mein = x => Z.imBereich(vonAbschnitt(x.a)) || Z.imBereich(vonAbschnitt(x.b));
+  let filter = 'mein';
+  const reihe = () => paare.filter(x => filter === 'alle' || mein(x))
+    .map(x => ({ ...x, v: verw.has(x.a) || verw.has(x.b), st: P.mutash?.[x.key] }))
+    .sort((x, y) => (y.v - x.v) || x.a - y.a || x.b - y.b);
+  const zeichnen = () => {
+    const l = reihe();
+    app.querySelector('#aliste').innerHTML = l.length ? l.slice(0, 120).map(x => `<a class="karte paar-karte" href="#vergleich/${x.key}"><div class="t"><b>${D.V[x.a][0]}:${D.V[x.a][1]} und ${D.V[x.b][0]}:${D.V[x.b][1]}</b>
+        <span>${esc(sureName(D.V[x.a][0]))}${D.V[x.a][0] !== D.V[x.b][0] ? ' · ' + esc(sureName(D.V[x.b][0])) : ''} · ${x.s} % gleich${x.v ? ' <span class="marke-art fehler">Verwechslung</span>' : ''}${x.st ? ` <span class="marke-art ${x.st.letzt ? 'bonus' : 'qadaa'}">${x.st.ok}/${x.st.n} unterschieden</span>` : ''}</span></div><span class="pfeil">›</span></a>`).join('')
+      + (l.length > 120 ? `<p class="unter" style="margin-top:10px">Die ersten 120 von ${l.length}.</p>` : '')
+      : '<p class="leer">In deinem Bereich gibt es keine ähnlichen Stellen.</p>';
+    app.querySelector('#azahl').textContent = `${l.length} ${l.length === 1 ? 'Paar' : 'Paare'}`;
+  };
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Ähnliche Stellen<small>Mutašābihāt: Āyāt, die sich fast gleichen. Im Vergleich sind die Wörter markiert, in denen sie sich unterscheiden. Beim Unterscheiden sind genau diese Wörter verdeckt.</small></div>
+    <div class="wahl" id="afilter" style="margin-top:16px"><button data-w="mein" class="an">In deinem Bereich</button><button data-w="alle">Alle</button></div>
+    <p class="unter" style="margin:10px 0 4px"><span id="azahl"></span>. Stellen, die du als Verwechslung markiert hast, stehen oben.</p>
+    <div id="aliste"></div>
+    <p class="unter" style="margin-top:16px">Die Liste ist automatisch erstellt (gemeinsame Wortfolgen, Wort für Wort verglichen) und wird noch von einem Gelehrten gegengelesen. Wortgleiche Āyāt sind nicht aufgenommen.</p>`;
+  app.querySelector('#afilter').onclick = ev => { const w = ev.target.dataset.w; if (!w) return; filter = w; app.querySelectorAll('#afilter button').forEach(b => b.classList.toggle('an', b.dataset.w === w)); zeichnen(); };
+  zeichnen();
+}
+async function vergleichSeite(key, modus) {
+  navSetzen(null);
+  app.innerHTML = '<div class="lade">Wird geladen …</div>';
+  let x, t;
+  try { [x, t] = await Promise.all([S.paar(key), S.textLaden()]); } catch (e) { app.innerHTML = '<p class="leer">Die Stellen ließen sich nicht laden. Bitte einmal mit Internet öffnen.</p>'; return; }
+  if (!x) { location.replace('#aehnlich'); return; }
+  const ueben = modus === 'ueben';
+  let offen = !ueben;
+  const stelleKarte = (vi, ab) => `<div class="vergleich-karte"><div class="vk-kopf"><b>${esc(sureName(D.V[vi][0]))}</b> ${D.V[vi][0]}:${D.V[vi][1]}<a href="#mushaf/${seiteVon(vi)}${abschnittVon(vi) ? '/' + abschnittVon(vi).id : ''}">S. ${seiteVon(vi)}</a></div>
+    <div class="vk-text" dir="rtl">${ayaText(t, vi, offen ? { mark: new Set(ab), klasse: 'anders' } : { zu: new Set(ab) })}</div></div>`;
+  const st = Z.P.mutash?.[key];
+  const zeichnen = () => {
+    app.innerHTML = `<button class="zurueck" onclick="location.hash='#aehnlich'">${zurueckPfeil}Ähnliche Stellen</button>
+      <div class="marke">${ueben ? 'Unterscheiden' : 'Vergleich'}<small>${ueben ? (offen ? 'Hast du beide Stellen richtig unterschieden?' : 'Rezitiere beide Stellen. Verdeckt sind genau die Wörter, in denen sie sich unterscheiden.') : `${x.s} % gleich. Markiert sind die Wörter, in denen sich die beiden Āyāt unterscheiden.`}</small></div>
+      ${stelleKarte(x.a, x.da)}${stelleKarte(x.b, x.db)}
+      ${st ? `<p class="unter" style="margin-top:6px">Bisher ${st.ok} von ${st.n} Mal richtig unterschieden.</p>` : ''}
+      <div class="reihe" style="margin-top:14px" id="vk-knoepfe">${!ueben ? '<a class="knopf haupt" href="#vergleich/' + key + '/ueben" style="text-decoration:none">Unterscheiden üben</a>'
+        : !offen ? '<button class="knopf haupt" id="vk-auf">Aufdecken</button>'
+        : '<button class="knopf schlecht" id="vk-f">Verwechselt</button><button class="knopf gut" id="vk-r">Beide richtig</button>'}</div>`;
+    const auf = app.querySelector('#vk-auf'); if (auf) auf.onclick = () => { offen = true; zeichnen(); };
+    const bew = ok => { Z.unterscheidenMerken(key, ok); toast(ok ? 'Gut unterschieden.' : 'Gemerkt. Vergleiche die markierten Wörter noch einmal in Ruhe.'); naechstes(); };
+    const r = app.querySelector('#vk-r'); if (r) r.onclick = () => bew(true);
+    const f = app.querySelector('#vk-f'); if (f) f.onclick = () => bew(false);
+  };
+  // nach der Bewertung: zurück zum Vergleich mit dem Ergebnis und dem Weg zum nächsten Paar im eigenen Bereich
+  const naechstes = async () => {
+    const paare = await S.paareLaden(), mein = y => Z.imBereich(vonAbschnitt(y.a)) || Z.imBereich(vonAbschnitt(y.b));
+    const l = paare.filter(mein), i = l.findIndex(y => y.key === key), n = l[(i + 1) % l.length];
+    app.querySelector('#vk-knoepfe').innerHTML = `<a class="knopf leise" href="#vergleich/${key}" style="text-decoration:none">Noch einmal ansehen</a>${n && n.key !== key ? `<a class="knopf haupt" href="#vergleich/${n.key}/ueben" style="text-decoration:none">Nächstes Paar</a>` : ''}`;
+  };
+  zeichnen();
+}
+
 // ---------- Fehlerstellen ----------
 function fehlerstellenSeite() {
   navSetzen('profil');
@@ -1374,11 +1494,17 @@ function fehlerstellenSeite() {
       const w = D.W.get(f.s); if (!w) return '';
       const arten = Object.entries(f.t).sort((a, b) => b[1] - a[1]).map(([x]) => Z.FEHLERARTEN.find(y => y[0] === x)?.[1]).filter(Boolean).join(', ');
       const ab = abschnittVon(f.vi), gut = f.gut || 0;
-      return `<div class="fs-karte"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="Im Muṣḥaf zeigen"><span class="nb">${wortHTML(f.vi + '.' + (f.i - 1))}</span>${wortHTML(f.s)}<span class="nb">${wortHTML(f.vi + '.' + (f.i + 1))}</span></a>
+      return `<div class="fs-karte" data-vi="${f.vi}"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="Im Muṣḥaf zeigen"><span class="nb">${wortHTML(f.vi + '.' + (f.i - 1))}</span>${wortHTML(f.s)}<span class="nb">${wortHTML(f.vi + '.' + (f.i + 1))}</span></a>
         <div class="fs-unten"><div class="t"><b>${sureName(D.V[f.vi][0])} ${D.V[f.vi][0]}:${D.V[f.vi][1]}</b><span>${f.n}× vertan${arten ? ' · ' + arten : ''}</span>
           <span class="fs-fort" title="richtig in Folge">${Array.from({ length: Z.STELLE_ZIEL }, (_, k) => `<i class="${k < gut ? 'an' : ''}"></i>`).join('')}</span></div>
           ${ab ? `<a class="knopf haupt klein" href="#ueben/${ab.id}/stelle/${f.vi}" style="width:auto;text-decoration:none">Üben</a>` : ''}</div></div>`;
     }).join('') : '<p class="leer">Wenn du nach „Fehler“ auf das Wort tippst, bei dem du dich vertan hast, sammelt Itqān diese Stellen hier.</p>'}</div>`;
+  // ähnliche Stellen nachtragen, sobald die Liste geladen ist
+  S.paareLaden().then(paare => app.querySelectorAll('.fs-karte[data-vi]').forEach(k => {
+    const vi = +k.dataset.vi, p = paare.find(x => x.a === vi || x.b === vi); if (!p) return;
+    const ander = p.a === vi ? p.b : p.a;
+    k.querySelector('.t')?.insertAdjacentHTML('beforeend', `<a class="fs-aehnlich" href="#vergleich/${p.key}">Ähnlich wie ${D.V[ander][0]}:${D.V[ander][1]} · vergleichen</a>`);
+  })).catch(() => {});
 }
 
 // ---------- Einstellungen ----------
