@@ -157,7 +157,7 @@ button.karte:active{transform:scale(.99)}
 /* Feier und Ergebnis */
 .feier{text-align:center;padding-top:10px}
 .qandil{height:170px;margin:0 auto;display:flex;justify-content:center;animation:laterne 4s ease-in-out infinite}
-.qandil img,.lampe-k img{height:100%;width:auto;display:block}
+.qandil img,.lampe-k img,.zeichen svg{height:100%;width:auto;display:block}
 .lampe-k{display:inline-flex;height:20px}
 [data-modus=dunkel] .nur-hell,[data-modus=hell] .nur-dunkel{display:none!important}
 @keyframes laterne{0%,100%{filter:drop-shadow(0 0 14px var(--glow))}50%{filter:drop-shadow(0 0 30px var(--glow))}}
@@ -651,3 +651,11 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .fort-zeile.korrektur .punkte i.ok,.fort-zeile.korrektur .punkte i.hilfe{background:var(--gut);box-shadow:none}
 .fort-zeile.korrektur .punkte i.fehler{background:var(--schlecht);box-shadow:none}
 .fort-zeile.korrektur .punkte i.jetzt{box-shadow:inset 0 0 0 1.5px var(--schlecht),0 0 0 3px var(--glow)}
+
+/* Itqān-Zeichen: Nische mit Flamme (ersetzt die Laternenbilder) */
+:root,[data-modus=hell]{--z1:#c98b3c;--z2:#9c6326}
+[data-modus=dunkel]{--z1:#f4dc9c;--z2:#e2bf72}
+.zeichen{display:inline-flex}
+.lampe-k{height:18px}
+.qandil.zeichen{height:136px}
+.tb-laterne .qandil.zeichen{height:136px}

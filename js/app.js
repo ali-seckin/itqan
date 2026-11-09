@@ -69,7 +69,9 @@ function datumText(d = new Date()) {
 }
 const stufePunkte = st => `<div class="stufe" title="${Z.STUFEN[st]}">${[1, 2, 3, 4].map(i => `<i class="${st >= i ? 'an' : ''}"></i>`).join('')}</div>`;
 // Die Laterne (App-Symbol), freigestellt: hell = Bronze für die Lesestube, dunkel = Gold für Tezhip
-const laterne = klasse => `<span class="${klasse}" aria-hidden="true"><img class="nur-hell" src="icons/laterne_hell.png" alt=""><img class="nur-dunkel" src="icons/laterne.png" alt=""></span>`;
+// Das Itqān-Zeichen (Nische mit Flamme, nach Sūra an-Nūr 24:35): hell in Bronze, dunkel in Gold, Farben aus --z1/--z2
+const NISCHE = 'M272 820 V470 C272 330 392 230 512 176 C632 230 752 330 752 470 V820 H672 V488 C672 384 592 314 512 270 C432 314 352 384 352 488 V820 Z', FLAMME = 'M512 452 C576 532 600 596 578 652 C566 684 540 706 512 712 C484 706 458 684 446 652 C424 596 448 532 512 452 Z';
+const laterne = klasse => `<span class="${klasse} zeichen" aria-hidden="true"><svg viewBox="232 156 560 684"><defs><linearGradient id="zv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--z1)"/><stop offset="1" style="stop-color:var(--z2)"/></linearGradient></defs><path d="${NISCHE}" fill="url(#zv)"/><path d="${FLAMME}" fill="url(#zv)"/></svg></span>`;
 const qandil = () => laterne('qandil');
 const lampeKlein = laterne('lampe-k');
 function herunterladen(name, inhalt, typ) {

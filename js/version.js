@@ -1,10 +1,14 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.2';
+export const VERSION = '1.3';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.3', datum: '2026-11-09', titel: 'Neues Zeichen', punkte: [
+    'Itqān hat ein neues, schlichtes Zeichen: eine Nische mit einer Flamme, nach Sūra an-Nūr 24:35.',
+    'Es ersetzt die Laterne auf dem Home-Bildschirm, im Browser, auf der Startseite, beim Abschluss und in der Kette.'
+  ] },
   { v: '1.2', datum: '2026-11-09', titel: 'Verlässlich prüfen', punkte: [
     'Vorige Āya neu bewerten: Ein Fehltipp lässt sich zurücknehmen, auch die markierten Stellen.',
     '„Doch kein Fehler“ führt nach einem versehentlichen „Fehler“ zurück.',
