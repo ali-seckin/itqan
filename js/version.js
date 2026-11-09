@@ -7,7 +7,9 @@ export const RUECKMELDUNG_AN = '';
 export const NEUIGKEITEN = [
   { v: '1.3', datum: '2026-11-09', titel: 'Neues Zeichen', punkte: [
     'Itqān hat ein neues, schlichtes Zeichen: eine Nische mit einer Flamme, nach Sūra an-Nūr 24:35.',
-    'Es ersetzt die Laterne auf dem Home-Bildschirm, im Browser, auf der Startseite, beim Abschluss und in der Kette.'
+    'Es ersetzt die Laterne auf dem Home-Bildschirm, im Browser, auf der Startseite, beim Abschluss und in der Kette.',
+    'Hilfe beim Aufdecken heißt jetzt „Erstes Wort“, danach „Noch ein Wort“.',
+    'Das Abhören durch eine zweite Person heißt jetzt „Jemand hört ab“.'
   ] },
   { v: '1.2', datum: '2026-11-09', titel: 'Verlässlich prüfen', punkte: [
     'Vorige Āya neu bewerten: Ein Fehltipp lässt sich zurücknehmen, auch die markierten Stellen.',
@@ -16,7 +18,7 @@ export const NEUIGKEITEN = [
     'Sofortkorrektur: Die Āyāt mit Fehler kommen am Ende des Abschnitts gleich noch einmal.',
     'Hilfe Wort für Wort statt nur des ersten Wortes.',
     'Eigener Tageswechsel, z. B. um 3 Uhr, für ein Wird nach Mitternacht.',
-    'Dezent: „Jemand hört zu“ öffnet den Text für eine zweite Person, die Fehler aufs Wort tippt.'
+    'Dezent: „Jemand hört ab“ öffnet den Text für eine zweite Person, die Fehler aufs Wort tippt.'
   ] },
   { v: '1.1', datum: '2026-11-09', titel: 'Schutz und Testbetrieb', punkte: [
     'Profil sichern öffnet am Handy das Teilen-Menü: in Dateien, iCloud Drive oder per WhatsApp an dich selbst.',

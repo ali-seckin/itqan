@@ -660,7 +660,7 @@ async function ueben(idText, quelle, fokusText) {
       { ziel: () => app.querySelector('#mikro'), titel: 'Dich selbst aufnehmen', text: 'Freiwillig: Tippe auf den Punkt und rezitiere. Beim Aufdecken endet die Aufnahme und du kannst dich anhören und mit dem Text vergleichen. Die Aufnahme wird nirgends gespeichert und nach der Bewertung gelöscht.' },
       { ziel: () => app.querySelector('#teil'), titel: 'Bis zum Zeichen', text: 'Deckt die Āya nur bis zum nächsten Stoppzeichen auf. Bei langen Āyāt prüfst du dich so Stück für Stück.' },
       { ziel: () => app.querySelector('#auf'), titel: 'Aufdecken', text: 'Deckt die ganze Āya auf. Du kannst auch direkt auf ein verdecktes Wort tippen.' },
-      { ziel: () => app.querySelector('#hilfe'), titel: 'Nächstes Wort', text: 'Wenn du hängst, deckt jedes Tippen ein weiteres Wort auf. Die Āya zählt dann nur halb.' },
+      { ziel: () => app.querySelector('#hilfe'), titel: 'Erstes Wort', text: 'Wenn du nicht weißt, wie die Āya beginnt, zeigt dir das ihr erstes Wort. Danach deckt „Noch ein Wort“ jeweils ein weiteres auf. Die Āya zählt dann nur halb.' },
       { ziel: () => app.querySelector('#ansehen'), titel: 'Erst ansehen', text: 'Du kannst den Abschnitt auch zuerst offen lesen und dich erst danach prüfen.' },
       { ziel: () => app.querySelector('.ueb-kopf .info'), titel: 'Wo du bist', text: 'Oben stehen Bereich, Zahl der Āyāt und Zeilen und die Seite. R oder L zeigt, ob die Seite im gedruckten Muṣḥaf rechts oder links liegt.' },
       { titel: 'Jetzt du', text: 'Rezitiere die erste Āya aus dem Gedächtnis und decke sie dann auf. Danach zeigen wir dir, wie du dich bewertest.', los: 'Los geht’s' }
@@ -727,10 +727,10 @@ async function ueben(idText, quelle, fokusText) {
       K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? 'Aufnahme beenden' : 'Eigene Rezitation aufnehmen'}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? '<button class="knopf leise" id="teil">Bis zum Zeichen</button>' : ''}<button class="knopf haupt" id="auf">${ti ? 'Rest aufdecken' : `Āya ${D.V[vi][1]} aufdecken`}</button>`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
-      if (E.hilfe) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? 'Noch ein Wort' : 'Nächstes Wort'}</button>`);
+      if (E.hilfe) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? 'Noch ein Wort' : ti ? 'Nächstes Wort' : 'Erstes Wort'}</button>`);
       if (E.vorueben && start) links.push('<button class="textlink mini" id="ansehen">Erst ansehen</button>');
       if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push('<button class="textlink mini" id="neu-bewerten">Vorige Āya neu bewerten</button>');
-      if (E.abhoeren !== false && start && art !== 'stelle') links.push('<button class="textlink mini leiser" id="abhoeren">Jemand hört zu</button>');
+      if (E.abhoeren !== false && start && art !== 'stelle') links.push('<button class="textlink mini leiser" id="abhoeren">Jemand hört ab</button>');
       const satz = phase === 'korrektur' ? 'Sofortkorrektur: diese Āya noch einmal aus dem Gedächtnis. Zählt nicht für die Punkte.' : alt.has(vi) ? 'Hier warst du zuletzt unsicher.' : ti ? 'Weiter aus dem Gedächtnis.' : 'Rezitiere aus dem Gedächtnis.';
       H.innerHTML = (nimmt ? '<b class="nimmt-text">● Aufnahme läuft.</b> Beim Aufdecken endet sie.' : satz) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
@@ -1356,13 +1356,13 @@ function einstellungen() {
     <div class="abschnitt"><h3>Was du wiederholst</h3><div class="juzwahl" id="juz">${Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${juzAn.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join('')}</div></div>
     <div class="abschnitt"><h3>Erst ansehen, dann prüfen</h3><p class="unter">Vor der ersten Āya kannst du den Abschnitt offen lesen und dich danach prüfen.</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">Aus</button></div></div>
-    <div class="abschnitt"><h3>Hilfe beim Aufdecken</h3><p class="unter">„Nächstes Wort“ deckt bei jedem Tippen ein weiteres Wort der Āya auf. Die Āya zählt dann als halb sicher.</p>
+    <div class="abschnitt"><h3>Hilfe beim Aufdecken</h3><p class="unter">„Erstes Wort“ zeigt den Anfang der Āya, danach deckt „Noch ein Wort“ jeweils ein weiteres auf. Die Āya zählt dann als halb sicher.</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">Erlaubt</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Sofortkorrektur</h3><p class="unter">Hattest du in einem Abschnitt Fehler, fragt Itqān die Āyāt mit Fehler am Ende gleich noch einmal ab. Das zählt nicht für die Punkte, die Wiederholung nach 1, 3 und 7 Tagen bleibt.</p>
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">An</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Dein Tag beginnt um</h3><p class="unter">Wer sein Wird nach Mitternacht macht, kann den Tageswechsel später legen. Bei 3 Uhr zählt ein Wird um 1 Uhr nachts noch zum Vortag, die Kette bleibt ganz.</p>
       <label class="auswahl" style="margin-top:10px"><span>Tageswechsel</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? `${x} Uhr` : 'Mitternacht')}</select></label></div>
-    <div class="abschnitt"><h3>Abhören durch eine zweite Person</h3><p class="unter">Zu Beginn eines Abschnitts steht klein „Jemand hört zu“. Dann sieht die zuhörende Person den Text offen und tippt Fehler direkt aufs Wort.</p>
+    <div class="abschnitt"><h3>Abhören durch eine zweite Person</h3><p class="unter">Zu Beginn eines Abschnitts steht klein „Jemand hört ab“. Dann sieht die zuhörende Person den Text offen und tippt Fehler direkt aufs Wort.</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Tägliche Erinnerung</h3><p class="unter">Ohne Server kann die App selbst keine Benachrichtigung schicken. Deshalb trägt sie dein Wird als täglichen Termin mit Erinnerung in deinen Kalender ein.</p>
       <div class="zeitwahl"><select id="std" aria-label="Stunde">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="Minute">${optionen(minuten, mm, zwei)}</select><span>Uhr</span></div>
