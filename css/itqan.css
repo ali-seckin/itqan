@@ -564,3 +564,8 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 [data-modus=dunkel] .orn-legende b{color:var(--akzent2)}
 .orn-legende span:not(.kreis){font-size:12.5px;line-height:1.2;color:var(--leise);white-space:nowrap}
 .orn-legende-text{font-size:13.5px;color:var(--leise);text-align:center;margin:8px auto 0;max-width:560px}
+/* Fortschritt beim Üben: Punkte und „Āya x von y“ in einer eigenen Zeile, getrennt vom Hinweistext */
+.fort-zeile{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:4px 12px;margin:2px 0 10px}
+.fort-zeile .punkte{margin:0}
+.fort-zeile .zaehler{font-size:14px;line-height:1;color:var(--leise);white-space:nowrap;padding-left:12px;border-left:1px solid var(--rand)}
+.steuerung .zeile2 #hinweis{flex:1}

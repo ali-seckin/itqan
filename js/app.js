@@ -384,8 +384,9 @@ async function ueben(idText, quelle, fokusText) {
     r.onstop = () => {
       if (nr !== aufnahmeNr) return;
       if (rec === r) rec = null;
+      mikroFrei();
       if (daten.length) { aufnahmeWeg(); aufnahme = URL.createObjectURL(new Blob(daten, { type: r.mimeType || daten[0].type || 'audio/mp4' })); }
-      else { mikro?.getTracks().forEach(t => t.stop()); mikro = null; toast('Die Aufnahme ist leer geblieben. Bitte noch einmal aufnehmen.'); }
+      else toast('Die Aufnahme ist leer geblieben. Bitte noch einmal aufnehmen.');
       zeichne();
     };
     rec = r; startet = false;
@@ -395,8 +396,13 @@ async function ueben(idText, quelle, fokusText) {
   const aufnahmeStopp = () => { if (rec?.state === 'recording') rec.stop(); };
   function aufnahmeWeg() { spieler?.pause(); spieler = null; if (aufnahme) URL.revokeObjectURL(aufnahme); aufnahme = null; }
   // laufende und fertige Aufnahme verwerfen (nach der Bewertung oder vor einer neuen Aufnahme)
-  function aufnahmeVerwerfen() { aufnahmeNr++; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); }
-  function mikroAus() { aufnahmeVerwerfen(); mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
+  function aufnahmeVerwerfen() { aufnahmeNr++; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); mikroFrei(); }
+  // Das Mikrofon ist nur während einer Aufnahme offen. Sonst zeigt das iPhone beim App-Wechsel eine laufende Aufnahme an.
+  function mikroFrei() { mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
+  function mikroAus() { aufnahmeVerwerfen(); document.removeEventListener('visibilitychange', imHintergrund); }
+  // App wechselt in den Hintergrund: laufende Aufnahme beenden (sie bleibt zum Anhören) und Mikrofon freigeben
+  function imHintergrund() { if (!document.hidden) return; if (rec?.state === 'recording') aufnahmeStopp(); else mikroFrei(); }
+  document.addEventListener('visibilitychange', imHintergrund);
   addEventListener('hashchange', mikroAus, { once: true });
   const zusatz = art === 'bonus' ? ' · Bonus' : art === 'fehler' ? ' · Wiederholung nach Fehler' : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
@@ -404,8 +410,8 @@ async function ueben(idText, quelle, fokusText) {
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([c, , ty, , p]) => `<span style="font-family:qp${p}">${glyphen(c, ty)}</span>`).join('')}</div></div>` : ''}
     <div class="seiten" id="seiten"></div><div style="height:190px"></div>
-    <div class="steuerung"><div class="innen"><div class="punkte" id="punkte"></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
-    <div class="zeile2"><span class="unter" id="hinweis"></span><span class="unter" id="zaehler"></span></div></div></div>
+    <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
+    <div class="zeile2"><span class="unter" id="hinweis"></span></div></div></div>
     ${art === 'stelle' ? '' : `<div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b> von <b>${e.von_n}</b>` : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
       <div class="ar">${sureArabisch(e.von[0])}</div>${doppelseiteSkizze(e)}</div></div>`}`;
   const einbl = app.querySelector('#einbl');
