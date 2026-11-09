@@ -943,8 +943,8 @@ function ornamenteSeite() {
     <div class="marke">Ornamente<small>Für jede Sūra ein eigenes Ornament. Du bekommst es, wenn alle Abschnitte der Sūra gefestigt sind. Ist die ganze Sūra mutqan, wird es vergoldet. Je länger die Sūra, desto prächtiger das Ornament.</small></div>
     <div class="zahlen"><div class="zahl"><b>${ges}</b><span>von 114 gesammelt</span></div><div class="zahl"><b>${gold}</b><span>vergoldet</span></div><div class="zahl"><b>${P.zyklus.khatma}</b><span>${P.zyklus.khatma === 1 ? 'Ḫatma' : 'Ḫatmāt'}</span></div></div>
     <div class="wahl" id="ofilter" style="margin-top:16px"><button data-w="alle" class="an">Alle 114</button><button data-w="hat">Gesammelt</button><button data-w="offen">Noch offen</button></div>
-    <div class="orn-legende" aria-label="Größen der Ornamente">${[['unter 1 Seite', 1.5], ['1 bis 4 Seiten', 2], ['5 bis 9 Seiten', 3], ['10 bis 20 Seiten', 4], ['über 20 Seiten', 6]].map(([t, e], i) => `<div><i style="--e:${e}"></i><b>${i + 1}</b><span>${t}</span></div>`).join('')}</div>
-    <p class="orn-legende-text">Die Größe richtet sich nach der Länge der Sūra im Muṣḥaf. <span style="white-space:nowrap">al-Fātiḥah</span> steht ausnahmsweise in Größe 3 an erster Stelle.</p>
+    <div class="orn-legende" aria-label="Größen der Ornamente">${[['unter 1', 'Seite', 1.5], ['1 bis 4', 'Seiten', 2], ['5 bis 9', 'Seiten', 3], ['10 bis 20', 'Seiten', 4], ['über 20', 'Seiten', 6]].map(([t, w, e], i) => `<div><span class="kreis"><i style="--e:${e}"></i></span><b>${i + 1}</b><span>${t}<br>${w}</span></div>`).join('')}</div>
+    <p class="orn-legende-text">Die Größe richtet sich nach der Länge der Sūra im Muṣḥaf. Wegen ihrer besonderen Stellung ist <span style="white-space:nowrap">al-Fātiḥah</span> größer, als ihre Länge es vorgibt, und steht in Größe 3 an erster Stelle.</p>
     <div class="orn-feld" id="og"></div>
     <div class="titel-klein">Meilensteine der Kette</div>
     <div class="meilensteine">${ketten}</div>
