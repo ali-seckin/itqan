@@ -569,3 +569,26 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .fort-zeile .punkte{margin:0}
 .fort-zeile .zaehler{font-size:14px;line-height:1;color:var(--leise);white-space:nowrap;padding-left:12px;border-left:1px solid var(--rand)}
 .steuerung .zeile2 #hinweis{flex:1}
+
+/* Geführte Erklärung beim ersten Üben: Bildschirm abgedunkelt, das erklärte Element hell ausgespart */
+.fuehrung{position:fixed;inset:0;z-index:90;animation:fhAuf .25s ease}
+.fuehrung.weg{opacity:0;transition:opacity .2s}
+@keyframes fhAuf{from{opacity:0}to{opacity:1}}
+.fh-loch{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(6,14,20,.66);outline:2px solid var(--akzent2);outline-offset:0;transition:left .3s ease,top .3s ease,width .3s ease,height .3s ease;pointer-events:none}
+.fuehrung.ohne-ziel .fh-loch{outline:0}
+.fh-box{position:fixed;width:min(340px,calc(100vw - 24px));background:var(--karte2);background:color-mix(in srgb,var(--bg) 92%,#fff 8%);border:1px solid var(--akzent);border-radius:16px;padding:12px 14px 12px;box-shadow:0 14px 34px rgba(0,0,0,.4);transition:left .3s ease,top .3s ease}
+[data-modus=hell] .fh-box{background:#fffaf0}
+.fh-box.neu{animation:fhBox .3s ease}
+@keyframes fhBox{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fh-box[data-pfeil=oben]::before,.fh-box[data-pfeil=unten]::after{content:'';position:absolute;left:var(--px);width:12px;height:12px;margin-left:-6px;background:inherit;border:1px solid var(--akzent);transform:rotate(45deg)}
+.fh-box[data-pfeil=oben]::before{top:-7px;border-right:0;border-bottom:0}
+.fh-box[data-pfeil=unten]::after{bottom:-7px;border-left:0;border-top:0}
+.fh-kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.fh-nr{font-size:13px;letter-spacing:1px;color:var(--leise)}
+.fh-weg{background:none;border:0;color:var(--leise);font-size:14px;text-decoration:underline;padding:2px 0}
+.fh-box h3{font-family:var(--kopf);font-size:21px;font-weight:600;color:var(--akzent);margin-bottom:4px}
+[data-modus=dunkel] .fh-box h3{color:var(--akzent2)}
+.fh-box p{font-size:16px;line-height:1.45}
+.fh-knoepfe{display:flex;gap:8px;margin-top:12px}
+.fh-knoepfe .knopf{flex:1}
+@media (prefers-reduced-motion:reduce){.fh-loch,.fh-box{transition:none}.fh-box.neu{animation:none}}

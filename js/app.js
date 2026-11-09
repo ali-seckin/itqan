@@ -3,6 +3,7 @@ import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArab
 import * as Z from './zustand.js';
 import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
+import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -443,7 +444,55 @@ async function ueben(idText, quelle, fokusText) {
     return aus;
   }
   function sichtbar(el) { if (!el) return; const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 210) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  function zeichne() {
+  // ---------- Erklärung beim ersten Üben: drei Etappen, jede beim ersten Mal, wenn sie gebraucht wird ----------
+  // 1 vor dem ersten Aufdecken, 2 nach dem ersten Aufdecken (Bewerten), 3 nach dem ersten „Fehler“ (Stelle markieren)
+  const imAbschnitt = () => [...(seitenEl.querySelector('.seite') || seitenEl).querySelectorAll('.w.in')];
+  const jetzt = () => spans(ayat[pos]);
+  const TOUR = {
+    'ueben-1': () => [
+      { titel: 'Deine erste Übung', text: 'Willkommen. So läuft jede Übung ab: Du rezitierst eine Āya aus dem Gedächtnis, deckst sie auf und sagst ehrlich, ob sie richtig war. Dann kommt die nächste Āya.<br><br>Wir gehen die Seite und die Knöpfe einmal Schritt für Schritt durch.' },
+      { ziel: imAbschnitt, titel: 'Dein Abschnitt', text: 'Die Āyāt deines Abschnitts sind verdeckt, jedes Wort als Balken. So siehst du, wie lang eine Āya ist, aber nicht ihren Text. Die Stoppzeichen bleiben sichtbar.' },
+      { ziel: () => [...seitenEl.querySelectorAll('.w.naechste')].slice(0, 12), titel: 'Diese Āya ist dran', text: 'Die Āya, die du jetzt rezitierst, ist goldbraun hinterlegt und pulsiert leicht. Ein leuchtendes Stoppzeichen zeigt, bis wohin „Bis zum Zeichen“ aufdeckt.' },
+      { ziel: () => { const k = [...seitenEl.querySelectorAll('.w.klar')]; return k.length ? k : null; }, titel: 'Die Āya davor', text: 'Die Āya vor deinem Abschnitt ist hell bläulich hinterlegt und gut lesbar. Sie hilft dir, den Einstieg zu finden.' },
+      { ziel: () => { const v = [...seitenEl.querySelectorAll('.w.vor, .w.nach')].slice(0, 30); return v.length ? v : null; }, titel: 'Der Rest der Seite', text: 'Text vor deinem Abschnitt ist blass, Text danach ist verschwommen. So verrät die Seite nichts, was du gleich aus dem Gedächtnis rezitieren sollst.' },
+      { ziel: () => app.querySelector('.fort-zeile'), titel: 'Dein Fortschritt', text: 'Jeder Punkt ist eine Āya des Abschnitts: grün richtig, rot Fehler, golden mit Hilfe. Daneben steht, bei welcher Āya du bist.' },
+      { ziel: () => app.querySelector('#mikro'), titel: 'Dich selbst aufnehmen', text: 'Freiwillig: Tippe auf den Punkt und rezitiere. Beim Aufdecken endet die Aufnahme und du kannst dich anhören und mit dem Text vergleichen. Die Aufnahme wird nirgends gespeichert und nach der Bewertung gelöscht.' },
+      { ziel: () => app.querySelector('#teil'), titel: 'Bis zum Zeichen', text: 'Deckt die Āya nur bis zum nächsten Stoppzeichen auf. Bei langen Āyāt prüfst du dich so Stück für Stück.' },
+      { ziel: () => app.querySelector('#auf'), titel: 'Aufdecken', text: 'Deckt die ganze Āya auf. Du kannst auch direkt auf ein verdecktes Wort tippen.' },
+      { ziel: () => app.querySelector('#hilfe'), titel: 'Anfang zeigen', text: 'Wenn du nicht weißt, wie die Āya beginnt, zeigt dir das ihr erstes Wort. Die Āya zählt dann nur halb.' },
+      { ziel: () => app.querySelector('#ansehen'), titel: 'Erst ansehen', text: 'Du kannst den Abschnitt auch zuerst offen lesen und dich erst danach prüfen.' },
+      { ziel: () => app.querySelector('.ueb-kopf .info'), titel: 'Wo du bist', text: 'Oben stehen Bereich, Zahl der Āyāt und Zeilen und die Seite. R oder L zeigt, ob die Seite im gedruckten Muṣḥaf rechts oder links liegt.' },
+      { titel: 'Jetzt du', text: 'Rezitiere die erste Āya aus dem Gedächtnis und decke sie dann auf. Danach zeigen wir dir, wie du dich bewertest.', los: 'Los geht’s' }
+    ],
+    'ueben-2': () => [
+      { ziel: jetzt, titel: 'Vergleichen', text: 'Jetzt siehst du die Āya. Vergleiche Wort für Wort mit dem, was du rezitiert hast. Die Ehrlichkeit dabei ist eine Amāna: Nur so zeigt dir Itqān, wo du wirklich stehst.' },
+      { ziel: () => app.querySelector('#hoeren'), titel: 'Anhören', text: 'Hier hörst du deine Aufnahme. Danach wird sie gelöscht.' },
+      { ziel: () => app.querySelector('#r'), titel: 'Richtig', text: 'Die Āya war fehlerfrei und ohne Stocken. Das bringt 10 Itqān-Punkte, mit „Anfang zeigen“ 5.' },
+      { ziel: () => app.querySelector('#f'), titel: 'Fehler', text: 'Ein Wort verwechselt oder ausgelassen, ein falscher Vokal oder ein Hänger. Danach kannst du die Stelle markieren. Ein Abschnitt mit Fehlern kommt nach 1, 3 und 7 Tagen wieder, bis er sitzt.', los: 'Verstanden' }
+    ],
+    'ueben-3': () => [
+      { ziel: jetzt, titel: 'Die Stelle markieren', text: 'Tippe auf das Wort, bei dem du dich vertan hast. Es wird rot umrandet. Du kannst auch mehrere Wörter markieren. Das ist freiwillig.' },
+      { ziel: () => app.querySelector('#arten'), titel: 'Was ist passiert?', text: 'Wähle, wenn du möchtest, die Art des Fehlers. Tippst du eine an, steht darunter, was sie bedeutet.' },
+      { ziel: () => app.querySelector('#weiter'), titel: 'Weiter', text: 'Speichert die markierten Wörter und geht zur nächsten Āya.' },
+      { titel: 'Deine Fehlerstellen', text: 'Alle markierten Wörter sammelt Itqān unter <b>Profil › Fehlerstellen</b>. Dort übst du jede Stelle gezielt: dreimal in Folge richtig, dann ist sie erledigt.<br><br>Auf der Muṣḥaf-Seite tragen markierte Wörter einen kleinen roten Punkt.' }
+    ]
+  };
+  let tourAktiv = false;
+  function tourPruefen() {
+    if (tourAktiv || vorschau || pos >= ayat.length) return;
+    const name = markieren ? 'ueben-3' : offen ? 'ueben-2' : pos === 0 && ti === 0 ? 'ueben-1' : null;
+    if (!name || tourGesehen(name)) return;
+    tourAktiv = true;
+    const los = () => {
+      if (!seitenEl.isConnected) { tourAktiv = false; return; }
+      if (document.querySelector('#einbl')) return setTimeout(los, 250);   // erst wenn die Einblendung weg ist
+      tourMerken(name);
+      fuehrung(TOUR[name]()).then(() => { tourAktiv = false; });
+    };
+    setTimeout(los, name === 'ueben-1' ? 300 : 450);   // kurz warten, bis Knöpfe und Abspielknopf stehen
+  }
+  function zeichne() { zeichneInnen(); tourPruefen(); }
+  function zeichneInnen() {
     app.querySelector('#punkte').innerHTML = ayat.map((a, i) => `<i class="${erg[i] || (i === pos ? 'jetzt' : '')}"></i>`).join('');
     seitenEl.querySelectorAll('.naechste').forEach(x => x.classList.remove('naechste'));
     seitenEl.querySelectorAll('.ziel').forEach(x => x.classList.remove('ziel'));
@@ -899,7 +948,8 @@ function profil() {
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei.${P.einst.letzteSicherung ? ` Letzte Sicherung: ${new Date(P.einst.letzteSicherung).toLocaleDateString('de-AT')}.` : ''}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
-    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a></div>`;
+    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button></div>`;
+  app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast('Beim nächsten Üben erscheint die Erklärung wieder.'); };
   app.querySelector('#sichern').onclick = async () => {
     const name = `Itqan-${(P.name || 'Profil').replace(/[^\p{L}\p{N}]+/gu, '_')}-${Z.heute()}.itqan`;
     herunterladen(name, await Z.exportDatei(), 'application/json');
