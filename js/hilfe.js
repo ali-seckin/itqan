@@ -4,6 +4,8 @@ import { tx } from './sprache.js';
 
 // Fragen und Antworten. th: Themen, nach denen die Tests prüfen, ob jede Testfrage beantwortet ist.
 export const FRAGEN = [
+  { th: 'lernen', f: tx('lernen.frage'),
+    a: tx('lernen.antwort') },
   { th: 'wird', f: tx('hilfe.was_mache_ich_jeden_tag'),
     a: tx('hilfe.unter_heute_steht_dein_wird_die') },
   { th: 'qadaa', f: tx('hilfe.was_passiert_wenn_ich_einen_tag_verpasse'),
@@ -50,6 +52,7 @@ export const GLOSSAR = [
   { b: tx('hilfe.amana'), ar: 'أَمَانَة', t: tx('hilfe.anvertrautes_gut_beim_ueben_pruefst_du') },
   { b: tx('hilfe.aya'), ar: 'آيَة', t: tx('hilfe.ein_vers_des_quran_mehrzahl_ayat') },
   { b: tx('allg.bonus'), t: tx('hilfe.ein_zusaetzlicher_freiwilliger_abschnitt') },
+  { b: tx('lernen.dabt'), ar: 'الضَّبْط', t: tx('lernen.glossar_dabt') },
   { b: tx('hilfe.fehlerarten'), t: tx('hilfe.beim_markieren_eines_fehlers_kannst_du'), mehr: tx('hilfe.verwechslung_in_eine_aehnliche_stelle') },
   { b: tx('hilfe.fehlerstelle'), t: tx('hilfe.das_wort_bei_dem_du_dich_vertan_hast') },
   { b: tx('allg.festigen'), t: tx('hilfe.abschnitte_in_denen_du_dich_zuletzt'), mehr: tx('hilfe.wie_oft_bestimmst_du_in_den') },
@@ -57,6 +60,7 @@ export const GLOSSAR = [
   { b: tx('hilfe.haraka'), ar: 'حَرَكَة', t: tx('hilfe.ein_vokalzeichen_der_arabischen_schrift') },
   { b: tx('allg.hasanat'), ar: 'حَسَنَات', t: tx('hilfe.gute_taten_itqan_zaehlt_fuer_jeden'), mehr: tx('hilfe.die_zahl_ist_eine_erinnerung_kein') },
   { b: tx('hilfe.hatma'), ar: 'خَتْمَة', t: tx('hilfe.ein_vollstaendiger_durchgang_durch_alles') },
+  { b: tx('lernen.hifz'), ar: 'الحِفْظ', t: tx('lernen.glossar_hifz') },
   { b: tx('allg.itqan'), ar: 'إِتْقَان', t: tx('hilfe.etwas_so_sicher_beherrschen_dass_es') },
   { b: tx('allg.itqan_punkte'), t: tx('hilfe.eine_rueckmeldung_ueber_dein_koennen_10') },
   { b: tx('allg.kette'), t: tx('hilfe.die_tage_in_folge_mit_erfuelltem_wird'), mehr: tx('hilfe.meilensteine_bei_7_40_66_100_200_365_und') },

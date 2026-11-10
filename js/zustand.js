@@ -49,7 +49,7 @@ export function ergaenzen(p) {
   // Tageswechsel: Vorgabe 3 Uhr (Entscheidung 10.11.2026). Wer noch die alte Vorgabe Mitternacht hat, wird einmal umgestellt, danach gilt die eigene Wahl.
   if (!p.einst.tb3) { if (!p.einst.tagesbeginn) p.einst.tagesbeginn = 3; p.einst.tb3 = 1; }
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
-  p.statistik ??= { arten: artenAusStellen(p.fstellen) };
+  p.lern ??= {}; p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %
   // Protokoll: Sockel (Generation, Zeit, Gerät) und Liste der Einträge seit dem Sockel
   p.sockel ??= { n: 1, z: Date.parse(p.erstellt) || 0, g: '' }; p.log ??= [];
@@ -158,6 +158,8 @@ function anwenden(e, extra) {
     case 'pb': return pauseBeginnAnwenden(e);
     case 'pe': return pauseEndeAnwenden(e);
     case 'on': ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), e.d); return;
+    case 'lb': if (!(P.lern ??= {})[e.id]) P.lern[e.id] = { b: e.d, ph: 0, ft: [], s: 0 }; return;
+    case 'lx': if (P.lern?.[e.id]?.ph < 2) delete P.lern[e.id]; return;
     case 'rk': return ruecknahmeAnwenden(extra?.stand);
     case 'ei':
       if (e.k === 'name') P.name = e.w ?? '';
@@ -187,7 +189,7 @@ export function umziehen(eintraege, profilNeu) {
   const ab = profilNeu.sockel?.z ?? 0, uebernommen = [], offen = []; let verworfen = 0;
   for (const e of eintraege) {
     if (e.z <= ab || e.y === 'pl' || e.y === 'pa' || (e.y === 'ei' && e.k === 'einst.bereich')) { verworfen++; continue; }
-    if (e.y !== 'ab') { uebernommen.push(e); continue; }
+    if (e.y !== 'ab' && e.y !== 'lb' && e.y !== 'lx') { uebernommen.push(e); continue; }
     const a = D.A.find(x => x.v[0] === e.v[0] && x.v[1] === e.v[1]);
     if (a) uebernommen.push({ ...e, id: a.id }); else offen.push(e);
   }
@@ -256,6 +258,9 @@ export function gliederungUmstellen(alt, ziel = D.gliederung, sichern = true) {
     t.fertig = plan.filter(nid => M[nid].every(o => !t.plan.includes(o) || fertig.has(o)));
     t.plan = plan; t.art = art;
   }
+  // Lektionen ziehen mit: bei mehreren alten Abschnitten gilt der schwächste Stand
+  const altL = P.lern || {}; P.lern = {};
+  neu.forEach((n, nid) => { const ls = M[nid].map(o => altL[o]).filter(Boolean); if (ls.length) P.lern[nid] = kopie(ls.reduce((a, b) => b.ph < a.ph ? b : a)); });
   P.gliederung = ziel; if (sichern && !fremd) { sockelWechsel(); speichern(); }
 }
 export async function gliederungAbgleichen() {
@@ -272,7 +277,8 @@ export function abschnittStand(id) {
   if ((k.lf ?? (k.fae ? 1 : 0)) > 0) return 'fehler';
   return ['neu', 'aufbau', 'gefestigt', 'sicher', 'mutqan'][k.st];
 }
-export function imBereich(id) { return !P.einst.bereich || P.einst.bereich.includes(id); }
+// Zum Bereich gehört auch, was auf dem Weg des Neulernens den Itqān erreicht hat
+export function imBereich(id) { return !P.einst.bereich || P.einst.bereich.includes(id) || P.lern?.[id]?.ph === 2; }
 export function reihe() {
   const ids = D.A.map(e => e.id).filter(imBereich);
   if (P.einst.reihenfolge !== 'rueckwaerts') return ids;
@@ -534,12 +540,65 @@ function aufraeumen(bezug) { // alte Tage verdichten, Statistik behalten
   for (const d of Object.keys(P.tage)) if (tageZwischen(d, bezug) > 400) delete P.tage[d];
 }
 
+// ---------- Neu lernen: Ḥifẓ, Ḍabṭ, Itqān ----------
+// Eine Lektion ist ein Abschnitt außerhalb des Bereichs. P.lern[id] = { b: Beginn, ph: 0 Ḥifẓ | 1 Ḍabṭ | 2 Itqān,
+// ft: Tage mit fehlerfreiem Durchgang (Ḥifẓ), s: fehlerfreie Durchgänge in Folge (Ḍabṭ), zul: letzter Durchgang,
+// d: Tag des Übergangs in den Ḍabṭ, e: Tag des Itqān }. Fehlerfrei heißt: ohne Fehler und ohne Hilfe.
+// Die drei Stufen sind das Dach über den fünf Schritten der Karte: Ḥifẓ = 0 und 1, Ḍabṭ = 2 und 3, Itqān = 4.
+export const LERN = { hifzTage: 2, dabtSerie: 4 };
+export const dach = st => st >= 4 ? 2 : st >= 2 ? 1 : 0;
+export const lernbar = id => !!D.A[id] && !imBereich(id) && !P.lern?.[id];
+// Offene Fehlerstellen eines Abschnitts (je Stelle die Āya)
+export function offeneStellen(id) {
+  const [a, b] = D.A[id].v;
+  return Object.keys(P.fstellen || {}).map(s => +s.split('.')[0]).filter(v => v >= a && v <= b);
+}
+export function lernBeginnen(id) { if (!lernbar(id)) return false; eintrag('lb', { d: heute(), id, v: [...D.A[id].v] }); return true; }
+export function lernAbbrechen(id) { if (P.lern?.[id]?.ph < 2) eintrag('lx', { id, v: [...D.A[id].v] }); }
+export function lektionen() {
+  const d = heute();
+  return Object.entries(P.lern || {}).filter(([, L]) => L.ph < 2).map(([id, L]) => {
+    const st = offeneStellen(+id);
+    return { id: +id, ph: L.ph, tage: L.ft.length, serie: L.s, seit: L.b, zul: L.zul || null, heute: L.zul === d, offen: st.length, stellen: [...new Set(st)] };
+  }).sort((a, b) => a.seit.localeCompare(b.seit) || a.id - b.id);
+}
+export const lernFertig = () => Object.entries(P.lern || {}).filter(([, L]) => L.ph === 2).map(([id, L]) => ({ id: +id, e: L.e }));
+// Vorschlag für die nächste Lektion: die Sūra der jüngsten Lektion zu Ende, sonst der Abschnitt nach dem Bereich,
+// und wenn der Bereich bis ans Ende reicht (etwa Ǧuzʾ 30), die Sūra davor von ihrem ersten Abschnitt an
+export function lernVorschlag() {
+  const frei = D.A.map(e => e.id).filter(lernbar); if (!frei.length) return null;
+  const ls = Object.keys(P.lern || {}).map(Number).sort((a, b) => P.lern[b].b.localeCompare(P.lern[a].b) || b - a);
+  if (ls.length) { const s = D.A[ls[0]].bis[0], n = frei.find(x => x > ls[0] && D.A[x].von[0] === s); if (n != null) return n; }
+  const im = D.A.map(e => e.id).filter(id => imBereich(id) || P.lern?.[id]); if (!im.length) return frei[0];
+  const nach = frei.find(x => x > im[im.length - 1]); if (nach != null) return nach;
+  const vor = frei.filter(x => x < im[0]); if (!vor.length) return frei[0];
+  const s = D.A[vor[vor.length - 1]].von[0]; return vor.find(x => D.A[x].von[0] === s);
+}
+// Wie viele geübte Abschnitte (Bereich und offene Lektionen) stehen auf welcher der drei Stufen
+export function dachZahlen() {
+  const z = [0, 0, 0];
+  for (const id of reihe()) { const k = karte(id); if (k.n) z[dach(k.st)]++; }
+  for (const L of Object.values(P.lern || {})) if (L.ph < 2) z[L.ph]++;
+  return z;
+}
+function lernSchritt(L, k, id, datum, f, h, ereignisse) {
+  const vor = L.ph, rein = !f && !h;
+  if (!rein) { L.s = 0; if (f) k.fz = datum; }
+  else if (L.ph === 0) { if (!L.ft.includes(datum)) L.ft.push(datum); if (L.ft.length >= LERN.hifzTage) { L.ph = 1; L.s = 0; L.d = datum; } }
+  else { L.s++; if (L.s >= LERN.dabtSerie && !offeneStellen(id).length) { L.ph = 2; L.e = datum; } }
+  L.zul = datum;
+  k.st = L.ph === 2 ? 4 : L.ph === 1 ? (L.s >= 2 ? 3 : 2) : Math.min(1, L.ft.length);
+  if (L.ph > vor) ereignisse.push({ typ: 'lernstufe', id, ph: L.ph });
+  return { vor, ph: L.ph, tage: L.ft.length, s: L.s, offen: offeneStellen(id).length, rein };
+}
+
 // ---------- Ergebnis eines Abschnitts ----------
 // ergebnisse: Array von 'ok' | 'hilfe' | 'fehler' je Āya (in Reihenfolge v[0]..v[1])
 // dauer: aktive Übungszeit in Sekunden (ohne Zeit im Hintergrund), fehlt bei fortgesetzten Übungen
 export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const datum = heute(), t = tagesplan(datum);
   const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
+  if (quelle === 'lern' && !(P.lern?.[id]?.ph < 2)) quelle = 'frei';
   const art = quelle || t.art[id] || 'frei';
   // Punkte: Rückmeldung über Können
   let punkte = 10 * r + 5 * h, teile = [[tx('zustand.ayat_richtig', { r }), 10 * r]];
@@ -550,7 +609,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte });
-  return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher };
+  return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
 }
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f' };
 function abschlussAnwenden(e0) {
@@ -559,8 +618,12 @@ function abschlussAnwenden(e0) {
   const r = ergebnisse.filter(x => x === 'o').length, h = ergebnisse.filter(x => x === 'h').length, f = ergebnisse.filter(x => x === 'f').length;
   const hasanat = e.buchstaben * 10;
   // Karteisystem
-  const vorher = k.st;
-  if (f) { k.fz = datum; k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
+  const vorher = k.st, ereignisse = [];
+  // Neu lernen: eine offene Lektion folgt ihren eigenen Regeln, nicht dem Karteisystem
+  const L = art === 'lern' && P.lern?.[id]?.ph < 2 ? P.lern[id] : null;
+  const lern = L ? lernSchritt(L, k, id, datum, f, h, ereignisse) : null;
+  if (L) { /* Stufe steht schon */ }
+  else if (f) { k.fz = datum; k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
   else if (h) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
   else {
     k.st = Math.min(4, k.st + 1);
@@ -575,9 +638,8 @@ function abschlussAnwenden(e0) {
   if (art === 'bonus' && !t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'bonus'; }
   Object.assign(t, { punkte: t.punkte + punkte, hasanat: t.hasanat + hasanat, r: t.r + r, f: t.f + f, h: t.h + h });
   Object.assign(P.summe, { punkte: P.summe.punkte + punkte, hasanat: P.summe.hasanat + hasanat, r: P.summe.r + r, f: P.summe.f + f, h: P.summe.h + h, abschnitte: P.summe.abschnitte + 1 });
-  const ereignisse = [];
   // Zyklus / Ḫatma
-  if (art !== 'frei' && !P.zyklus.erledigt.includes(id)) {
+  if (art !== 'frei' && art !== 'lern' && !P.zyklus.erledigt.includes(id)) {
     P.zyklus.erledigt.push(id);
     if (reihe().every(x => P.zyklus.erledigt.includes(x))) {
       P.zyklus.khatma++; P.zyklus.erledigt = []; P.zyklus.beginn = datum; (P.meilenD ??= {})['khatma-' + P.zyklus.khatma] = datum;
@@ -587,7 +649,7 @@ function abschlussAnwenden(e0) {
   }
   // Wird erfüllt → Kette
   const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
-  if (!t.voll && ((!t.ohne && pflicht.every(x => t.fertig.includes(x))) || e0.w)) {
+  if (art !== 'lern' && !t.voll && ((!t.ohne && pflicht.every(x => t.fertig.includes(x))) || e0.w)) {
     t.voll = true;
     const z = P.kette.zuletzt, w1 = vorigerWirdTag(datum);
     if (z === datum) { /* schon gezählt */ }
@@ -604,7 +666,7 @@ function abschlussAnwenden(e0) {
   // Rang: neu erreicht, wenn er höher ist als der bisher höchste
   const rg = rangJetzt();
   if (rg > (P.rangBeste?.r ?? 0)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
-  return { hasanat, ereignisse, stufe: k.st, vorher };
+  return { hasanat, ereignisse, stufe: k.st, vorher, lern };
 }
 
 // ---------- Ornamente: eines je Sūra, sobald alle ihre Abschnitte gefestigt sind; vergoldet, wenn alle mutqan sind ----------
