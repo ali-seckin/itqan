@@ -20,6 +20,10 @@ let texte = de;
 let regel = null;
 let wandel = null;
 const fertig = new Map();
+// Fassung der Meldungen für einen Lernmodus: Im Bereich <fassung> der Sprachdatei steht unter 'bereich__name' der Text,
+// der in diesem Modus an die Stelle von 'bereich.name' tritt (Modus „Ganze Seiten“: Seiten statt Abschnitte).
+let fassung = null;
+export function fassungSetzen(f) { if (f !== fassung) { fassung = f; fertig.clear(); } }
 
 // Angaben der geladenen Sprache: gebiet('code'), gebiet('datum'), gebiet('zahl'), gebiet('hidschri'), gebiet('richtung')
 export const gebiet = art => texte._[art] ?? de._[art];
@@ -78,7 +82,8 @@ export function tx(schluessel, w) {
   if (f === undefined) {
     const p = schluessel.indexOf('.');
     const b = schluessel.slice(0, p), s = schluessel.slice(p + 1);
-    const roh = texte[b]?.[s] ?? de[b]?.[s] ?? schluessel;
+    const eigen = fassung ? texte[fassung]?.[b + '__' + s] ?? de[fassung]?.[b + '__' + s] : undefined;
+    const roh = eigen ?? texte[b]?.[s] ?? de[b]?.[s] ?? schluessel;
     f = roh.includes('{') ? bauen(roh) : roh;
     fertig.set(schluessel, f);
   }

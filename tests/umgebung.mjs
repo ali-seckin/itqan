@@ -26,10 +26,12 @@ export const Z = await import('../js/zustand.js');
 export const D = daten.D;
 
 // Gliederung laden wie ladeDaten, nur ohne Layout
-export function gliederungSetzen(modus = 'fort') {
-  const A = lies(modus === 'anf' ? 'daten/abschnitte_anf.json' : 'daten/abschnitte.json');
+export function gliederungSetzen(modus = 'fort', ausgabe = 'v2') {
+  const G = daten.gliederungVon(modus, ausgabe);
+  const A = lies(G.datei);
   for (const e of A) e.juz = daten.juzVonSeite(e.seiten[0]);
-  Object.assign(D, { A, V: lies('daten/verse.json'), S: lies('daten/suren.json'), modus, gliederung: daten.GLIEDERUNG[modus].name, ausgabe: 'v1' });
+  Object.assign(D, { A, V: lies('daten/verse.json'), S: lies('daten/suren.json'), modus, gliederung: G.name, ausgabe: modus === 'seite' ? ausgabe : 'v1' });
+  daten.modusAnwenden(A, modus);
 }
 gliederungSetzen('fort');
 

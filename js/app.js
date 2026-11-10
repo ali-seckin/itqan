@@ -235,7 +235,7 @@ function rueckmeldung() {
   const P = Z.P;
   const info = [tx('rueckmeldung.itqan', { VERSION }), tx('rueckmeldung.geraet', { geraet: geraet(), a: istTouch() ? tx('rueckmeldung.touch') : '', b: istInstalliert() ? tx('rueckmeldung.installiert') : tx('rueckmeldung.im_browser') }),
     tx('rueckmeldung.bildschirm_fenster', { width: screen.width, height: screen.height, innerWidth, innerHeight }), tx('rueckmeldung.browser', { userAgent: navigator.userAgent }),
-    P ? tx('rueckmeldung.druck_abschnitte_geuebt', { a: P.einst.ausgabe === 'v1' ? '1405' : '1421', b: P.einst.modus === 'anf' ? tx('rueckmeldung.anfaenger') : tx('rueckmeldung.fortgeschritten'), abschnitte: P.summe.abschnitte }) : tx('rueckmeldung.noch_kein_profil'),
+    P ? tx('rueckmeldung.druck_abschnitte_geuebt', { a: P.einst.ausgabe === 'v1' ? '1405' : '1421', b: P.einst.modus === 'anf' ? tx('rueckmeldung.anfaenger') : P.einst.modus === 'seite' ? tx('rueckmeldung.ganze_seiten') : tx('rueckmeldung.fortgeschritten'), abschnitte: P.summe.abschnitte }) : tx('rueckmeldung.noch_kein_profil'),
     vorherigeAnsicht ? tx('rueckmeldung.zuletzt_geoeffnet', { vorherigeAnsicht }) : ''].filter(Boolean);
   let art = tx('allg.fehler');
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
@@ -407,8 +407,9 @@ function start() {
   navSetzen(null);
   const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto', modus: 'fort' };
   const tageText = () => {
-    const ids = D.A.filter(e => s.juz.has(e.juz)).length;
-    return `${tx('start.abschnitte', { ids })} · ${tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
+    const ganz = s.modus === 'seite';
+    const ids = ganz ? [...s.juz].reduce((n, j) => n + (j < 30 ? juzStart(j + 1) : 605) - juzStart(j), 0) : D.A.filter(e => s.juz.has(e.juz)).length;
+    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
@@ -421,7 +422,7 @@ function start() {
       <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">${tx('start.alle_30')}</button><button class="knopf leise klein" id="keine">${tx('start.keinen')}</button></div>
       <div class="juzwahl" id="juz"></div></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
-    <div class="abschnitt"><h3>${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p>
+    <div class="abschnitt"><h3 id="pensum-titel">${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p>
       <div class="zaehler"><button id="minus" aria-label="${tx('start.weniger')}">−</button><b id="pensum">3</b><button id="plus" aria-label="${tx('start.mehr')}">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.ab_al_fatihah')}</button><button data-w="rueckwaerts">${tx('start.ab_an_nas')}</button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
@@ -443,6 +444,7 @@ function start() {
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
     if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
     if (id === 'thema') { try { localStorage.setItem('itqan-thema', w); } catch (x) {} themaAnwenden(); }
+    if (id === 'modus') { app.querySelector('#pensum-titel').textContent = w === 'seite' ? tx('start.wie_viele_seiten_am_tag') : tx('start.wie_viele_abschnitte_am_tag'); app.querySelector('#dauer').innerHTML = tageText(); }
   };
   app.querySelector('#los').onclick = () => {
     if (!s.juz.size) { toast(tx('start.waehle_mindestens_einen_guz')); return; }
@@ -468,10 +470,11 @@ function abschnittMarke(e) {
   return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span><span class="nur-leser">, ${STAND_TEXT[st]}</span></strong>`;
 }
 
-// Wahl zwischen Fortgeschritten und Anfänger
+// Wahl zwischen Anfänger, Fortgeschritten und ganzen Seiten; empfohlen bleiben die Sinnabschnitte
 function modusWahl(jetzt, mitHinweis = true) {
-  return `<div class="wahl" id="modus" style="margin-top:4px">${[['anf', tx('moduswahl.anfaenger')], ['fort', tx('moduswahl.fortgeschritten')]].map(([w, l]) => `<button data-w="${w}" class="${jetzt === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+  return `<div class="wahl" id="modus" style="margin-top:4px">${[['anf', tx('moduswahl.anfaenger')], ['fort', tx('moduswahl.fortgeschritten')], ['seite', tx('moduswahl.ganze_seiten')]].map(([w, l]) => `<button data-w="${w}" class="${jetzt === w ? 'an' : ''}">${l}</button>`).join('')}</div>
     <p class="unter" style="margin-top:8px">${tx('moduswahl.anfaenger_jeder_abschnitt_ist_hoechstens')}</p>
+    <p class="unter" style="margin-top:6px">${tx('moduswahl.ganze_seiten_text')}</p>
     ${mitHinweis ? `<p class="unter" style="margin-top:6px">${tx('moduswahl.beim_wechsel_bleibt_dein_fortschritt')}</p>` : ''}`;
 }
 
@@ -541,7 +544,7 @@ function heute() {
     ${lernHTML}
     ${istFreitag ? `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
-      <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]) }) : '' })}</p></div>` : ''}
+      <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]), titel: esc(D.A[Z.schwaechste(1)[0].id].titel) }) : '' })}</p></div>` : ''}
     <div class="titel-klein">${tx('heute.hatma', { a: P.zyklus.khatma + 1 })}</div>
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${tx('heute.von_abschnitten', { fertig: kf.fertig, gesamt: kf.gesamt })}</span><span>${prozent(Math.floor(kf.anteil * 100))}</span></div>
@@ -1222,7 +1225,9 @@ async function mushaf(pText, aText) {
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
   const t = Z.tagesplan();
   const s = D.V[D.L[seiten[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
-  const opt = { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
+  // Ganze Seiten: keine Tönung und keine Grenzlinien, die Seite ist die Einheit
+  const ganz = D.modus === 'seite';
+  const opt = ganz ? { fst: Z.fehlerstellenSet() } : { ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
   app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${seiten.length > 1 ? `${tx('allg.seiten')} ${seiten.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p })} · ${sureName(s)} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(p) })}</small></div>
       <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button><select id="nr" class="seitenwahl" aria-label="${tx('mushaf.seite_3')}">${seitenOptionen(p)}</select></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
@@ -1232,7 +1237,7 @@ async function mushaf(pText, aText) {
     <div class="titel-klein">${tx('mushaf.abschnitte_auf', { a: seiten.length > 1 ? tx('mushaf.diesen_seiten') : tx('mushaf.dieser_seite') })}</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
-      return `<div class="karte tonk${e.id % 4}" data-a="${i}"><i class="farbe"></i><div class="t"><b>${esc(e.titel)}</b><span>${e.nr ? `${sureName(e.von[0])} <b class="nr-fett">${e.nr}</b>` : abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ` <span class="marke-art bonus">${tx('mushaf.heute_dran')}</span>` : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">${tx('allg.ueben')}</a></div>`;
+      return `<div class="karte${ganz ? '' : ` tonk${e.id % 4}`}" data-a="${i}">${ganz ? '' : '<i class="farbe"></i>'}<div class="t"><b>${esc(e.titel)}</b><span>${e.nr ? `${sureName(e.von[0])} <b class="nr-fett">${e.nr}</b>` : abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ` <span class="marke-art bonus">${tx('mushaf.heute_dran')}</span>` : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">${tx('allg.ueben')}</a></div>`;
     }).join('')}`;
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
@@ -1288,7 +1293,7 @@ async function vollbild(start) {
   const buehne = v.querySelector('.vb-buehne');
   const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
-  const farben = x => { const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
+  const farben = x => { if (D.modus === 'seite') return { lage: true }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;
     const doppel = quer();
@@ -2030,7 +2035,7 @@ function einstellungen() {
   wahl('reihenfolge', w => { E.reihenfolge = w; app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   wahl('zufall', w => { E.zufall = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
-  wahl('ausgabe', w => { if (w === E.ausgabe) return; E.ausgabe = w; Z.speichern(); location.reload(); });
+  wahl('ausgabe', w => { if (w === E.ausgabe) return; if (E.modus === 'seite') Z.schnappschuss('vor dem Gliederungswechsel'); E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast(tx('einstellungen.abschnitte_werden_umgestellt')); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
@@ -2124,7 +2129,7 @@ async function lehrer() {
       <p class="unter">${tx('lehrer.rang', { n: Z.RAENGE[Z.rangJetzt()].n })} · ${tx('lehrer.stand', { a: new Date(x.exportiert).toLocaleDateString(gebiet('datum')) })} · ${tx('lehrer.markierte_fehlerstellen', { n: Object.keys(x.profil.fstellen || {}).length })}${x.echt ? '' : ` · <b style="color:var(--schlechtT)">${tx('lehrer.datei_wurde_veraendert')}</b>`}</p>
       <div class="zahlen"><div class="zahl"><b>${x.profil.kette.n}</b><span>${tx('allg.kette')}</span></div><div class="zahl"><b>${prozent(q)}</b><span>${tx('allg.ayat_sicher')}</span></div><div class="zahl"><b>${prozent(Math.floor(kf.anteil * 100))}</b><span>${tx('lehrer.hatma', { a: x.profil.zyklus.khatma + 1 })}</span></div></div>
       <div class="licht-seiten" role="img" aria-label="${tx('lehrer.lichtkarte_der_30_agza_von_30_mit_uebung', { n: juz.filter(o => o != null).length })}" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button tabindex="-1" aria-hidden="true" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
-      <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? `${tx('lehrer.uebt_im_anfaenger_modus')} ` : ''}${schwach.length ? `${tx('lehrer.schwach')} ${schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ')}` : tx('lehrer.noch_keine_wiederholungen')}</p></div>`;
+      <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? `${tx('lehrer.uebt_im_anfaenger_modus')} ` : kopie.einst.modus === 'seite' ? `${tx('lehrer.uebt_in_ganzen_seiten')} ` : ''}${schwach.length ? `${tx('lehrer.schwach')} ${schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ')}` : tx('lehrer.noch_keine_wiederholungen')}</p></div>`;
   }); }).join('');
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('lehrer.lehreransicht')}<small>${tx('lehrer.deine_schueler_schicken_dir_ihre')}</small></div>

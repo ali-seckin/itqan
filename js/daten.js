@@ -1,18 +1,27 @@
-import { tx, gebiet, umschrift } from './sprache.js';
+import { tx, gebiet, umschrift, fassungSetzen } from './sprache.js';
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
 export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2', modus: 'fort', gliederung: 'fort-2' };
 // Gliederungen: Fortgeschritten (bis etwa eine Seite) und Anfänger (höchstens eine halbe Seite); Name = Fassung für die Umstellung
 export const GLIEDERUNG = { fort: { datei: 'daten/abschnitte.json', name: 'fort-2' }, anf: { datei: 'daten/abschnitte_anf.json', name: 'anf-1' } };
+// Dritter Modus 'seite': jede Lerneinheit ist eine Muṣḥaf-Seite. Die Umbrüche der zwei Drucke weichen teils ab, darum je Druck eine Fassung.
+export const gliederungVon = (modus, ausgabe = 'v2') => modus === 'seite' ? { datei: `daten/abschnitte_seite_${ausgabe === 'v1' ? 'v1' : 'v2'}.json`, name: `seite-${ausgabe === 'v1' ? 'v1' : 'v2'}` } : GLIEDERUNG[modus];
+// Im Seiten-Modus heißt jede Einheit nach ihrer Seitenzahl, und die Sprachschicht nimmt die Fassung 'ganzseite' der Meldungen
+export function modusAnwenden(A, modus) {
+  fassungSetzen(modus === 'seite' ? 'ganzseite' : null);
+  for (const e of A) if (e.seite) e.titel = tx('daten.seite_n', { n: e.seite });
+}
 
 // ausgabe: 'v1' = Druck 1405, 'v2' = Druck 1421, jeweils mit eigenen Seiten und Zeilen
 const LAYOUT = { v1: 'daten/layout_v1.json', v2: 'daten/layout_v2.json' };
 export async function ladeDaten(ausgabe = 'v2', modus = 'fort') {
   if (!LAYOUT[ausgabe]) ausgabe = 'v2';
-  if (!GLIEDERUNG[modus]) modus = 'fort';
+  if (!gliederungVon(modus, ausgabe)) modus = 'fort';
+  const G = gliederungVon(modus, ausgabe);
   const holen = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
   const j = u => holen(u).catch(() => holen(u));   // ein zweiter Versuch bei abgebrochener Verbindung
-  const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j(GLIEDERUNG[modus].datei), j('daten/suren.json')]);
-  Object.assign(D, { L, V, A, S, ausgabe, modus, gliederung: GLIEDERUNG[modus].name });
+  const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j(G.datei), j('daten/suren.json')]);
+  Object.assign(D, { L, V, A, S, ausgabe, modus, gliederung: G.name });
+  modusAnwenden(A, modus);
   for (const e of A) e.juz = juzVonSeite(e.seiten[0]);   // Ǧuzʾ immer nach 1405, damit der gewählte Bereich gleich bleibt
   if (ausgabe === 'v2') {   // Seiten, Zeilen und Āya-Seite nach den Umbrüchen von 1421 neu bestimmen
     const seiten = new Map(), zeilen = new Map();
@@ -64,7 +73,7 @@ export const vers = vi => ({ s: D.V[vi][0], a: D.V[vi][1], b: D.V[vi][2], p: D.V
 export function abschnittName(e) {
   if (e.nr) return `${sureName(e.von[0])} ${e.nr}`;
   if (e.von[0] === e.bis[0]) return sureName(e.von[0]);
-  return tx('daten.sammelkarte');
+  return e.seite ? tx('daten.suren_bis', { a: sureName(e.von[0]), b: sureName(e.bis[0]) }) : tx('daten.sammelkarte');
 }
 export function bereichText(e) {
   return e.von[0] === e.bis[0] ? tx('daten.bis', { a: e.von[0], b: e.von[1], c: e.bis[1] }) : tx('daten.bis_2', { a: e.von[0], b: e.von[1], c: e.bis[0], d: e.bis[1] });
