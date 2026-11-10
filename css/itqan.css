@@ -897,3 +897,7 @@ h2.titel-klein{font-weight:400;line-height:inherit}
 .hf-suche input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2);color:var(--text);font:inherit;min-height:44px}
 .hf-tasten td[colspan]{padding-top:12px}
 .hf-tasten tr:first-child td[colspan]{padding-top:0}
+/* Mac: Wörter auf eigener Ebene (Übergang, Schleier) wurden anders geglättet als ihre Nachbarn und wirkten dünner. Eine Glättung für die ganze Seite. */
+.seite{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* Ergebnis nach dem Üben: am Computer höchstens so breit wie die Doppelseite */
+body.doppelt .feier{max-width:calc(2 * var(--sb) + 20px);margin-left:auto;margin-right:auto}
