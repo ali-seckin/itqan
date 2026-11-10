@@ -4,6 +4,11 @@ export const VERSION = '1.12';
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
+// Übergangsfunktionen bis zum Start mit eigenem Server und App-Store. Dann beide Schalter auf false:
+// sicherungErinnern = Erinnerung ans Sichern auf der Seite Heute, installieren = Karte, Anleitung und Verweis zum Installieren.
+// „Profil sichern“ und „Profil laden“ bleiben in jedem Fall.
+export const UEBERGANG = { sicherungErinnern: true, installieren: true };
+
 export const NEUIGKEITEN = [
   { v: '1.12', datum: '2026-11-10', titel: 'Fundament für mehrere Geräte', punkte: [
     'Unter der Oberfläche führt Itqān jetzt Buch über jeden Lernschritt. Das ist die Grundlage dafür, dass später zwei Geräte ihren Stand ohne Verlust zusammenführen. Für dich ändert sich heute nichts.',

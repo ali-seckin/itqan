@@ -3,7 +3,7 @@ import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArab
 import * as Z from './zustand.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
-import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
+import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
@@ -184,6 +184,7 @@ const teilenSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="c
 const plusSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 const punkteSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
 function installieren() {
+  if (!UEBERGANG.installieren) { location.replace(Z.P ? '#profil' : '#start'); return; }
   navSetzen(Z.P ? 'profil' : null);
   const g = geraet();
   const schritte = {
@@ -506,9 +507,9 @@ function heute() {
   // Erinnerung an die Sicherung: 7 Tage nach der letzten (oder nach dem Anlegen), höchstens einmal am Tag wegklickbar
   const seitSicherung = Z.tageZwischen((P.einst.letzteSicherung || P.erstellt).slice(0, 10), Z.heute());
   let spaeter = null; try { spaeter = localStorage.getItem('itqan-sicherung-spaeter'); } catch (e) {}
-  const sicherungFaellig = seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
+  const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
-  const installKarte = !istInstalliert() && istTouch() && !installWeg;
+  const installKarte = UEBERGANG.installieren && !istInstalliert() && istTouch() && !installWeg;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">Itqān<small>${datumText()}</small></div>
       <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge" aria-label="Kette: ${aktiv ? P.kette.n : 0} ${(aktiv ? P.kette.n : 0) === 1 ? 'Tag' : 'Tage'} in Folge. Zum Profil">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
@@ -1313,7 +1314,7 @@ function profil() {
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig${istTouch() ? ', am besten in Dateien, iCloud Drive oder per WhatsApp an dich selbst' : ' als Datei'}. Letzte Sicherung: <b>${datumKurz(P.einst.letzteSicherung)}</b>.</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
-    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#hilfe" style="text-decoration:none">Hilfe und Glossar</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button><a class="knopf leise" href="#installieren" style="text-decoration:none">Itqān installieren</a><a class="knopf leise" href="#rueckmeldung" style="text-decoration:none">Rückmeldung senden</a></div>
+    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#hilfe" style="text-decoration:none">Hilfe und Glossar</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button>${UEBERGANG.installieren ? '<a class="knopf leise" href="#installieren" style="text-decoration:none">Itqān installieren</a>' : ''}<a class="knopf leise" href="#rueckmeldung" style="text-decoration:none">Rückmeldung senden</a></div>
     <p class="version-zeile">Itqān ${VERSION} · <a href="#neu">Was ist neu</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast('Beim nächsten Üben erscheint die Erklärung wieder.'); };
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
