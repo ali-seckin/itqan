@@ -1,0 +1,90 @@
+// Itqān · Hilfe und Glossar (Gutachten Teil A, Punkt 21)
+// Nur Texte, damit sie sich prüfen und später übersetzen lassen. Die Wortwahl folgt den Texten der App.
+
+// Fragen und Antworten. th: Themen, nach denen die Tests prüfen, ob jede Testfrage beantwortet ist.
+export const FRAGEN = [
+  { th: 'wird', f: 'Was mache ich jeden Tag?',
+    a: 'Unter <b>Heute</b> steht dein Wird: die Abschnitte, die heute dran sind. Tippe auf einen Abschnitt, rezitiere jede Āya aus dem Gedächtnis, decke sie auf und sage ehrlich <b>Richtig</b> oder <b>Fehler</b>. Sind alle Abschnitte des Tages abgeschlossen, ist dein Wird erfüllt und eine Lampe deiner Kette brennt.' },
+  { th: 'qadaa', f: 'Was passiert, wenn ich einen Tag verpasse?',
+    a: 'Fällt ein Wird-Tag aus oder bleibt er halb, kommt das Versäumte am nächsten Wird-Tag als <b>Qaḍāʾ</b> dazu. Erfüllst du es an diesem Tag, bleibt deine Kette ganz. Erst wenn auch dieser Tag ausfällt, beginnt die Kette neu.' },
+  { th: 'ruhetag', f: 'Was ist der Unterschied zwischen Ruhetag und Pause?',
+    a: 'Ein <b>Ruhetag</b> ist ein fester Wochentag ohne Wird. Du legst ihn in den Einstellungen unter „Abschnitte pro Tag“ fest. Eine <b>Pause</b> ist eine Reihe freier Tage, zum Beispiel bei Krankheit oder auf Reisen, höchstens 30 Tage. In beiden Fällen gibt es kein Wird und keine Fehlerwiederholung, die Kette wartet und läuft danach weiter.' },
+  { th: 'fehler', f: 'Warum kommt ein Abschnitt nach einem Fehler wieder?',
+    a: 'Was nicht sitzt, braucht mehr Wiederholung. Nach einem Fehler steht der Abschnitt nach 1, 3 und 7 Tagen wieder in deinem Tagesplan, mit dem Vermerk „Wiederholung nach Fehler“. Ist er dreimal hintereinander fehlerfrei, läuft er wieder im gewöhnlichen Takt der Ḫatma.' },
+  { th: 'stufen', f: 'Was bedeuten die Stufen, und wann ist ein Abschnitt mutqan?',
+    a: 'Jeder Abschnitt hat eine von fünf Stufen: neu, im Aufbau, gefestigt, sicher, mutqan. Jeder fehlerfreie Durchgang hebt ihn eine Stufe höher. Ein Fehler setzt ihn eine Stufe zurück, viele Fehler in einem Durchgang zwei. Nach vier fehlerfreien Durchgängen in Folge ist ein neuer Abschnitt <b>mutqan</b>.' },
+  { th: 'punkte', f: 'Wie werden die Itqān-Punkte berechnet?',
+    a: 'Jede richtige Āya bringt 10 Punkte, jede Āya mit Hilfe 5. Ein fehlerfreier Abschnitt ohne Hilfe bringt ein Viertel dazu, ein Bonusabschnitt die Hälfte. Eine lange Kette gibt je sieben Tage 2 % dazu, höchstens 20 %. Die Punkte sind eine Rückmeldung über dein Können. Es gibt keine Bestenliste.' },
+  { th: 'hilfe', f: 'Wozu dienen „Bis zum Zeichen“, „Erstes Wort“ und „Erst ansehen“?',
+    a: '<b>Bis zum Zeichen</b> deckt eine lange Āya nur bis zum nächsten Stoppzeichen auf, sie zählt weiter als richtig. <b>Erstes Wort</b> zeigt den Anfang der Āya, „Noch ein Wort“ deckt jeweils ein weiteres auf, die Āya zählt dann als halb sicher. <b>Erst ansehen</b> zeigt den ganzen Abschnitt offen, bevor du dich prüfst. Jede dieser Hilfen lässt sich in den Einstellungen abschalten.' },
+  { th: 'stelle', f: 'Wie markiere ich die Stelle eines Fehlers?',
+    a: 'Nach „Fehler“ tippst du auf das Wort, bei dem du dich vertan hast, und wählst darüber die Art des Fehlers. Beides ist freiwillig. Die markierten Stellen stehen unter Profil bei <b>Fehlerstellen</b>. Dort übst du sie gezielt: Ist eine Stelle dreimal in Folge richtig, wird sie aus der Liste genommen.' },
+  { th: 'abhoeren', f: 'Kann mich jemand abhören?',
+    a: 'Ja. Zu Beginn eines Abschnitts steht klein „Jemand hört ab“. Dann sieht die zuhörende Person den Text offen und tippt Fehler direkt aufs Wort. Du kannst dich auch selbst aufnehmen: Der runde Knopf nimmt deine Rezitation auf, nach dem Aufdecken hörst du sie an und vergleichst. Die Aufnahme wird danach gelöscht und verlässt das Gerät nicht.' },
+  { th: 'aehnlich', f: 'Wo finde ich ähnliche Stellen?',
+    a: 'Unter Profil bei <b>Ähnliche Stellen</b>. Dort schlägst du Mutašābihāt nach, legst zwei Stellen nebeneinander und übst, sie zu unterscheiden. Im Muṣḥaf findest du mit der Lupe jedes Wort und jede Āya.' },
+  { th: 'groesse', f: 'Wie mache ich die Seite oder die Schrift größer?',
+    a: 'In den Einstellungen unter <b>Lesbarkeit</b>. Die Seitengröße (100, 125 oder 150 %) vergrößert die Muṣḥaf-Seite beim Üben und im Muṣḥaf. Ist die Seite breiter als der Bildschirm, schiebst du sie mit dem Finger, beim Üben folgt sie der Stelle von selbst. Die Schriftgröße vergrößert die Texte der App. Außerdem kannst du überall mit zwei Fingern zoomen.' },
+  { th: 'sicherung', f: 'Wie sichere ich meinen Fortschritt, und was ist beim Wechsel des Geräts?',
+    a: 'Dein Fortschritt liegt nur auf diesem Gerät. Unter Profil legt „Profil sichern“ eine Datei an, die du in Dateien, in einer Cloud oder per Nachricht an dich selbst aufhebst. Auf dem neuen Gerät wählst du „Profil laden“. Zusätzlich legt Itqān von selbst Schnappschüsse auf dem Gerät an, die du in den Einstellungen zurückholen kannst.' },
+  { th: 'offline', f: 'Funktioniert Itqān ohne Internet?',
+    a: 'Ja. Die App selbst und jede Seite, die du einmal geöffnet hast, bleiben auf dem Gerät. In den Einstellungen unter „Offline“ speicherst du alle 604 Seiten auf einmal, am besten im WLAN.' },
+  { th: 'bereich', f: 'Kann ich nur einen Teil des Qurʾān wiederholen?',
+    a: 'Ja. In den Einstellungen unter „Was du wiederholst“ wählst du die Aǧzāʾ, die du auswendig kannst. Die Wiederholung ist für Bewahrtes, nicht für neues Lernen. Kommt ein Ǧuzʾ dazu, schaltest du ihn dort ein.' },
+  { th: 'modus', f: 'Was ist der Unterschied zwischen Anfänger und Fortgeschritten?',
+    a: 'Es geht um die Länge der Abschnitte. <b>Anfänger</b>: höchstens eine halbe Seite je Abschnitt. <b>Fortgeschritten</b>: meist 10 bis 15 Zeilen. Wechseln geht jederzeit in den Einstellungen, der Fortschritt bleibt.' },
+  { th: 'farben', f: 'Was bedeuten die Farben der Abschnittsnummern?',
+    a: 'Sie zeigen die Stufe des Abschnitts: hellblau für gefestigt, dunkelblau für sicher, grün für mutqan. Rot heißt, dass im letzten Durchgang ein Fehler war. Dieselbe Auskunft gibt es ohne Farbe: Ein Bildschirmleser liest den Stand vor, und am Computer erscheint er als Text, wenn du mit der Maus über die Nummer fährst.' },
+  { th: 'erinnerung', f: 'Wie bekomme ich eine tägliche Erinnerung?',
+    a: 'In den Einstellungen unter „Tägliche Erinnerung“ trägt Itqān dein Wird als täglichen Termin mit Erinnerung in deinen Kalender ein. Die App selbst schickt in der Testphase keine Benachrichtigungen.' },
+  { th: 'mushaf', f: 'Welcher Muṣḥaf wird gezeigt?',
+    a: 'Der Madīna-Muṣḥaf in der Lesart Ḥafṣ von ʿĀṣim mit 604 Seiten, wahlweise im Druck von 1405 oder von 1421. Beide haben ihre eigenen Seiten und Zeilen. Abschnitte, Fortschritt und Fehlerstellen gelten für beide.' },
+  { th: 'leser', f: 'Wie bediene ich Itqān mit Tastatur oder Bildschirmleser?',
+    a: 'Jeder Knopf ist mit der Tabulatortaste erreichbar und hat einen Namen, der Fokus ist immer sichtbar. Beim Üben und im Muṣḥaf gibt es Tastenkürzel, sie stehen weiter unten. Ein Bildschirmleser sagt beim Üben die aufgedeckte Āya an. Eine Muṣḥaf-Seite als Ganzes ist für ihn bisher nur ein Bild: Das ist eine bekannte Lücke.' }
+];
+
+// Glossar. b: Begriff, ar: arabische Schreibung (wenn es ein arabisches Wort ist), t: Erklärung, mehr: Zusatz.
+export const GLOSSAR = [
+  { b: 'Abschnitt', t: 'Der Qurʾān ist in kleine Sinnabschnitte geteilt, jeder mit einem eigenen Titel. Du wiederholst Abschnitt für Abschnitt, nicht Seite für Seite.', mehr: 'Anfänger: höchstens eine halbe Seite. Fortgeschritten: meist 10 bis 15 Zeilen.' },
+  { b: 'Amāna', ar: 'أَمَانَة', t: 'Anvertrautes Gut. Beim Üben prüfst du dich selbst: Nur wenn du ehrlich „Richtig“ oder „Fehler“ sagst, zeigt dir Itqān, wo du wirklich stehst.' },
+  { b: 'Āya', ar: 'آيَة', t: 'Ein Vers des Qurʾān. Mehrzahl: Āyāt.' },
+  { b: 'Bonus', t: 'Ein zusätzlicher, freiwilliger Abschnitt nach erfülltem Wird. Er bringt 50 % mehr Itqān-Punkte.' },
+  { b: 'Fehlerarten', t: 'Beim Markieren eines Fehlers kannst du seine Art angeben.', mehr: 'Verwechslung: in eine ähnliche Stelle geraten. Abweichung: ein anderes Wort als im Text. Ausgelassen: ein Wort oder eine Āya übersprungen. Ḥaraka: ein Vokalzeichen falsch. Hänger: stecken geblieben.' },
+  { b: 'Fehlerstelle', t: 'Das Wort, bei dem du dich vertan hast. Markierte Stellen sammelt Itqān unter Profil, dort übst du sie gezielt. Dreimal in Folge richtig, und die Stelle ist aus der Liste genommen.' },
+  { b: 'Festigen', t: 'Abschnitte, in denen du dich zuletzt vertan hast, können zwischen zwei Runden zusätzlich drankommen. Sie stehen dann mit „Festigen“ im Tagesplan.', mehr: 'Wie oft, bestimmst du in den Einstellungen unter „Schwache Abschnitte“.' },
+  { b: 'Ǧuzʾ', ar: 'جُزْء', t: 'Einer der 30 Teile des Qurʾān. Mehrzahl: Aǧzāʾ.' },
+  { b: 'Ḥaraka', ar: 'حَرَكَة', t: 'Ein Vokalzeichen der arabischen Schrift, zum Beispiel Fatḥa, Kasra oder Ḍamma.' },
+  { b: 'Ḥasanāt', ar: 'حَسَنَات', t: 'Gute Taten. Itqān zählt für jeden Buchstaben eines abgeschlossenen Abschnitts zehn Ḥasanāt, nach der Überlieferung bei at-Tirmiḏī, dass jeder gelesene Buchstabe des Qurʾān als gute Tat zählt und zehnfach vergolten wird.', mehr: 'Die Zahl ist eine Erinnerung, kein Kontostand. Den Lohn kennt allein Allāh.' },
+  { b: 'Ḫatma', ar: 'خَتْمَة', t: 'Ein vollständiger Durchgang durch alles, was du wiederholst. War jeder Abschnitt einmal dran, ist eine Ḫatma vollendet und die nächste beginnt.' },
+  { b: 'Itqān', ar: 'إِتْقَان', t: 'Etwas so sicher beherrschen, dass es hält.' },
+  { b: 'Itqān-Punkte', t: 'Eine Rückmeldung über dein Können: 10 Punkte für jede richtige Āya, 5 für eine Āya mit Hilfe, dazu Zuschläge für fehlerfreie Abschnitte, Bonusabschnitte und eine lange Kette.' },
+  { b: 'Kette', t: 'Die Tage in Folge mit erfülltem Wird. Jeder erfüllte Tag zündet eine Lampe an. Ruhetage und Pausen unterbrechen sie nicht.', mehr: 'Meilensteine bei 7, 40, 66, 100, 200, 365 und 604 Tagen.' },
+  { b: 'Lichtkarte', t: 'Alle 604 Seiten auf einen Blick. Je sicherer eine Seite sitzt, desto heller leuchtet sie.' },
+  { b: 'Murāǧaʿa', ar: 'مُرَاجَعَة', t: 'Die Wiederholung des auswendig Gelernten, damit es bleibt. Dafür ist Itqān gemacht.' },
+  { b: 'Muṣḥaf', ar: 'مُصْحَف', t: 'Das geschriebene Exemplar des Qurʾān. Itqān zeigt die 604 Seiten des Madīna-Muṣḥaf, Zeile für Zeile wie im Druck.' },
+  { b: 'Mutašābihāt', ar: 'مُتَشَابِهَات', t: 'Ähnliche Stellen: Āyāt, die fast gleich lauten und deshalb leicht verwechselt werden. Unter Profil bei „Ähnliche Stellen“ schlägst du sie nach und übst, sie zu unterscheiden.' },
+  { b: 'mutqan', ar: 'مُتْقَن', t: 'Die höchste der fünf Stufen eines Abschnitts: Er sitzt so sicher, dass er hält.' },
+  { b: 'Ornament', t: 'Für jede Sūra, die ganz gefestigt ist, sammelst du ein Ornament. Ist die ganze Sūra mutqan, wird es vergoldet.' },
+  { b: 'Pause', t: 'Eine Reihe freier Tage, höchstens 30. Kein Wird, keine Fehlerwiederholung. Die Kette wartet und läuft danach weiter.' },
+  { b: 'Qaḍāʾ', ar: 'قَضَاء', t: 'Das Nachholen. Ein ausgefallener oder halber Wird-Tag kommt am nächsten Wird-Tag dazu. Wer ihn dann erfüllt, behält seine Kette.' },
+  { b: 'Rang', t: 'Dreizehn Ränge von Mubtadiʾ bis Mutqin Muṭlaq. Sie richten sich danach, wie viel du wiederholst und wie sicher es sitzt. Du misst dich nur an dir selbst.' },
+  { b: 'Rückblick', t: 'Eine Woche oder ein Monat als Bild zum Aufheben und Teilen, dazu dasselbe in Worten.' },
+  { b: 'Ruhetag', t: 'Ein fester Wochentag ohne Wird. Die Kette läuft darüber weiter.' },
+  { b: 'Schnappschuss', t: 'Eine Kopie deines Profils, die Itqān von selbst auf diesem Gerät anlegt, zum Beispiel vor dem Laden einer Sicherung. In den Einstellungen holst du einen früheren Stand zurück.' },
+  { b: 'Sicherung', t: 'Eine Datei mit deinem ganzen Profil. Du legst sie unter Profil mit „Profil sichern“ an und hebst sie außerhalb der App auf.' },
+  { b: 'Sofortkorrektur', t: 'Hattest du in einem Abschnitt Fehler, fragt Itqān die Āyāt mit Fehler am Ende gleich noch einmal ab. Das zählt nicht für die Punkte.' },
+  { b: 'Stoppzeichen', ar: 'وَقْف', t: 'Die kleinen Zeichen im Muṣḥaf, an denen man beim Rezitieren anhalten darf (Waqf). „Bis zum Zeichen“ deckt eine Āya bis zum nächsten davon auf.' },
+  { b: 'Stufe', t: 'Wie sicher ein Abschnitt sitzt: neu, im Aufbau, gefestigt, sicher, mutqan. Fehlerfreie Durchgänge heben die Stufe, Fehler senken sie.' },
+  { b: 'Sūra', ar: 'سُورَة', t: 'Eines der 114 Kapitel des Qurʾān.' },
+  { b: 'Tasmīʿ', ar: 'تَسْمِيع', t: 'Das Abhören: Du rezitierst, eine zweite Person hört zu und prüft. In Itqān mit „Jemand hört ab“ zu Beginn eines Abschnitts.' },
+  { b: 'Wiederholung nach Fehler', t: 'Nach einem Fehler kommt der Abschnitt nach 1, 3 und 7 Tagen wieder, bis er hält.' },
+  { b: 'Wird', ar: 'وِرْد', t: 'Die feste Menge, die du dir für jeden Tag vornimmst. In Itqān: die Abschnitte, die heute dran sind.', mehr: 'Die Zahl legst du in den Einstellungen fest, für alle Tage gleich oder je Wochentag.' }
+];
+
+// Tastenkürzel (PC und Tablet mit Tastatur)
+export const TASTEN = [
+  { wo: 'Üben', kuerzel: [[['Leertaste', 'Enter'], 'Āya aufdecken'], [['S', '↓'], 'bis zum Zeichen aufdecken'], [['R', '→'], 'Richtig'], [['F', '←'], 'Fehler']] },
+  { wo: 'Muṣḥaf', kuerzel: [[['←'], 'nächste Seite, wie im Buch'], [['→'], 'vorige Seite']] },
+  { wo: 'Vollbild', kuerzel: [[['←', '→'], 'blättern'], [['Esc'], 'schließen']] },
+  { wo: 'Überall', kuerzel: [[['Tab'], 'zum nächsten Knopf'], [['Esc'], 'Fenster schließen']] }
+];

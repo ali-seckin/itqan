@@ -39,6 +39,7 @@ export function ergaenzen(p) {
   p.einst.sofort ??= true; p.einst.abhoeren ??= true; p.einst.tagesbeginn ??= 0;
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
   p.statistik ??= { arten: artenAusStellen(p.fstellen) };
+  p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %
   return p;
 }
 export function speichern() {
@@ -47,7 +48,7 @@ export function speichern() {
 export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort' } = {}) {
   P = {
     format: 'itqan', version: 1, erstellt: uhr().toISOString(), name,
-    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus, seitenGroesse: 100, textGroesse: 100 }, gliederung: GLIEDERUNG[modus]?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
     meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }, mutash: {}

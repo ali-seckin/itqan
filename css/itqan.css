@@ -3,24 +3,26 @@
 @font-face{font-family:'Itqan Ain';font-weight:100 900;font-display:swap;src:url(../schriften/latein/AlegreyaSans-700-latin-ext.woff2) format('woff2');unicode-range:U+02BE-02BF;size-adjust:108%}
 @font-face{font-family:'Uthmani';src:url(../schriften/uthmanic_hafs.woff2) format('woff2');font-display:swap}
 /* Schriftskala (Schrift-Gutachten 9.11.2026): sieben Rollen statt 31 Größen */
-:root{--s-etikett:13px;--s-klein:15px;--s-text:18px;--s-unter:22px;--s-titel:28px;--s-seite:34px;--s-anzeige:48px}
+:root{--s-etikett:calc(13px * var(--tm,1));--s-klein:calc(15px * var(--tm,1));--s-text:calc(18px * var(--tm,1));--s-unter:calc(22px * var(--tm,1));--s-titel:calc(28px * var(--tm,1));--s-seite:calc(34px * var(--tm,1));--s-anzeige:calc(48px * var(--tm,1))}
 *{box-sizing:border-box;margin:0;padding:0}
 :root,[data-modus=hell]{--bg:#f3e8d2;--bg2:#ead9b8;--karte:#fbf4e4;--karte2:#fffaf0;--rand:#e1cfae;
- --text:#3a2a1d;--leise:#86705a;--akzent:#b7772f;--akzent2:#d99a4e;--aufAkzent:#fff;--gut:#6f8f5a;--schlecht:#b5543a;
+ --text:#3a2a1d;--leise:#6f5942;--akzent:#b7772f;--akzent2:#d99a4e;--aufAkzent:#fff;--gut:#6f8f5a;--schlecht:#b5543a;
+ --akzentT:#855312;--akzentF:#96601c;--akzentF2:#a0661f;--gutT:#4a6a37;--gutF:#557640;--schlechtT:#9d4129;--aufGut:#fff;--aufSchlecht:#fff;
  --seite:#fffaf0;--seite2:#f7ecd6;--seitetext:#2a2018;--hi:rgba(217,154,78,.16);--schleier:#e8d9bb;--glow:rgba(255,190,110,.55);
  --schatten:0 2px 0 #e7d5b2,0 14px 30px rgba(80,50,20,.18);--seitenrand:none;
  --kopf:'Itqan Ain','Alegreya',Georgia,serif;--fliess:'Alegreya Sans',system-ui,sans-serif;color-scheme:light}
 [data-modus=dunkel]{--bg:#0d2230;--bg2:#12303f;--karte:rgba(255,255,255,.045);--karte2:rgba(255,255,255,.07);--rand:rgba(212,175,106,.26);
  --text:#efe6d2;--leise:#a9b6b9;--akzent:#d4af6a;--akzent2:#e9cf95;--aufAkzent:#0d2230;--gut:#8fbf9a;--schlecht:#e08a6d;
+ --akzentT:var(--akzent);--akzentF:var(--akzent);--akzentF2:var(--akzent2);--gutT:var(--gut);--gutF:var(--gut);--schlechtT:#eba188;--aufGut:#0d2230;--aufSchlecht:#0d2230;
  --seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
  --schatten:0 10px 30px rgba(0,0,0,.35);--seitenrand:1px solid #c9a45c;color-scheme:dark}
-html{background:var(--bg);touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+html{background:var(--bg);touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-variant-numeric:lining-nums;font-size:var(--s-text);line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
 [data-modus=hell] body{background:radial-gradient(900px 500px at 50% -120px,#fbf3e2 0%,var(--bg) 70%) fixed}
 [data-modus=dunkel] body{background:radial-gradient(900px 600px at 50% -100px,#17394a 0%,var(--bg) 65%) fixed}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
-a{color:var(--akzent)}
+a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
 
@@ -42,13 +44,13 @@ h1,h2,h3{font-family:var(--kopf);font-weight:600;line-height:1.15}
 .ring svg{transform:rotate(-90deg);display:block}
 .ring .mitte{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ring .gross{font-family:var(--kopf);font-size:var(--s-anzeige);line-height:1}
-.ring .gross span{opacity:.45}
+.ring .gross span{opacity:.62}
 .ring .klein{font-size:var(--s-klein);color:var(--leise);margin-top:4px}
 .ring circle.fort{transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
 
 .zahlen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
 .zahl{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:11px 6px;text-align:center}
-.zahl b{display:block;font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;color:var(--akzent)}
+.zahl b{display:block;font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;color:var(--akzentT)}
 [data-modus=dunkel] .zahl b{color:var(--akzent2)}
 .zahl span{font-size:var(--s-klein);color:var(--leise)}
 
@@ -56,16 +58,16 @@ h1,h2,h3{font-family:var(--kopf);font-weight:600;line-height:1.15}
 .karte{display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px;margin-bottom:8px;width:100%;text-align:left}
 button.karte:active{transform:scale(.99)}
 .karte .nr{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:var(--s-klein);border:1px solid var(--rand)}
-.karte.fertig .nr{background:var(--gut);border-color:transparent;color:#fff}
+.karte.fertig .nr{background:var(--gutF);border-color:transparent;color:var(--aufGut)}
 .karte.jetzt{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent),0 8px 24px var(--glow)}
-.karte.jetzt .nr{background:var(--akzent);color:var(--aufAkzent);border-color:transparent}
+.karte.jetzt .nr{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
 .karte .t{flex:1;min-width:0}
 .karte .t b{display:block;font-weight:700;font-size:var(--s-text);line-height:1.25}
 .karte .t span{font-size:var(--s-klein);color:var(--leise)}
 .marke-art{display:inline-block;font-size:var(--s-etikett);letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
-.marke-art.fehler{background:rgba(181,84,58,.14);color:var(--schlecht)}
-.marke-art.qadaa{background:rgba(183,119,47,.16);color:var(--akzent)}
-.marke-art.bonus{background:rgba(111,143,90,.16);color:var(--gut)}
+.marke-art.fehler{background:rgba(181,84,58,.14);color:var(--schlechtT)}
+.marke-art.qadaa{background:rgba(183,119,47,.16);color:var(--akzentT)}
+.marke-art.bonus{background:rgba(111,143,90,.16);color:var(--gutT)}
 .stufe{display:flex;gap:3px;flex:none}
 .stufe i{width:7px;height:7px;border-radius:50%;background:var(--rand)}
 .stufe i.an{background:var(--akzent)}
@@ -73,15 +75,15 @@ button.karte:active{transform:scale(.99)}
 .balken div{height:100%;border-radius:9px;background:linear-gradient(90deg,var(--akzent),var(--akzent2));transition:width 1s}
 .klein-zeile{display:flex;justify-content:space-between;font-size:var(--s-klein);color:var(--leise);gap:10px}
 .hinweisbox{background:var(--karte);border:1px dashed var(--akzent);border-radius:16px;padding:12px 14px;font-size:var(--s-text);margin:14px 0}
-.hinweisbox b{color:var(--akzent)}
+.hinweisbox b{color:var(--akzentT)}
 .leer{color:var(--leise);font-style:italic;font-size:var(--s-text)}
 
 /* Knöpfe */
 .knopf{display:block;width:100%;border:0;border-radius:14px;padding:14px 12px;font-size:var(--s-text);font-weight:700;text-align:center;transition:transform .1s,opacity .2s}
 .knopf:active{transform:scale(.97)}
-.knopf.haupt{background:var(--akzent);color:var(--aufAkzent);box-shadow:0 8px 20px var(--glow)}
-.knopf.gut{background:var(--gut);color:#fff}
-.knopf.schlecht{background:transparent;color:var(--schlecht);border:1.5px solid var(--schlecht)}
+.knopf.haupt{background:var(--akzentF);color:var(--aufAkzent);box-shadow:0 8px 20px var(--glow)}
+.knopf.gut{background:var(--gutF);color:var(--aufGut)}
+.knopf.schlecht{background:transparent;color:var(--schlechtT);border:1.5px solid var(--schlecht)}
 .knopf.leise{background:transparent;color:var(--leise);border:1px solid var(--rand)}
 .knopf.klein{padding:9px 12px;font-size:var(--s-text)}
 .knopf:disabled{opacity:.4}
@@ -95,7 +97,7 @@ button.karte:active{transform:scale(.99)}
 [data-modus=dunkel] .nav{background:rgba(13,34,48,.94);backdrop-filter:blur(10px)}
 .nav div{display:flex;justify-content:space-around;width:100%;max-width:560px}
 .nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:var(--s-klein);color:var(--leise);text-decoration:none;padding:4px 10px;min-width:64px}
-.nav a.an{color:var(--akzent)}
+.nav a.an{color:var(--akzentT)}
 [data-modus=dunkel] .nav a.an{color:var(--akzent2)}
 .nav svg{width:23px;height:23px}
 
@@ -105,7 +107,7 @@ button.karte:active{transform:scale(.99)}
 [data-modus=dunkel] .seite{outline:3px double rgba(201,164,92,.7);outline-offset:3px;margin:4px}
 /* Lage im doppelseitigen Muṣḥaf: R oder L neben der Seitenzahl */
 .reihe-k{display:flex;align-items:center;gap:8px}
-.seitenlage{width:38px;height:38px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzent);font:600 var(--s-text) var(--fliess);display:grid;place-items:center;padding:0}
+.seitenlage{width:44px;height:44px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzentT);font:600 var(--s-text) var(--fliess);display:grid;place-items:center;padding:0}
 [data-modus=dunkel] .seitenlage{color:var(--akzent2)}
 .seitenlage.klein{display:inline-grid;width:24px;height:24px;font-size:var(--s-etikett);margin:0 3px 0 5px;vertical-align:1px}
 .lageinfo:not(.verdeckt){display:flex;gap:14px;align-items:center;border-style:solid}
@@ -144,7 +146,7 @@ button.karte:active{transform:scale(.99)}
 @keyframes puls{50%{background-color:rgba(183,119,47,.88)}}
 
 /* Üben */
-.ab-kopf .ueber{font-size:var(--s-klein);letter-spacing:1.4px;text-transform:uppercase;color:var(--akzent)}
+.ab-kopf .ueber{font-size:var(--s-klein);letter-spacing:1.4px;text-transform:uppercase;color:var(--akzentT)}
 .ab-kopf h2{font-size:var(--s-titel);margin:4px 0 6px}
 .ab-kopf p{font-size:var(--s-klein);color:var(--leise)}
 .zurueck{display:inline-flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--leise);background:none;border:0;padding:4px 0;margin-bottom:8px}
@@ -168,8 +170,8 @@ button.karte:active{transform:scale(.99)}
 @media (prefers-reduced-motion:reduce){.qandil{animation:none;filter:drop-shadow(0 0 20px var(--glow))}}
 .qandil .flamme{animation:flackern 3s ease-in-out infinite;transform-origin:60px 96px}
 @keyframes flackern{0%,100%{transform:scale(1)}40%{transform:scale(1.04,.97)}70%{transform:scale(.97,1.03)}}
-.feier .ar{font-family:'Uthmani',serif;font-size:34px;color:var(--akzent);margin-top:8px}
-.feier h2{font-size:var(--s-titel);color:var(--akzent)}
+.feier .ar{font-family:'Uthmani',serif;font-size:34px;color:var(--akzentT);margin-top:8px}
+.feier h2{font-size:var(--s-titel);color:var(--akzentT)}
 [data-modus=dunkel] .feier h2,[data-modus=dunkel] .feier .ar{color:var(--akzent2)}
 .feier>p{margin:6px 0 18px}
 .ernte{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
@@ -180,7 +182,7 @@ button.karte:active{transform:scale(.99)}
 .aufschl{font-size:var(--s-klein);color:var(--leise);margin:10px 0;text-align:left}
 .aufschl div{display:flex;justify-content:space-between;padding:3px 2px;border-bottom:1px dotted var(--rand)}
 .band{margin:12px 0;padding:12px 14px;border-radius:16px;display:flex;gap:12px;align-items:center;text-align:left;border:1px dashed var(--akzent);font-size:var(--s-text);background:var(--karte)}
-.angebot{background:linear-gradient(135deg,var(--akzent),var(--akzent2));color:var(--aufAkzent);border-radius:20px;padding:16px;text-align:left;box-shadow:0 12px 28px var(--glow);margin-top:14px}
+.angebot{background:linear-gradient(135deg,var(--akzentF),var(--akzentF2));color:var(--aufAkzent);border-radius:20px;padding:16px;text-align:left;box-shadow:0 12px 28px var(--glow);margin-top:14px}
 .angebot b{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;display:block}
 .angebot p{font-size:var(--s-text);margin:4px 0 12px;opacity:.92}
 .angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:var(--s-text);font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
@@ -211,7 +213,7 @@ button.karte:active{transform:scale(.99)}
 .feld input[type=text],.feld input[type=time],.feld select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2)}
 .wahl{display:flex;gap:6px;background:var(--karte);border:1px solid var(--rand);padding:4px;border-radius:999px}
 .wahl button{flex:1;border:0;background:none;padding:8px 6px;border-radius:999px;font-size:var(--s-text)}
-.wahl button.an{background:var(--akzent);color:var(--aufAkzent)}
+.wahl button.an{background:var(--akzentF);color:var(--aufAkzent)}
 .zaehler{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
 .zaehler button{width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-titel)}
 .zaehler b{font-family:var(--kopf);font-size:var(--s-anzeige);min-width:64px;text-align:center}
@@ -220,7 +222,7 @@ button.karte:active{transform:scale(.99)}
 .wochentage input{width:100%;text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--rand);background:var(--karte2)}
 .juzwahl{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .juzwahl button{padding:9px 0;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-text)}
-.juzwahl button.an{background:var(--akzent);color:var(--aufAkzent);border-color:transparent}
+.juzwahl button.an{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
 .abschnitt{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:16px;margin:12px 0}
 .abschnitt h3{font-size:var(--s-unter);margin-bottom:6px}
 
@@ -236,7 +238,7 @@ button.karte:active{transform:scale(.99)}
 /* Start */
 .start{text-align:center;padding-top:24px}
 .start .qandil{height:150px}
-.start h1{font-size:var(--s-anzeige);color:var(--akzent);margin-top:8px}
+.start h1{font-size:var(--s-anzeige);color:var(--akzentT);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}
 .start .ar{font-family:'Uthmani',serif;font-size:29px;color:var(--leise)}
 .lade{display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:var(--s-text)}
@@ -276,7 +278,7 @@ button.karte:active{transform:scale(.99)}
 .kontext .kz{direction:rtl;display:flex;flex-wrap:wrap;gap:.1em .32em;justify-content:center;font-size:clamp(22px,6.6vw,34px);line-height:1.7;color:var(--text)}
 .einblendung{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;text-align:center;background:var(--bg);animation:einbl 3.8s ease forwards}
 .einblendung>div{animation:einbltext 3.8s ease forwards}
-.einblendung .ueber{font-size:var(--s-klein);letter-spacing:2px;text-transform:uppercase;color:var(--akzent)}
+.einblendung .ueber{font-size:var(--s-klein);letter-spacing:2px;text-transform:uppercase;color:var(--akzentT)}
 .einblendung .ueber b{font-weight:700;color:var(--text);font-size:1.2em;letter-spacing:1px}
 .einblendung h2{font-size:var(--s-seite);margin:10px 0 12px;color:var(--text)}
 .skizze{display:flex;flex-direction:row-reverse;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:22px}
@@ -298,14 +300,14 @@ button.karte:active{transform:scale(.99)}
 @media (prefers-reduced-motion:reduce){.einblendung,.einblendung>div{animation-duration:1.8s}}
 .arten{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 10px}
 .arten button{border:1px solid var(--rand);background:var(--karte);border-radius:999px;padding:6px 12px;font-size:var(--s-klein)}
-.arten button.an{background:var(--schlecht);color:#fff;border-color:transparent}
+.arten button.an{background:var(--schlecht);color:var(--aufSchlecht);border-color:transparent}
 .textlink.mini{padding:4px 0;margin:2px 16px 0 0;font-size:var(--s-klein)}
 .steuerung .zeile2{align-items:flex-start;gap:10px}
 .steuerung #zaehler{white-space:nowrap}
 
 /* Fehlerstellen im Profil */
 .fstelle .wortbild{direction:rtl;display:flex;gap:.28em;align-items:center;justify-content:center;font-size:30px;line-height:1.35;color:var(--text);text-decoration:none;flex:none;min-width:92px}
-.fstelle .wortbild .nb{opacity:.35;font-size:.78em}
+.fstelle .wortbild .nb{opacity:.6;font-size:.78em}
 .fstelle .textlink{white-space:nowrap}
 
 .stufenwahl .zahl{cursor:pointer;color:inherit;font:inherit}
@@ -320,7 +322,7 @@ button.karte:active{transform:scale(.99)}
 /* Vollbild */
 #seite{position:relative}
 [data-ansicht=mushaf] #seite .seite{padding-bottom:calc(1.4cqw + 16px)}
-.vollbild-knopf{position:absolute;right:16px;bottom:8px;width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,72,30,.25);background:rgba(255,250,240,.75);color:#7a5a2e;display:grid;place-items:center;opacity:.6;padding:0}
+.vollbild-knopf{position:absolute;right:16px;bottom:8px;width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,72,30,.25);background:rgba(255,250,240,.75);color:#7a5a2e;display:grid;place-items:center;opacity:.85;padding:0}
 .vollbild-knopf:hover,.vollbild-knopf:focus-visible{opacity:1}
 body.im-vollbild{overflow:hidden}
 .vollbild{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;touch-action:none;overscroll-behavior:none;
@@ -336,31 +338,31 @@ body.im-vollbild{overflow:hidden}
 .vb-seiten.von-rechts{animation:vonRechts .28s ease}
 @keyframes vonLinks{from{opacity:0;transform:translateX(-24px)}}
 @keyframes vonRechts{from{opacity:0;transform:translateX(24px)}}
-.vb-zu{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:36px;height:36px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:var(--leise);font-size:var(--s-klein);opacity:.75;z-index:2}
-.vb-pfeil{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:64px;border:0;background:none;color:var(--leise);font-size:34px;opacity:.35;z-index:2}
+.vb-zu{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:var(--leise);font-size:var(--s-klein);z-index:2}
+.vb-pfeil{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:12px;background:color-mix(in srgb,var(--bg) 60%,transparent);color:var(--text);font-size:34px;opacity:.8;z-index:2}
 .vb-pfeil.links{left:calc(env(safe-area-inset-left,0px) + 2px)}
 .vb-pfeil.rechts{right:calc(env(safe-area-inset-right,0px) + 2px)}
-@media (hover:none){.vb-pfeil{opacity:.22}}
+@media (hover:none){.vb-pfeil{opacity:.7}}
 .licht-seiten button.gewaehlt{outline:2px solid var(--text);outline-offset:1px;position:relative;z-index:1}
 .seiteninfo{background:var(--karte);border:1px solid var(--akzent);border-radius:14px;padding:12px 14px;margin:4px 0 10px;display:grid;gap:8px}
 .seiteninfo .kopf b{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;margin-right:8px}
 .seiteninfo .kopf span{font-size:var(--s-klein);color:var(--leise)}
 .seiteninfo .zeile{display:flex;justify-content:space-between;gap:10px;font-size:var(--s-klein);border-top:1px dotted var(--rand);padding-top:6px}
 .seiteninfo .zeile small{display:block;font-size:var(--s-etikett);color:var(--leise)}
-.seiteninfo .st{color:var(--akzent);white-space:nowrap}
+.seiteninfo .st{color:var(--akzentT);white-space:nowrap}
 /* Abschnittsname auf der Startseite: Nummer nach Stand */
-:root,[data-modus=hell]{--st-hellblau:#4f8fd0;--st-dunkelblau:#1d4f91;--st-gruen:#3e8f5c;--st-rot:#c62828}
-[data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#5b8fe0;--st-gruen:#7fcf98;--st-rot:#ff6b6b}
+:root,[data-modus=hell]{--st-hellblau:#2866a8;--st-dunkelblau:#1d4f91;--st-gruen:#2f7549;--st-rot:#c62828}
+[data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#7aa6ee;--st-gruen:#7fcf98;--st-rot:#ff7d7d}
 .karte .t span .ab-name{font-weight:700;color:var(--text)}
 .karte .t .ab-name .ab-nr{font-weight:700;font-size:inherit;color:var(--text)}
 .karte .t .ab-name .ab-nr.st-gefestigt{color:var(--st-hellblau)}
 .karte .t .ab-name .ab-nr.st-sicher{color:var(--st-dunkelblau)}
 .karte .t .ab-name .ab-nr.st-mutqan{color:var(--st-gruen)}
 .karte .t .ab-name .ab-nr.st-fehler{color:var(--st-rot)}
-.knopf.rund{flex:0 0 52px;padding:0;font-size:var(--s-unter);display:grid;place-items:center;color:var(--schlecht)}
-.knopf.rund.nimmt{background:var(--schlecht);color:#fff;border-color:transparent;animation:nimmt 1.2s ease-in-out infinite}
-#hoeren.knopf.rund{color:var(--akzent)}
-.nimmt-text{color:var(--schlecht);font-weight:600}
+.knopf.rund{flex:0 0 52px;padding:0;font-size:var(--s-unter);display:grid;place-items:center;color:var(--schlechtT)}
+.knopf.rund.nimmt{background:var(--schlecht);color:var(--aufSchlecht);border-color:transparent;animation:nimmt 1.2s ease-in-out infinite}
+#hoeren.knopf.rund{color:var(--akzentT)}
+.nimmt-text{color:var(--schlechtT);font-weight:600}
 @keyframes nimmt{50%{opacity:.7}}
 /* Einführung */
 [data-ansicht=einfuehrung] #app{padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}
@@ -397,16 +399,16 @@ body.im-vollbild{overflow:hidden}
 .tb-aya .tb-schrift{flex:1;height:8px;border-radius:4px;background:var(--seitetext);opacity:.55}
 .tb-aya .tb-schleier{position:absolute;inset:0 34px 0 0;border-radius:6px;background:var(--schleier);animation:tutDecke 6s calc(var(--i) * 1.1s) ease-in-out infinite}
 [data-modus=dunkel] .tb-aya .tb-schrift{background:var(--text)}
-.tb-aya b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:var(--s-klein);color:#fff;opacity:0;animation:tutHaken 6s calc(var(--i) * 1.1s) ease-in-out infinite}
-.tb-aya b.ja{background:var(--gut)}.tb-aya b.nein{background:var(--schlecht)}
+.tb-aya b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:var(--s-klein);color:var(--aufGut);opacity:0;animation:tutHaken 6s calc(var(--i) * 1.1s) ease-in-out infinite}
+.tb-aya b.ja{background:var(--gutF)}.tb-aya b.nein{background:var(--schlecht)}
 @keyframes tutDecke{0%,12%{transform:scaleX(1);transform-origin:left}24%,88%{transform:scaleX(0);transform-origin:left}100%{transform:scaleX(1)}}
 @keyframes tutHaken{0%,24%{opacity:0;transform:scale(.5)}30%,88%{opacity:1;transform:none}100%{opacity:0}}
 /* 4 Stufen */
 .tb-stufen{display:flex;flex-direction:column-reverse;gap:7px;align-items:center;position:relative}
 .tb-stufen>span{width:150px;padding:5px 0;border-radius:999px;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-klein);animation:tutStufe 5s calc(var(--i) * .7s) ease-in-out infinite}
-@keyframes tutStufe{0%,10%{background:var(--karte);color:var(--text)}18%,70%{background:var(--akzent);color:var(--aufAkzent)}85%,100%{background:var(--karte);color:var(--text)}}
+@keyframes tutStufe{0%,10%{background:var(--karte);color:var(--text)}18%,70%{background:var(--akzentF);color:var(--aufAkzent)}85%,100%{background:var(--karte);color:var(--text)}}
 .tb-zurueck{display:flex;gap:6px;margin-bottom:8px}
-.tb-zurueck span{font-size:var(--s-etikett);padding:3px 8px;border-radius:999px;border:1px dashed var(--schlecht);color:var(--schlecht);animation:tutAuf 1s calc(1s + var(--i,0) * .3s) both}
+.tb-zurueck span{font-size:var(--s-etikett);padding:3px 8px;border-radius:999px;border:1px dashed var(--schlecht);color:var(--schlechtT);animation:tutAuf 1s calc(1s + var(--i,0) * .3s) both}
 /* 5 Lichtkarte */
 .tb-licht{display:grid;grid-template-columns:repeat(10,18px);gap:4px}
 .tb-licht i{display:block;aspect-ratio:1/1.3;border-radius:3px;background:var(--akzent);opacity:.08;animation:tutLicht 5s calc(var(--i) * .06s) ease-in-out infinite}
@@ -420,7 +422,7 @@ body.im-vollbild{overflow:hidden}
 /* 7 Liste */
 .tb-liste{display:grid;gap:8px;text-align:left}
 .tb-liste div{display:flex;align-items:center;gap:10px;font-size:var(--s-klein);padding:7px 12px;border-radius:12px;background:var(--karte);border:1px solid var(--rand);animation:tutAuf .6s calc(.2s + var(--i) * .35s) both}
-.tb-liste b{width:22px;height:22px;border-radius:50%;background:var(--gut);color:#fff;display:grid;place-items:center;font-size:var(--s-etikett)}
+.tb-liste b{width:22px;height:22px;border-radius:50%;background:var(--gutF);color:var(--aufGut);display:grid;place-items:center;font-size:var(--s-etikett)}
 @media (prefers-reduced-motion:reduce){.tutorial *{animation-duration:30s!important}}
 .dauer-zahl{font-size:1.15em;color:var(--text);font-weight:700}
 .tut-mess{position:absolute;left:-9999px;top:0;visibility:hidden}
@@ -432,7 +434,7 @@ body.im-vollbild{overflow:hidden}
 .unterseiten .pfeil{font-size:var(--s-titel);color:var(--leise);padding:0 4px}
 .fs-karte{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px;margin-bottom:10px;display:grid;gap:10px}
 .fs-karte .wortbild{direction:rtl;display:flex;flex-wrap:wrap;gap:.3em;align-items:center;justify-content:center;font-size:32px;line-height:1.5;color:var(--text);text-decoration:none}
-.fs-karte .wortbild .nb{opacity:.35;font-size:.78em}
+.fs-karte .wortbild .nb{opacity:.6;font-size:.78em}
 .fs-unten{display:flex;align-items:center;gap:12px;border-top:1px dotted var(--rand);padding-top:10px}
 .fs-unten .t{flex:1;min-width:0}
 .fs-unten .t b{display:block;font-weight:600}
@@ -451,16 +453,15 @@ body.im-vollbild{overflow:hidden}
 .bed{display:grid;gap:9px}
 .bed>div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:var(--s-klein)}
 .bed>div>span:last-of-type{color:var(--leise);font-variant-numeric:tabular-nums}
-.bed>div.ok>span:first-child{color:var(--gut)}
+.bed>div.ok>span:first-child{color:var(--gutT)}
 .bed i{grid-column:1/-1;height:5px;border-radius:5px;background:var(--rand);overflow:hidden;display:block}
 .bed i b{display:block;height:100%;background:linear-gradient(90deg,var(--akzent),var(--akzent2))}
 .bed>div.ok i b{background:var(--gut)}
 .rangstufe{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:14px 16px;margin:12px 0;display:grid;gap:10px}
 .rangstufe.jetzt{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent),0 10px 26px var(--glow)}
-.rangstufe.erreicht{opacity:.8}
 .rangstufe .nr{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:var(--s-klein);border:1px solid var(--rand);color:var(--leise)}
-.rangstufe.erreicht .nr{background:var(--gut);color:#fff;border-color:transparent}
-.rangstufe.jetzt .nr{background:var(--akzent);color:var(--aufAkzent);border-color:transparent}
+.rangstufe.erreicht .nr{background:var(--gutF);color:var(--aufGut);border-color:transparent}
+.rangstufe.jetzt .nr{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
 .rangstufe .ar{font-size:28px;min-width:60px}
 .rangstufe p{font-size:var(--s-klein)}
 .rang-band .ar{font-size:30px;min-width:56px}
@@ -482,7 +483,7 @@ select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("dat
 .karte .t b.nr-fett{display:inline;font-weight:700;font-size:inherit;line-height:inherit;color:var(--text)}
 
 /* Itqān-Punkte steigen beim Bewerten auf */
-.punkt-pop{position:fixed;z-index:60;transform:translate(-50%,-50%);pointer-events:none;font:700 var(--s-unter)/1 var(--kopf);color:var(--akzent);text-shadow:0 0 10px var(--glow),0 1px 0 var(--bg);animation:punktAuf 1.35s cubic-bezier(.2,.7,.3,1) forwards}
+.punkt-pop{position:fixed;z-index:60;transform:translate(-50%,-50%);pointer-events:none;font:700 var(--s-unter)/1 var(--kopf);color:var(--akzentT);text-shadow:0 0 10px var(--glow),0 1px 0 var(--bg);animation:punktAuf 1.35s cubic-bezier(.2,.7,.3,1) forwards}
 [data-modus=dunkel] .punkt-pop{color:var(--akzent2)}
 @keyframes punktAuf{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}18%{opacity:1;transform:translate(-50%,-90%) scale(1.08)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-260%) scale(.95)}}
 @media (prefers-reduced-motion:reduce){.punkt-pop{animation:punktRuhig 1.2s forwards}@keyframes punktRuhig{0%,70%{opacity:1;transform:translate(-50%,-90%)}100%{opacity:0;transform:translate(-50%,-90%)}}}
@@ -543,7 +544,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .orn-karte{background:var(--bg);border:1px solid var(--rand);border-radius:22px;padding:20px 18px 18px;max-width:420px;width:100%;max-height:92vh;overflow:auto;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .orn-gross{width:min(72vw,300px);margin:0 auto 6px;animation:ornDreh .5s ease}
 @keyframes ornDreh{from{transform:scale(.8) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
-.orn-karte .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--akzent)}
+.orn-karte .ar{font-family:'Uthmani',serif;font-size:30px;color:var(--akzentT)}
 .orn-karte h2{font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;margin-bottom:6px}
 .orn-karte p{margin:6px 0;font-size:var(--s-text)}
 .orn-karte .balken{margin-top:12px}
@@ -553,8 +554,12 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .orn-vorschau .ornament{width:34px}
 .orn-vorschau .ornament+.ornament{margin-left:-10px}
 .meilensteine{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.meilenstein{display:flex;flex-direction:column;align-items:center;background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:8px 2px;opacity:.38;filter:grayscale(1)}
-.meilenstein.hat{opacity:1;filter:none;border-color:var(--akzent)}
+.meilenstein{display:flex;flex-direction:column;align-items:center;background:var(--karte);border:1px dashed var(--rand);border-radius:14px;padding:8px 2px}
+.meilenstein>:first-child{opacity:.38;filter:grayscale(1)}
+.meilenstein b{color:var(--leise);font-weight:400}
+.meilenstein.hat{border:1px solid var(--akzent)}
+.meilenstein.hat>:first-child{opacity:1;filter:none}
+.meilenstein.hat b{color:var(--text);font-weight:700}
 .meilenstein b{font-family:var(--kopf);font-size:var(--s-text);line-height:1.1;margin-top:3px}
 .meilenstein span{font-size:var(--s-etikett);color:var(--leise)}
 @media (min-width:700px){[data-ansicht=ornamente] #app{max-width:800px}[data-ansicht=ornamente] .meilensteine,[data-ansicht=ornamente] #ofilter,[data-ansicht=ornamente] .zahlen{max-width:560px;margin-left:auto;margin-right:auto}}
@@ -564,7 +569,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .orn-legende .kreis{height:58px;display:flex;align-items:center;justify-content:center}
 .orn-legende div{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
 .orn-legende i{width:calc(var(--e) * 9px);aspect-ratio:1;border-radius:50%;border:1.5px solid var(--akzent);background:radial-gradient(circle,var(--hi),transparent 70%)}
-.orn-legende b{font-family:var(--kopf);font-size:var(--s-klein);line-height:1;color:var(--akzent)}
+.orn-legende b{font-family:var(--kopf);font-size:var(--s-klein);line-height:1;color:var(--akzentT)}
 [data-modus=dunkel] .orn-legende b{color:var(--akzent2)}
 .orn-legende span:not(.kreis){font-size:var(--s-etikett);line-height:1.2;color:var(--leise);white-space:nowrap}
 .orn-legende-text{font-size:var(--s-klein);color:var(--leise);text-align:center;margin:8px auto 0;max-width:560px}
@@ -590,7 +595,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .fh-kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .fh-nr{font-size:var(--s-etikett);letter-spacing:1px;color:var(--leise)}
 .fh-weg{background:none;border:0;color:var(--leise);font-size:var(--s-klein);text-decoration:underline;padding:2px 0}
-.fh-box h3{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzent);margin-bottom:4px}
+.fh-box h3{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzentT);margin-bottom:4px}
 [data-modus=dunkel] .fh-box h3{color:var(--akzent2)}
 .fh-box p{font-size:var(--s-klein);line-height:1.45}
 .fh-knoepfe{display:flex;gap:8px;margin-top:12px}
@@ -602,7 +607,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .dialog.weg{opacity:0;transition:opacity .2s}
 .dialog-karte{background:var(--bg);border:1px solid var(--akzent);border-radius:20px;padding:18px 18px 16px;width:min(420px,100%);max-height:88vh;overflow:auto;box-shadow:0 18px 44px rgba(0,0,0,.35)}
 [data-modus=hell] .dialog-karte{background:#fffaf0}
-.dialog-karte h3{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzent);margin-bottom:10px}
+.dialog-karte h3{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzentT);margin-bottom:10px}
 [data-modus=dunkel] .dialog-karte h3{color:var(--akzent2)}
 .dialog-text{font-size:var(--s-text)}
 .dialog-text p{margin:8px 0}
@@ -611,20 +616,20 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .ueberblick div{background:var(--karte);border:1px solid var(--rand);border-radius:12px;padding:8px 10px}
 .ueberblick span{display:block;font-size:var(--s-etikett);color:var(--leise)}
 .ueberblick b{font-weight:600}
-.warnung{color:var(--schlecht);font-weight:500}
+.warnung{color:var(--schlechtT);font-weight:500}
 
 /* Installieren */
 .install-schritte{margin:18px 0 6px;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
 .install-schritte li{counter-increment:s;display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:12px 14px;font-size:var(--s-text)}
-.install-schritte li::before{content:counter(s);flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--akzent);color:var(--aufAkzent);font:600 var(--s-klein) var(--fliess)}
-.sym{width:22px;height:22px;vertical-align:-5px;color:var(--akzent);margin:0 2px}
+.install-schritte li::before{content:counter(s);flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--akzentF);color:var(--aufAkzent);font:600 var(--s-klein) var(--fliess)}
+.sym{width:22px;height:22px;vertical-align:-5px;color:var(--akzentT);margin:0 2px}
 .install-hinweis,.sicherung-hinweis{border-style:solid}
 
 /* Was ist neu, Version */
 .neu-eintrag{border-bottom:1px dotted var(--rand);padding:10px 0 12px}
 .neu-eintrag:last-child{border-bottom:0}
 .neu-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.neu-kopf b{font-family:var(--kopf);font-size:var(--s-text);color:var(--akzent)}
+.neu-kopf b{font-family:var(--kopf);font-size:var(--s-text);color:var(--akzentT)}
 [data-modus=dunkel] .neu-kopf b{color:var(--akzent2)}
 .neu-kopf span{font-size:var(--s-klein);color:var(--leise)}
 .neu-eintrag h4{font-size:var(--s-text);font-weight:600;margin:2px 0 6px}
@@ -648,8 +653,8 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 
 /* Etappe 2: angefangene Übung, dezenter Abhör-Link, Sofortkorrektur */
 .marke-art.angefangen{background:rgba(90,140,200,.16);color:var(--text)}
-.textlink.mini.leiser{opacity:.6;font-size:var(--s-etikett)}
-.fort-zeile.korrektur .zaehler{color:var(--akzent);font-weight:600}
+.textlink.mini.leiser{font-size:var(--s-etikett)}
+.fort-zeile.korrektur .zaehler{color:var(--akzentT);font-weight:600}
 [data-modus=dunkel] .fort-zeile.korrektur .zaehler{color:var(--akzent2)}
 .fort-zeile.korrektur .punkte i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--schlecht)}
 .fort-zeile.korrektur .punkte i.ok,.fort-zeile.korrektur .punkte i.hilfe{background:var(--gut);box-shadow:none}
@@ -673,7 +678,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 /* Etappe 3: Festigen, Ruhetag und Pause, Auswertung */
 .marke-art.festigen{background:rgba(90,120,170,.16);color:var(--text)}
 .ruhe-karte{background:var(--karte);border:1px solid var(--rand);border-radius:20px;padding:20px 18px;margin:22px 0 8px;text-align:center}
-.ruhe-karte b{display:block;font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzent);margin-bottom:6px}
+.ruhe-karte b{display:block;font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;color:var(--akzentT);margin-bottom:6px}
 .ruhe-karte p{color:var(--leise);font-size:var(--s-text)}
 .ruhe-karte .reihe{justify-content:center}
 .aw-liste{display:grid;gap:9px;margin-top:6px}
@@ -701,15 +706,15 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .uthmani{font:24px/2 'Uthmani',serif;direction:rtl;display:block;text-align:right}
 .uthmani mark{background:var(--hi);color:inherit;border-radius:6px;padding:0 2px;box-shadow:inset 0 -2px 0 var(--akzent)}
 .uthmani mark.anders{background:rgba(212,175,106,.22)}
-.aya-nr{font-size:.75em;color:var(--akzent)}
+.aya-nr{font-size:.75em;color:var(--akzentT)}
 .wort-zu{color:transparent;background:var(--rand);border-radius:6px;user-select:none}
 .quelle{font-size:var(--s-etikett);color:var(--leise);margin-top:22px}
 .vergleich-karte{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:12px 16px 8px;margin-top:14px}
 .vk-kopf{display:flex;gap:8px;align-items:baseline;font-size:var(--s-klein);color:var(--leise)}
-.vk-kopf b{font-family:var(--kopf);font-size:var(--s-text);color:var(--akzent);font-weight:600}
+.vk-kopf b{font-family:var(--kopf);font-size:var(--s-text);color:var(--akzentT);font-weight:600}
 .vk-kopf a{margin-left:auto;color:var(--leise)}
 .vk-text .uthmani{font-size:26px}
-.fs-aehnlich{display:block;font-size:var(--s-klein);color:var(--akzent);margin-top:4px}
+.fs-aehnlich{display:block;font-size:var(--s-klein);color:var(--akzentT);margin-top:4px}
 /* Etappe 5: Mutašābihāt nachschlagen (Gruppen ähnlicher Verse, Reihenfolge-Fälle) */
 :root,[data-modus=hell]{--ah-eins:#2f6f78;--ah-zwei:#b04f36;--ah-kern:rgba(176,79,54,.14)}
 [data-modus=dunkel]{--ah-eins:#7cc3c9;--ah-zwei:#e08a6d;--ah-kern:rgba(224,138,109,.2)}
@@ -719,7 +724,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .ah-zeile .wahl{flex:1 1 210px}
 .ah-reiter{display:flex;gap:4px;border-bottom:1px solid var(--rand);margin:18px 0 14px}
 .ah-reiter button{flex:1;border:0;background:none;padding:10px 4px 9px;font:600 var(--s-unter)/1.15 var(--kopf);color:var(--leise);border-bottom:3px solid transparent;margin-bottom:-1px}
-.ah-reiter button.an{color:var(--akzent);border-bottom-color:var(--akzent)}
+.ah-reiter button.an{color:var(--akzentT);border-bottom-color:var(--akzent)}
 .ah-reiter small{font:400 var(--s-klein) var(--fliess);margin-left:6px;font-variant-numeric:tabular-nums}
 .wahl.vier button{font-size:var(--s-klein);padding:8px 2px;white-space:nowrap}
 .ah-filter{margin-top:10px}
@@ -734,7 +739,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-karte{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:14px 14px 12px;display:grid;gap:10px;min-width:0}
 .ah-karte h3{font-size:var(--s-unter)}
 .ah-kopf{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
-.ah-art{font-size:var(--s-etikett);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--akzent)}
+.ah-art{font-size:var(--s-etikett);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--akzentT)}
 .ah-art.gleich{color:var(--ah-eins)}
 .ah-nr{font-size:var(--s-klein);color:var(--leise);font-variant-numeric:tabular-nums}
 .ah-kopf .marke-art{margin-left:auto}
@@ -749,7 +754,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-arw{font-family:system-ui,'Segoe UI','Noto Naskh Arabic','Geeza Pro',sans-serif}
 .ah-orte{list-style:none;display:grid;gap:2px;margin-top:2px}
 .ah-orte li{border-top:1px dotted var(--rand);padding-top:3px}
-.ah-orte li a{font:600 var(--s-klein) var(--kopf);color:var(--akzent);text-decoration:none;min-width:3.4em;font-variant-numeric:tabular-nums}
+.ah-orte li a{font:600 var(--s-klein) var(--kopf);color:var(--akzentT);text-decoration:none;min-width:3.4em;font-variant-numeric:tabular-nums}
 .ah-orte .sn{min-width:6.5em}
 .ah-orte.zu li:nth-child(n+7){display:none}
 .vk-kopf.ah-treffer b,li.ah-treffer>a{background:var(--hi);border-radius:6px;padding:0 5px}
@@ -808,3 +813,76 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .rb-name input{width:22px;height:22px}
 .rb-worte{margin:6px 0 0;padding-left:22px;display:grid;gap:6px;font-size:var(--s-text)}
 .rb-leer{margin-top:26px;text-align:center}
+/* Etappe 6: Lesbarkeit und Barrierefreiheit (Gutachten Teil A, Punkte 19 bis 21) */
+/* Nur für Bildschirmleser */
+.nur-leser{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+/* Tastatur: der Fokus ist immer zu sehen */
+:focus-visible{outline:2px solid var(--akzentT);outline-offset:2px}
+[data-modus=dunkel] :focus-visible{outline-color:var(--akzent2)}
+#app:focus{outline:none}
+/* Tippflächen mindestens 44 px; kleine Zeichen bekommen eine unsichtbare Fläche um sich */
+.textlink,.wahl button,.arten button,.knopf.klein,.juzwahl button,.haken,.ah-reiter button,select{min-height:44px}
+.seitenlage.klein,.zurueck,.textlink.mini,.tut-weg,.fh-weg,.vk-kopf a,.ah-verweis,.ah-chip,.ah-mehr{position:relative}
+.seitenlage.klein::after,.vollbild-knopf::after,.zurueck::after,.textlink.mini::after,.tut-weg::after,.fh-weg::after,.vk-kopf a::after,.ah-verweis::after,.ah-chip::after,.ah-mehr::after{content:'';position:absolute;inset:-7px}
+.seitenlage.klein::after{inset:-10px}
+.zurueck::after{inset:-6px -10px}
+.textlink.mini,.tut-weg{min-height:0}
+.textlink.mini::after{inset:-7px 0}
+.textlink.mini.leiser::after{inset:-9px 0}
+.tut-weg::after{inset:-8px -6px}
+.fh-weg::after{inset:-10px -6px}
+.vk-kopf a::after{inset:-11px -16px}
+.ah-chip::after,.ah-mehr::after{inset:-6px 0}
+.ah-verweis::after{inset:-8px 0}
+.ah-verweise div{gap:16px 8px}
+[data-modus=dunkel] .ah-stelle{background:rgba(255,255,255,.025)}
+[data-modus=dunkel] .vk-kopf.ah-treffer b,[data-modus=dunkel] li.ah-treffer>a{color:var(--akzent2)}
+.ah-chips{gap:11px 6px}
+.titel-klein a{display:inline-block;padding:12px 0;margin:-12px 0}
+.fs-aehnlich{padding:12px 0;margin-top:0}
+.ah-orte li{position:relative;min-height:44px;align-items:center}
+.ah-orte li>a::after{content:'';position:absolute;inset:0}
+.ah-orte li .ah-danach{position:relative;z-index:1}
+/* Lichtkarte auf der Startseite: ein einziger Verweis, Zahlen ohne Durchsichtigkeit */
+.licht-mini{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;text-decoration:none}
+.licht-mini span{aspect-ratio:1;border-radius:6px;font-size:13px;display:grid;place-items:center;color:#1c140c}
+[data-modus=dunkel] .licht-mini span{color:#fff}
+[data-modus=dunkel] .licht-mini span.voll{color:#000}
+.licht-mini span.aus,[data-modus=dunkel] .licht-mini span.aus{background:color-mix(in srgb,var(--rand) 35%,var(--bg));color:var(--leise)}
+/* Seitengröße 125 und 150 %: die Seite wächst über den Rand, man schiebt sie mit dem Finger. Bei 100 % ändert sich nichts. */
+html[data-gross] .roller{direction:rtl;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:6px 4px 44px;margin:-6px -4px -44px;scrollbar-width:thin}
+html[data-gross] .roller>*{direction:ltr}
+html[data-gross] .roller>.seite{width:calc((100% - 8px) * var(--sm,1));flex:none}
+html[data-gross][data-modus=dunkel] .roller>.seite{width:calc((100% - 16px) * var(--sm,1))}
+html[data-gross] .roller>.paar{width:max-content;min-width:100%}
+html[data-gross] .roller>.paar .seite{width:calc(var(--sb) * var(--sm,1))}
+html[data-gross] #seite.doppel{width:auto;max-width:100%}
+html[data-gross] #seite>.roller{margin-bottom:0;padding-bottom:6px}
+/* Weniger Bewegung: was nur einmal hereingleitet, steht sofort da (bei 30 s blieb es unsichtbar) */
+@media (prefers-reduced-motion:reduce){.tut-schritt,.tb-ar,.tb-zurueck span,.tb-liste div{animation:none!important}html{scroll-behavior:auto}}
+/* Hilfe und Glossar */
+.hf-sprung{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.hf-sprung button{border:1px solid var(--rand);background:var(--karte);border-radius:999px;padding:9px 16px;min-height:44px;font-size:var(--s-text)}
+.hf-fragen{display:grid;gap:8px}
+.hf-fragen details{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:0 14px}
+.hf-fragen summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:8px 0;font-weight:700;font-size:var(--s-text)}
+.hf-fragen summary::-webkit-details-marker{display:none}
+.hf-fragen summary::after{content:'+';font:400 var(--s-titel)/1 var(--kopf);color:var(--leise);flex:none}
+.hf-fragen details[open] summary::after{content:'\2212'}
+.hf-fragen details p{margin:0 0 12px;font-size:var(--s-text)}
+.hf-suche{margin:12px 0 10px}
+.glossar{display:grid;gap:8px;margin:0}
+.glossar>div{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px}
+.glossar dt{font:600 var(--s-unter)/1.2 var(--kopf);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.glossar dt span{font:22px/1.5 'Uthmani',serif;color:var(--leise)}
+.glossar dd{font-size:var(--s-text);margin-top:4px}
+.glossar dd small{display:block;font-size:var(--s-klein);color:var(--leise);margin-top:4px}
+.hf-tasten{width:100%;border-collapse:collapse;font-size:var(--s-text)}
+.hf-tasten th{text-align:left;font-weight:400;color:var(--leise);padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap}
+.hf-tasten td{padding:6px 0}
+kbd{font:600 var(--s-klein) var(--fliess);border:1px solid var(--rand);border-bottom-width:2px;border-radius:7px;padding:1px 7px;background:var(--karte2);color:var(--text);white-space:nowrap}
+.lesbar-probe{margin-top:12px;font-size:var(--s-klein);color:var(--leise)}
+h2.titel-klein{font-weight:400;line-height:inherit}
+.hf-suche input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2);color:var(--text);font:inherit;min-height:44px}
+.hf-tasten td[colspan]{padding-top:12px}
+.hf-tasten tr:first-child td[colspan]{padding-top:0}

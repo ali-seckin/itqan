@@ -1,10 +1,17 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.9';
+export const VERSION = '1.10';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.10', datum: '2026-11-10', titel: 'Lesbarkeit und Hilfe', punkte: [
+    'Seitengröße 100, 125 oder 150 %: Die Muṣḥaf-Seite wird größer, beim Üben folgt sie der Stelle, an der du bist. Dazu drei Schriftgrößen für die App.',
+    'Zoomen mit zwei Fingern ist überall erlaubt. Knöpfe und Verweise sind mindestens 44 Punkte groß.',
+    'Besser lesbar in Hell und Dunkel: Alle Texte halten den Kontrast für gut lesbare Schrift ein.',
+    'Für Bildschirmleser und Tastatur: Jeder Knopf hat einen Namen, der Fokus ist sichtbar, die aufgedeckte Āya wird angesagt.',
+    'Neu unter Profil: Hilfe und Glossar mit Antworten auf die häufigsten Fragen und allen Begriffen der App.'
+  ] },
   { v: '1.9', datum: '2026-11-10', titel: 'Rückblick als Bild', punkte: [
     'Neu unter Profil: der Rückblick. Eine Woche oder ein Monat als Bild, mit Āyāt, erfüllten Tagen, Sicherheit, Kette und Punkten.',
     'Teilen auf iPhone und Android direkt aus der App, am Computer als Bilddatei. Mit oder ohne deinen Namen.',

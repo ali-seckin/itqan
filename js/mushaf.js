@@ -80,5 +80,5 @@ export function seiteHTML(p, opt = {}) {
     return `<div class="mz${p < 3 ? ' mitte' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');
   // Madanī-Muṣḥaf: ungerade Seiten liegen rechts, gerade links (Bundsteg jeweils innen)
-  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen">${zeilen}</div><div class="snr"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? 'R' : 'L'}</b>` : ''}</span></div></div>`;
+  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="img" aria-label="Muṣḥaf-Seite ${p}">${zeilen}</div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? 'R' : 'L'}</b>` : ''}</span></div></div>`;
 }

@@ -8,6 +8,7 @@ import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen a
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
 import * as RB from './rueckblick.js';
+import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -21,14 +22,19 @@ function themaAnwenden() {
   const modus = wahl === 'auto' ? (dunkelMQ.matches ? 'dunkel' : 'hell') : wahl;
   document.documentElement.dataset.modus = modus;
   document.querySelector('meta[name=theme-color]').content = modus === 'dunkel' ? '#0d2230' : '#f3e8d2';
+  // Lesbarkeit: Seitengröße (--sm) und Schriftgröße (--tm) aus den Einstellungen; data-gross nur über 100 %
+  if (Z.P) {
+    const h = document.documentElement, sm = Z.P.einst.seitenGroesse || 100, tm = Z.P.einst.textGroesse || 100;
+    h.style.setProperty('--sm', sm / 100); h.style.setProperty('--tm', tm / 100);
+    if (sm > 100) h.dataset.gross = '1'; else delete h.dataset.gross;
+  }
 }
 dunkelMQ.addEventListener('change', themaAnwenden);
-// Wie eine App: kein Zoomen mit zwei Fingern (Safari hält sich nicht an user-scalable=no)
-for (const g of ['gesturestart', 'gesturechange']) document.addEventListener(g, e => e.preventDefault(), { passive: false });
+// Zoomen mit zwei Fingern bleibt erlaubt (Barrierefreiheit); die Seitengröße lässt sich zusätzlich fest einstellen
 
 // ---------- Hilfen ----------
 function toast(text, ms = 2600) {
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; document.body.appendChild(t);
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite'); t.textContent = text; document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add('an')); setTimeout(() => { t.classList.remove('an'); setTimeout(() => t.remove(), 400); }, ms);
 }
 const ruhig = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -70,7 +76,7 @@ function datumText(d = new Date()) {
   let h = ''; try { h = new Intl.DateTimeFormat('de-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s*(AH|d\. H\.)$/, '') + ' n. H.'; } catch (e) {}
   return g + (h ? ' · ' + h : '');
 }
-const stufePunkte = st => `<div class="stufe" title="${Z.STUFEN[st]}">${[1, 2, 3, 4].map(i => `<i class="${st >= i ? 'an' : ''}"></i>`).join('')}</div>`;
+const stufePunkte = st => `<div class="stufe" role="img" aria-label="Stufe: ${Z.STUFEN[st]}" title="${Z.STUFEN[st]}">${[1, 2, 3, 4].map(i => `<i class="${st >= i ? 'an' : ''}"></i>`).join('')}</div>`;
 // Die Laterne (App-Symbol), freigestellt: hell = Bronze für die Lesestube, dunkel = Gold für Tezhip
 // Das Itqān-Zeichen (Nische mit Flamme, nach Sūra an-Nūr 24:35): hell in Bronze, dunkel in Gold, Farben aus --z1/--z2
 const NISCHE = 'M272 820 V470 C272 330 392 230 512 176 C632 230 752 330 752 470 V820 H672 V488 C672 384 592 314 512 270 C432 314 352 384 352 488 V820 Z', FLAMME = 'M512 452 C576 532 600 596 578 652 C566 684 540 706 512 712 C484 706 458 684 446 652 C424 596 448 532 512 452 Z';
@@ -92,7 +98,7 @@ function dateiWaehlen(mehrere = false) {
 function navSetzen(aktiv) {
   if (!aktiv) { nav.classList.add('verdeckt'); return; }
   nav.classList.remove('verdeckt');
-  nav.querySelectorAll('a').forEach(a => a.classList.toggle('an', a.dataset.r === aktiv));
+  nav.querySelectorAll('a').forEach(a => { const an = a.dataset.r === aktiv; a.classList.toggle('an', an); if (an) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
 }
 
 const rangBand = r => `<div class="band rang-band"><span class="ar">${Z.RAENGE[r].ar}</span><span><b>Neuer Rang: ${Z.RAENGE[r].n}</b><br>${Z.RAENGE[r].de}. <a href="#raenge">Was das bedeutet</a></span></div>`;
@@ -103,8 +109,17 @@ function dialog({ titel, html = '', ja = 'OK', nein = 'Abbrechen', gefahr = fals
     const d = document.createElement('div'); d.className = 'dialog';
     d.innerHTML = `<div class="dialog-karte" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3><div class="dialog-text">${html}</div>
       <div class="reihe">${nein ? `<button class="knopf leise klein" data-a="0">${esc(nein)}</button>` : ''}<button class="knopf ${gefahr ? 'schlecht' : 'haupt'} klein" data-a="1">${esc(ja)}</button></div></div>`;
-    const zu = wert => { d.classList.add('weg'); setTimeout(() => d.remove(), 200); removeEventListener('keydown', taste, true); fertig(wert); };
-    const taste = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); zu(false); } };
+    const vorher = document.activeElement;   // nach dem Schließen kehrt der Fokus dorthin zurück
+    const zu = wert => { d.classList.add('weg'); setTimeout(() => d.remove(), 200); removeEventListener('keydown', taste, true); if (vorher?.isConnected) vorher.focus({ preventScroll: true }); fertig(wert); };
+    const taste = ev => {
+      if (ev.key === 'Escape') { ev.stopPropagation(); zu(false); return; }
+      if (ev.key !== 'Tab') return;
+      // der Fokus bleibt im Dialog
+      const f = [...d.querySelectorAll('button, a[href], input, select, textarea')].filter(x => !x.disabled); if (!f.length) return;
+      const drin = d.contains(document.activeElement);
+      if (ev.shiftKey && (!drin || document.activeElement === f[0])) { ev.preventDefault(); f[f.length - 1].focus(); }
+      else if (!ev.shiftKey && (!drin || document.activeElement === f[f.length - 1])) { ev.preventDefault(); f[0].focus(); }
+    };
     d.onclick = ev => { const a = ev.target.closest('[data-a]'); if (a) zu(a.dataset.a === '1'); else if (ev.target === d) zu(false); };
     addEventListener('keydown', taste, true);
     document.body.appendChild(d); d.querySelector('[data-a="1"]').focus();
@@ -269,7 +284,17 @@ async function gespeicherteSeiten() {
 }
 
 // ---------- Router ----------
-const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite };
+const ROUTEN = { heute, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+// Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
+const TITEL = { heute: 'Heute', ueben: 'Üben', fertig: 'Abschluss', karte: 'Lichtkarte', mushaf: 'Muṣḥaf', profil: 'Profil', einstellungen: 'Einstellungen', lehrer: 'Lehrer', start: 'Profil anlegen', raenge: 'Ränge', einfuehrung: 'Einführung',
+  fortschritt: 'Fortschritt', auswertung: 'Auswertung', suche: 'Suche', aehnlich: 'Mutašābihāt', vergleich: 'Vergleich', fehlerstellen: 'Fehlerstellen', ornamente: 'Ornamente', installieren: 'Installieren', neu: 'Was ist neu', rueckmeldung: 'Rückmeldung', rueckblick: 'Rückblick', hilfe: 'Hilfe und Glossar' };
+// Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
+const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
+new MutationObserver(() => {
+  for (const b of app.querySelectorAll(GEDRUECKT)) { const an = String(b.classList.contains('an')); if (b.getAttribute('aria-pressed') !== an) b.setAttribute('aria-pressed', an); }
+  // eine Auswahl heißt wie die Überschrift ihres Abschnitts
+  for (const g of app.querySelectorAll('.abschnitt .wahl:not([role]), .abschnitt .juzwahl:not([role])')) { const h = g.closest('.abschnitt').querySelector('h3'); if (h) { g.setAttribute('role', 'group'); g.setAttribute('aria-label', h.textContent); } }
+}).observe(app, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
@@ -283,6 +308,10 @@ async function zeige() {
   if (y == null) window.scrollTo(0, 0);
   await f(...arg);
   if (y != null) window.scrollTo(0, y);
+  const ansicht = ROUTEN[name] ? name : 'heute';
+  document.title = ansicht === 'heute' ? 'Itqān' : TITEL[ansicht] + ' · Itqān';
+  // Tastatur und Bildschirmleser beginnen in der neuen Ansicht, nicht in der alten Navigation
+  if (!app.contains(document.activeElement)) app.focus({ preventScroll: true });
 }
 addEventListener('hashchange', zeige);
 
@@ -422,7 +451,7 @@ const STAND_TEXT = { nie: 'noch nie wiederholt', neu: 'neu', aufbau: 'im Aufbau'
 function abschnittMarke(e) {
   const st = Z.abschnittStand(e.id);
   if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}</strong>`;
-  return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span></strong>`;
+  return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span><span class="nur-leser">, ${STAND_TEXT[st]}</span></strong>`;
 }
 
 // Wahl zwischen Fortgeschritten und Anfänger
@@ -472,19 +501,19 @@ function heute() {
   const installKarte = !istInstalliert() && istTouch() && !installWeg;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">Itqān<small>${datumText()}</small></div>
-      <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
+      <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="Tage in Folge" aria-label="Kette: ${aktiv ? P.kette.n : 0} ${(aktiv ? P.kette.n : 0) === 1 ? 'Tag' : 'Tage'} in Folge. Zum Profil">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
     <h2 class="gruss">Assalāmu ʿalaikum${P.name ? ', ' + esc(P.name) : ''}</h2><p class="unter">${unter}</p>
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis"><b>Sichere dein Profil.</b> ${P.einst.letzteSicherung ? `Die letzte Sicherung ist ${seitSicherung} Tage her.` : 'Du hast dein Profil noch nie gesichert.'} Deine Fortschritte liegen nur auf diesem Gerät.
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">Jetzt sichern</button><button class="knopf leise klein" id="sichern-spaeter">Morgen erinnern</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis"><b>Itqān als App nutzen.</b> Auf dem Home-Bildschirm startet Itqān schneller und im Vollbild.
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">So geht’s</a><button class="knopf leise klein" id="install-weg">Nicht mehr zeigen</button></div></div>` : ''}
     ${t.qadaa && !t.voll ? `<div class="hinweisbox"><b>Qaḍāʾ:</b> ${qadaaTag()} ist dein Wird ausgefallen. Holst du es heute mit nach, bleibt deine Kette von ${P.kette.n} ${P.kette.n === 1 ? 'Tag' : 'Tagen'} ganz.</div>` : ''}
-    ${t.ruhe ? ruheHTML : `<div class="ring"><svg width="210" height="210" viewBox="0 0 210 210">
+    ${t.ruhe ? ruheHTML : `<div class="ring"><svg width="210" height="210" viewBox="0 0 210 210" aria-hidden="true">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="10"/>
       <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/>
       <circle cx="105" cy="105" r="74" fill="none" stroke="var(--rand)" stroke-width="1" stroke-dasharray="2 6"/></svg>
-      <div class="mitte"><span class="gross">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">Abschnitte</span></div></div>
+      <div class="mitte"><span class="gross" aria-label="${erledigt} von ${pflicht.length}">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">Abschnitte</span></div></div>
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>Tage Kette</span></div>
       <div class="zahl"><b>${zahl(t.hasanat)}</b><span>Ḥasanāt heute</span></div>
       <div class="zahl"><b>${quote == null ? '·' : quote + ' %'}</b><span>Āyāt sicher</span></div></div>
@@ -498,12 +527,13 @@ function heute() {
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${kf.fertig} von ${kf.gesamt} Abschnitten</span><span>${Math.floor(kf.anteil * 100)} %</span></div>
     <div class="titel-klein"><a href="#karte" style="color:inherit">Lichtkarte · 30 Ǧuzʾ ›</a></div>
-    <div class="licht-seiten" style="grid-template-columns:repeat(10,1fr);gap:5px">${Array.from({ length: 30 }, (_, i) => {
+    <a class="licht-mini" href="#karte" aria-label="Lichtkarte öffnen: 30 Ǧuzʾ, je heller, desto sicherer">${Array.from({ length: 30 }, (_, i) => {
       const seiten = Array.from({ length: (i < 29 ? juzStart(i + 2) : 605) - juzStart(i + 1) }, (_, k) => juzStart(i + 1) + k);
       const w = seiten.map(Z.seitenStufe).filter(x => x != null);
       const o = w.length ? 0.14 + 0.86 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6 : null;
-      return `<button onclick="location.hash='#karte'" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1;border-radius:6px;font-size:13px;color:rgba(0,0,0,.5);${o != null ? `opacity:${o.toFixed(2)}` : ''}">${i + 1}</button>`;
-    }).join('')}</div>`;
+      // Farbe gemischt statt durchsichtig, damit die Zahl lesbar bleibt; ab 58,5 % wechselt im dunklen Bild die Schrift auf Schwarz
+      return `<span aria-hidden="true" class="${o == null ? 'aus' : o >= 0.585 ? 'voll' : ''}"${o != null ? ` style="background:color-mix(in srgb,var(--akzent) ${Math.round(o * 100)}%,var(--bg))"` : ''}>${i + 1}</span>`;
+    }).join('')}</a>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   const mehr = app.querySelector('#mehr'); if (mehr) mehr.onclick = () => { Z.pensumHeuteAendern(1); heute(); };
   const weniger = app.querySelector('#weniger'); if (weniger) weniger.onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
@@ -558,7 +588,7 @@ function doppelseiteSkizze(e) {
 }
 
 // ---------- Üben ----------
-const zurueckPfeil = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>';
+const zurueckPfeil = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
 async function ueben(idText, quelle, fokusText) {
   navSetzen(null);
   const id = +idText; let e = D.A[id]; if (!e) { location.hash = '#heute'; return; }
@@ -635,7 +665,7 @@ async function ueben(idText, quelle, fokusText) {
       <div class="info">${art === 'stelle' ? `<b>Fehlerstelle</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen`} · S. ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="Seite ${p}: ${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button>`).join(' ')}</div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([c, , ty, , p]) => `<span style="font-family:qp${p}">${glyphen(c, ty)}</span>`).join('')}</div></div>` : ''}
-    <div class="seiten" id="seiten"></div><div style="height:190px"></div>
+    <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div style="height:190px"></div>
     <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span></div></div></div>
     ${art === 'stelle' ? '' : `<div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b> von <b>${e.von_n}</b>` : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
@@ -668,7 +698,18 @@ async function ueben(idText, quelle, fokusText) {
     while (aus.length > 1 && aus[aus.length - 1].length <= 1) { const rest = aus.pop(); aus[aus.length - 1].push(...rest); }
     return aus;
   }
-  function sichtbar(el) { if (!el) return; const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 210) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  function sichtbar(el) {
+    if (!el) return; const r = el.getBoundingClientRect();
+    if (r.top < 70 || r.bottom > innerHeight - 210) { el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: ruhig() ? 'auto' : 'smooth' }); return; }
+    // vergrößerte Seite (125 oder 150 %): liegt das Wort seitlich außerhalb, schiebt sich die Seite dorthin
+    if (seitenEl.scrollWidth > seitenEl.clientWidth + 1) {
+      const sr = seitenEl.getBoundingClientRect(), dx = r.left < sr.left + 8 ? r.left - sr.left - 24 : r.right > sr.right - 8 ? r.right - sr.right + 24 : 0;
+      if (dx) seitenEl.scrollBy({ left: dx, behavior: ruhig() ? 'auto' : 'smooth' });
+    }
+  }
+  // Für Bildschirmleser: die aufgedeckte Āya wird als Text angesagt (die Seite selbst besteht aus Schriftzeichen ohne lesbaren Text)
+  const ansage = app.querySelector('#ansage');
+  const ansagen = vi => S.textLaden().then(T => { if (ansage.isConnected) ansage.textContent = `${D.V[vi][0]}:${D.V[vi][1]} ${T.u[vi].join(' ')}`; }).catch(() => {});
   // ---------- Erklärung beim ersten Üben: drei Etappen, jede beim ersten Mal, wenn sie gebraucht wird ----------
   // 1 vor dem ersten Aufdecken, 2 nach dem ersten Aufdecken (Bewerten), 3 nach dem ersten „Fehler“ (Stelle markieren)
   const imAbschnitt = () => [...(seitenEl.querySelector('.seite') || seitenEl).querySelectorAll('.w.in')];
@@ -786,7 +827,7 @@ async function ueben(idText, quelle, fokusText) {
     aufnahmeStopp();
     const vi = liste[pos]; zu.delete(vi);
     spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
-    offen = true; zeichne();
+    offen = true; zeichne(); ansagen(vi);
   }
   function teilAufdecken() {
     teile[ti].forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
@@ -883,6 +924,8 @@ async function ueben(idText, quelle, fokusText) {
   const tasten = ev => {
     if (!document.body.contains(seitenEl)) { removeEventListener('keydown', tasten); return; }
     if (pos >= liste.length || abhoeren) return;
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.closest?.('button,a,select,input,summary')) return;
+    if (ev.target.closest?.('input,select,textarea') || document.querySelector('.dialog')) return;
     if (vorschau) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
     if (markieren) { if (ev.key === 'Enter') { ev.preventDefault(); markierenFertig(); } return; }
     if (!offen && (ev.key === ' ' || ev.key === 'Enter')) { ev.preventDefault(); aufdecken(); }
@@ -994,7 +1037,7 @@ function lichtkarte() {
     const zellen = [];
     for (let p = von; p <= bis; p++) {
       const s = Z.seitenStufe(p);
-      zellen.push(`<button data-p="${p}" class="${s == null ? 'aus' : ''}" title="Seite ${p}" style="${s != null ? `opacity:${(0.12 + 0.88 * s / 4.6).toFixed(2)}` : ''}"></button>`);
+      zellen.push(`<button data-p="${p}" class="${s == null ? 'aus' : ''}" title="Seite ${p}" aria-label="Seite ${p}, ${s == null ? 'nicht gewählt' : Z.STUFEN[Math.round(s)]}" style="${s != null ? `opacity:${(0.12 + 0.88 * s / 4.6).toFixed(2)}` : ''}"></button>`);
     }
     const oben = zellen.length > 22 ? Math.floor(zellen.length / 2) : 10;   // Ǧuzʾ 30 (23 Seiten): 11 und 12
     zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="lk-reihen"><div class="licht-seiten lk-reihe">${zellen.slice(0, oben).join('')}</div><div class="licht-seiten lk-reihe">${zellen.slice(oben).join('')}</div></div><span class="lk-anz" title="Seiten in Ǧuzʾ ${j}">${zellen.length}</span></div>`);
@@ -1102,7 +1145,7 @@ async function mushaf(pText, aText) {
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
     ${stellenWahl(s)}
     <div class="reihe blaettern" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
-    <div id="seite" class="${dop ? 'doppel' : ''}">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}<button class="vollbild-knopf" id="vollbild" aria-label="Seite im Vollbild zeigen">${vollbildIcon}</button></div>
+    <div id="seite" class="${dop ? 'doppel' : ''}"><div class="roller">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}</div><button class="vollbild-knopf" id="vollbild" aria-label="Seite im Vollbild zeigen">${vollbildIcon}</button></div>
     <div class="titel-klein">Abschnitte auf ${seiten.length > 1 ? 'diesen Seiten' : 'dieser Seite'}</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
@@ -1121,6 +1164,8 @@ async function mushaf(pText, aText) {
   seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
   seiteEl.addEventListener('touchend', e => {
     if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    // vergrößerte Seite: Wischen schiebt die Seite, geblättert wird mit den Knöpfen darüber
+    const ro = seiteEl.querySelector('.roller'); if (ro.scrollWidth > ro.clientWidth + 1) return;
     if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) blaettern(dx > 0 ? naechste : vorige);
   });
   // Tastatur am PC: Pfeil links = weiter (wie im Buch), Pfeil rechts = zurück
@@ -1247,7 +1292,7 @@ function profil() {
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>Itqān-Punkte</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>Ḥasanāt</span></div><div class="zahl"><b>${quote} %</b><span>Āyāt sicher</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>Kette jetzt</span></div><div class="zahl"><b>${P.kette.beste}</b><span>längste Kette</span></div><div class="zahl"><b>${s.abschnitte}</b><span>Abschnitte</span></div></div>
     <div class="titel-klein">Itqān-Punkte der letzten 30 Tage</div>
-    <div class="diagramm">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
+    <div class="diagramm" role="img" aria-label="Itqān-Punkte der letzten 30 Tage: zusammen ${zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0))}, bester Tag ${zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0)))}, ${tage.filter(x => x.t?.punkte).length} Tage mit Übung">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>vor 30 Tagen</span><span>heute</span></div>
     <div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>Auswertung</b><span>Fehlerarten, Sūren, Quote und Zeit</span></div><span class="pfeil">›</span></a>
       <a class="karte" href="#rueckblick"><div class="t"><b>Rückblick</b><span>Woche und Monat als Bild zum Aufheben und Teilen</span></div><span class="pfeil">›</span></a>
@@ -1258,11 +1303,49 @@ function profil() {
     <div class="titel-klein">Sicherung</div>
     <p class="unter">Es gibt keinen Server: Deine Fortschritte liegen nur auf diesem Gerät. Sichere sie regelmäßig${istTouch() ? ', am besten in Dateien, iCloud Drive oder per WhatsApp an dich selbst' : ' als Datei'}. Letzte Sicherung: <b>${datumKurz(P.einst.letzteSicherung)}</b>.</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">Profil sichern</button><button class="knopf leise klein" id="laden">Profil laden</button></div>
-    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button><a class="knopf leise" href="#installieren" style="text-decoration:none">Itqān installieren</a><a class="knopf leise" href="#rueckmeldung" style="text-decoration:none">Rückmeldung senden</a></div>
+    <div style="display:grid;gap:10px;margin-top:22px"><a class="knopf leise" href="#einstellungen" style="text-decoration:none">Einstellungen</a><a class="knopf leise" href="#hilfe" style="text-decoration:none">Hilfe und Glossar</a><a class="knopf leise" href="#lehrer" style="text-decoration:none">Lehreransicht</a><a class="knopf leise" href="#einfuehrung" style="text-decoration:none">Einführung ansehen</a><button class="knopf leise" id="tour-neu">Erklärung beim Üben wieder zeigen</button><a class="knopf leise" href="#installieren" style="text-decoration:none">Itqān installieren</a><a class="knopf leise" href="#rueckmeldung" style="text-decoration:none">Rückmeldung senden</a></div>
     <p class="version-zeile">Itqān ${VERSION} · <a href="#neu">Was ist neu</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast('Beim nächsten Üben erscheint die Erklärung wieder.'); };
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   app.querySelector('#laden').onclick = profilLaden;
+}
+
+// ---------- Hilfe und Glossar ----------
+// ohne Sonderzeichen suchen: „hatma“ findet Ḫatma, „guz“ findet Ǧuzʾ
+const schlicht = s => s.normalize('NFD').replace(/[\u0300-\u036f\u02be\u02bf'’]/g, '').toLowerCase();
+function hilfeSeite(ziel) {
+  navSetzen('profil');
+  const kbd = k => `<kbd>${k}</kbd>`;
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
+    <div class="marke">Hilfe<small>Fragen, Begriffe und Bedienung</small></div>
+    <div class="hf-sprung" role="navigation" aria-label="Auf dieser Seite">${[['fragen', 'Fragen'], ['glossar', 'Glossar'], ['lesbar', 'Lesbarkeit'], ['tasten', 'Tastatur']].map(([z, l]) => `<button data-z="${z}">${l}</button>`).join('')}</div>
+    <h2 class="titel-klein" id="hf-fragen" tabindex="-1">Fragen und Antworten</h2>
+    <div class="hf-fragen">${FRAGEN.map(x => `<details><summary>${x.f}</summary><p>${x.a}</p></details>`).join('')}</div>
+    <h2 class="titel-klein" id="hf-glossar" tabindex="-1">Glossar</h2>
+    <div class="hf-suche"><input type="search" id="hf-filter" placeholder="Begriff suchen" aria-label="Begriff im Glossar suchen" autocomplete="off" enterkeyhint="search"></div>
+    <dl class="glossar" id="hf-liste">${GLOSSAR.map(g => `<div data-s="${esc(schlicht(g.b + ' ' + g.t + ' ' + (g.mehr || '')))}"><dt>${g.b}${g.ar ? `<span lang="ar" dir="rtl">${g.ar}</span>` : ''}</dt><dd>${g.t}${g.mehr ? `<small>${g.mehr}</small>` : ''}</dd></div>`).join('')}</dl>
+    <p class="leer verdeckt" id="hf-leer" role="status">Kein Begriff gefunden.</p>
+    <h2 class="titel-klein" id="hf-lesbar" tabindex="-1">Lesbarkeit</h2>
+    <div class="abschnitt"><p><b>Seitengröße.</b> In den Einstellungen wählst du 100, 125 oder 150 %. So groß erscheint die Muṣḥaf-Seite beim Üben und im Muṣḥaf. Ist sie breiter als der Bildschirm, schiebst du sie mit dem Finger. Beim Üben folgt sie von selbst der Stelle, an der du bist.</p>
+      <p style="margin-top:10px"><b>Schriftgröße.</b> Normal, groß oder sehr groß: Das gilt für Texte, Knöpfe und Überschriften der App.</p>
+      <p style="margin-top:10px"><b>Zoomen.</b> Mit zwei Fingern lässt sich jede Ansicht vergrößern. Im Vollbild des Muṣḥaf füllt die Seite den ganzen Bildschirm.</p>
+      <p style="margin-top:10px"><b>Hell und Dunkel.</b> Beide Erscheinungsbilder halten den Kontrast ein, der für gut lesbare Schrift verlangt wird (WCAG 2.1, Stufe AA).</p>
+      <a class="knopf leise" href="#einstellungen" style="text-decoration:none;margin-top:14px">Zu den Einstellungen</a></div>
+    <h2 class="titel-klein" id="hf-tasten" tabindex="-1">Tastatur</h2>
+    <div class="abschnitt"><table class="hf-tasten">${TASTEN.map(t => `<tr><td colspan="2"><b>${t.wo}</b></td></tr>` + t.kuerzel.map(([k, was]) => `<tr><th scope="row">${k.map(kbd).join(' oder ')}</th><td>${was}</td></tr>`).join('')).join('')}</table></div>
+    <h2 class="titel-klein">Bildschirmleser</h2>
+    <div class="abschnitt"><p>Jeder Knopf hat einen Namen, jede Auswahl sagt, was gewählt ist, und nach einem Wechsel der Ansicht beginnt der Leser oben in der neuen Ansicht. Beim Üben wird die aufgedeckte Āya auf Arabisch angesagt.</p>
+      <p style="margin-top:10px">Zwei Dinge fehlen noch: Eine Muṣḥaf-Seite als Ganzes ist für den Bildschirmleser nur ein Bild, und das Markieren des Fehlerworts geht bisher nur durch Tippen auf das Wort.</p></div>
+    <p class="lesbar-probe">Deine Frage ist nicht dabei? <a href="#rueckmeldung">Schreib uns</a>, dann ergänzen wir die Hilfe.</p>`;
+  const zu = z => { const el = app.querySelector('#hf-' + z); if (!el) return; el.scrollIntoView({ block: 'start', behavior: ruhig() ? 'auto' : 'smooth' }); el.focus({ preventScroll: true }); };
+  app.querySelector('.hf-sprung').onclick = ev => { const z = ev.target.dataset.z; if (z) zu(z); };
+  const filter = app.querySelector('#hf-filter'), eintraege = [...app.querySelectorAll('#hf-liste > div')], leer = app.querySelector('#hf-leer');
+  filter.oninput = () => {
+    const q = schlicht(filter.value.trim()); let n = 0;
+    for (const e of eintraege) { const da = !q || e.dataset.s.includes(q); e.classList.toggle('verdeckt', !da); if (da) n++; }
+    leer.classList.toggle('verdeckt', n > 0);
+  };
+  if (ziel) setTimeout(() => zu(ziel), 60);
 }
 
 // ---------- Ornamente und Meilensteine ----------
@@ -1754,8 +1837,13 @@ function einstellungen() {
   const zwei = x => String(x).padStart(2, '0');
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
     <div class="marke">Einstellungen</div>
-    <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" value="${esc(P.name)}"></div></div>
+    <div class="abschnitt"><h3>Name</h3><div class="feld"><input type="text" id="name" aria-label="Name" autocomplete="given-name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>Erscheinungsbild</h3><div class="wahl" id="thema">${[['hell', 'Hell'], ['dunkel', 'Dunkel'], ['auto', 'Wie Gerät']].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="abschnitt" id="lesbarkeit"><h3>Lesbarkeit</h3><p class="unter">Seitengröße: so groß erscheint die Muṣḥaf-Seite beim Üben und im Muṣḥaf. Ist sie breiter als der Bildschirm, schiebst du sie mit dem Finger.</p>
+      <div class="wahl" id="seitengroesse" role="group" aria-label="Seitengröße" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${w} %</button>`).join('')}</div>
+      <p class="unter" style="margin-top:14px">Schriftgröße: Texte, Knöpfe und Überschriften der App.</p>
+      <div class="wahl" id="textgroesse" role="group" aria-label="Schriftgröße" style="margin-top:10px">${[[100, 'Normal'], [112, 'Groß'], [125, 'Sehr groß']].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <p class="lesbar-probe">Mit zwei Fingern kannst du außerdem überall zoomen. Mehr dazu in der <a href="#hilfe/lesbar">Hilfe</a>.</p></div>
     <div class="abschnitt"><h3>Länge der Abschnitte</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt"><h3>Druckausgabe des Muṣḥaf</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', 'Druck 1405'], ['v2', 'Druck 1421']].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
@@ -1796,6 +1884,8 @@ function einstellungen() {
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });
+  wahl('seitengroesse', w => { E.seitenGroesse = +w; themaAnwenden(); });
+  wahl('textgroesse', w => { E.textGroesse = +w; themaAnwenden(); });
   wahl('reihenfolge', w => { E.reihenfolge = w; app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer(); toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('zufall', w => { E.zufall = w; toast('Gilt ab dem nächsten Tagesplan.'); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
@@ -1890,12 +1980,12 @@ async function lehrer() {
       return w.length ? (0.12 + 0.88 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6).toFixed(2) : null;
     });
     return `<div class="abschnitt"><div class="kopfzeile"><h3>${esc(x.profil.name || 'ohne Namen')}</h3><button class="textlink" data-weg="${i}">entfernen</button></div>
-      <p class="unter">Rang: <b>${Z.RAENGE[Z.rangJetzt()].n}</b> · Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlecht)">Datei wurde verändert</b>'}</p>
+      <p class="unter">Rang: <b>${Z.RAENGE[Z.rangJetzt()].n}</b> · Stand ${new Date(x.exportiert).toLocaleDateString('de-AT')} · ${Object.keys(x.profil.fstellen || {}).length} markierte Fehlerstellen${x.echt ? '' : ' · <b style="color:var(--schlechtT)">Datei wurde verändert</b>'}</p>
       <div class="zahlen"><div class="zahl"><b>${x.profil.kette.n}</b><span>Kette</span></div><div class="zahl"><b>${q} %</b><span>Āyāt sicher</span></div><div class="zahl"><b>${Math.floor(kf.anteil * 100)} %</b><span>${x.profil.zyklus.khatma + 1}. Ḫatma</span></div></div>
-      <div class="licht-seiten" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
+      <div class="licht-seiten" role="img" aria-label="Lichtkarte der 30 Aǧzāʾ: ${juz.filter(o => o != null).length} von 30 mit Übung, je heller, desto sicherer" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button tabindex="-1" aria-hidden="true" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
       <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? 'Übt im Anfänger-Modus. ' : ''}${schwach.length ? 'Schwach: ' + schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ') : 'Noch keine Wiederholungen.'}</p></div>`;
   }); }).join('');
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>Profil</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
     <div class="marke">Lehreransicht<small>Deine Schüler schicken dir ihre Profildatei. Sie bleibt nur auf diesem Gerät.</small></div>
     <button class="knopf haupt" id="import" style="margin:18px 0">Profildateien hinzufügen</button>
     ${karten || '<p class="leer">Noch keine Schüler. Füge die .itqan-Dateien deiner Schüler hinzu.</p>'}`;
