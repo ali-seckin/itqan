@@ -174,7 +174,7 @@ async function profilLaden() {
     ${Z.P ? '<p class="unter">Dein jetziger Stand auf diesem Gerät wird ersetzt. Vorher legt Itqān einen Schnappschuss an, den du in den Einstellungen zurückholen kannst.</p>' : ''}` });
   if (!ok) return;
   if (Z.P) Z.schnappschuss('vor dem Laden einer Sicherung');
-  Z.ersetzeProfil(r.profil);
+  Z.ersetzeProfil(r.profil, r.exportiert);
   try { localStorage.setItem(EINF_KEY, '1'); } catch (e) {}
   location.hash = '#heute'; location.reload();
 }
@@ -1673,7 +1673,7 @@ async function aehnlichSeite(teil, key) {
   const begrenzt = !!P.einst.bereich;
   const wahlen = (feld, l) => `<select data-feld="${feld}" aria-label="${esc(l[0][1])}">${l.map(([w, n]) => `<option value="${w}"${String(NA[feld]) === String(w) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
-    <div class="marke">Ähnliche Stellen<small>Mutašābihāt zum Nachschlagen: ${A.f.length} Gruppen ähnlicher Verse mit ${A.stellen} Stellen und ${A.faelle.length} Fälle, in denen dieselben Wörter in anderer Reihenfolge stehen.</small></div>
+    <div class="marke">Ähnliche Stellen<small>Mutašābihāt zum Nachschlagen: ${A.f.length} Gruppen ähnlicher Verse mit ${A.stellen} Stellen und ${A.faelle.length} Fälle, in denen dieselben Wörter in anderer Reihenfolge stehen. Die Liste ist eine Orientierung, sie erhebt keinen Anspruch auf Vollständigkeit.</small></div>
     <div class="suchfeld"><input id="q" class="ah-q" type="search" dir="auto" autocomplete="off" spellcheck="false" placeholder="2:48, Sūra oder Wörter" value="${esc(NA.q)}" aria-label="Stelle, Sūra oder arabische Wörter">
       <button class="seitenlage" id="tast" aria-label="Arabische Buchstaben einblenden" aria-expanded="false">ا ب</button></div>
     <div class="tastatur verdeckt" id="tastatur" dir="rtl">${ARABISCH.map(b => `<button data-b="${b}">${b}</button>`).join('')}<button data-b=" " class="breit">Leerzeichen</button><button data-b="⌫" aria-label="Löschen">⌫</button></div>
@@ -1890,6 +1890,8 @@ function einstellungen() {
       <button class="knopf leise" id="offline" style="margin-top:10px">Alle Seiten speichern</button></div>
     <div class="abschnitt"><h3>Schnappschüsse</h3><p class="unter">Itqān legt einmal am Tag und vor wichtigen Schritten eine Kopie deines Profils auf diesem Gerät ab. Damit holst du einen früheren Stand zurück. Gegen das Löschen der App oder einen Gerätewechsel hilft nur „Profil sichern“.</p>
       <div style="margin-top:10px">${schnappschussListe()}</div></div>
+    <div class="abschnitt"><h3>Quellen</h3><p class="unter">Die Schriften der Muṣḥaf-Seiten (Drucke 1405 und 1421) und die Schrift „KFGQPC Uthmanic Script HAFS“ stammen vom König-Fahd-Komplex für den Druck des edlen Qurʾān in Medina. Text, Zeichen und Zeilen je Seite kommen über die Schnittstelle der Quran Foundation.</p>
+      <p class="unter" lang="en" style="margin-top:8px">Quran fonts provided by Quran Foundation.</p></div>
     <div class="abschnitt"><h3>Neu beginnen</h3><p class="unter">Löscht dein Profil auf diesem Gerät. Sichere es vorher.</p><button class="knopf schlecht" id="reset" style="margin-top:10px">Profil löschen</button></div>`;
   const dauer = () => app.querySelector('#dauer').innerHTML = `Eine Ḫatma dauert damit etwa<br><b class="dauer-zahl">${Z.tageProKhatma(true)} Tage</b>`;
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast('Gespeichert.'); };

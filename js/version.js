@@ -1,10 +1,16 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.11';
+export const VERSION = '1.12';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.12', datum: '2026-11-10', titel: 'Fundament für mehrere Geräte', punkte: [
+    'Unter der Oberfläche führt Itqān jetzt Buch über jeden Lernschritt. Das ist die Grundlage dafür, dass später zwei Geräte ihren Stand ohne Verlust zusammenführen. Für dich ändert sich heute nichts.',
+    'Eine Sicherung merkt sich ihren Zeitpunkt. Damit lässt sich später zuordnen, was danach noch geübt wurde.',
+    'Neu in den Einstellungen: Quellen. Dort steht, woher die Muṣḥaf-Schriften und der Text stammen.',
+    'Bei den ähnlichen Stellen steht jetzt, dass die Liste eine Orientierung ist und keine Vollständigkeit beansprucht.'
+  ] },
   { v: '1.11', datum: '2026-11-10', titel: 'Ohne Netz und beim Tippen', punkte: [
     'Ohne Netz bleibt der Text lesbar: Fehlt die Muṣḥaf-Schrift einer Seite, zeigt Itqān dieselben Zeilen in einfacher Schrift. Sobald du wieder Netz hast, kommt die Muṣḥaf-Schrift von selbst zurück.',
     'Die Seiten deines heutigen Wird speichert Itqān jetzt im Hintergrund. Alle 604 Seiten auf einmal sicherst du in den Einstellungen unter „Offline“.',

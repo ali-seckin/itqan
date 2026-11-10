@@ -25,10 +25,18 @@ export function plusTage(datum, n) {
 export const wochentag = datum => { const [y, m, t] = datum.split('-').map(Number); return (new Date(y, m - 1, t).getDay() + 6) % 7; }; // 0 = Montag
 export const tageZwischen = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
 
+// ---------- Speicher ----------
+// Austauschbar: im Browser localStorage, in der App-Hülle später der Gerätespeicher (gleiche drei Aufrufe).
+const SPEICHER_STANDARD = { lesen: k => localStorage.getItem(k), schreiben: (k, v) => localStorage.setItem(k, v), entfernen: k => localStorage.removeItem(k) };
+let speicher = SPEICHER_STANDARD;
+export function speicherSetzen(s) { speicher = s || SPEICHER_STANDARD; geraet = null; }
+const kopie = x => x === undefined ? undefined : JSON.parse(JSON.stringify(x));
+
 // ---------- Laden / Speichern ----------
 export function laden() {
-  try { const t = localStorage.getItem(SCHLUESSEL); if (t) P = JSON.parse(t); } catch (e) { P = null; }
+  try { const t = speicher.lesen(SCHLUESSEL); if (t) P = JSON.parse(t); } catch (e) { P = null; }
   if (P) ergaenzen(P);
+  schattenNeu();
   return P;
 }
 // ältere Profile um neue Felder ergänzen
@@ -42,10 +50,14 @@ export function ergaenzen(p) {
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
   p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %
+  // Protokoll: Sockel (Generation, Zeit, Gerät) und Liste der Einträge seit dem Sockel
+  p.sockel ??= { n: 1, z: Date.parse(p.erstellt) || 0, g: '' }; p.log ??= [];
   return p;
 }
 export function speichern() {
-  try { localStorage.setItem(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
+  if (fremd) return;    // ein fremdes Profil (Lehreransicht, Nachbau) wird nie gespeichert
+  einstAbgleichen();
+  try { speicher.schreiben(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
 }
 export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort' } = {}) {
   P = {
@@ -56,22 +68,143 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
     meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }, mutash: {}
   };
   P.einst.schwaechen = 'ausgewogen'; P.zyklus.konto = 0;
+  ergaenzen(P); P.sockel.n = 0;    // ein neues Profil hat sofort alle Felder, nicht erst nach dem nächsten Laden
+  sockelWechsel();
   speichern(); return P;
 }
-export function ersetzeProfil(neu) { P = ergaenzen(neu); speichern(); }
+// stand: Zeitpunkt, zu dem der geladene Stand entstanden ist (bei einer Sicherung der Zeitpunkt des Sicherns).
+// Einträge anderer Geräte, die danach entstanden sind, lassen sich später in diesen Stand holen (umziehen).
+export function ersetzeProfil(neu, stand) { P = ergaenzen(neu); sockelWechsel(stand); speichern(); }
+// Einen Stand unverändert übernehmen (nach dem Zusammenführen, später nach dem Abgleich mit dem Server):
+// kein neuer Sockel, log sind die Einträge, die noch nicht abgeglichen sind.
+export function standUebernehmen(profil, log = []) { P = ergaenzen(kopie(profil)); P.log = kopie(log); schattenNeu(); speichern(); return P; }
+
+// ---------- Protokoll (Beschreibung: konzept/datenmodell.md) ----------
+// Jede Änderung am Lernstand ist ein Eintrag { i: 'Gerät-Zähler', z: Zeit in ms, y: Art, ... }.
+// Der Lernstand ergibt sich aus dem Sockel und den Einträgen in der Reihenfolge (z, i). Zwei Geräte legen ihre
+// Einträge zusammen und bauen den Stand neu auf: so geht beim Zusammenführen nichts verloren.
+// Arten: pl Tagesplan, pa Pensum heute, ab Abschnitt abgeschlossen, fm Fehlerstellen gemerkt, fl Fehlerstelle gelöscht,
+// fg Fehlerstelle geübt, mu Mutašābih unterschieden, pb Pause beginnt, pe Pause endet, on Ornamente nachgetragen,
+// rk Rücknahme, ei Einstellung.
+const GERAET = 'itqan-geraet', LOG_GRENZE = 300;
+let geraet = null, fremd = 0, schatten = null, grenze = LOG_GRENZE;
+export function logGrenze(n) { grenze = n > 0 ? n : LOG_GRENZE; }
+function geraetLesen() {
+  if (geraet) return geraet;
+  try { const g = JSON.parse(speicher.lesen(GERAET) || 'null'); if (g && typeof g.g === 'string' && g.g) geraet = { g: g.g, n: g.n || 0, z: g.z || 0 }; } catch (e) {}
+  if (!geraet) {
+    geraet = { g: [...crypto.getRandomValues(new Uint8Array(6))].map(x => (x % 36).toString(36)).join(''), n: 0, z: 0 };
+    geraetSichern();
+  }
+  return geraet;
+}
+function geraetSichern() { try { speicher.schreiben(GERAET, JSON.stringify(geraet)); } catch (e) {} }
+export function geraetSetzen(g) { geraet = { g, n: 0, z: 0 }; geraetSichern(); }
+export const geraetKennung = () => geraetLesen().g;
+// Kennung und Zeit eines neuen Eintrags. Die Zeit läuft je Gerät nie rückwärts, der Zähler hat feste Breite:
+// so bleibt die Reihenfolge eines Geräts auch bei verstellter Uhr erhalten.
+function marke() {
+  const g = geraetLesen(); g.n++; g.z = Math.max(uhr().getTime(), g.z);
+  return { i: g.g + '-' + g.n.toString(36).padStart(6, '0'), z: g.z };
+}
+function logAnhaengen(e) {
+  (P.log ??= []).push(e);
+  if (P.log.length > grenze) P.log.splice(0, P.log.length - grenze);
+}
+// Neuer Sockel: neues Profil, geladene Sicherung, zurückgeholter Schnappschuss, Wechsel der Gliederung.
+// Die höhere Generation gewinnt, ihre Einträge beginnen von vorn.
+function sockelWechsel(stand) {
+  const g = geraetLesen(); g.z = Math.max(uhr().getTime(), g.z);
+  const z = Date.parse(stand ?? '');
+  P.sockel = { n: (P.sockel?.n || 0) + 1, z: z > 0 && z < g.z ? z : g.z, g: g.g }; P.log = [];
+  schattenNeu(); geraetSichern();
+}
+export const sockelNeuer = (a, b) => (a.n - b.n || a.z - b.z || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0)) > 0;
+// Einstellungen (Name und einst.*) schreibt die Oberfläche direkt. Ein Schattenbild erkennt die Änderungen
+// und legt je geändertem Wert einen Eintrag an. Beim Zusammenführen gilt der spätere Wert.
+const einstBild = p => { const b = { name: JSON.stringify(p.name ?? '') }; for (const [k, w] of Object.entries(p.einst || {})) if (w !== undefined) b['einst.' + k] = JSON.stringify(w); return b; };
+function schattenNeu() { schatten = P ? einstBild(P) : null; }
+function einstAbgleichen() {
+  if (fremd || !P) return;
+  if (!schatten) { schattenNeu(); return; }
+  const neu = einstBild(P); let n = 0;
+  for (const k of new Set([...Object.keys(schatten), ...Object.keys(neu)])) {
+    if (schatten[k] === neu[k]) continue;
+    logAnhaengen({ ...marke(), y: 'ei', k, ...(k in neu ? { w: JSON.parse(neu[k]) } : {}) }); n++;
+  }
+  schatten = neu; if (n) geraetSichern();
+}
+// Der einzige Weg, den Lernstand zu ändern: Eintrag bilden, anwenden, anhängen, speichern.
+function eintrag(y, daten, extra) {
+  if (fremd) return anwenden({ y, ...daten }, extra);
+  einstAbgleichen();
+  const e = { ...marke(), y, ...daten };
+  const erg = anwenden(e, extra);
+  if (y === 'ab' && erg.ereignisse.some(x => x.typ === 'wird')) e.w = 1;   // dieser Abschluss hat den Wird erfüllt
+  logAnhaengen(e); geraetSichern(); speichern();
+  return erg;
+}
+// Wendet einen Eintrag auf P an. Rechnet nur mit den Daten des Eintrags, nie mit der Uhr.
+function anwenden(e, extra) {
+  switch (e.y) {
+    case 'pl': return planAnwenden(e);
+    case 'pa': return pensumAnwenden(e);
+    case 'ab': return abschlussAnwenden(e);
+    case 'fm': return merkenAnwenden(e);
+    case 'fl': delete P.fstellen[e.s]; return;
+    case 'fg': return geuebtAnwenden(e);
+    case 'mu': return unterscheidenAnwenden(e);
+    case 'pb': return pauseBeginnAnwenden(e);
+    case 'pe': return pauseEndeAnwenden(e);
+    case 'on': ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), e.d); return;
+    case 'rk': return ruecknahmeAnwenden(extra?.stand);
+    case 'ei':
+      if (e.k === 'name') P.name = e.w ?? '';
+      else if (e.k.startsWith('einst.')) { if ('w' in e) P.einst[e.k.slice(6)] = kopie(e.w); else delete P.einst[e.k.slice(6)]; }
+      return;
+  }
+}
+const ordnung = (a, b) => a.z - b.z || (a.i < b.i ? -1 : a.i > b.i ? 1 : 0);
+// Stand aus Sockel und Einträgen neu aufbauen. Zurückgenommene Einträge (rk) werden übersprungen.
+// D muss zur Gliederung des Sockels passen.
+export function nachbau(sockel, eintraege) {
+  const p = ergaenzen(kopie(sockel)); p.log = [];
+  const weg = new Set(eintraege.filter(e => e.y === 'rk').flatMap(e => e.ids || []));
+  const liste = eintraege.filter(e => !weg.has(e.i)).sort(ordnung);
+  return mitProfil(p, () => { for (const e of liste) anwenden(e); return p; });
+}
+// Zwei oder mehr Gerätestände mit demselben Sockel: Einträge vereinen (jede Kennung einmal), Stand neu aufbauen.
+export function zusammenfuehren(sockel, ...logs) {
+  const alle = new Map();
+  for (const l of logs) for (const e of l) if (!alle.has(e.i)) alle.set(e.i, e);
+  const log = [...alle.values()].sort(ordnung);
+  return { profil: nachbau(sockel, log), log };
+}
+// Einträge einer älteren Generation in die neuere holen: nur was nach dem neuen Sockel entstanden ist.
+// Abschlüsse werden über ihren Āya-Bereich dem heutigen Abschnitt zugeordnet, Pläne entstehen neu.
+export function umziehen(eintraege, profilNeu) {
+  const ab = profilNeu.sockel?.z ?? 0, uebernommen = [], offen = []; let verworfen = 0;
+  for (const e of eintraege) {
+    if (e.z <= ab || e.y === 'pl' || e.y === 'pa' || (e.y === 'ei' && e.k === 'einst.bereich')) { verworfen++; continue; }
+    if (e.y !== 'ab') { uebernommen.push(e); continue; }
+    const a = D.A.find(x => x.v[0] === e.v[0] && x.v[1] === e.v[1]);
+    if (a) uebernommen.push({ ...e, id: a.id }); else offen.push(e);
+  }
+  return { uebernommen, offen, verworfen };
+}
 
 // ---------- Schnappschüsse: automatische Kopien des Profils auf diesem Gerät ----------
 // Bis zu zwei tägliche und drei vor wichtigen Schritten (Gliederungswechsel, Laden einer Sicherung, Löschen).
 // Sie schützen vor eigenen Fehlgriffen, nicht vor dem Löschen der App: dafür ist „Profil sichern“ da.
 const SCHNAPP = 'itqan-schnappschuesse';
-export function schnappschuesse() { try { return JSON.parse(localStorage.getItem(SCHNAPP) || '[]'); } catch (e) { return []; } }
+export function schnappschuesse() { try { return JSON.parse(speicher.lesen(SCHNAPP) || '[]'); } catch (e) { return []; } }
 export function schnappschuss(grund) {
   if (!P) return false;
-  const neu = { zeit: uhr().toISOString(), tag: heute(), grund, name: P.name, abschnitte: P.summe.abschnitte, daten: JSON.stringify(P) };
+  const neu = { zeit: uhr().toISOString(), tag: heute(), grund, name: P.name, abschnitte: P.summe.abschnitte, daten: JSON.stringify({ ...P, log: [] }) };
   const alle = [neu, ...schnappschuesse()];
   let liste = [...alle.filter(x => x.grund === 'täglich').slice(0, 2), ...alle.filter(x => x.grund !== 'täglich').slice(0, 3)]
     .sort((a, b) => b.zeit.localeCompare(a.zeit));
-  while (liste.length) { try { localStorage.setItem(SCHNAPP, JSON.stringify(liste)); return true; } catch (e) { liste = liste.slice(0, -1); } }
+  while (liste.length) { try { speicher.schreiben(SCHNAPP, JSON.stringify(liste)); return true; } catch (e) { liste = liste.slice(0, -1); } }
   return false;
 }
 export function tagesSchnappschuss() {
@@ -82,7 +215,7 @@ export function schnappschussZurueck(zeit) {
   const s = schnappschuesse().find(x => x.zeit === zeit); if (!s) return false;
   const daten = JSON.parse(s.daten);
   if (P) schnappschuss('vor dem Zurückholen');
-  P = ergaenzen(daten); speichern(); return true;
+  P = ergaenzen(daten); sockelWechsel(); speichern(); return true;
 }
 // Kurzer Überblick über ein Profil, z. B. vor dem Laden einer Sicherung
 export function profilUeberblick(p) {
@@ -90,7 +223,7 @@ export function profilUeberblick(p) {
   return { name: p.name || '', erstellt: p.erstellt, abschnitte: p.summe?.abschnitte || 0, punkte: p.summe?.punkte || 0,
     kette: p.kette?.n || 0, khatma: p.zyklus?.khatma || 0, letzterTag: tage.at(-1) || null, fstellen: Object.keys(p.fstellen || {}).length };
 }
-export function loeschen() { P = null; try { localStorage.removeItem(SCHLUESSEL); } catch (e) {} }
+export function loeschen() { P = null; schatten = null; try { speicher.entfernen(SCHLUESSEL); } catch (e) {} }
 
 // ---------- Wechsel der Gliederung (neue Fassung oder Anfänger/Fortgeschritten) ----------
 // Der Fortschritt wird über die Āya-Bereiche übertragen: ein geteilter Abschnitt erbt den Stand des alten,
@@ -122,7 +255,7 @@ export function gliederungUmstellen(alt, ziel = D.gliederung, sichern = true) {
     t.fertig = plan.filter(nid => M[nid].every(o => !t.plan.includes(o) || fertig.has(o)));
     t.plan = plan; t.art = art;
   }
-  P.gliederung = ziel; if (sichern) speichern();
+  P.gliederung = ziel; if (sichern && !fremd) { sockelWechsel(); speichern(); }
 }
 export async function gliederungAbgleichen() {
   if (!P || P.gliederung === D.gliederung) return false;
@@ -164,21 +297,27 @@ function faeVerschieben(ab, n) {
   for (const k of Object.values(P.karten)) if (k.fae && k.fae >= ab) k.fae = plusTage(k.fae, n);
 }
 export function pauseBeginnen(tage) {
-  tage = Math.max(1, Math.min(PAUSE_MAX, Math.round(tage)));
-  const d = heute(), t = P.tage[d];
+  return eintrag('pb', { d: heute(), n: Math.max(1, Math.min(PAUSE_MAX, Math.round(tage))) });
+}
+function pauseBeginnAnwenden(e) {
+  const tage = e.n, d = e.d, t = P.tage[d];
   const von = t && !t.ruhe && t.fertig.length ? plusTage(d, 1) : d;   // heute schon geübt: Pause ab morgen
   if (P.tage[von] && !P.tage[von].fertig.length) delete P.tage[von];
   const bis = plusTage(von, tage - 1);
   P.pausen = [...(P.pausen || []).filter(x => x.bis < von), { von, bis }].slice(-12);
   faeVerschieben(von, tage);
-  speichern(); return { von, bis };
+  return { von, bis };
 }
 export function pauseBeenden() {
-  const d = heute(), p = pauseJetzt(d); if (!p) return false;
+  const d = heute(); if (!pauseJetzt(d)) return false;
+  return eintrag('pe', { d });
+}
+function pauseEndeAnwenden(e) {
+  const d = e.d, p = pauseJetzt(d); if (!p) return false;
   faeVerschieben(d, -(tageZwischen(d, p.bis) + 1));   // nicht genutzte Pausentage zurückgeben
   if (p.von >= d) P.pausen = P.pausen.filter(x => x !== p); else p.bis = plusTage(d, -1);
   if (P.tage[d]?.ruhe) delete P.tage[d];
-  speichern(); return true;
+  return true;
 }
 
 // ---------- Tagesplan ----------
@@ -199,8 +338,8 @@ export const schwachWert = k => (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0);
 export function tagesplan(datum = heute(), trotzdem = false) {
   if (P.tage[datum] && !(trotzdem && P.tage[datum].ruhe)) return P.tage[datum];
   if (ruhetag(datum) && !trotzdem) {
-    P.tage[datum] = { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ruhe: inPause(datum) ? 'pause' : 'ruhetag' };
-    speichern(); return P.tage[datum];
+    eintrag('pl', { d: datum, t: { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ruhe: inPause(datum) ? 'pause' : 'ruhetag' } });
+    return P.tage[datum];
   }
   const frei = ruhetag(datum);
   let n = frei ? pensumUeblich() : pensumAm(datum), qadaa = 0;
@@ -215,22 +354,36 @@ export function tagesplan(datum = heute(), trotzdem = false) {
   for (const id of faellig.slice(0, Math.ceil((n + qadaa) / 2))) { plan.push(id); art[id] = 'fehler'; }
   // Festigen: schwache Abschnitte, deren letzte Wiederholung mindestens eine halbe Runde zurückliegt
   const anteil = SCHWAECHEN[P.einst.schwaechen] ?? SCHWAECHEN.ausgewogen;
+  let konto = P.zyklus.konto || 0;    // der Plan wird erst berechnet, dann als Eintrag angewendet
   if (anteil > 0) {
-    P.zyklus.konto = (P.zyklus.konto || 0) + n * anteil;
+    konto += n * anteil;
     const runde = tageProKhatma(), grenze = plusTage(datum, -Math.max(14, Math.round(runde / 4))), seit = plusTage(datum, -2 * runde);
     const platz = n + qadaa - plan.length - 1;    // mindestens ein Abschnitt der Runde bleibt
     const kand = Object.entries(P.karten).map(([id, k]) => [+id, k])
       .filter(([id, k]) => !plan.includes(id) && !k.fae && k.zul && k.zul <= grenze && istSchwach(k, seit) && imBereich(id))
       .sort((a, b) => schwachWert(b[1]) - schwachWert(a[1]) || a[1].zul.localeCompare(b[1].zul));
-    const zahl = Math.max(0, Math.min(Math.floor(P.zyklus.konto), platz, kand.length));
+    const zahl = Math.max(0, Math.min(Math.floor(konto), platz, kand.length));
     for (const [id] of kand.slice(0, zahl)) { plan.push(id); art[id] = 'festigen'; }
-    P.zyklus.konto = kand.length > zahl ? P.zyklus.konto - zahl : Math.min(P.zyklus.konto - zahl, 1);   // ohne Kandidaten kein Stau
+    konto = kand.length > zahl ? konto - zahl : Math.min(konto - zahl, 1);   // ohne Kandidaten kein Stau
   }
   const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan), datum);
   naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
-  P.tage[datum] = { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(frei ? { freiwillig: true } : {}) };
-  aufraeumen(); speichern();
+  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(frei ? { freiwillig: true } : {}) }, ...(anteil > 0 ? { k: konto } : {}) });
   return P.tage[datum];
+}
+// Tagesplan anwenden. Gibt es für den Tag schon einen Plan (zweites Gerät), bleibt der erste;
+// nur ein Ruhetag-Eintrag weicht einem echten Plan („trotzdem üben“), was an dem Tag schon geübt wurde, bleibt stehen.
+function planAnwenden(e) {
+  const alt = P.tage[e.d], neu = kopie(e.t);
+  if (alt && !(alt.ruhe && !neu.ruhe)) return;
+  if (alt?.fertig.length) for (const f of ['fertig', 'punkte', 'hasanat', 'r', 'f', 'h', 'zeit', 'zn', 'za']) if (alt[f] != null) neu[f] = alt[f];
+  P.tage[e.d] = neu;
+  if (e.k != null) P.zyklus.konto = e.k;
+  if (!neu.ruhe) aufraeumen(e.d);
+}
+// Tag für einen Abschluss, zu dem es keinen Plan gibt (Einträge aus einer älteren Generation)
+function tagSicher(d) {
+  return P.tage[d] ??= { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ohne: 1 };
 }
 // an einem Ruhetag oder in der Pause trotzdem üben
 export function trotzdemUeben() { return tagesplan(heute(), true); }
@@ -273,15 +426,21 @@ function fortsetzung(t) {
   return naechsteImZyklus(1, new Set(t.plan))[0];
 }
 export function pensumHeuteAendern(delta) {
-  const t = tagesplan(); const offen = t.plan.filter(id => !t.fertig.includes(id));
-  if (delta > 0) { const id = fortsetzung(t); if (id != null) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; } }
-  else if (offen.length && t.plan.length > 1) { const id = offen[offen.length - 1]; t.plan = t.plan.filter(x => x !== id); delete t.art[id]; }
-  speichern(); return t;
+  const d = heute(), t = tagesplan(d); const offen = t.plan.filter(id => !t.fertig.includes(id));
+  const id = delta > 0 ? fortsetzung(t) : offen.length && t.plan.length > 1 ? offen[offen.length - 1] : null;
+  if (id != null) eintrag('pa', delta > 0 ? { d, plus: id } : { d, minus: id }); else speichern();
+  return P.tage[d];
+}
+function pensumAnwenden(e) {
+  const t = P.tage[e.d]; if (!t) return;
+  if (e.plus != null) { if (!t.plan.includes(e.plus)) { t.plan.push(e.plus); t.art[e.plus] = 'zyklus'; t.voll = false; } }
+  else if (t.plan.includes(e.minus) && !t.fertig.includes(e.minus) && t.plan.length > 1) { t.plan = t.plan.filter(x => x !== e.minus); delete t.art[e.minus]; }
 }
 export function bonusVorschlag() { return fortsetzung(tagesplan()); }
 
 // ---------- Fehlerstellen (einzelne Wörter) ----------
-// P.fstellen['vi.i'] = { n: Anzahl, t: { Art: Anzahl }, d: zuletzt }
+// P.fstellen['vi.i'] = { n: Anzahl, t: { Art: Anzahl }, d: zuletzt, m: { vi der verwechselten Āya: Anzahl } }
+// P.statistik.vw['viA-viB'] = Anzahl: dauerhafte Zählung der Verwechslungen je Āya-Paar (Grundlage der lernenden Liste)
 export const FEHLERARTEN = [['verwechslung', 'Verwechslung'], ['abweichung', 'Abweichung'], ['ausgelassen', 'Ausgelassen'], ['haraka', 'Ḥaraka'], ['haenger', 'Hänger']];
 // kurze Erklärung, die beim Antippen einer Fehlerart erscheint
 export const FEHLERARTEN_TEXT = {
@@ -296,49 +455,73 @@ function artenAusStellen(fst) {
   return a;
 }
 // je markierte Āya zählt die gewählte Fehlerart einmal (dauerhaft, auch wenn die Stelle später erledigt ist)
-export function fehlerstellenMerken(schluessel, art) {
-  if (art && schluessel.length) { P.statistik ??= { arten: {} }; P.statistik.arten[art] = (P.statistik.arten[art] || 0) + 1; }
-  for (const s of schluessel) {
+// mit: freiwillig die Āya (vi), mit der verwechselt wurde
+export function fehlerstellenMerken(schluessel, art, mit) {
+  if (!schluessel.length) { speichern(); return; }
+  eintrag('fm', { d: heute(), w: [...schluessel], ...(art ? { a: art } : {}), ...(mit != null ? { m: mit } : {}) });
+}
+function merkenAnwenden(e) {
+  P.statistik ??= { arten: {} };
+  if (e.a) (P.statistik.arten ??= {})[e.a] = (P.statistik.arten[e.a] || 0) + 1;
+  for (const s of e.w) {
     const f = P.fstellen[s] || { n: 0, t: {}, d: null };
-    f.n++; f.d = heute(); if (art) f.t[art] = (f.t[art] || 0) + 1;
+    f.n++; f.d = e.d; if (e.a) f.t[e.a] = (f.t[e.a] || 0) + 1;
+    if (e.m != null) (f.m ??= {})[e.m] = (f.m[e.m] || 0) + 1;
     P.fstellen[s] = f;
   }
-  speichern();
+  if (e.m != null) {
+    const a = +e.w[0].split('.')[0], key = a <= e.m ? `${a}-${e.m}` : `${e.m}-${a}`;
+    (P.statistik.vw ??= {})[key] = (P.statistik.vw[key] || 0) + 1;
+  }
 }
-export function fehlerstelleLoeschen(s) { delete P.fstellen[s]; speichern(); }
-// Stand der Fehlerstellen merken und wiederherstellen (für „Vorige Āya neu bewerten“)
-export const fehlerstellenStand = () => JSON.parse(JSON.stringify({ f: P.fstellen || {}, a: P.statistik?.arten || {} }));
+export function fehlerstelleLoeschen(s) { if (P.fstellen[s]) eintrag('fl', { s }); else speichern(); }
+// Stand der Fehlerstellen merken und wiederherstellen (für „Vorige Āya neu bewerten“).
+// m: Zähler dieses Geräts beim Merken. Die Rücknahme nennt alle danach gemerkten Fehlerstellen dieses Geräts,
+// beim Nachbau werden sie übersprungen.
+export const fehlerstellenStand = () => ({ ...kopie({ f: P.fstellen || {}, a: P.statistik?.arten || {}, vw: P.statistik?.vw }), m: geraetLesen().n });
 export function fehlerstellenSetzen(stand) {
-  stand = JSON.parse(JSON.stringify(stand || {}));
-  if (stand.f && stand.a) { P.fstellen = stand.f; (P.statistik ??= {}).arten = stand.a; } else P.fstellen = stand;
-  speichern();
+  stand = kopie(stand || {});
+  const vor = geraetLesen().g + '-';
+  const ids = stand.m == null ? [] : (P.log || []).filter(x => x.y === 'fm' && x.i.startsWith(vor) && parseInt(x.i.slice(vor.length), 36) > stand.m).map(x => x.i);
+  eintrag('rk', { ids }, { stand });
+}
+function ruecknahmeAnwenden(stand) {
+  if (!stand) return;    // beim Nachbau sind die zurückgenommenen Einträge schon übersprungen
+  if (stand.f && stand.a) {
+    P.fstellen = stand.f; (P.statistik ??= {}).arten = stand.a;
+    if (stand.vw) P.statistik.vw = stand.vw; else delete P.statistik.vw;
+  } else P.fstellen = stand;
 }
 // Mutašābihāt unterscheiden: je Paar (Schlüssel 'viA-viB') Anzahl, richtig, letztes Ergebnis, Tag
-export function unterscheidenMerken(key, ok) {
-  const x = (P.mutash ??= {})[key] || { n: 0, ok: 0 };
-  x.n++; if (ok) x.ok++; x.letzt = ok ? 1 : 0; x.d = heute();
-  P.mutash[key] = x; speichern(); return x;
+export function unterscheidenMerken(key, ok) { return eintrag('mu', { d: heute(), k: key, ok: ok ? 1 : 0 }); }
+function unterscheidenAnwenden(e) {
+  const x = (P.mutash ??= {})[e.k] || { n: 0, ok: 0 };
+  x.n++; if (e.ok) x.ok++; x.letzt = e.ok ? 1 : 0; x.d = e.d;
+  P.mutash[e.k] = x; return x;
 }
 // Abhören: jede Āya mit mindestens einem markierten Wort zählt als Fehler, alle anderen als richtig
 export const abhoerErgebnis = (ayat, fehlerVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : 'ok');
 
 // ---------- Zwischenstand einer angefangenen Übung (gilt nur am selben Tag und für dieselbe Gliederung) ----------
 const ZWISCHEN = 'itqan-zwischenstand';
-export function zwischenstand() { try { const z = JSON.parse(localStorage.getItem(ZWISCHEN) || 'null'); return z && z.tag === heute() && z.gliederung === D.gliederung ? z : null; } catch (e) { return null; } }
+export function zwischenstand() { try { const z = JSON.parse(speicher.lesen(ZWISCHEN) || 'null'); return z && z.tag === heute() && z.gliederung === D.gliederung ? z : null; } catch (e) { return null; } }
 export function zwischenstandLaden(id, quelle = '') { const z = zwischenstand(); return z && z.id === id && (z.quelle || '') === (quelle || '') ? z : null; }
-export function zwischenstandSpeichern(id, quelle, erg) { try { localStorage.setItem(ZWISCHEN, JSON.stringify({ id, quelle: quelle || '', erg, tag: heute(), gliederung: D.gliederung })); } catch (e) {} }
-export function zwischenstandLoeschen() { try { localStorage.removeItem(ZWISCHEN); } catch (e) {} }
+export function zwischenstandSpeichern(id, quelle, erg) { try { speicher.schreiben(ZWISCHEN, JSON.stringify({ id, quelle: quelle || '', erg, tag: heute(), gliederung: D.gliederung })); } catch (e) {} }
+export function zwischenstandLoeschen() { try { speicher.entfernen(ZWISCHEN); } catch (e) {} }
 // Gezieltes Üben einer Fehlerstelle: dreimal in Folge richtig, dann ist sie erledigt
 export const STELLE_ZIEL = 3;
 export function fehlerstelleGeuebt(vi, ergebnis) {
-  const keys = Object.keys(P.fstellen).filter(s => +s.split('.')[0] === vi);
+  if (!Object.keys(P.fstellen).some(s => +s.split('.')[0] === vi)) { speichern(); return { erledigt: 0, gut: 0, rest: 0 }; }
+  return eintrag('fg', { vi, e: ergebnis === 'ok' ? 1 : 0 });
+}
+function geuebtAnwenden(e) {
+  const keys = Object.keys(P.fstellen).filter(s => +s.split('.')[0] === e.vi);
   let erledigt = 0, gut = 0;
   for (const s of keys) {
     const f = P.fstellen[s];
-    if (ergebnis === 'ok') { f.gut = (f.gut || 0) + 1; gut = Math.max(gut, f.gut); if (f.gut >= STELLE_ZIEL) { delete P.fstellen[s]; erledigt++; } }
+    if (e.e) { f.gut = (f.gut || 0) + 1; gut = Math.max(gut, f.gut); if (f.gut >= STELLE_ZIEL) { delete P.fstellen[s]; erledigt++; } }
     else f.gut = 0;
   }
-  speichern();
   return { erledigt, gut, rest: keys.length - erledigt };
 }
 export const fehlerstellenSet = () => new Set(Object.keys(P.fstellen || {}));
@@ -346,15 +529,15 @@ export function fehlerstellenListe(n = 12) {
   return Object.entries(P.fstellen || {}).map(([s, f]) => ({ s, vi: +s.split('.')[0], i: +s.split('.')[1], ...f }))
     .sort((a, b) => b.n - a.n || (b.d || '').localeCompare(a.d || '')).slice(0, n);
 }
-function aufraeumen() { // alte Tage verdichten, Statistik behalten
-  for (const [d, t] of Object.entries(P.tage)) if (tageZwischen(d, heute()) > 400) delete P.tage[d];
+function aufraeumen(bezug) { // alte Tage verdichten, Statistik behalten
+  for (const d of Object.keys(P.tage)) if (tageZwischen(d, bezug) > 400) delete P.tage[d];
 }
 
 // ---------- Ergebnis eines Abschnitts ----------
 // ergebnisse: Array von 'ok' | 'hilfe' | 'fehler' je Āya (in Reihenfolge v[0]..v[1])
 // dauer: aktive Übungszeit in Sekunden (ohne Zeit im Hintergrund), fehlt bei fortgesetzten Übungen
 export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
-  const datum = heute(), t = tagesplan(datum), e = D.A[id], k = { ...karte(id) };
+  const datum = heute(), t = tagesplan(datum);
   const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
   const art = quelle || t.art[id] || 'frei';
   // Punkte: Rückmeldung über Können
@@ -364,6 +547,15 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push(['Bonusabschnitt +50 %', b]); }
   const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([`Kette +${kp} %`, b]); }
+  // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
+  const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte });
+  return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher };
+}
+const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f' };
+function abschlussAnwenden(e0) {
+  const datum = e0.d, id = e0.id, t = tagSicher(datum), e = D.A[id], k = { ...karte(id) };
+  const ergebnisse = [...e0.e], art = e0.q, punkte = e0.p, dauer = e0.s || 0;
+  const r = ergebnisse.filter(x => x === 'o').length, h = ergebnisse.filter(x => x === 'h').length, f = ergebnisse.filter(x => x === 'f').length;
   const hasanat = e.buchstaben * 10;
   // Karteisystem
   const vorher = k.st;
@@ -375,7 +567,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   }
   k.n++; k.fe += f; k.zul = datum; k.lf = f;   // lf: Fehler im letzten Durchgang
   if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
-  k.fa = ergebnisse.map((x, i) => x !== 'ok' ? e.v[0] + i : -1).filter(i => i >= 0);
+  k.fa = ergebnisse.map((x, i) => x !== 'o' ? e.v[0] + i : -1).filter(i => i >= 0);
   P.karten[id] = k;
   // Tag und Summen
   if (!t.fertig.includes(id)) t.fertig.push(id);
@@ -394,7 +586,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   }
   // Wird erfüllt → Kette
   const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
-  if (!t.voll && pflicht.every(x => t.fertig.includes(x))) {
+  if (!t.voll && ((!t.ohne && pflicht.every(x => t.fertig.includes(x))) || e0.w)) {
     t.voll = true;
     const z = P.kette.zuletzt, w1 = vorigerWirdTag(datum);
     if (z === datum) { /* schon gezählt */ }
@@ -411,27 +603,30 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   // Rang: neu erreicht, wenn er höher ist als der bisher höchste
   const rg = rangJetzt();
   if (rg > (P.rangBeste?.r ?? 0)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
-  speichern();
-  return { punkte, teile, hasanat, r, f, h, ereignisse, stufe: k.st, vorher };
+  return { hasanat, ereignisse, stufe: k.st, vorher };
 }
 
 // ---------- Ornamente: eines je Sūra, sobald alle ihre Abschnitte gefestigt sind; vergoldet, wenn alle mutqan sind ----------
 export const sureAbschnitte = s => D.A.filter(x => x.von[0] <= s && x.bis[0] >= s);
-function ornamentePruefen(suren, datum, ereignisse) {
+// probe: nichts eintragen, nur zählen, was fehlt
+function ornamentePruefen(suren, datum, ereignisse, probe = false) {
+  let fehlt = 0;
   for (const s of suren) {
     const ids = sureAbschnitte(s).map(x => x.id);
     if (!ids.length || !ids.every(imBereich)) continue;   // nur Sūren, die ganz im eigenen Bereich liegen
     for (const [st, name] of [[2, 'gefestigt'], [4, 'mutqan']]) {
       const key = `sure-${name}-${s}`;
-      if (!P.meilen.includes(key) && ids.every(x => karte(x).st >= st)) { P.meilen.push(key); (P.meilenD ??= {})[key] = datum; ereignisse?.push({ typ: 'ornament', s, stufe: name }); }
+      if (!P.meilen.includes(key) && ids.every(x => karte(x).st >= st)) {
+        fehlt++; if (probe) continue;
+        P.meilen.push(key); (P.meilenD ??= {})[key] = datum; ereignisse?.push({ typ: 'ornament', s, stufe: name });
+      }
     }
   }
+  return fehlt;
 }
 // verpasste Ornamente nachtragen (früher bekamen Sūren in Sammelkarten keines)
 export function ornamenteNachtragen() {
-  const n = P.meilen.length;
-  ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), heute());
-  if (P.meilen.length !== n) speichern();
+  if (ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), heute(), null, true)) eintrag('on', { d: heute() });
 }
 export function ornamentStand(s) {
   const ids = sureAbschnitte(s).map(x => x.id), st = ids.map(x => karte(x).st);
@@ -626,7 +821,8 @@ export function rueckblick(art = 'woche', versatz = 0) {
 }
 
 // Auswertung eines fremden Profils (Lehreransicht), ohne das eigene zu verändern
-export function mitProfil(profil, fn) { const eigenes = P; P = profil; try { return fn(); } finally { P = eigenes; } }
+// Solange ein fremdes Profil eingesetzt ist, wird nichts gespeichert und nichts protokolliert.
+export function mitProfil(profil, fn) { const eigenes = P; P = profil; fremd++; try { return fn(); } finally { P = eigenes; fremd--; } }
 
 // ---------- Profildatei (Sicherung und Lehreransicht) ----------
 async function pruefsumme(text) {
@@ -634,6 +830,7 @@ async function pruefsumme(text) {
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 export async function exportDatei(profil = P) {
+  profil = { ...profil, log: [] };    // die Sicherung ist ein Stand, kein Protokoll
   const daten = JSON.stringify(profil);
   return JSON.stringify({ format: 'itqan-profil', version: 1, exportiert: uhr().toISOString(), pruef: await pruefsumme(daten), profil }, null, 0);
 }

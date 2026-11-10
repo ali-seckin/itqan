@@ -118,7 +118,7 @@ test('Sicherung: Datei hin und zurück ergibt dasselbe Profil, Veränderung wird
   const text = await Z.exportDatei();
   const r = await Z.importDatei(text);
   assert.equal(r.echt, true);
-  assert.deepEqual(r.profil, JSON.parse(JSON.stringify(Z.P)));
+  assert.deepEqual(r.profil, JSON.parse(JSON.stringify({ ...Z.P, log: [] })));   // die Sicherung ist ein Stand, das Protokoll bleibt auf dem Gerät
   const o = JSON.parse(text); o.profil.summe.punkte += 1000;
   assert.equal((await Z.importDatei(JSON.stringify(o))).echt, false);
   await assert.rejects(() => Z.importDatei('{"x":1}'));
@@ -156,6 +156,9 @@ test('Profilüberblick zeigt den letzten Übungstag', () => {
 test('Tageswechsel: um 3 Uhr zählt 1 Uhr nachts noch zum Vortag', () => {
   frisch({ datum: '2026-02-10' });
   Z.uhrSetzen(() => new Date(2026, 1, 11, 1, 30));
+  assert.equal(Z.P.einst.tagesbeginn, 3);                  // Vorgabe eines neuen Profils
+  assert.equal(Z.heute(), '2026-02-10');
+  Z.P.einst.tagesbeginn = 0;
   assert.equal(Z.heute(), '2026-02-11');
   Z.P.einst.tagesbeginn = 3;
   assert.equal(Z.heute(), '2026-02-10');
