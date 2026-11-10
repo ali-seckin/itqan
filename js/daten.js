@@ -27,8 +27,12 @@ export async function ladeDaten(ausgabe = 'v2', modus = 'fort') {
       e.seiten = [...ps].sort((a, b) => a - b); e.zeilen = zs.size;
     }
   }
-  // Einträge vereinheitlichen zu [Glyphen, vi, Typen, Wortindex in der Āya, Schriftseite]
-  // und Fundort jedes Wortes merken: D.W 'vi.i' → [Seite, Glyphen, Typen, Schriftseite]
+  layoutSetzen(L);
+}
+// Einträge vereinheitlichen zu [Glyphen, vi, Typen, Wortindex in der Āya, Schriftseite]
+// und Fundort jedes Wortes merken: D.W 'vi.i' → [Seite, Glyphen, Typen, Schriftseite]
+export function layoutSetzen(L) {
+  D.L = L;
   const zaehler = new Map(); D.W = new Map();
   L.forEach((seite, pi) => { for (const z of seite) if (z?.w) for (const e of z.w) {
     const fp = e[3] ?? pi + 1, i = zaehler.get(e[1]) || 0; zaehler.set(e[1], i + 1);

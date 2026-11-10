@@ -1,7 +1,7 @@
 // Itqān · Oberfläche
 import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
-import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
+import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
@@ -578,6 +578,16 @@ function doppelseiten(seiten) {
   for (const x of [...new Set(seiten.flatMap(paarVon))].sort((a, b) => a - b)) { const r = x % 2 ? x : x - 1; if (!paare.has(r)) paare.set(r, []); paare.get(r).push(x); }
   return [...paare.values()];
 }
+// Vergrößerte Seite (125 oder 150 %): Der Ausschnitt beginnt am rechten Rand. Die gemeinte Seite schiebt sich ganz in den Blick,
+// wenn sie in den Ausschnitt passt. Ist sie breiter, entscheidet das einzelne Wort (sichtbar beim Üben).
+function seiteHolen(roller, el) {
+  const s = el?.closest?.('.seite');
+  if (!roller || !s || roller.scrollWidth <= roller.clientWidth + 1) return;
+  const R = roller.getBoundingClientRect(), r = s.getBoundingClientRect();
+  if (r.width > R.width) return;
+  const dx = r.left < R.left ? r.left - R.left - 4 : r.right > R.right ? r.right - R.right + 4 : 0;
+  if (dx) roller.scrollBy({ left: dx, behavior: 'auto' });
+}
 const paarHTML = (seiten, opt) => `<div class="paar">${seiten.map(x => seiteHTML(x, typeof opt === 'function' ? opt(x) : opt)).join('')}</div>`;
 let warDoppelt = null;
 addEventListener('resize', () => {
@@ -691,7 +701,7 @@ async function ueben(idText, quelle, fokusText) {
     einbl.onclick = einblWeg;
   }
   const seitenEl = app.querySelector('#seiten');
-  const sOpt = { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet() };
+  const sOpt = { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet(), wahl: true };
   seitenEl.classList.toggle('doppel', dop);
   seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
   zeilenEinpassen(seitenEl);
@@ -713,7 +723,7 @@ async function ueben(idText, quelle, fokusText) {
     return aus;
   }
   function sichtbar(el) {
-    if (!el) return; const r = el.getBoundingClientRect();
+    if (!el) return; seiteHolen(seitenEl, el); const r = el.getBoundingClientRect();
     if (r.top < 70 || r.bottom > innerHeight - 210) { el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: ruhig() ? 'auto' : 'smooth' }); return; }
     // vergrößerte Seite (125 oder 150 %): liegt das Wort seitlich außerhalb, schiebt sich die Seite dorthin
     if (seitenEl.scrollWidth > seitenEl.clientWidth + 1) {
@@ -771,7 +781,51 @@ async function ueben(idText, quelle, fokusText) {
     };
     setTimeout(los, name === 'ueben-1' ? 300 : 450);   // kurz warten, bis Knöpfe und Abspielknopf stehen
   }
-  function zeichne() { zeichneInnen(); tourPruefen(); }
+  function zeichne() { zeichneInnen(); wahlSetzen(); seitenText(seitenEl, vorschau ? new Set() : zu); tourPruefen(); }
+  // ---------- Fehlerwort mit Tastatur und Bildschirmleser ----------
+  // Nach „Fehler“ sind die Wörter der Āya Knöpfe mit ihrem Wortlaut, beim Abhören alle Wörter des Abschnitts.
+  // Ein Wort ist mit Tab erreichbar, die Pfeiltasten gehen von Wort zu Wort (links und unten = weiter im Text).
+  const wahlWoerter = () => !seitenEl.isConnected ? [] : abhoeren ? [...seitenEl.querySelectorAll('.w.in')] : markieren ? spans(liste[pos]) : [];
+  function wahlSetzen() {
+    const ws = wahlWoerter(), drin = new Set(ws);
+    let fokusWeg = false;
+    for (const w of seitenEl.querySelectorAll('.w[role=button]')) if (!drin.has(w)) {
+      if (w === document.activeElement) fokusWeg = true;
+      for (const a of ['role', 'tabindex', 'aria-pressed', 'aria-label', 'lang']) w.removeAttribute(a);
+      w.setAttribute('aria-hidden', 'true'); delete w.dataset.wl;
+    }
+    for (const w of ws) {
+      if (w.getAttribute('role') !== 'button') { w.setAttribute('role', 'button'); w.removeAttribute('aria-hidden'); w.tabIndex = -1; }
+      if (!w.dataset.wl) {
+        const vi = +w.dataset.v, t = wortText(vi, +w.dataset.i);
+        if (t) { w.setAttribute('aria-label', t); w.lang = 'ar'; w.dataset.wl = '1'; }
+        else w.setAttribute('aria-label', t === null ? tx('ueben.endzeichen_der_aya', { a: D.V[vi][1] }) : tx('ueben.wort_nr', { n: +w.dataset.i + 1 }));
+        if (t === null) w.dataset.wl = '1';
+      }
+      w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false');
+    }
+    if (ws.length && !ws.some(w => w.tabIndex === 0)) ws[0].tabIndex = 0;
+    if (fokusWeg) app.querySelector('#auf, #weiter, #r')?.focus();
+  }
+  function wortFokus(w) {
+    if (!w) return;
+    for (const x of seitenEl.querySelectorAll('.w[tabindex="0"]')) x.tabIndex = -1;
+    w.tabIndex = 0; w.focus();
+  }
+  const wortEinstieg = () => wortFokus(seitenEl.querySelector('.w[role=button][tabindex="0"]') || wahlWoerter()[0]);
+  seitenEl.addEventListener('keydown', ev => {
+    const w = ev.target.closest?.('.w[role=button]'); if (!w) return;
+    const ws = wahlWoerter(), i = ws.indexOf(w); let z;
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowDown') z = ws[Math.min(ws.length - 1, i + 1)];
+    else if (ev.key === 'ArrowRight' || ev.key === 'ArrowUp') z = ws[Math.max(0, i - 1)];
+    else if (ev.key === 'Home') z = ws[0];
+    else if (ev.key === 'End') z = ws[ws.length - 1];
+    else if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); w.click(); return; }
+    else return;
+    ev.preventDefault(); ev.stopPropagation(); wortFokus(z);
+  });
+  // Wortlaute nachtragen, sobald der Text geladen ist
+  textFuerLeser().then(() => { if (seitenEl.isConnected) wahlSetzen(); });
   function zeichneInnen() {
     app.querySelector('#punkte').innerHTML = liste.map((a, i) => `<i class="${(phase === 'haupt' ? erg[i] : korr[i]) || (i === pos ? 'jetzt' : '')}"></i>`).join('');
     app.querySelector('.fort-zeile').classList.toggle('korrektur', phase === 'korrektur');
@@ -931,17 +985,24 @@ async function ueben(idText, quelle, fokusText) {
   };
   seitenEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
-    if (abhoeren) { if (w.classList.contains('in')) w.classList.toggle('fmark'); return; }
-    if (markieren) { if (+w.dataset.v === liste[pos]) w.classList.toggle('fmark'); return; }
+    const gedrueckt = () => { if (w.getAttribute('role') === 'button') w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false'); };
+    if (abhoeren) { if (w.classList.contains('in')) { w.classList.toggle('fmark'); gedrueckt(); } return; }
+    if (markieren) { if (+w.dataset.v === liste[pos]) { w.classList.toggle('fmark'); gedrueckt(); } return; }
     if (w.classList.contains('zu') && +w.dataset.v === liste[pos] && !offen && !vorschau) aufdecken();
   };
   const tasten = ev => {
     if (!document.body.contains(seitenEl)) { removeEventListener('keydown', tasten); return; }
-    if (pos >= liste.length || abhoeren) return;
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.closest?.('button,a,select,input,summary')) return;
     if (ev.target.closest?.('input,select,textarea') || document.querySelector('.dialog')) return;
+    const pfeil = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key);
+    if (abhoeren) { if (pfeil) { ev.preventDefault(); wortEinstieg(); } return; }
+    if (pos >= liste.length) return;
     if (vorschau) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
-    if (markieren) { if (ev.key === 'Enter') { ev.preventDefault(); markierenFertig(); } return; }
+    if (markieren) {
+      if (ev.key === 'Enter' || ev.key === 'w') { ev.preventDefault(); markierenFertig(); }
+      else if (pfeil || (ev.key === 'f' && !ev.repeat)) { ev.preventDefault(); wortEinstieg(); }
+      return;
+    }
     if (!offen && (ev.key === ' ' || ev.key === 'Enter')) { ev.preventDefault(); aufdecken(); }
     else if (!offen && (ev.key === 's' || ev.key === 'ArrowDown')) { ev.preventDefault(); app.querySelector('#teil')?.click(); }
     else if (offen && (ev.key === 'r' || ev.key === 'ArrowRight')) bewerte(hilfe ? 'hilfe' : 'ok');
@@ -1167,6 +1228,7 @@ async function mushaf(pText, aText) {
     }).join('')}`;
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
+  seitenText(seiteEl); seiteHolen(seiteEl.querySelector('.roller'), seiteEl.querySelector(`.seite[data-p="${p}"]`));
   const blaettern = ziel => { if (seiten.includes(ziel)) return; scrollBehalten = scrollY; location.replace('#mushaf/' + ziel); };
   app.querySelector('#vor').onclick = () => blaettern(naechste);
   app.querySelector('#zur').onclick = () => blaettern(vorige);
@@ -1232,7 +1294,7 @@ async function vollbild(start) {
     ss.forEach(s => s.style.width = breite + 'px');
     const h = Math.max(...ss.map(s => s.offsetHeight));
     if (h > hoehe) ss.forEach(s => s.style.width = Math.floor(breite * hoehe / h) + 'px');
-    zeilenEinpassen(buehne); grenzenZeichnen(buehne);
+    zeilenEinpassen(buehne); grenzenZeichnen(buehne); seitenText(buehne);
     if (richtung) buehne.firstElementChild.classList.add(richtung > 0 ? 'von-links' : 'von-rechts');
     const nach = Math.max(...seiten), vor = Math.min(...seiten);
     if (nach < 604) schriftenLaden([nach + 1]); if (vor > 1) schriftenLaden([vor - 1]);
@@ -1349,7 +1411,7 @@ function hilfeSeite(ziel) {
     <div class="abschnitt"><table class="hf-tasten">${TASTEN.map(t => `<tr><td colspan="2"><b>${t.wo}</b></td></tr>` + t.kuerzel.map(([k, was]) => `<tr><th scope="row">${k.map(kbd).join(` ${tx('hilfeseite.oder')} `)}</th><td>${was}</td></tr>`).join('')).join('')}</table></div>
     <h2 class="titel-klein">${tx('hilfeseite.bildschirmleser')}</h2>
     <div class="abschnitt"><p>${tx('hilfeseite.jeder_knopf_hat_einen_namen_jede_auswahl')}</p>
-      <p style="margin-top:10px">${tx('hilfeseite.zwei_dinge_fehlen_noch_eine_mushaf_seite')}</p></div>
+      <p style="margin-top:10px">${tx('hilfeseite.jede_mushaf_seite_gibt_es_auch_als_text')}</p></div>
     <p class="lesbar-probe">${tx('hilfeseite.deine_frage_ist_nicht_dabei_schreib_uns')}</p>`;
   const zu = z => { const el = app.querySelector('#hf-' + z); if (!el) return; el.scrollIntoView({ block: 'start', behavior: ruhig() ? 'auto' : 'smooth' }); el.focus({ preventScroll: true }); };
   app.querySelector('.hf-sprung').onclick = ev => { const z = ev.target.dataset.z; if (z) zu(z); };

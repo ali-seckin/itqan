@@ -829,6 +829,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 /* Tastatur: der Fokus ist immer zu sehen */
 :focus-visible{outline:2px solid var(--akzentT);outline-offset:2px}
 [data-modus=dunkel] :focus-visible{outline-color:var(--akzent2)}
+.seite .w[role=button]:focus-visible{outline:2.5px solid #7a3f0e;outline-offset:2px;border-radius:3px}
 #app:focus{outline:none}
 /* Tippflächen mindestens 44 px; kleine Zeichen bekommen eine unsichtbare Fläche um sich */
 .textlink,.wahl button,.arten button,.knopf.klein,.juzwahl button,.haken,.ah-reiter button,select{min-height:44px}

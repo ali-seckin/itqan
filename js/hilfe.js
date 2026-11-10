@@ -84,7 +84,7 @@ export const GLOSSAR = [
 
 // Tastenkürzel (PC und Tablet mit Tastatur)
 export const TASTEN = [
-  { wo: tx('allg.ueben'), kuerzel: [[[tx('hilfe.leertaste'), 'Enter'], tx('hilfe.aya_aufdecken')], [['S', '↓'], tx('hilfe.bis_zum_zeichen_aufdecken')], [['R', '→'], tx('hilfe.richtig')], [['F', '←'], tx('allg.fehler')]] },
+  { wo: tx('allg.ueben'), kuerzel: [[[tx('hilfe.leertaste'), 'Enter'], tx('hilfe.aya_aufdecken')], [['S', '↓'], tx('hilfe.bis_zum_zeichen_aufdecken')], [['R', '→'], tx('hilfe.richtig')], [['F', '←'], tx('allg.fehler')], [['←', '→'], tx('hilfe.nach_fehler_wort_der_aya_waehlen')], [[tx('hilfe.leertaste')], tx('hilfe.gewaehltes_wort_markieren')], [['W'], tx('hilfe.nach_dem_markieren_weiter')]] },
   { wo: tx('allg.mushaf'), kuerzel: [[['←'], tx('hilfe.naechste_seite_wie_im_buch')], [['→'], tx('hilfe.vorige_seite')]] },
   { wo: tx('hilfe.vollbild'), kuerzel: [[['←', '→'], tx('hilfe.blaettern')], [['Esc'], tx('hilfe.schliessen')]] },
   { wo: tx('hilfe.ueberall'), kuerzel: [[['Tab'], tx('hilfe.zum_naechsten_knopf')], [['Esc'], tx('hilfe.fenster_schliessen')]] }
