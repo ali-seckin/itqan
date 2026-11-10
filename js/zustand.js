@@ -36,7 +36,9 @@ export function ergaenzen(p) {
   p.einst.zufall ??= 'einzeln'; p.einst.vorueben ??= true; p.fstellen ??= {};
   if (!['v1', 'v2'].includes(p.einst.ausgabe)) p.einst.ausgabe = 'v2';   // frühere Mischform wird Druck 1421
   p.einst.modus ??= 'fort'; p.gliederung ??= 'fort-1'; p.meilenD ??= {};
-  p.einst.sofort ??= true; p.einst.abhoeren ??= true; p.einst.tagesbeginn ??= 0;
+  p.einst.sofort ??= true; p.einst.abhoeren ??= true;
+  // Tageswechsel: Vorgabe 3 Uhr (Entscheidung 10.11.2026). Wer noch die alte Vorgabe Mitternacht hat, wird einmal umgestellt, danach gilt die eigene Wahl.
+  if (!p.einst.tb3) { if (!p.einst.tagesbeginn) p.einst.tagesbeginn = 3; p.einst.tb3 = 1; }
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
   p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %

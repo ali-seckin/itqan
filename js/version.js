@@ -1,10 +1,16 @@
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.10';
+export const VERSION = '1.11';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
 
 export const NEUIGKEITEN = [
+  { v: '1.11', datum: '2026-11-10', titel: 'Ohne Netz und beim Tippen', punkte: [
+    'Ohne Netz bleibt der Text lesbar: Fehlt die Muṣḥaf-Schrift einer Seite, zeigt Itqān dieselben Zeilen in einfacher Schrift. Sobald du wieder Netz hast, kommt die Muṣḥaf-Schrift von selbst zurück.',
+    'Die Seiten deines heutigen Wird speichert Itqān jetzt im Hintergrund. Alle 604 Seiten auf einmal sicherst du in den Einstellungen unter „Offline“.',
+    'Beim Tippen in ein Suchfeld oder Textfeld weicht die Menüleiste. Sie rutscht nicht mehr über die Tastatur.',
+    'Der Tag beginnt jetzt um 3 Uhr: Ein Wird nach Mitternacht zählt noch zum Vortag. Ändern kannst du das in den Einstellungen.'
+  ] },
   { v: '1.10', datum: '2026-11-10', titel: 'Lesbarkeit und Hilfe', punkte: [
     'Seitengröße 100, 125 oder 150 %: Die Muṣḥaf-Seite wird größer, beim Üben folgt sie der Stelle, an der du bist. Dazu drei Schriftgrößen für die App.',
     'Zoomen mit zwei Fingern ist überall erlaubt. Knöpfe und Verweise sind mindestens 44 Punkte groß.',

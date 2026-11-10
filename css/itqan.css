@@ -67,6 +67,7 @@ button.karte:active{transform:scale(.99)}
 .marke-art{display:inline-block;font-size:var(--s-etikett);letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
 .marke-art.fehler{background:rgba(181,84,58,.14);color:var(--schlechtT)}
 .marke-art.qadaa{background:rgba(183,119,47,.16);color:var(--akzentT)}
+[data-modus=dunkel] .marke-art.qadaa{color:var(--akzent2)}
 .marke-art.bonus{background:rgba(111,143,90,.16);color:var(--gutT)}
 .stufe{display:flex;gap:3px;flex:none}
 .stufe i{width:7px;height:7px;border-radius:50%;background:var(--rand)}
@@ -124,6 +125,13 @@ button.karte:active{transform:scale(.99)}
 .mz.kopfz{justify-content:center;font-family:'Uthmani',serif;font-size:5.2cqw;color:#6b4a22;border:1px solid #c9a45c;border-radius:4px;height:8.4cqw;margin:.4cqw 0;background:linear-gradient(90deg,transparent,rgba(201,164,92,.16),transparent)}
 .mz.bas{justify-content:center;font-family:'Uthmani',serif;font-size:5.4cqw}
 .snr{text-align:center;margin-top:1.4cqw;line-height:1}
+/* Ersatz, wenn die Schrift einer Seite fehlt (ohne Netz, noch nicht gespeichert): gleicher Text in der einfachen Uthmani-Schrift */
+.ers{font-family:'Uthmani',serif}
+.mz .ers{font-size:.8em}
+.mz.ers{gap:.18em}
+.ers-hinweis{font:500 max(12px,3.1cqw)/1.35 var(--fliess);text-align:center;margin:1.8cqw 2cqw 0;opacity:.78}
+/* Solange getippt wird, weicht die Navigation (iPhone: sie rutscht sonst mit der Tastatur über den Inhalt) */
+html.tippt .nav{display:none}
 .snr-k{display:inline-flex;align-items:center;gap:.6em;font:500 4cqw/1 var(--fliess);color:#6b5338;border:1.5px solid #c9a45c;border-radius:4px;padding:.3em 1em;background:rgba(201,164,92,.08)}
 .snr-k .ar{font-family:system-ui,'Geeza Pro','Noto Naskh Arabic',sans-serif;font-size:1.05em}
 .snr-k i{font-style:normal;color:#c9a45c}
@@ -352,7 +360,7 @@ body.im-vollbild{overflow:hidden}
 .seiteninfo .st{color:var(--akzentT);white-space:nowrap}
 /* Abschnittsname auf der Startseite: Nummer nach Stand */
 :root,[data-modus=hell]{--st-hellblau:#2866a8;--st-dunkelblau:#1d4f91;--st-gruen:#2f7549;--st-rot:#c62828}
-[data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#7aa6ee;--st-gruen:#7fcf98;--st-rot:#ff7d7d}
+[data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#7aa6ee;--st-gruen:#7fcf98;--st-rot:#ff9090}
 .karte .t span .ab-name{font-weight:700;color:var(--text)}
 .karte .t .ab-name .ab-nr{font-weight:700;font-size:inherit;color:var(--text)}
 .karte .t .ab-name .ab-nr.st-gefestigt{color:var(--st-hellblau)}

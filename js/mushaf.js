@@ -1,7 +1,14 @@
 // Itqān · Darstellung der Muṣḥaf-Seiten (Druck 1405, KFGQPC-Seitenschriften)
 import { D, sureArabisch, arZahl, schriftSeiten } from './daten.js';
+import { textLaden } from './suche.js';
 
-const geladen = new Map();
+const geladen = new Map(), da = new Set();   // da: Seiten, deren Schrift angemeldet ist
+// Fehlt eine Seitenschrift (ohne Netz und noch nicht gespeichert), steht der Text in der einfachen Uthmani-Schrift:
+// gleiche Zeilen, gleiche Wörter, nur ein anderes Schriftbild. U: Wörter je Āya aus daten/text.json
+let U = null;
+const textHolen = () => U ? Promise.resolve() : textLaden().then(t => { U = t.u; }).catch(() => {});
+const fehlt = fp => !da.has(fp) && !!U;
+export function textSetzen(u) { U = u; }   // für Tests
 let anfaenge = null;   // erste Āya jedes Abschnitts
 export function schrift(p) {
   if (!geladen.has(p)) {
@@ -11,8 +18,8 @@ export function schrift(p) {
     const holen = () => { const c = new AbortController(), t = setTimeout(() => c.abort(), 12000);
       return fetch(url, { signal: c.signal }).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).finally(() => clearTimeout(t)); };
     geladen.set(p, holen().catch(holen)
-      .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); return true; })
-      .catch(() => { geladen.delete(p); return false; }));
+      .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); da.add(p); return true; })
+      .catch(() => { geladen.delete(p); return textHolen().then(() => false); }));
   }
   return geladen.get(p);
 }
@@ -58,16 +65,49 @@ export function glyphen(c, ty) {
   }
   return aus;
 }
+// Ein Wort in einfacher Schrift. Das letzte Stück jeder Āya ist ihr Endzeichen mit der Nummer.
+// Stoppzeichen stehen im Text schon am Wort; leere Marken halten die Teilung an den Stoppzeichen wie in der Muṣḥaf-Schrift.
+export function ersatz(vi, i, ty) {
+  const w = U?.[vi]; if (!w) return '';
+  const marken = ty ? [...ty].filter(x => x === 'q' || x === 'n').map(x => `<span class="${KL[x]}"></span>`).join('') : '';
+  return (i < w.length ? w[i] : arZahl(D.V[vi][1])) + marken;
+}
+// Ein einzelnes Wort außerhalb der Seite (Kontextzeile, Fehlerstellen)
+export function wortHTML(vi, i) {
+  const w = D.W.get(vi + '.' + i); if (!w) return '';
+  const a = `data-v="${vi}" data-i="${i}" data-fp="${w[3]}"`;
+  return fehlt(w[3]) ? `<span class="ers" ${a}>${ersatz(vi, i, w[2])}</span>` : `<span ${a} style="font-family:qp${w[3]}">${glyphen(w[1], w[2])}</span>`;
+}
+// Nachziehen: Schriften noch einmal versuchen. Was da ist, steht danach in Muṣḥaf-Schrift, was fehlt, in einfacher Schrift.
+export async function schriftAbgleichen(el = document.body) {
+  const offen = [...el.querySelectorAll('[data-fp]')].filter(x => x.classList.contains('ers') || !da.has(+x.dataset.fp));
+  if (!offen.length) return false;
+  await Promise.all([...new Set(offen.map(x => +x.dataset.fp))].map(schrift));
+  let neu = false;
+  for (const x of offen) {
+    const fp = +x.dataset.fp, vi = +x.dataset.v, i = +x.dataset.i, w = D.W.get(vi + '.' + i); if (!w) continue;
+    if (da.has(fp) && x.classList.contains('ers')) { x.classList.remove('ers'); x.innerHTML = glyphen(w[1], w[2]); x.style.fontFamily = 'qp' + fp; neu = true; }
+    else if (fehlt(fp) && !x.classList.contains('ers')) { x.classList.add('ers'); x.innerHTML = ersatz(vi, i, w[2]); x.style.fontFamily = ''; neu = true; }
+  }
+  if (!neu) return false;
+  for (const z of el.querySelectorAll('.mz.ers')) if (!z.querySelector('.ers')) z.classList.remove('ers');
+  for (const h of el.querySelectorAll('.ers-hinweis')) if (!h.closest('.seite')?.querySelector('.ers')) h.remove();
+  zeilenEinpassen(el); if (el.querySelector('.gz')) grenzenZeichnen(el);
+  return true;
+}
 // opt: { von, bis } Āya-Indizes des Abschnitts; zu: Set verdeckter Āyāt; alt: Set früherer Fehler-Āyāt; status: Map vi → 'ok'|'hilfe'|'fehler'
 // klar: Āyāt vor dem Abschnitt, die deutlich sichtbar bleiben; ton: vi → Farbnummer; fst: Set 'vi.i' markierter Fehlerstellen
 export function seiteHTML(p, opt = {}) {
   const { von = -1, bis = -1, zu = new Set(), alt = new Set(), status = new Map(), naechste = -1, klar = new Set(), ton = null, fst = null, grenzen = false, lage = false } = opt;
   if (grenzen && !anfaenge) anfaenge = new Set(D.A.map(e => e.v[0]));
+  let einfach = false;
   const zeilen = D.L[p - 1].map(z => {
     if (z.kopf) return `<div class="mz kopfz"><span>سُورَةُ ${sureArabisch(z.kopf)}</span></div>`;
     if (z.basmala) return `<div class="mz bas">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`;
+    let zers = false;
     const w = z.w.map(([c, vi, ty, i, fp]) => {
       let k = 'w';
+      const ers = fehlt(fp); if (ers) { k += ' ers'; zers = einfach = true; }
       if (von >= 0) k += vi < von ? (klar.has(vi) ? ' klar' : ' vor') : vi > bis ? ' nach' : ' in';
       if (zu.has(vi)) k += ' zu' + (vi === naechste ? ' naechste' : '');
       if (status.has(vi)) k += ' ' + status.get(vi);
@@ -75,10 +115,11 @@ export function seiteHTML(p, opt = {}) {
       if (ton) { const t = ton(vi); if (t != null) k += ' ton' + t; }
       if (fst?.has(vi + '.' + i)) k += ' fs';
       if (grenzen && i === 0 && anfaenge.has(vi) && vi > 0) k += ' ab';
+      if (ers) return `<span class="${k}" data-v="${vi}" data-i="${i}" data-fp="${fp}">${ersatz(vi, i, ty)}</span>`;
       return `<span class="${k}" data-v="${vi}" data-i="${i}"${fp !== p ? ` style="font-family:qp${fp}"` : ''}>${glyphen(c, ty)}</span>`;
     }).join('');
-    return `<div class="mz${p < 3 ? ' mitte' : ''}" style="font-family:qp${p}">${w}</div>`;
+    return `<div class="mz${p < 3 ? ' mitte' : ''}${zers ? ' ers' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');
   // Madanī-Muṣḥaf: ungerade Seiten liegen rechts, gerade links (Bundsteg jeweils innen)
-  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="img" aria-label="Muṣḥaf-Seite ${p}">${zeilen}</div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? 'R' : 'L'}</b>` : ''}</span></div></div>`;
+  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="img" aria-label="Muṣḥaf-Seite ${p}">${zeilen}</div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? 'R' : 'L'}</b>` : ''}</span></div>${einfach ? '<p class="ers-hinweis">Ohne Netz in einfacher Schrift. Die Muṣḥaf-Schrift dieser Seite lädt, sobald du wieder Netz hast.</p>' : ''}</div>`;
 }

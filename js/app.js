@@ -1,7 +1,7 @@
 // Itqān · Oberfläche
-import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter } from './daten.js';
+import { D, ladeDaten, abschnittName, bereichText, zahl, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
-import { seiteHTML, schriftenLaden, schrift, glyphen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
+import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
@@ -281,6 +281,16 @@ async function gespeicherteSeiten() {
   if (!('caches' in window)) return null;
   const c = await caches.open(SEITEN_CACHE), pfad = `/schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p`;
   return new Set((await c.keys()).map(r => new URL(r.url).pathname).filter(p => p.includes(pfad)).map(p => +p.split(pfad)[1].replace('.woff2', '')));
+}
+// Die Seiten des heutigen Wird im Hintergrund speichern, damit es auch ohne Netz in Muṣḥaf-Schrift da ist
+async function vorratSpeichern() {
+  if (!Z.P || !navigator.onLine || navigator.connection?.saveData) return;
+  try {
+    const da = await gespeicherteSeiten(); if (!da) return;
+    const t = Z.tagesplan(), cache = await caches.open(SEITEN_CACHE);
+    const fehlt = [...new Set(t.plan.filter(x => !t.fertig.includes(x)).flatMap(x => D.A[x].seiten).flatMap(schriftSeiten))].filter(x => !da.has(x));
+    for (let i = 0; i < fehlt.length; i += 3) await Promise.all(fehlt.slice(i, i + 3).map(x => cache.add(seitenUrl(x)).catch(() => {})));
+  } catch (e) {}
 }
 
 // ---------- Router ----------
@@ -664,7 +674,7 @@ async function ueben(idText, quelle, fokusText) {
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="Zurück">${zurueckPfeil}</button>
       <div class="info">${art === 'stelle' ? `<b>Fehlerstelle</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${e.ayat} Āyāt · ${e.zeilen} Zeilen`} · S. ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="Seite ${p}: ${p % 2 ? 'rechte' : 'linke'} Seite">${p % 2 ? 'R' : 'L'}</button>`).join(' ')}</div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
-    ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([c, , ty, , p]) => `<span style="font-family:qp${p}">${glyphen(c, ty)}</span>`).join('')}</div></div>` : ''}
+    ${kBox ? `<div class="kontext"><span>Davor · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([, vi, , i]) => wortHTML(vi, i)).join('')}</div></div>` : ''}
     <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div style="height:190px"></div>
     <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span></div></div></div>
@@ -1775,7 +1785,7 @@ function fehlerstellenSeite() {
   navSetzen('profil');
   const fl = Z.fehlerstellenListe(500);
   for (const f of fl) for (const d of [-1, 0, 1]) { const w = D.W.get(f.vi + '.' + (f.i + d)); if (w) schrift(w[3]); }
-  const wortHTML = k => { const w = D.W.get(k); return w ? `<span style="font-family:qp${w[3]}">${glyphen(w[1], w[2])}</span>` : ''; };
+  const wortBild = k => { const [vi, i] = k.split('.').map(Number); return wortHTML(vi, i); };
   const abschnittVon = vi => D.A.find(e => vi >= e.v[0] && vi <= e.v[1]);
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}Profil</button>
     <div class="marke">Fehlerstellen<small>Die Wörter, bei denen du dich vertan hast. Übe eine Stelle dreimal in Folge richtig, dann verschwindet sie von selbst.</small></div>
@@ -1783,11 +1793,12 @@ function fehlerstellenSeite() {
       const w = D.W.get(f.s); if (!w) return '';
       const arten = Object.entries(f.t).sort((a, b) => b[1] - a[1]).map(([x]) => Z.FEHLERARTEN.find(y => y[0] === x)?.[1]).filter(Boolean).join(', ');
       const ab = abschnittVon(f.vi), gut = f.gut || 0;
-      return `<div class="fs-karte" data-vi="${f.vi}"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="Im Muṣḥaf zeigen"><span class="nb">${wortHTML(f.vi + '.' + (f.i - 1))}</span>${wortHTML(f.s)}<span class="nb">${wortHTML(f.vi + '.' + (f.i + 1))}</span></a>
+      return `<div class="fs-karte" data-vi="${f.vi}"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="Im Muṣḥaf zeigen"><span class="nb">${wortBild(f.vi + '.' + (f.i - 1))}</span>${wortBild(f.s)}<span class="nb">${wortBild(f.vi + '.' + (f.i + 1))}</span></a>
         <div class="fs-unten"><div class="t"><b>${sureName(D.V[f.vi][0])} ${D.V[f.vi][0]}:${D.V[f.vi][1]}</b><span>${f.n}× vertan${arten ? ' · ' + arten : ''}</span>
           <span class="fs-fort" title="richtig in Folge">${Array.from({ length: Z.STELLE_ZIEL }, (_, k) => `<i class="${k < gut ? 'an' : ''}"></i>`).join('')}</span></div>
           ${ab ? `<a class="knopf haupt klein" href="#ueben/${ab.id}/stelle/${f.vi}" style="width:auto;text-decoration:none">Üben</a>` : ''}</div></div>`;
     }).join('') : '<p class="leer">Wenn du nach „Fehler“ auf das Wort tippst, bei dem du dich vertan hast, sammelt Itqān diese Stellen hier.</p>'}</div>`;
+  schriftAbgleichen(app).catch(() => {});
   // ähnliche Stellen nachtragen, sobald die Liste geladen ist
   // Paar: zum Vergleich. Größere Gruppe, wortgleiche Stelle oder Reihenfolge-Fall: zum Nachschlagen
   Promise.all([NL.laden(), S.paareLaden()]).then(([A, paare]) => app.querySelectorAll('.fs-karte[data-vi]').forEach(k => {
@@ -1867,7 +1878,7 @@ function einstellungen() {
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">Erlaubt</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">Aus</button></div></div>
     <div class="abschnitt"><h3>Sofortkorrektur</h3><p class="unter">Hattest du in einem Abschnitt Fehler, fragt Itqān die Āyāt mit Fehler am Ende gleich noch einmal ab. Das zählt nicht für die Punkte, die Wiederholung nach 1, 3 und 7 Tagen bleibt.</p>
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">An</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">Aus</button></div></div>
-    <div class="abschnitt"><h3>Dein Tag beginnt um</h3><p class="unter">Wer sein Wird nach Mitternacht macht, kann den Tageswechsel später legen. Bei 3 Uhr zählt ein Wird um 1 Uhr nachts noch zum Vortag, die Kette bleibt ganz.</p>
+    <div class="abschnitt"><h3>Dein Tag beginnt um</h3><p class="unter">Vorgabe ist 3 Uhr: Ein Wird um 1 Uhr nachts zählt noch zum Vortag, die Kette bleibt ganz. Wer nach dem Kalendertag rechnen will, wählt Mitternacht.</p>
       <label class="auswahl" style="margin-top:10px"><span>Tageswechsel</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? `${x} Uhr` : 'Mitternacht')}</select></label></div>
     <div class="abschnitt"><h3>Abhören durch eine zweite Person</h3><p class="unter">Zu Beginn eines Abschnitts steht klein „Jemand hört ab“. Dann sieht die zuhörende Person den Text offen und tippt Fehler direkt aufs Wort.</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">Anbieten</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">Aus</button></div></div>
@@ -2016,6 +2027,13 @@ async function lehrer() {
   Z.tagesSchnappschuss();
   await zeige();
   setTimeout(neuigkeitenPruefen, 600);
+  setTimeout(vorratSpeichern, 4000);
+  // wieder Netz: Seiten in einfacher Schrift bekommen ihre Muṣḥaf-Schrift, der Vorrat wird nachgeholt
+  addEventListener('online', () => { schriftAbgleichen().catch(() => {}); vorratSpeichern(); });
+  // Solange in ein Feld getippt wird, weicht die Navigation: auf dem iPhone rutscht sie sonst mit der Tastatur über den Inhalt
+  const tippfeld = el => !!el?.matches?.('textarea, [contenteditable=""], [contenteditable="true"], input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=file]):not([type=color])');
+  const tippt = () => document.documentElement.classList.toggle('tippt', tippfeld(document.activeElement));
+  document.addEventListener('focusin', tippt); document.addEventListener('focusout', () => setTimeout(tippt, 0));
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
   // Tageswechsel, wenn die App über Nacht offen bleibt
   let tag = Z.heute();
