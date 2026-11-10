@@ -1,69 +1,72 @@
 // Itqān · Rückblick als Bild: eine Woche oder ein Monat, zum Aufheben oder Teilen
 // Die Zahlen kommen aus zustand.js (rueckblick). Hier: Texte dazu und das Bild auf einer Zeichenfläche (1080 × 1350).
-import { zahl } from './daten.js';
+import { zahl, prozent } from './daten.js';
 import { RAENGE } from './zustand.js';
+import { tx, gebiet } from './sprache.js';
 
-const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-const WT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-const WT_LANG = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const MONATE = [tx('rueckblick.januar'), tx('rueckblick.februar'), tx('rueckblick.maerz'), tx('rueckblick.april'), tx('rueckblick.mai'), tx('rueckblick.juni'), tx('rueckblick.juli'), tx('rueckblick.august'), tx('rueckblick.september'), tx('rueckblick.oktober'), tx('rueckblick.november'), tx('rueckblick.dezember')];
+const WT = [tx('rueckblick.mo'), tx('rueckblick.di'), tx('rueckblick.mi'), tx('rueckblick.do'), tx('rueckblick.fr'), tx('rueckblick.sa'), tx('rueckblick.so')];
+const WT_LANG = [tx('rueckblick.montag'), tx('rueckblick.dienstag'), tx('rueckblick.mittwoch'), tx('rueckblick.donnerstag'), tx('rueckblick.freitag'), tx('rueckblick.samstag'), tx('rueckblick.sonntag')];
 const teile = d => d.split('-').map(Number);
 const wochentag = d => { const [y, m, t] = teile(d); return (new Date(y, m - 1, t).getDay() + 6) % 7; };
 
 // ---------- Texte ----------
 export function zeitraumTitel(R) {
   const [y1, m1, t1] = teile(R.von), [y2, m2, t2] = teile(R.bis);
-  if (R.art === 'monat') return `${MONATE[m1 - 1]} ${y1}`;
-  if (y1 !== y2) return `${t1}. ${MONATE[m1 - 1]} ${y1} bis ${t2}. ${MONATE[m2 - 1]} ${y2}`;
-  if (m1 !== m2) return `${t1}. ${MONATE[m1 - 1]} bis ${t2}. ${MONATE[m2 - 1]} ${y2}`;
-  return `${t1}. bis ${t2}. ${MONATE[m2 - 1]} ${y2}`;
+  const w = { t1, t2, y1, y2, m1: MONATE[m1 - 1], m2: MONATE[m2 - 1] };
+  if (R.art === 'monat') return tx('rueckblick.spanne_monat', w);
+  if (y1 !== y2) return tx('rueckblick.spanne_jahre', w);
+  if (m1 !== m2) return tx('rueckblick.spanne_monate', w);
+  return tx('rueckblick.spanne_tage', w);
 }
 export function seitenText(x) {
-  if (x < 0.75) return 'weniger als 1 Seite';
-  if (x >= 10) return `etwa ${zahl(x)} Seiten`;
+  if (x < 0.75) return tx('rueckblick.weniger_als_1_seite');
+  if (x >= 10) return tx('rueckblick.etwa_seiten', { x: zahl(x) });
   const h = Math.round(x * 2) / 2;
-  return `etwa ${h.toLocaleString('de-DE')} ${h === 1 ? 'Seite' : 'Seiten'}`;
+  return tx('rueckblick.etwa_seiten_2', { h: h.toLocaleString(gebiet('zahl')), n: h });
 }
 export function dauerText(sek) {
   const m = Math.max(1, Math.round(sek / 60));
-  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+  return m < 60 ? tx('rueckblick.min', { m }) : tx('rueckblick.h_min', { a: Math.floor(m / 60), b: m % 60 });
 }
-const mz = (n, eins, viele) => `${zahl(n)} ${n === 1 ? eins : viele}`;
+// Zahl und Zählwort: die Meldung wählt die Form nach den Regeln der Sprache, {z} ist die Zahl in ihrer Schreibweise
+const mz = n => ({ z: zahl(n), n });
 // was im Zeitraum erreicht wurde, das Wichtigste zuerst
-export function ereignisse(R) {
+export function ereignisse(R, vergleich = true) {
   const n = R.neu, l = [];
-  if (n.rang) l.push(`Neuer Rang: ${RAENGE[n.rang].n}`);
-  if (n.khatma) l.push(n.khatma === 1 ? 'Ḫatma vollendet' : `${n.khatma} Ḫatmāt vollendet`);
-  if (n.kette) l.push(`Kette von ${n.kette} Tagen erreicht`);
-  if (n.ornamente) l.push(n.ornamente === 1 ? '1 neues Ornament' : `${n.ornamente} neue Ornamente`);
-  if (n.vergoldet) l.push(mz(n.vergoldet, 'Ornament', 'Ornamente') + ' vergoldet');
-  if (R.vor.ayat > 0 && R.ayat > R.vor.ayat) l.push(`${zahl(R.ayat - R.vor.ayat)} Āyāt mehr als ${R.art === 'monat' ? 'im Monat' : 'in der Woche'} davor`);
+  if (n.rang) l.push(tx('rueckblick.neuer_rang', { n: RAENGE[n.rang].n }));
+  if (n.khatma) l.push(n.khatma === 1 ? tx('rueckblick.hatma_vollendet') : tx('rueckblick.hatmat_vollendet', { khatma: n.khatma }));
+  if (n.kette) l.push(tx('rueckblick.kette_von_tagen_erreicht', { kette: n.kette }));
+  if (n.ornamente) l.push(n.ornamente === 1 ? tx('rueckblick.1_neues_ornament') : tx('rueckblick.neue_ornamente', { ornamente: n.ornamente }));
+  if (n.vergoldet) l.push(tx('rueckblick.vergoldet', { vergoldet: tx('rueckblick.z_ornamente', mz(n.vergoldet)) }));
+  if (vergleich && R.vor.ayat > 0 && R.ayat > R.vor.ayat) l.push(tx('rueckblick.ayat_mehr_als_davor', { a: zahl(R.ayat - R.vor.ayat), b: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche') }));
   return l;
 }
 // die vier Kacheln: [Wert, Bezeichnung]
 export function kacheln(R) {
   return [
-    [`${R.voll} von ${R.wird}`, 'Wird erfüllt'],
-    [R.quote == null ? '·' : `${Math.floor(R.quote)} %`, 'sicher'],
-    R.kette != null ? [zahl(R.kette), R.kette === 1 ? 'Tag Kette' : 'Tage Kette'] : [zahl(R.folge), R.folge === 1 ? 'Tag in Folge' : 'Tage in Folge'],
-    [zahl(R.punkte), 'Itqān-Punkte']
+    [tx('rueckblick.von', { voll: R.voll, wird: R.wird }), tx('rueckblick.wird_erfuellt')],
+    [R.quote == null ? '·' : prozent(Math.floor(R.quote)), tx('allg.sicher')],
+    R.kette != null ? [zahl(R.kette), tx('rueckblick.tage_kette', { n: R.kette })] : [zahl(R.folge), tx('rueckblick.tage_in_folge', { n: R.folge })],
+    [zahl(R.punkte), tx('allg.itqan_punkte')]
   ];
 }
-export const unterzeile = R => [seitenText(R.seiten), mz(R.abschnitte, 'Abschnitt', 'Abschnitte'), ...(R.zeit >= 30 ? [dauerText(R.zeit)] : [])].join(' · ');
+export const unterzeile = R => [seitenText(R.seiten), tx('rueckblick.z_abschnitte', mz(R.abschnitte)), ...(R.zeit >= 30 ? [dauerText(R.zeit)] : [])].join(' · ');
 // der ganze Rückblick in Sätzen: Bildbeschreibung für Bildschirmleser und Text unter dem Bild
 export function beschreibung(R, name = '') {
-  const kopf = `${R.art === 'monat' ? 'Rückblick auf den Monat' : 'Rückblick auf die Woche vom'} ${zeitraumTitel(R)}${name ? ' von ' + name : ''}.`;
-  if (R.leer) return [kopf, 'In diesem Zeitraum wurde nicht geübt.'];
+  const kopf = `${R.art === 'monat' ? tx('rueckblick.rueckblick_auf_den_monat') : tx('rueckblick.rueckblick_auf_die_woche_vom')} ${zeitraumTitel(R)}${name ? ` ${tx('rueckblick.von_2', { name })}` : ''}.`;
+  if (R.leer) return [kopf, tx('rueckblick.in_diesem_zeitraum_wurde_nicht_geuebt')];
   const s = [kopf,
-    `${mz(R.ayat, 'Āya', 'Āyāt')} wiederholt, das sind ${seitenText(R.seiten)} in ${mz(R.abschnitte, 'Abschnitt', 'Abschnitten')}.`,
-    `An ${mz(R.geuebt, 'Tag', 'Tagen')} geübt, der Wird wurde an ${R.voll} von ${mz(R.wird, 'Tag', 'Tagen')} erfüllt${R.nach ? `, davon ${R.nach} am Tag danach nachgeholt` : ''}.`,
-    `${Math.floor(R.quote)} % der Āyāt ohne Fehler und ohne Hilfe${R.f + R.h ? ` (${mz(R.f, 'Fehler', 'Fehler')}, ${R.h} mit Hilfe)` : ''}.`,
-    `${zahl(R.punkte)} Itqān-Punkte${R.zeit >= 30 ? `, Übungszeit ${dauerText(R.zeit)}` : ''}.`,
-    R.kette != null ? `Die Kette steht bei ${mz(R.kette, 'Tag', 'Tagen')}.` : `Längste Folge erfüllter Tage: ${R.folge}.`];
-  if (R.bester && R.geuebt > 1) s.push(`Stärkster Tag: ${WT_LANG[wochentag(R.bester.d)]}, ${teile(R.bester.d)[2]}. ${MONATE[teile(R.bester.d)[1] - 1]}, mit ${mz(R.bester.ayat, 'Āya', 'Āyāt')}.`);
-  const e = ereignisse(R).filter(x => !x.includes(' davor'));
-  if (e.length) s.push(`Erreicht: ${e.join(', ')}.`);
-  if (R.vor.ayat > 0 && (!R.laufend || R.ayat > R.vor.ayat)) s.push(R.ayat === R.vor.ayat ? `Gleich viele Āyāt wie ${R.art === 'monat' ? 'im Monat' : 'in der Woche'} davor.`
-    : `${zahl(Math.abs(R.ayat - R.vor.ayat))} Āyāt ${R.ayat > R.vor.ayat ? 'mehr' : 'weniger'} als ${R.art === 'monat' ? 'im Monat' : 'in der Woche'} davor (${zahl(R.vor.ayat)}).`);
+    tx('rueckblick.wiederholt_das_sind_in', { ayat: tx('rueckblick.z_ayat', mz(R.ayat)), seiten: seitenText(R.seiten), abschnitte: tx('rueckblick.z_abschnitten', mz(R.abschnitte)) }),
+    tx('rueckblick.an_geuebt_der_wird_wurde_an_von_erfuellt', { geuebt: tx('rueckblick.z_tagen', mz(R.geuebt)), voll: R.voll, wird: tx('rueckblick.z_tagen', mz(R.wird)), a: R.nach ? tx('rueckblick.davon_am_tag_danach_nachgeholt', { nach: R.nach }) : '' }),
+    tx('rueckblick.der_ayat_ohne_fehler_und_ohne_hilfe', { quote: Math.floor(R.quote), a: R.f + R.h ? ` ${tx('rueckblick.mit_hilfe', { f: tx('rueckblick.z_fehler', mz(R.f)), h: R.h })}` : '' }),
+    tx('rueckblick.itqan_punkte', { punkte: zahl(R.punkte), a: R.zeit >= 30 ? tx('rueckblick.uebungszeit', { zeit: dauerText(R.zeit) }) : '' }),
+    R.kette != null ? tx('rueckblick.die_kette_steht_bei', { kette: tx('rueckblick.z_tagen', mz(R.kette)) }) : tx('rueckblick.laengste_folge_erfuellter_tage', { folge: R.folge })];
+  if (R.bester && R.geuebt > 1) s.push(tx('rueckblick.staerkster_tag_mit', { a: WT_LANG[wochentag(R.bester.d)], b: teile(R.bester.d)[2], c: MONATE[teile(R.bester.d)[1] - 1], ayat: tx('rueckblick.z_ayat', mz(R.bester.ayat)) }));
+  const e = ereignisse(R, false);
+  if (e.length) s.push(tx('rueckblick.erreicht', { e: e.join(', ') }));
+  if (R.vor.ayat > 0 && (!R.laufend || R.ayat > R.vor.ayat)) s.push(R.ayat === R.vor.ayat ? tx('rueckblick.gleich_viele_ayat_wie_davor', { a: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche') })
+    : tx('rueckblick.ayat_als_davor', { a: zahl(Math.abs(R.ayat - R.vor.ayat)), b: R.ayat > R.vor.ayat ? tx('rueckblick.mehr') : tx('rueckblick.weniger'), c: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche'), ayat: zahl(R.vor.ayat) }));
   return s;
 }
 export const dateiName = (R, name = '') => `Itqan-Rueckblick-${R.art === 'monat' ? R.von.slice(0, 7) : R.von}${name ? '-' + name.replace(/[^\p{L}\p{N}]+/gu, '_') : ''}.png`;
@@ -130,10 +133,10 @@ export function zeichnen(cv, R, F, name = '') {
   c.save(); c.translate(zx - 232 * zs, zy - 156 * zs); c.scale(zs, zs);
   const zg = c.createLinearGradient(0, 156, 0, 840); zg.addColorStop(0, F.z1); zg.addColorStop(1, F.z2); c.fillStyle = zg;
   c.fill(new Path2D(NISCHE)); c.fill(new Path2D(FLAMME)); c.restore();
-  c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.fillStyle = F.akzent; c.font = KOPF(58); c.fillText('Itqān', zx + 86, zy + 66);
+  c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.fillStyle = F.akzent; c.font = KOPF(58); c.fillText(tx('allg.itqan'), zx + 86, zy + 66);
   c.textAlign = 'right'; c.fillStyle = F.leise; c.font = TEXT(30, 500);
   try { c.letterSpacing = '4px'; } catch (e) {}
-  c.fillText(monat ? 'MONATSRÜCKBLICK' : 'WOCHENRÜCKBLICK', B - 86, zy + 60);
+  c.fillText(monat ? tx('rueckblick.monatsrueckblick') : tx('rueckblick.wochenrueckblick'), B - 86, zy + 60);
   try { c.letterSpacing = '0px'; } catch (e) {}
   // Titel
   let y = monat ? 258 : 282;
@@ -143,8 +146,8 @@ export function zeichnen(cv, R, F, name = '') {
   const gz = monat ? 150 : 200;
   y += (name ? 0 : 20) + gz * .93;
   c.fillStyle = F.akzent; passend(c, R.leer ? '0' : zahl(R.ayat), mitte, y, B - 200, gz, KOPF);
-  y += monat ? 52 : 62; c.fillStyle = F.text; c.font = KOPF(monat ? 40 : 46); c.fillText(R.ayat === 1 ? 'Āya wiederholt' : 'Āyāt wiederholt', mitte, y);
-  y += monat ? 44 : 50; c.fillStyle = F.leise; passend(c, R.leer ? 'In diesem Zeitraum wurde nicht geübt.' : unterzeile(R), mitte, y, B - 180, 32, TEXT);
+  y += monat ? 52 : 62; c.fillStyle = F.text; c.font = KOPF(monat ? 40 : 46); c.fillText(tx('rueckblick.ayat_wiederholt', { n: R.ayat }), mitte, y);
+  y += monat ? 44 : 50; c.fillStyle = F.leise; passend(c, R.leer ? tx('rueckblick.in_diesem_zeitraum_wurde_nicht_geuebt') : unterzeile(R), mitte, y, B - 180, 32, TEXT);
   // Tage
   if (monat) {
     const versatz = wochentag(R.von), reihen = Math.ceil((versatz + R.tage.length) / 7);
@@ -167,7 +170,7 @@ export function zeichnen(cv, R, F, name = '') {
       tagKreis(c, F, x, y, r, t.stand, (farbe, a) => {
         c.save(); c.globalAlpha = a;
         if (t.stand === 'voll' || t.stand === 'nach') { c.strokeStyle = farbe; c.lineWidth = 7; c.lineCap = 'round'; c.lineJoin = 'round'; haken(c, x, y, 40); }
-        else if (t.stand === 'ruhe') { c.fillStyle = farbe; c.font = TEXT(26); c.textBaseline = 'middle'; c.fillText('Ruhe', x, y + 2); }
+        else if (t.stand === 'ruhe') { c.fillStyle = farbe; c.font = TEXT(26); c.textBaseline = 'middle'; c.fillText(tx('rueckblick.ruhe'), x, y + 2); }
         c.restore();
       });
       if (t.ayat) { c.fillStyle = F.leise; c.font = TEXT(28); c.fillText(zahl(t.ayat), x, y + r + 40); }
@@ -176,7 +179,7 @@ export function zeichnen(cv, R, F, name = '') {
   }
   // Legende
   y += monat ? 46 : 56;
-  const leg = [['voll', 'Wird erfüllt'], ...(R.tage.some(t => t.stand === 'nach') ? [['nach', 'nachgeholt']] : []), ...(R.tage.some(t => t.stand === 'teil') ? [['teil', 'zum Teil']] : []), ...(R.tage.some(t => t.stand === 'ruhe') ? [['ruhe', 'Ruhetag']] : []), ...(R.tage.some(t => t.stand === 'aus') ? [['aus', 'ausgefallen']] : [])];
+  const leg = [['voll', tx('rueckblick.wird_erfuellt')], ...(R.tage.some(t => t.stand === 'nach') ? [['nach', tx('rueckblick.nachgeholt')]] : []), ...(R.tage.some(t => t.stand === 'teil') ? [['teil', tx('rueckblick.zum_teil')]] : []), ...(R.tage.some(t => t.stand === 'ruhe') ? [['ruhe', tx('allg.ruhetag')]] : []), ...(R.tage.some(t => t.stand === 'aus') ? [['aus', tx('rueckblick.ausgefallen')]] : [])];
   c.font = TEXT(26); c.textAlign = 'left';
   const lb = leg.map(([, t]) => 34 + c.measureText(t).width), ges = lb.reduce((a, b) => a + b, 0) + 36 * (leg.length - 1);
   let lx = mitte - ges / 2;
@@ -202,6 +205,6 @@ export function zeichnen(cv, R, F, name = '') {
   }
   // Fuß
   c.strokeStyle = F.linie; c.globalAlpha = .3; c.lineWidth = 1.5; c.beginPath(); c.moveTo(mitte - 150, fuss - 44); c.lineTo(mitte + 150, fuss - 44); c.stroke(); c.globalAlpha = 1;
-  c.fillStyle = F.leise; c.font = TEXT(28); c.fillText('Itqān · die Murāǧaʿa des ganzen Qurʾāns', mitte, fuss);
+  c.fillStyle = F.leise; c.font = TEXT(28); c.fillText(`${tx('allg.itqan')} · ${tx('rueckblick.die_muragaa_des_ganzen_qurans')}`, mitte, fuss);
   return cv;
 }

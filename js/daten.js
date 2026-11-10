@@ -1,3 +1,4 @@
+import { tx, gebiet, umschrift } from './sprache.js';
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
 export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2', modus: 'fort', gliederung: 'fort-2' };
 // Gliederungen: Fortgeschritten (bis etwa eine Seite) und Anfänger (höchstens eine halbe Seite); Name = Fassung für die Umstellung
@@ -52,18 +53,20 @@ const JUZ = [1, 22, 42, 62, 82, 102, 121, 142, 162, 182, 201, 222, 242, 262, 282
 export function juzVonSeite(p) { let j = 1; for (let i = 0; i < 30; i++) if (p >= JUZ[i]) j = i + 1; return j; }
 export const juzStart = j => JUZ[j - 1];
 
-export const sureName = s => D.S[s][1];
+export const sureName = s => umschrift(D.S[s][1]);
 export const sureArabisch = s => D.S[s][0];
 export const vers = vi => ({ s: D.V[vi][0], a: D.V[vi][1], b: D.V[vi][2], p: D.V[vi][3] });
 
 export function abschnittName(e) {
   if (e.nr) return `${sureName(e.von[0])} ${e.nr}`;
   if (e.von[0] === e.bis[0]) return sureName(e.von[0]);
-  return 'Sammelkarte';
+  return tx('daten.sammelkarte');
 }
 export function bereichText(e) {
-  return e.von[0] === e.bis[0] ? `${e.von[0]}:${e.von[1]} bis ${e.bis[1]}` : `${e.von[0]}:${e.von[1]} bis ${e.bis[0]}:${e.bis[1]}`;
+  return e.von[0] === e.bis[0] ? tx('daten.bis', { a: e.von[0], b: e.von[1], c: e.bis[1] }) : tx('daten.bis_2', { a: e.von[0], b: e.von[1], c: e.bis[0], d: e.bis[1] });
 }
-export const zahl = n => Math.round(n).toLocaleString('de-DE');
+export const zahl = n => Math.round(n).toLocaleString(gebiet('zahl'));
+// Prozentangabe in der Schreibweise der Sprache (Deutsch mit Abstand, Englisch ohne)
+export const prozent = n => tx('allg.prozent', { n });
 export const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const arZahl = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);

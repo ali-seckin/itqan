@@ -1,6 +1,7 @@
 // Itqān · Darstellung der Muṣḥaf-Seiten (Druck 1405, KFGQPC-Seitenschriften)
 import { D, sureArabisch, arZahl, schriftSeiten } from './daten.js';
 import { textLaden } from './suche.js';
+import { tx } from './sprache.js';
 
 const geladen = new Map(), da = new Set();   // da: Seiten, deren Schrift angemeldet ist
 // Fehlt eine Seitenschrift (ohne Netz und noch nicht gespeichert), steht der Text in der einfachen Uthmani-Schrift:
@@ -121,5 +122,5 @@ export function seiteHTML(p, opt = {}) {
     return `<div class="mz${p < 3 ? ' mitte' : ''}${zers ? ' ers' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');
   // Madanī-Muṣḥaf: ungerade Seiten liegen rechts, gerade links (Bundsteg jeweils innen)
-  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="img" aria-label="Muṣḥaf-Seite ${p}">${zeilen}</div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? 'R' : 'L'}</b>` : ''}</span></div>${einfach ? '<p class="ers-hinweis">Ohne Netz in einfacher Schrift. Die Muṣḥaf-Schrift dieser Seite lädt, sobald du wieder Netz hast.</p>' : ''}</div>`;
+  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="img" aria-label="${tx('mushaf.mushaf_seite', { p })}">${zeilen}</div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</b>` : ''}</span></div>${einfach ? `<p class="ers-hinweis">${tx('mushaf.ohne_netz_in_einfacher_schrift_die')}</p>` : ''}</div>`;
 }

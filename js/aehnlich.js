@@ -3,12 +3,13 @@
 //   f: [{ k, art: gleich|fast|aehnlich, kern, v: [{ g: [vi], d: [abweichende Wortnummern] }], was, wo, nach, vor, auch, verw, t }]
 //   t: [{ thema, hinweis, gruppen: [{ titel, notiz, faelle: [{ k, art: paar|stellung|weit, ta, tb, ab: [[vi, i, j]], ba, f }] }] }]
 //      ab = die häufigere Reihenfolge, ta und tb = Wortlaut der beiden Folgen
-import { D } from './daten.js';
+import { D, sureName } from './daten.js';
 import { normal, stelle, paareLaden } from './suche.js';
+import { tx } from './sprache.js';
 
-export const ART = { gleich: 'Wortgleich', fast: 'Fast gleich', aehnlich: 'Ähnlich' };
-export const WAS = { zusatz: 'Zusatz oder Auslassung', wort: 'anderes Wort', wortform: 'andere Wortform', bindewort: 'وَ oder فَ davor', reihenfolge: 'andere Reihenfolge' };
-export const WO = { anfang: 'am Anfang', mitte: 'in der Mitte', schluss: 'am Schluss' };
+export const ART = { gleich: tx('aehnlich.wortgleich'), fast: tx('aehnlich.fast_gleich'), aehnlich: tx('aehnlich.aehnlich') };
+export const WAS = { zusatz: tx('aehnlich.zusatz_oder_auslassung'), wort: tx('aehnlich.anderes_wort'), wortform: tx('aehnlich.andere_wortform'), bindewort: tx('aehnlich.oder_davor'), reihenfolge: tx('aehnlich.andere_reihenfolge') };
+export const WO = { anfang: tx('aehnlich.am_anfang'), mitte: tx('aehnlich.in_der_mitte'), schluss: tx('aehnlich.am_schluss') };
 
 let A = null;
 export async function laden() {
@@ -44,7 +45,8 @@ function vorbereiten(d, paare) {
 // ---------- Anfrage: Stelle (2:48), Sūrennummer, arabische Wörter oder Sūrenname ----------
 const falte = s => s.normalize('NFD').replace(/[̀-ͯʿʾ'’‘`-]/g, '').replace(/\s+/g, '').toLowerCase();
 const NAMEN = {};
-const sureGefaltet = s => NAMEN[s] ??= falte(D.S[s][1]);
+// gesucht wird in der Umschrift der Daten und in der Umschrift der geladenen Sprache
+const sureGefaltet = s => NAMEN[s] ??= [...new Set([D.S[s][1], sureName(s)].map(falte))].join(' ');
 export function anfrage(eingabe = '', sure = 0) {
   const q = eingabe.trim(), a = { sure, vi: null, sureQ: 0, text: '', name: '' };
   if (/^\d{1,3}\s*[:.,;\s]\s*\d{1,3}$/.test(q)) a.vi = stelle(q.replace(';', ':')) ?? -1;
@@ -95,16 +97,16 @@ export function danach(t, vi) {
 }
 export function merksatz(f) {
   const n = f.s.length;
-  if (f.art === 'gleich') return `Derselbe Wortlaut an ${n === 2 ? 'beiden' : 'allen ' + n} Stellen. Verwechselt wird hier die Fortsetzung.`;
+  if (f.art === 'gleich') return tx('aehnlich.derselbe_wortlaut_an_stellen_verwechselt', { a: n === 2 ? tx('aehnlich.beiden') : tx('aehnlich.allen', { n }) });
   const wo = f.wo.map(x => WO[x]);
-  return `Der Unterschied liegt ${wo.length > 1 ? wo.slice(0, -1).join(', ') + ' und ' + wo.at(-1) : wo[0]}.`;
+  return tx('aehnlich.der_unterschied_liegt', { a: wo.length > 1 ? `${wo.slice(0, -1).join(', ')} ${tx('aehnlich.und', { at: wo.at(-1) })}` : wo[0] });
 }
 // Reihenfolge-Fall: regel = eine Folge ist klar die häufigere
 export function fallSatz(x) {
-  const na = x.ab.length, nb = x.ba.length, regel = na >= 3 && na >= 2 * nb, st = n => `${n} ${n === 1 ? 'Stelle' : 'Stellen'}`;
-  const satz = na === nb ? `Beide Reihenfolgen kommen gleich oft vor, je ${st(na)}.`
-    : regel ? (nb === 1 ? `Regel mit einer einzigen Ausnahme: ${stelleKurz(x.ba[0][0])} (${D.S[D.V[x.ba[0][0]][0]][1]}).` : `Die Regel gilt an ${na} von ${na + nb} Stellen. Die ${nb} Ausnahmen lohnt es sich einzeln zu merken.`)
-    : `Keine klare Regel: ${na} Stellen in der einen, ${st(nb)} in der anderen Reihenfolge.`;
+  const na = x.ab.length, nb = x.ba.length, regel = na >= 3 && na >= 2 * nb, st = n => `${n} ${tx('aehnlich.stellen', { n })}`;
+  const satz = na === nb ? tx('aehnlich.beide_reihenfolgen_kommen_gleich_oft_vor', { na: st(na) })
+    : regel ? (nb === 1 ? tx('aehnlich.regel_mit_einer_einzigen_ausnahme', { stelleKurz: stelleKurz(x.ba[0][0]), a: sureName(D.V[x.ba[0][0]][0]) }) : tx('aehnlich.die_regel_gilt_an_von_stellen_die', { na, a: na + nb, nb }))
+    : tx('aehnlich.keine_klare_regel_stellen_in_der_einen', { na: st(na), nb: st(nb) });
   return { satz, regel };
 }
 // Markierung der Wörter einer Stelle [vi, i, j]: 'kern' für die Wörter, die den Platz tauschen, 'zw' für das Stück dazwischen

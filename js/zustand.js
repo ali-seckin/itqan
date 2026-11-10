@@ -1,8 +1,9 @@
 // Itqān · Profil, Tagesplan (Wird), Karteisystem, Punkte, Kette
 import { D, GLIEDERUNG } from './daten.js';
+import { tx, gebiet } from './sprache.js';
 
 const SCHLUESSEL = 'itqan-profil-v1';
-export const STUFEN = ['neu', 'im Aufbau', 'gefestigt', 'sicher', 'mutqan'];
+export const STUFEN = [tx('allg.neu'), tx('zustand.im_aufbau'), tx('allg.gefestigt'), tx('allg.sicher'), tx('allg.mutqan')];
 export const KETTEN_MEILEN = [7, 40, 66, 100, 200, 365, 604];
 const FEHLER_ABSTAND = [1, 3, 7];      // Tage bis zur nächsten Fehlerwiederholung
 export let P = null;
@@ -441,14 +442,14 @@ export function bonusVorschlag() { return fortsetzung(tagesplan()); }
 // ---------- Fehlerstellen (einzelne Wörter) ----------
 // P.fstellen['vi.i'] = { n: Anzahl, t: { Art: Anzahl }, d: zuletzt, m: { vi der verwechselten Āya: Anzahl } }
 // P.statistik.vw['viA-viB'] = Anzahl: dauerhafte Zählung der Verwechslungen je Āya-Paar (Grundlage der lernenden Liste)
-export const FEHLERARTEN = [['verwechslung', 'Verwechslung'], ['abweichung', 'Abweichung'], ['ausgelassen', 'Ausgelassen'], ['haraka', 'Ḥaraka'], ['haenger', 'Hänger']];
+export const FEHLERARTEN = [['verwechslung', tx('zustand.verwechslung')], ['abweichung', tx('zustand.abweichung')], ['ausgelassen', tx('zustand.ausgelassen')], ['haraka', tx('zustand.haraka')], ['haenger', tx('zustand.haenger')]];
 // kurze Erklärung, die beim Antippen einer Fehlerart erscheint
 export const FEHLERARTEN_TEXT = {
-  verwechslung: 'Mit einer ähnlichen Stelle verwechselt (Mutašābih).',
-  abweichung: 'Kleine Abweichung im Wort, z. B. ohne Wāw gelesen oder Fāʾ statt Wāw.',
-  ausgelassen: 'Ein Wort oder ein Stück übersprungen.',
-  haraka: 'Falscher Vokal oder falsches Zeichen.',
-  haenger: 'Hängen geblieben, erst nach einer Pause weiter.'
+  verwechslung: tx('zustand.mit_einer_aehnlichen_stelle_verwechselt'),
+  abweichung: tx('zustand.kleine_abweichung_im_wort_z_b_ohne_waw'),
+  ausgelassen: tx('zustand.ein_wort_oder_ein_stueck_uebersprungen'),
+  haraka: tx('zustand.falscher_vokal_oder_falsches_zeichen'),
+  haenger: tx('zustand.haengen_geblieben_erst_nach_einer_pause')
 };
 function artenAusStellen(fst) {
   const a = {}; for (const f of Object.values(fst || {})) for (const [x, n] of Object.entries(f.t || {})) a[x] = (a[x] || 0) + n;
@@ -541,12 +542,12 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
   const art = quelle || t.art[id] || 'frei';
   // Punkte: Rückmeldung über Können
-  let punkte = 10 * r + 5 * h, teile = [[`${r} Āyāt richtig`, 10 * r]];
-  if (h) teile.push([`${h} mit Hilfe`, 5 * h]);
-  if (!f && !h) { const b = Math.round(punkte * 0.25); punkte += b; teile.push(['Fehlerfrei', b]); }
-  if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push(['Bonusabschnitt +50 %', b]); }
+  let punkte = 10 * r + 5 * h, teile = [[tx('zustand.ayat_richtig', { r }), 10 * r]];
+  if (h) teile.push([tx('zustand.mit_hilfe', { h }), 5 * h]);
+  if (!f && !h) { const b = Math.round(punkte * 0.25); punkte += b; teile.push([tx('zustand.fehlerfrei'), b]); }
+  if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push([tx('zustand.bonusabschnitt_50'), b]); }
   const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
-  if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([`Kette +${kp} %`, b]); }
+  if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte });
   return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher };
@@ -641,19 +642,19 @@ export function ornamentStand(s) {
 // ohne Fehler und ohne Hilfe, gemessen über den ganzen gewählten Bereich), st2/st3/st4 (% der Abschnitte
 // mindestens gefestigt / sicher / mutqan), offen0 (keine Fehlerwiederholung offen)
 export const RAENGE = [
-  { n: 'Mubtadiʾ', ar: 'مُبْتَدِئ', de: 'der Beginnende', hifz: 'Du hast mit der geordneten Murāǧaʿa begonnen. Gemessen wird noch nichts, jeder Anfang zählt.', b: {} },
-  { n: 'Murīd', ar: 'مُرِيد', de: 'der Wollende, der Strebende', hifz: 'Die Absicht ist gefasst und durch Taten bestätigt. Die ersten Abschnitte sind wiederholt.', b: { punkte: 1000 } },
-  { n: 'Muwāẓib', ar: 'مُوَاظِب', de: 'der Beständige', hifz: 'Die Wiederholung hat einen festen Platz im Tag. Eine ganze Woche ohne Unterbrechung.', b: { punkte: 5000, kette: 7 } },
-  { n: 'Mutaʿāhid', ar: 'مُتَعَاهِد', de: 'der, der den Qurʾān pflegt', hifz: 'Nach dem Ḥadīṯ „Taʿāhadū hāḏā l-Qurʾān“: Er entkommt leichter als Kamele aus ihren Fußfesseln, darum pflegt man ihn. Vierzig Tage Beständigkeit, die Murāǧaʿa ist zur Gewohnheit geworden.', b: { punkte: 15000, kette: 40 } },
-  { n: 'Murābiṭ', ar: 'مُرَابِط', de: 'der auf seinem Posten Ausharrende', hifz: 'Du hältst deinen Bereich gegen das Vergessen. Drei von vier Āyāt sitzen beim letzten Durchgang.', b: { punkte: 30000, quote: 75 } },
-  { n: 'Ḫātim', ar: 'خَاتِم', de: 'der Vollendende', hifz: 'Eine ganze Runde durch deinen Bereich ist vollbracht. Mehr als vier von fünf Āyāt kommen ohne Fehler.', b: { punkte: 60000, khatma: 1, quote: 85 } },
-  { n: 'Mustaḥḍir', ar: 'مُسْتَحْضِر', de: 'der den Qurʾān gegenwärtig hat', hifz: 'Der ganze Qurʾān ist einmal vollständig wiederholt. Du findest in jede Stelle hinein, auch wenn es noch manchmal stockt.', b: { punkte: 100000, ganz: 1, voll: 1, quote: 88 } },
-  { n: 'Ḍābiṭ', ar: 'ضَابِط', de: 'der Genaue', hifz: 'Ḍabṭ heißt in den Ḥadīṯwissenschaften das genaue Bewahren des Wortlauts. Fehler sind Einzelfälle, die Hälfte aller Abschnitte ist gefestigt.', b: { punkte: 180000, ganz: 1, voll: 2, quote: 92, st2: 50 } },
-  { n: 'Ḥāḏiq', ar: 'حَاذِق', de: 'der Geübte, der Kundige', hifz: 'In den alten Qurʾānschulen hieß der Abschluss des Auswendiglernens Ḥiḏāq. Alle Teile sitzen, ähnliche Stellen (Mutašābihāt) werden meist sicher unterschieden.', b: { punkte: 270000, ganz: 1, voll: 3, quote: 94, st2: 75 } },
-  { n: 'Rāsiḫ', ar: 'رَاسِخ', de: 'der fest Verwurzelte', hifz: 'Wie „ar-rāsiḫūna fī l-ʿilm“ (3:7). Fehler sind selten, die Hälfte aller Abschnitte ist mehrere Runden in Folge fehlerfrei.', b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
-  { n: 'Mutqin', ar: 'مُتْقِن', de: 'der Meisterhafte', hifz: 'Vom selben Stamm wie Itqān. Der Qurʾān sitzt fast überall ohne Fehler, ein Drittel der Abschnitte ist schon vier Runden in Folge fehlerfrei.', b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
-  { n: 'Ṯabt', ar: 'ثَبْت', de: 'der Verlässliche', hifz: 'Ṯiqa ṯabt ist das höchste Lob für einen Überlieferer. Auf jede deiner Rezitationen ist Verlass, drei Viertel aller Abschnitte sind vier Runden in Folge fehlerfrei.', b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
-  { n: 'Mutqin Muṭlaq', ar: 'مُتْقِنٌ مُطْلَق', de: 'der uneingeschränkt Meisterhafte', hifz: 'Jede Stelle des ganzen Qurʾān sitzt ohne Fehler und ohne Hilfe. Jeder Abschnitt war in den letzten vier Durchgängen fehlerfrei, keine Fehlerwiederholung steht offen.', b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
+  { n: tx('zustand.mubtadi'), ar: 'مُبْتَدِئ', de: tx('zustand.der_beginnende'), hifz: tx('zustand.du_hast_mit_der_geordneten_muragaa'), b: {} },
+  { n: tx('zustand.murid'), ar: 'مُرِيد', de: tx('zustand.der_wollende_der_strebende'), hifz: tx('zustand.die_absicht_ist_gefasst_und_durch_taten'), b: { punkte: 1000 } },
+  { n: tx('zustand.muwazib'), ar: 'مُوَاظِب', de: tx('zustand.der_bestaendige'), hifz: tx('zustand.die_wiederholung_hat_einen_festen_platz'), b: { punkte: 5000, kette: 7 } },
+  { n: tx('zustand.mutaahid'), ar: 'مُتَعَاهِد', de: tx('zustand.der_der_den_quran_pflegt'), hifz: tx('zustand.nach_dem_hadit_taahadu_hada_l_quran_er'), b: { punkte: 15000, kette: 40 } },
+  { n: tx('zustand.murabit'), ar: 'مُرَابِط', de: tx('zustand.der_auf_seinem_posten_ausharrende'), hifz: tx('zustand.du_haeltst_deinen_bereich_gegen_das'), b: { punkte: 30000, quote: 75 } },
+  { n: tx('zustand.hatim'), ar: 'خَاتِم', de: tx('zustand.der_vollendende'), hifz: tx('zustand.eine_ganze_runde_durch_deinen_bereich'), b: { punkte: 60000, khatma: 1, quote: 85 } },
+  { n: tx('zustand.mustahdir'), ar: 'مُسْتَحْضِر', de: tx('zustand.der_den_quran_gegenwaertig_hat'), hifz: tx('zustand.der_ganze_quran_ist_einmal_vollstaendig'), b: { punkte: 100000, ganz: 1, voll: 1, quote: 88 } },
+  { n: tx('zustand.dabit'), ar: 'ضَابِط', de: tx('zustand.der_genaue'), hifz: tx('zustand.dabt_heisst_in_den_haditwissenschaften'), b: { punkte: 180000, ganz: 1, voll: 2, quote: 92, st2: 50 } },
+  { n: tx('zustand.hadiq'), ar: 'حَاذِق', de: tx('zustand.der_geuebte_der_kundige'), hifz: tx('zustand.in_den_alten_quranschulen_hiess_der'), b: { punkte: 270000, ganz: 1, voll: 3, quote: 94, st2: 75 } },
+  { n: tx('zustand.rasih'), ar: 'رَاسِخ', de: tx('zustand.der_fest_verwurzelte'), hifz: tx('zustand.wie_ar_rasihuna_fi_l_ilm_3_7_fehler_sind'), b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
+  { n: tx('zustand.mutqin'), ar: 'مُتْقِن', de: tx('zustand.der_meisterhafte'), hifz: tx('zustand.vom_selben_stamm_wie_itqan_der_quran'), b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
+  { n: tx('zustand.tabt'), ar: 'ثَبْت', de: tx('zustand.der_verlaessliche'), hifz: tx('zustand.tiqa_tabt_ist_das_hoechste_lob_fuer'), b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
+  { n: tx('zustand.mutqin_mutlaq'), ar: 'مُتْقِنٌ مُطْلَق', de: tx('zustand.der_uneingeschraenkt_meisterhafte'), hifz: tx('zustand.jede_stelle_des_ganzen_quran_sitzt_ohne'), b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
 ];
 export function kennzahlen() {
   const ids = reihe(); let ay = 0, ok = 0, offen = 0; const st = [0, 0, 0, 0, 0];
@@ -667,16 +668,16 @@ export function kennzahlen() {
     quote: ay ? 100 * ok / ay : 0, st2: ab(2), st3: ab(3), st4: ab(4), offen };
 }
 const BED = {
-  punkte: (s, z) => [`${s.toLocaleString('de-DE')} Itqān-Punkte`, z.punkte, s],
-  kette: (s, z) => [`${s} Tage Kette (längste)`, z.kette, s],
-  khatma: (s, z) => [`${s} ${s === 1 ? 'Runde' : 'Runden'} durch deinen Bereich`, z.khatma, s],
-  ganz: (s, z) => ['Ganzer Qurʾān gewählt (alle 30 Aǧzāʾ)', z.ganz, 1],
-  voll: (s, z) => [`${s} ${s === 1 ? 'Ḫatma' : 'Ḫatmāt'} über den ganzen Qurʾān`, z.voll, s],
-  quote: (s, z) => [`${s} % fehlerfrei beim letzten Durchgang`, Math.floor(z.quote * 10) / 10, s],
-  st2: (s, z) => [`${s} % der Abschnitte mindestens gefestigt`, Math.floor(z.st2), s],
-  st3: (s, z) => [`${s} % der Abschnitte mindestens sicher`, Math.floor(z.st3), s],
-  st4: (s, z) => [`${s} % der Abschnitte mutqan`, Math.floor(z.st4), s],
-  offen0: (s, z) => ['Keine Fehlerwiederholung offen', z.offen ? 0 : 1, 1]
+  punkte: (s, z) => [tx('zustand.itqan_punkte', { s: s.toLocaleString(gebiet('zahl')) }), z.punkte, s],
+  kette: (s, z) => [tx('zustand.tage_kette_laengste', { s }), z.kette, s],
+  khatma: (s, z) => [tx('zustand.runden_durch_deinen_bereich', { s }), z.khatma, s],
+  ganz: (s, z) => [tx('zustand.ganzer_quran_gewaehlt_alle_30_agza'), z.ganz, 1],
+  voll: (s, z) => [tx('zustand.hatmat_ueber_den_ganzen_quran', { s }), z.voll, s],
+  quote: (s, z) => [tx('zustand.fehlerfrei_beim_letzten_durchgang', { s }), Math.floor(z.quote * 10) / 10, s],
+  st2: (s, z) => [tx('zustand.der_abschnitte_mindestens_gefestigt', { s }), Math.floor(z.st2), s],
+  st3: (s, z) => [tx('zustand.der_abschnitte_mindestens_sicher', { s }), Math.floor(z.st3), s],
+  st4: (s, z) => [tx('zustand.der_abschnitte_mutqan', { s }), Math.floor(z.st4), s],
+  offen0: (s, z) => [tx('zustand.keine_fehlerwiederholung_offen'), z.offen ? 0 : 1, 1]
 };
 // je Bedingung: { text, ist, soll, ok }
 export function bedingungen(i, z = kennzahlen()) {
@@ -836,7 +837,7 @@ export async function exportDatei(profil = P) {
 }
 export async function importDatei(text) {
   const o = JSON.parse(text);
-  if (o.format !== 'itqan-profil' || !o.profil || o.profil.format !== 'itqan') throw new Error('Keine Itqān-Profildatei');
+  if (o.format !== 'itqan-profil' || !o.profil || o.profil.format !== 'itqan') throw new Error(tx('zustand.keine_itqan_profildatei'));
   const echt = (await pruefsumme(JSON.stringify(o.profil))) === o.pruef;
   return { profil: o.profil, echt, exportiert: o.exportiert };
 }

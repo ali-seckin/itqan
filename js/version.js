@@ -1,3 +1,4 @@
+import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
 export const VERSION = '1.12';
 
@@ -10,82 +11,82 @@ export const RUECKMELDUNG_AN = '';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
-  { v: '1.12', datum: '2026-11-10', titel: 'Fundament für mehrere Geräte', punkte: [
-    'Unter der Oberfläche führt Itqān jetzt Buch über jeden Lernschritt. Das ist die Grundlage dafür, dass später zwei Geräte ihren Stand ohne Verlust zusammenführen. Für dich ändert sich heute nichts.',
-    'Eine Sicherung merkt sich ihren Zeitpunkt. Damit lässt sich später zuordnen, was danach noch geübt wurde.',
-    'Neu in den Einstellungen: Quellen. Dort steht, woher die Muṣḥaf-Schriften und der Text stammen.',
-    'Bei den ähnlichen Stellen steht jetzt, dass die Liste eine Orientierung ist und keine Vollständigkeit beansprucht.'
+  { v: '1.12', datum: '2026-11-10', titel: tx('version.fundament_fuer_mehrere_geraete'), punkte: [
+    tx('version.unter_der_oberflaeche_fuehrt_itqan_jetzt'),
+    tx('version.eine_sicherung_merkt_sich_ihren'),
+    tx('version.neu_in_den_einstellungen_quellen_dort'),
+    tx('version.bei_den_aehnlichen_stellen_steht_jetzt')
   ] },
-  { v: '1.11', datum: '2026-11-10', titel: 'Ohne Netz und beim Tippen', punkte: [
-    'Ohne Netz bleibt der Text lesbar: Fehlt die Muṣḥaf-Schrift einer Seite, zeigt Itqān dieselben Zeilen in einfacher Schrift. Sobald du wieder Netz hast, kommt die Muṣḥaf-Schrift von selbst zurück.',
-    'Die Seiten deines heutigen Wird speichert Itqān jetzt im Hintergrund. Alle 604 Seiten auf einmal sicherst du in den Einstellungen unter „Offline“.',
-    'Beim Tippen in ein Suchfeld oder Textfeld weicht die Menüleiste. Sie rutscht nicht mehr über die Tastatur.',
-    'Der Tag beginnt jetzt um 3 Uhr: Ein Wird nach Mitternacht zählt noch zum Vortag. Ändern kannst du das in den Einstellungen.'
+  { v: '1.11', datum: '2026-11-10', titel: tx('version.ohne_netz_und_beim_tippen'), punkte: [
+    tx('version.ohne_netz_bleibt_der_text_lesbar_fehlt'),
+    tx('version.die_seiten_deines_heutigen_wird'),
+    tx('version.beim_tippen_in_ein_suchfeld_oder'),
+    tx('version.der_tag_beginnt_jetzt_um_3_uhr_ein_wird')
   ] },
-  { v: '1.10', datum: '2026-11-10', titel: 'Lesbarkeit und Hilfe', punkte: [
-    'Seitengröße 100, 125 oder 150 %: Die Muṣḥaf-Seite wird größer, beim Üben folgt sie der Stelle, an der du bist. Dazu drei Schriftgrößen für die App.',
-    'Zoomen mit zwei Fingern ist überall erlaubt. Knöpfe und Verweise sind mindestens 44 Punkte groß.',
-    'Besser lesbar in Hell und Dunkel: Alle Texte halten den Kontrast für gut lesbare Schrift ein.',
-    'Für Bildschirmleser und Tastatur: Jeder Knopf hat einen Namen, der Fokus ist sichtbar, die aufgedeckte Āya wird angesagt.',
-    'Neu unter Profil: Hilfe und Glossar mit Antworten auf die häufigsten Fragen und allen Begriffen der App.'
+  { v: '1.10', datum: '2026-11-10', titel: tx('version.lesbarkeit_und_hilfe'), punkte: [
+    tx('version.seitengroesse_100_125_oder_150_die'),
+    tx('version.zoomen_mit_zwei_fingern_ist_ueberall'),
+    tx('version.besser_lesbar_in_hell_und_dunkel_alle'),
+    tx('version.fuer_bildschirmleser_und_tastatur_jeder'),
+    tx('version.neu_unter_profil_hilfe_und_glossar_mit')
   ] },
-  { v: '1.9', datum: '2026-11-10', titel: 'Rückblick als Bild', punkte: [
-    'Neu unter Profil: der Rückblick. Eine Woche oder ein Monat als Bild, mit Āyāt, erfüllten Tagen, Sicherheit, Kette und Punkten.',
-    'Teilen auf iPhone und Android direkt aus der App, am Computer als Bilddatei. Mit oder ohne deinen Namen.',
-    'Jeder Tag hat sein Zeichen: erfüllt, nachgeholt, zum Teil, Ruhetag oder ausgefallen. Darunter steht alles noch einmal in Worten.',
-    'Das Bild entsteht auf deinem Gerät und folgt deinem Erscheinungsbild, hell oder dunkel.'
+  { v: '1.9', datum: '2026-11-10', titel: tx('version.rueckblick_als_bild'), punkte: [
+    tx('version.neu_unter_profil_der_rueckblick_eine'),
+    tx('version.teilen_auf_iphone_und_android_direkt_aus'),
+    tx('version.jeder_tag_hat_sein_zeichen_erfuellt'),
+    tx('version.das_bild_entsteht_auf_deinem_geraet_und')
   ] },
-  { v: '1.8', datum: '2026-11-10', titel: 'Mutašābihāt nachschlagen', punkte: [
-    'Ähnliche Stellen unter Profil sind jetzt ein Nachschlagewerk: 300 Gruppen ähnlicher Verse mit 750 Stellen, auch die wortgleichen Āyāt.',
-    'Suche nach Stelle (2:48), Sūra oder arabischen Wörtern. Filter nach Art des Unterschieds, nach seinem Ort in der Āya und nach Größe der Gruppe.',
-    'Unter jeder Stelle steht, wie die folgende Āya beginnt. Gruppen, die meist aufeinander folgen, sind miteinander verknüpft.',
-    'Neuer Bereich „Reihenfolge“: 81 Fälle, in denen dieselben Wörter in anderer Reihenfolge stehen, mit Regel und Ausnahmen.',
-    'Von den Fehlerstellen führt ein Verweis direkt zur passenden Gruppe.'
+  { v: '1.8', datum: '2026-11-10', titel: tx('version.mutasabihat_nachschlagen'), punkte: [
+    tx('version.aehnliche_stellen_unter_profil_sind'),
+    tx('version.suche_nach_stelle_2_48_sura_oder'),
+    tx('version.unter_jeder_stelle_steht_wie_die'),
+    tx('version.neuer_bereich_reihenfolge_81_faelle_in'),
+    tx('version.von_den_fehlerstellen_fuehrt_ein_verweis')
   ] },
-  { v: '1.7', datum: '2026-11-09', titel: 'Suche und ähnliche Stellen', punkte: [
-    'Suche im ganzen Qurʾān ohne Vokale, auch offline: im Muṣḥaf oben auf die Lupe. Eine Stelle wie 2:255 springt direkt dorthin.',
-    'Ähnliche Stellen (Mutašābihāt) unter Profil: zwei Āyāt nebeneinander, die Unterschiede markiert.',
-    'Neuer Modus „Unterscheiden“: Nur die abweichenden Wörter sind verdeckt, du rezitierst beide Stellen und prüfst dich.'
+  { v: '1.7', datum: '2026-11-09', titel: tx('version.suche_und_aehnliche_stellen'), punkte: [
+    tx('version.suche_im_ganzen_quran_ohne_vokale_auch'),
+    tx('version.aehnliche_stellen_mutasabihat_unter'),
+    tx('version.neuer_modus_unterscheiden_nur_die')
   ] },
-  { v: '1.6', datum: '2026-11-09', titel: 'Klug planen', punkte: [
-    'Schwache Abschnitte: wähle in den Einstellungen zwischen „Ḫatma zuerst“, „Ausgewogen“ und „Schwächen zuerst“. Zusätzliche Wiederholungen stehen als „Festigen“ im Tagesplan.',
-    'Ruhetage pro Wochentag und eine Pause bis zu 30 Tage. Die Kette wartet und läuft danach weiter.',
-    'Neue Auswertung im Profil: Fehlerarten, Sūren mit Fehlern, Quote je Woche und Zeit je Abschnitt.'
+  { v: '1.6', datum: '2026-11-09', titel: tx('version.klug_planen'), punkte: [
+    tx('version.schwache_abschnitte_waehle_in_den'),
+    tx('version.ruhetage_pro_wochentag_und_eine_pause'),
+    tx('version.neue_auswertung_im_profil_fehlerarten')
   ] },
-  { v: '1.5', datum: '2026-11-09', titel: 'Feinschliff der Überschriften', punkte: [
-    'ʿAin und Hamza in der Umschrift kräftiger und deutlicher, etwa in „ʿalaikum“ oder „Juzʾ“.',
-    'Große Überschriften etwas enger gesetzt und dadurch ruhiger.'
+  { v: '1.5', datum: '2026-11-09', titel: tx('version.feinschliff_der_ueberschriften'), punkte: [
+    tx('version.ain_und_hamza_in_der_umschrift'),
+    tx('version.grosse_ueberschriften_etwas_enger')
   ] },
-  { v: '1.4', datum: '2026-11-09', titel: 'Klarere Schrift', punkte: [
-    'Echte fette Schnitte statt künstlich verdickter Buchstaben.',
-    'Sieben feste Schriftgrößen statt 31, dadurch ruhiger und einheitlicher.',
-    'Kleinste Beschriftungen größer und besser lesbar, Zahlen gleich breit.'
+  { v: '1.4', datum: '2026-11-09', titel: tx('version.klarere_schrift'), punkte: [
+    tx('version.echte_fette_schnitte_statt_kuenstlich'),
+    tx('version.sieben_feste_schriftgroessen_statt_31'),
+    tx('version.kleinste_beschriftungen_groesser_und')
   ] },
-  { v: '1.3', datum: '2026-11-09', titel: 'Neues Zeichen', punkte: [
-    'Itqān hat ein neues, schlichtes Zeichen: eine Nische mit einer Flamme, nach Sūra an-Nūr 24:35.',
-    'Es ersetzt die Laterne auf dem Home-Bildschirm, im Browser, auf der Startseite, beim Abschluss und in der Kette.',
-    'Hilfe beim Aufdecken heißt jetzt „Erstes Wort“, danach „Noch ein Wort“.',
-    'Das Abhören durch eine zweite Person heißt jetzt „Jemand hört ab“.'
+  { v: '1.3', datum: '2026-11-09', titel: tx('version.neues_zeichen'), punkte: [
+    tx('version.itqan_hat_ein_neues_schlichtes_zeichen'),
+    tx('version.es_ersetzt_die_laterne_auf_dem_home'),
+    tx('version.hilfe_beim_aufdecken_heisst_jetzt_erstes'),
+    tx('version.das_abhoeren_durch_eine_zweite_person')
   ] },
-  { v: '1.2', datum: '2026-11-09', titel: 'Verlässlich prüfen', punkte: [
-    'Vorige Āya neu bewerten: Ein Fehltipp lässt sich zurücknehmen, auch die markierten Stellen.',
-    '„Doch kein Fehler“ führt nach einem versehentlichen „Fehler“ zurück.',
-    'Angefangene Übungen bleiben gespeichert und lassen sich am selben Tag fortsetzen.',
-    'Sofortkorrektur: Die Āyāt mit Fehler kommen am Ende des Abschnitts gleich noch einmal.',
-    'Hilfe Wort für Wort statt nur des ersten Wortes.',
-    'Eigener Tageswechsel, z. B. um 3 Uhr, für ein Wird nach Mitternacht.',
-    'Dezent: „Jemand hört ab“ öffnet den Text für eine zweite Person, die Fehler aufs Wort tippt.'
+  { v: '1.2', datum: '2026-11-09', titel: tx('version.verlaesslich_pruefen'), punkte: [
+    tx('version.vorige_aya_neu_bewerten_ein_fehltipp'),
+    tx('version.doch_kein_fehler_fuehrt_nach_einem'),
+    tx('version.angefangene_uebungen_bleiben_gespeichert'),
+    tx('version.sofortkorrektur_die_ayat_mit_fehler'),
+    tx('version.hilfe_wort_fuer_wort_statt_nur_des'),
+    tx('version.eigener_tageswechsel_z_b_um_3_uhr_fuer'),
+    tx('version.dezent_jemand_hoert_ab_oeffnet_den_text')
   ] },
-  { v: '1.1', datum: '2026-11-09', titel: 'Schutz und Testbetrieb', punkte: [
-    'Profil sichern öffnet am Handy das Teilen-Menü: in Dateien, iCloud Drive oder per WhatsApp an dich selbst.',
-    'Vor dem Laden einer Sicherung siehst du, was darin steht.',
-    'Nach sieben Tagen ohne Sicherung erinnert dich Heute daran.',
-    'Schnappschüsse: Itqān legt täglich und vor wichtigen Schritten eine Kopie auf dem Gerät ab, die du zurückholen kannst.',
-    'Anleitung zum Installieren auf dem Home-Bildschirm.',
-    'Alle Seiten speichern zeigt den Stand und lässt sich nach einem Abbruch fortsetzen.',
-    'Versionsnummer, diese Neuigkeiten und „Rückmeldung senden“ im Profil.'
+  { v: '1.1', datum: '2026-11-09', titel: tx('version.schutz_und_testbetrieb'), punkte: [
+    tx('version.profil_sichern_oeffnet_am_handy_das'),
+    tx('version.vor_dem_laden_einer_sicherung_siehst_du'),
+    tx('version.nach_sieben_tagen_ohne_sicherung'),
+    tx('version.schnappschuesse_itqan_legt_taeglich_und'),
+    tx('version.anleitung_zum_installieren_auf_dem_home'),
+    tx('version.alle_seiten_speichern_zeigt_den_stand'),
+    tx('version.versionsnummer_diese_neuigkeiten_und')
   ] },
-  { v: '1.0', datum: '2026-11-09', titel: 'Ausgangsstand', punkte: [
-    'Stand der Sicherung vor dem Gutachten Teil A: 114 Ornamente, Doppelseite auf PC und Tablet, geführte Erklärung beim ersten Üben.'
+  { v: '1.0', datum: '2026-11-09', titel: tx('version.ausgangsstand'), punkte: [
+    tx('version.stand_der_sicherung_vor_dem_gutachten')
   ] }
 ];

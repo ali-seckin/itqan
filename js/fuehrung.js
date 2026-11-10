@@ -1,3 +1,4 @@
+import { tx } from './sprache.js';
 // Itqān · Geführte Erklärung: dunkelt den Bildschirm ab, lässt ein Element ausgespart hell stehen
 // und zeigt daneben einen kleinen Erklärkasten. Schritte: { ziel: () => Element | Element[] | null, titel, text }
 
@@ -22,9 +23,9 @@ export function fuehrung(schritte) {
   return new Promise(fertig => {
     const o = document.createElement('div'); o.className = 'fuehrung';
     o.innerHTML = `<div class="fh-loch"></div><div class="fh-box" role="dialog" aria-live="polite">
-      <div class="fh-kopf"><span class="fh-nr"></span><button class="fh-weg">Überspringen</button></div>
+      <div class="fh-kopf"><span class="fh-nr"></span><button class="fh-weg">${tx('fuehrung.ueberspringen')}</button></div>
       <h3></h3><p></p>
-      <div class="fh-knoepfe"><button class="knopf leise klein fh-zurueck">Zurück</button><button class="knopf haupt klein fh-weiter">Weiter</button></div></div>`;
+      <div class="fh-knoepfe"><button class="knopf leise klein fh-zurueck">${tx('allg.zurueck')}</button><button class="knopf haupt klein fh-weiter">${tx('allg.weiter')}</button></div></div>`;
     document.body.appendChild(o);
     const loch = o.querySelector('.fh-loch'), box = o.querySelector('.fh-box');
     let i = 0, ziel = null;
@@ -50,11 +51,11 @@ export function fuehrung(schritte) {
     function zeige(n) {
       i = n; const s = schritte[i];
       ziel = s.ziel ? s.ziel() : null;
-      o.querySelector('.fh-nr').textContent = `${i + 1} von ${schritte.length}`;
+      o.querySelector('.fh-nr').textContent = tx('fuehrung.von', { a: i + 1, n: schritte.length });
       box.querySelector('h3').textContent = s.titel;
       box.querySelector('p').innerHTML = s.text;
       o.querySelector('.fh-zurueck').style.visibility = i ? 'visible' : 'hidden';
-      o.querySelector('.fh-weiter').textContent = i === schritte.length - 1 ? (s.los || 'Verstanden') : 'Weiter';
+      o.querySelector('.fh-weiter').textContent = i === schritte.length - 1 ? (s.los || tx('fuehrung.verstanden')) : tx('allg.weiter');
       o.classList.toggle('ohne-ziel', !ziel);
       // Ziel auf der Seite (nicht in der festen Leiste) in die Mitte holen
       const erstes = Array.isArray(ziel) ? ziel[0] : ziel;

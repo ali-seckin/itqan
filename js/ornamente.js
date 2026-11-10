@@ -2,6 +2,7 @@
 // kurze Sūren eine Blüte (so viele Blätter wie Āyāt, wenn es höchstens zwölf sind), mittlere ein Medaillon mit Bögen,
 // lange ein Medaillon mit Sternflechtband und Strahlen, die sieben längsten eine große Šamsa wie im Tezhip.
 import { D, arZahl } from './daten.js';
+import { tx } from './sprache.js';
 
 // Farbklänge nach Tezhip und İznik: Grund (innen, außen), Hauptfarbe, Zweitfarbe, Akzent
 const PAL = [
@@ -32,7 +33,7 @@ const GROESSE = '155555545444333444344434343433224333333433322322222222222222222
 export const groesse = s => +GROESSE[s - 1];
 // Gestalt des Ornaments: 1 Blüte, 2 Medaillon mit Bögen, 3 Medaillon mit Sternflechtband und Strahlen, 4 große Šamsa
 export const klasse = s => s === 1 ? 4 : [0, 1, 2, 3, 3, 4][groesse(s)];
-export const KLASSEN_TEXT = ['', 'Eine Blüte', 'Ein Medaillon mit Bögen', 'Ein Medaillon mit Sternflechtband und Strahlen', 'Eine große Šamsa (Sonnenmedaillon) für eine der sieben längsten Sūren'];
+export const KLASSEN_TEXT = ['', tx('ornamente.eine_bluete'), tx('ornamente.ein_medaillon_mit_boegen'), tx('ornamente.ein_medaillon_mit_sternflechtband_und'), tx('ornamente.eine_grosse_samsa_sonnenmedaillon_fuer')];
 
 // Parameter je Sūra, so verteilt, dass keine zwei Ornamente gleich sind und Nachbarn verschiedene Farben haben
 let PARAM = null;
@@ -56,11 +57,11 @@ function parameter() {
 function blatt(form, r0, r1, w) {
   const L = r1 - r0, m = (r0 + r1) / 2;
   switch (form) {
-    case 'mandel': return `M${f(r0)} 0Q${f(m)} ${f(-w * 2)} ${f(r1)} 0Q${f(m)} ${f(w * 2)} ${f(r0)} 0Z`;
-    case 'kolben': return `M${f(r0)} 0C${f(r0 + L * .4)} ${f(-w * .25)} ${f(r1)} ${f(-w * 1.25)} ${f(r1)} 0C${f(r1)} ${f(w * 1.25)} ${f(r0 + L * .4)} ${f(w * .25)} ${f(r0)} 0Z`;
-    case 'spitz': return `M${f(r0)} 0C${f(r0 + L * .2)} ${f(-w * 1.35)} ${f(r1 - L * .45)} ${f(-w * 1.1)} ${f(r1)} 0C${f(r1 - L * .45)} ${f(w * 1.1)} ${f(r0 + L * .2)} ${f(w * 1.35)} ${f(r0)} 0Z`;
-    case 'tulpe': return `M${f(r0)} 0C${f(r0 + L * .3)} ${f(-w * 1.15)} ${f(r1 - L * .35)} ${f(-w * 1.45)} ${f(r1 - L * .1)} ${f(-w * 1.05)}Q${f(r1 - L * .32)} ${f(-w * .35)} ${f(r1)} 0Q${f(r1 - L * .32)} ${f(w * .35)} ${f(r1 - L * .1)} ${f(w * 1.05)}C${f(r1 - L * .35)} ${f(w * 1.45)} ${f(r0 + L * .3)} ${f(w * 1.15)} ${f(r0)} 0Z`;
-    default: return `M${f(r0)} 0C${f(r0 + L * .15)} ${f(-w * 1.5)} ${f(r1 + L * .04)} ${f(-w * 1.55)} ${f(r1)} ${f(-w * .28)}L${f(r1 - L * .17)} 0L${f(r1)} ${f(w * .28)}C${f(r1 + L * .04)} ${f(w * 1.55)} ${f(r0 + L * .15)} ${f(w * 1.5)} ${f(r0)} 0Z`;
+    case 'mandel': return tx('ornamente.m_0q_0q_0z', { r0: f(r0), m: f(m), a: f(-w * 2), r1: f(r1), b: f(w * 2) });
+    case 'kolben': return tx('ornamente.m_0c_0c_0z', { r0: f(r0), a: f(r0 + L * .4), b: f(-w * .25), r1: f(r1), c: f(-w * 1.25), d: f(w * 1.25), e: f(w * .25) });
+    case 'spitz': return tx('ornamente.m_0c_0c_0z_2', { r0: f(r0), a: f(r0 + L * .2), b: f(-w * 1.35), c: f(r1 - L * .45), d: f(-w * 1.1), r1: f(r1), e: f(w * 1.1), f: f(w * 1.35) });
+    case 'tulpe': return tx('ornamente.m_0c_q_0q_c_0z', { r0: f(r0), a: f(r0 + L * .3), b: f(-w * 1.15), c: f(r1 - L * .35), d: f(-w * 1.45), e: f(r1 - L * .1), f: f(-w * 1.05), g: f(r1 - L * .32), h: f(-w * .35), r1: f(r1), i: f(w * .35), j: f(w * 1.05), k: f(w * 1.45), l: f(w * 1.15) });
+    default: return tx('ornamente.m_0c_l_0l_c_0z', { r0: f(r0), a: f(r0 + L * .15), b: f(-w * 1.5), c: f(r1 + L * .04), d: f(-w * 1.55), r1: f(r1), e: f(-w * .28), f: f(r1 - L * .17), g: f(w * .28), h: f(w * 1.55), i: f(w * 1.5) });
   }
 }
 // n Blätter im Kreis, mit innerer Ader in der Zweitfarbe
@@ -93,7 +94,7 @@ function boegen(n, r, tiefe) {
   let d = '';
   for (let i = 0; i <= n; i++) {
     const p = pol(r, -Math.PI / 2 + i * 2 * Math.PI / n);
-    if (!i) d += 'M' + p; else { const sehne = 2 * r * Math.sin(Math.PI / n); d += `A${f(sehne / 2 + tiefe)} ${f(sehne / 2 + tiefe)} 0 0 1 ${p}`; }
+    if (!i) d += 'M' + p; else { const sehne = 2 * r * Math.sin(Math.PI / n); d += tx('ornamente.a_0_0_1', { a: f(sehne / 2 + tiefe), p }); }
   }
   return d + 'Z';
 }
@@ -164,6 +165,6 @@ export function ornamentSVG(s, stufe = 2, klasseCss = '') {
     k += mitte(id, s, 15, P, gold);
   }
   if (stufe >= 4) k += `<circle r="${p.k >= 3 ? 99 : 98}" fill="none" stroke="${gold}" stroke-width="2.2"/>`;
-  return `<svg class="ornament k${p.k}${stufe ? '' : ' zu'}${stufe >= 4 ? ' gold' : ''}${klasseCss ? ' ' + klasseCss : ''}" viewBox="-101 -101 202 202" role="img" aria-label="Ornament Sūra ${s}">${defs}${k}</svg>`;
+  return `<svg class="ornament k${p.k}${stufe ? '' : ' zu'}${stufe >= 4 ? ' gold' : ''}${klasseCss ? ' ' + klasseCss : ''}" viewBox="-101 -101 202 202" role="img" aria-label="${tx('ornamente.ornament_sura', { s })}">${defs}${k}</svg>`;
 }
 export const ornamentInfo = s => { const p = parameter()[s]; return { klasse: p.k, blaetter: p.blaetter, ayat: p.ayat, farbe: p.pal.n }; };

@@ -839,7 +839,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .textlink.mini,.tut-weg{min-height:0}
 .textlink.mini::after{inset:-7px 0}
 .textlink.mini.leiser::after{inset:-9px 0}
-.tut-weg::after{inset:-8px -6px}
+.tut-weg::after{inset:-8px -12px}
 .fh-weg::after{inset:-10px -6px}
 .vk-kopf a::after{inset:-11px -16px}
 .ah-chip::after,.ah-mehr::after{inset:-6px 0}
