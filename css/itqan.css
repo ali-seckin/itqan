@@ -8,13 +8,13 @@
 :root,[data-modus=hell]{--bg:#f3e8d2;--bg2:#ead9b8;--karte:#fbf4e4;--karte2:#fffaf0;--rand:#e1cfae;
  --text:#3a2a1d;--leise:#6f5942;--akzent:#b7772f;--akzent2:#d99a4e;--aufAkzent:#fff;--gut:#6f8f5a;--schlecht:#b5543a;
  --akzentT:#855312;--akzentF:#96601c;--akzentF2:#a0661f;--gutT:#4a6a37;--gutF:#557640;--schlechtT:#9d4129;--aufGut:#fff;--aufSchlecht:#fff;
- --seite:#fffaf0;--seite2:#f7ecd6;--seitetext:#2a2018;--hi:rgba(217,154,78,.16);--schleier:#e8d9bb;--glow:rgba(255,190,110,.55);
+ --liste:#fffaf0;--seite:#fffaf0;--seite2:#f7ecd6;--seitetext:#2a2018;--hi:rgba(217,154,78,.16);--schleier:#e8d9bb;--glow:rgba(255,190,110,.55);
  --schatten:0 2px 0 #e7d5b2,0 14px 30px rgba(80,50,20,.18);--seitenrand:none;
  --kopf:'Itqan Ain','Alegreya',Georgia,serif;--fliess:'Alegreya Sans',system-ui,sans-serif;color-scheme:light}
 [data-modus=dunkel]{--bg:#0d2230;--bg2:#12303f;--karte:rgba(255,255,255,.045);--karte2:rgba(255,255,255,.07);--rand:rgba(212,175,106,.26);
  --text:#efe6d2;--leise:#a9b6b9;--akzent:#d4af6a;--akzent2:#e9cf95;--aufAkzent:#0d2230;--gut:#8fbf9a;--schlecht:#e08a6d;
  --akzentT:var(--akzent);--akzentF:var(--akzent);--akzentF2:var(--akzent2);--gutT:var(--gut);--gutF:var(--gut);--schlechtT:#eba188;--aufGut:#0d2230;--aufSchlecht:#0d2230;
- --seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
+ --liste:#16323f;--seite:#fbf5e6;--seite2:#f3ead3;--seitetext:#1f1a14;--hi:rgba(212,175,106,.20);--schleier:#d9ccae;--glow:rgba(233,207,149,.45);
  --schatten:0 10px 30px rgba(0,0,0,.35);--seitenrand:1px solid #c9a45c;color-scheme:dark}
 html{background:var(--bg);touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-variant-numeric:lining-nums;font-size:var(--s-text);line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
@@ -471,6 +471,8 @@ select{-webkit-appearance:none;appearance:none;background:var(--karte2) url("dat
 .auswahl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:var(--s-text)}
 .auswahl.stark{margin:12px 0;padding-bottom:12px;border-bottom:1px dotted var(--rand);font-weight:500}
 .tagesliste{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 22px}
+/* aufgeklappte Liste am Computer: der Browser zeichnet sie auf Weiß, darum bekommen die Einträge einen eigenen, deckenden Grund */
+select option,select optgroup{background-color:var(--liste);color:var(--text)}
 .tagesliste select{width:118px}
 .auswahl.stark select{width:136px}
 .zeitwahl{display:flex;align-items:center;gap:8px;margin:14px 0}

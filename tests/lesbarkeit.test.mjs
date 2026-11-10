@@ -62,6 +62,16 @@ test('Kontrast: Standfarben der Abschnittsnummern mindestens 4,5 zu 1, große Ü
   }
 });
 
+test('Auswahllisten: die aufgeklappte Liste hat einen deckenden Grund und lesbare Schrift', () => {
+  // am Computer zeichnet der Browser die Liste selbst auf Weiß; ein durchscheinender Grund ließe helle Schrift auf Weiß stehen
+  assert.match(css, /select option,select optgroup\{background-color:var\(--liste\);color:var\(--text\)\}/);
+  for (const [name, F] of [['hell', HELL], ['dunkel', DUNKEL]]) {
+    assert.match(F.liste || '', /^#[0-9a-f]{6}$/i, `${name}: --liste muss eine deckende Farbe sein`);
+    const k = kontrast(F.text, F.liste);
+    assert.ok(k >= 4.5, `${name}: --text auf --liste hat nur ${k.toFixed(2)}`);
+  }
+});
+
 test('Zoom ist erlaubt, die Größen wirken schon vor dem Laden der App', () => {
   const sicht = index.match(/<meta name="viewport" content="([^"]+)"/)[1];
   assert.doesNotMatch(sicht, /user-scalable|maximum-scale/);
