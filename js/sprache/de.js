@@ -954,7 +954,7 @@ export default {
     die_hoechste_stufe_mindestens_vier: 'Die höchste Stufe: mindestens vier Durchgänge in Folge ohne Fehler und ohne Hilfe. Itqān im eigentlichen Sinn, diese Seiten leuchten am hellsten.',
   },
   stufen_regel: {
-    so_entstehen_die_stufen_jeder_durchgang: 'So entstehen die Stufen: Jeder Durchgang ohne Fehler hebt einen Abschnitt um eine Stufe. Jeder Fehler setzt ihn eine Stufe zurück, bei vielen Fehlern (mehr als 30 % der Āyāt) zwei. Mit „Anfang zeigen“ bleibt die Stufe gleich. Eine Seite leuchtet so hell wie der Mittelwert ihrer Abschnitte.',
+    so_entstehen_die_stufen_jeder_durchgang: 'So entstehen die Stufen: Jeder Durchgang ohne Fehler hebt einen Abschnitt um eine Stufe. Jeder Fehler setzt ihn eine Stufe zurück, bei vielen Fehlern (mehr als 30 % der Āyāt) zwei. Hilfe mit „Erstes Wort“ oder „Noch ein Wort“ zählt wie ein Fehler. Eine Seite leuchtet so hell wie der Mittelwert ihrer Abschnitte.',
   },
   lageinfo: {
     rechte_seite: 'Rechte Seite',
@@ -1265,6 +1265,9 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    sprachen3_titel: 'Alle Sprachen überarbeitet',
+    sprachen3_1: 'Hilfe, Einstellungen, Rückblick, Auswertung und alle übrigen Bereiche klingen jetzt in jeder Sprache natürlich, mit einheitlichen Namen für Knöpfe und Stufen.',
+    sprachen3_2: 'In der Sprachwahl steht Arabisch als Sprache des Qurʾān an erster Stelle.',
     sprachwahl2_titel: 'Sprachwahl mit Bestätigen',
     sprachwahl2_1: 'Beim ersten Start wählst du die Sprache in Ruhe aus und bestätigst sie erst mit dem Knopf darunter. Von der ersten Seite der Einführung kommst du zur Sprachwahl zurück.',
     sprachwahl2_2: 'Die Übersetzungen klingen natürlicher, mit Ordnungszahlen in der Art jeder Sprache.',
