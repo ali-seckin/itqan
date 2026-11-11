@@ -1261,7 +1261,13 @@ export default {
     a_0_0_1: 'A{a} {a} 0 0 1 {p}',
     ornament_sura: 'Ornament Sūra {s}',
   },
+  sprachwahl: {
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+  },
   version: {
+    reihenfolge_titel: 'Ähnliche Stellen in allen Sprachen',
+    sprachwahl_1: 'Beim ersten Start wählst du zuerst deine Sprache. Einführung und Profil erscheinen dann gleich in dieser Sprache.',
+    reihenfolge_1: 'Auch die Themen, Hinweise und Gruppentitel im Bereich „Reihenfolge“ der ähnlichen Stellen erscheinen jetzt in der gewählten Sprache.',
     sprachen_titel: 'Sechs Sprachen',
     sprachen_1: 'Itqān gibt es jetzt auf Deutsch, Englisch, Türkisch, Arabisch, Französisch und Spanisch. Die Sprache wählst du in den Einstellungen.',
     sprachen_2: 'Auch die Titel der Abschnitte und die Namen der Sūren erscheinen in der gewählten Sprache, auf Arabisch von rechts nach links.',

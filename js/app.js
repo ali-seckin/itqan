@@ -9,7 +9,7 @@ import * as S from './suche.js';
 import * as NL from './aehnlich.js';
 import * as RB from './rueckblick.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
-import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen } from './sprache.js';
+import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -298,9 +298,9 @@ async function vorratSpeichern() {
 }
 
 // ---------- Router ----------
-const ROUTEN = { heute, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+const TITEL = { sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
   lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
@@ -313,7 +313,8 @@ let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollh�
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
-  if (!Z.P && name !== 'start' && name !== 'einfuehrung') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
+  if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
+  if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
@@ -333,6 +334,21 @@ addEventListener('hashchange', zeige);
 // ---------- Einführung (beim ersten Öffnen, später über Profil oder Start erneut) ----------
 const EINF_KEY = 'itqan-einfuehrung';
 const einfuehrungGesehen = () => { try { return localStorage.getItem(EINF_KEY) === '1'; } catch (e) { return true; } };
+// ---------- Sprachwahl beim ersten Start ----------
+// Die Sprache gilt für das Gerät und wird beim Start geladen. Nach der Wahl lädt die App neu und beginnt mit der Einführung.
+function sprachwahl() {
+  navSetzen(null);
+  const vorschlag = gebiet('code') !== 'de' ? gebiet('code') : geraeteSprache();
+  app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
+    <p class="unter" style="margin-top:8px">${tx('sprachwahl.titel')}</p></div>
+    <div class="sprachwahl" id="sprachwahl">${SPRACHEN.filter(s => s.frei).map(s => `<button class="knopf ${s.code === vorschlag ? 'haupt' : 'leise'}" data-w="${s.code}" lang="${s.code}" dir="${s.code === 'ar' ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>`;
+  app.querySelector('#sprachwahl').onclick = ev => {
+    const w = ev.target.closest('button')?.dataset.w; if (!w) return;
+    spracheMerken(w);
+    const u = new URL(location.href); u.searchParams.delete('sprache'); u.hash = Z.P ? '#heute' : '#einfuehrung';
+    history.replaceState(null, '', u); location.reload();
+  };
+}
 function einfuehrung() {
   navSetzen(null);
   const linien = (n, klasse = '') => Array.from({ length: n }, (_, i) => `<i class="${klasse}" style="--i:${i}"></i>`).join('');

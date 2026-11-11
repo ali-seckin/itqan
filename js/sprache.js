@@ -47,6 +47,15 @@ export function umschrift(name) {
   return name.replace(wandel.muster, m => wandel.nach.get(m));
 }
 
+// Beim ersten Start fragt die App nach der Sprache, solange keine gewählt ist
+export function spracheGewaehlt() {
+  try { return !!localStorage.getItem(MERKER) || new URLSearchParams(location.search).has('sprache'); } catch { return true; }
+}
+// Vorschlag aus den Spracheinstellungen des Geräts
+export function geraeteSprache() {
+  try { for (const l of navigator.languages || [navigator.language]) { const c = String(l).slice(0, 2).toLowerCase(); if (SPRACHEN.some(s => s.code === c && s.frei)) return c; } } catch { /* ohne Fenster */ }
+  return 'de';
+}
 export function spracheMerken(code) {
   try { localStorage.setItem(MERKER, code); } catch { /* ohne Speicher bleibt es bei Deutsch */ }
 }

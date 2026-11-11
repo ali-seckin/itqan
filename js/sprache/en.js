@@ -1265,7 +1265,13 @@ export default {
     a_0_0_1: 'A{a} {a} 0 0 1 {p}',
     ornament_sura: 'Ornament Surah {s}',
   },
+  sprachwahl: {
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+  },
   version: {
+    reihenfolge_titel: 'Similar passages in all languages',
+    sprachwahl_1: 'On first start you now choose your language first. The introduction and profile setup then appear in that language right away.',
+    reihenfolge_1: 'The themes, notes and group titles in the “Word order” part of the similar passages now also appear in the chosen language.',
     sprachen_titel: 'Six languages',
     sprachen_1: 'Itqān is now available in German, English, Turkish, Arabic, French and Spanish. You choose the language in the settings.',
     sprachen_2: 'The section titles and the names of the Surahs also appear in the chosen language, in Arabic from right to left.',

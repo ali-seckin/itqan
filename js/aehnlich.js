@@ -5,7 +5,7 @@
 //      ab = die häufigere Reihenfolge, ta und tb = Wortlaut der beiden Folgen
 import { D, sureName } from './daten.js';
 import { normal, stelle, paareLaden } from './suche.js';
-import { tx } from './sprache.js';
+import { tx, gebiet } from './sprache.js';
 
 export const ART = { gleich: tx('aehnlich.wortgleich'), fast: tx('aehnlich.fast_gleich'), aehnlich: tx('aehnlich.aehnlich') };
 export const WAS = { zusatz: tx('aehnlich.zusatz_oder_auslassung'), wort: tx('aehnlich.anderes_wort'), wortform: tx('aehnlich.andere_wortform'), bindewort: tx('aehnlich.oder_davor'), reihenfolge: tx('aehnlich.andere_reihenfolge') };
@@ -13,9 +13,26 @@ export const WO = { anfang: tx('aehnlich.am_anfang'), mitte: tx('aehnlich.in_der
 
 let A = null;
 export async function laden() {
-  if (!A) A = Promise.all([fetch('daten/aehnlich.json').then(r => { if (!r.ok) throw new Error('aehnlich'); return r.json(); }), paareLaden()])
-    .then(([d, paare]) => vorbereiten(d, paare)).catch(e => { A = null; throw e; });
+  if (!A) A = Promise.all([fetch('daten/aehnlich.json').then(r => { if (!r.ok) throw new Error('aehnlich'); return r.json(); }), paareLaden(), texteLaden()])
+    .then(([d, paare, ue]) => { uebersetzen(d, ue); return vorbereiten(d, paare); }).catch(e => { A = null; throw e; });
   return A;
+}
+// Themen, Hinweise und Gruppentitel der Reihenfolge-Fälle stehen in den Daten auf Deutsch. daten/titel/aehnlich_de.json
+// listet sie, daten/titel/aehnlich_<code>.json hat an derselben Stelle die Übersetzung. Ohne Übersetzung bleibt der deutsche Text.
+async function texteLaden() {
+  const code = gebiet('code');
+  if (code === 'de') return null;
+  const holen = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+  const [liste, ueber] = await Promise.all([holen('daten/titel/aehnlich_de.json'), holen(`daten/titel/aehnlich_${code}.json`)]);
+  return liste && ueber ? new Map(liste.map((d, i) => [d, ueber[i]])) : null;
+}
+function uebersetzen(d, ue) {
+  if (!ue) return;
+  const u = s => (s && ue.get(s)) || s;
+  for (const th of d.t) {
+    th.thema = u(th.thema); th.hinweis = u(th.hinweis);
+    for (const g of th.gruppen) { g.titel = u(g.titel); g.notiz = u(g.notiz); }
+  }
 }
 // für Tests: Daten direkt setzen
 export function datenSetzen(d, paare = []) { A = Promise.resolve(vorbereiten(d, paare.map(p => Array.isArray(p) ? { a: p[0], b: p[1], s: p[2], da: p[3], db: p[4], key: `${p[0]}-${p[1]}` } : p))); }

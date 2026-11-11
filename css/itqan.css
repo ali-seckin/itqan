@@ -245,6 +245,7 @@ html.tippt .nav{display:none}
 
 /* Start */
 .start{text-align:center;padding-top:24px}
+.sprachwahl{display:grid;gap:10px;max-width:360px;margin:24px auto 0}
 .start .qandil{height:150px}
 .start h1{font-size:var(--s-anzeige);color:var(--akzentT);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}
