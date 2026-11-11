@@ -149,7 +149,7 @@ html.tippt .nav{display:none}
 .w.zu.naechste{--wbg:rgba(183,119,47,.6)}
 .w.zu.naechste::before{animation:puls 1.6s ease-in-out infinite}
 .w.ok{--wbg:rgba(111,160,120,.20)}
-.w.hilfe{--wbg:rgba(217,154,78,.28)}
+.w.hilfe,.w.zoegern{--wbg:rgba(217,154,78,.28)}
 .w.fehler{--wbg:rgba(200,90,60,.25)}
 .w.alt{box-shadow:inset 0 -2px 0 rgba(200,90,60,.55)}
 .w.erstes{color:var(--seitetext)!important;--wbg:rgba(217,154,78,.35)}
@@ -166,7 +166,7 @@ html.tippt .nav{display:none}
 .steuerung .innen{max-width:560px;margin:0 auto}
 .punkte{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
 .punkte i{width:9px;height:9px;border-radius:50%;background:var(--rand)}
-.punkte i.ok{background:var(--gut)}.punkte i.fehler{background:var(--schlecht)}.punkte i.hilfe{background:var(--akzent2)}
+.punkte i.ok{background:var(--gut)}.punkte i.fehler{background:var(--schlecht)}.punkte i.hilfe,.punkte i.zoegern{background:var(--akzent2)}
 .punkte i.jetzt{background:var(--akzent);box-shadow:0 0 0 3px var(--glow)}
 .steuerung .zeile2{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
 

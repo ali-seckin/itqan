@@ -531,7 +531,7 @@ function heute() {
     const e = D.A[id], fertig = t.fertig.includes(id), jetzt = !fertig && id === offen[0];
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
-    const marke = angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : '');
+    const marke = angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${tx('heute.runde')}</span>` : '');
     return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
   }).join('');
@@ -573,7 +573,8 @@ function heute() {
     <div class="klein-zeile" style="justify-content:center;gap:4px"><button class="textlink" id="weniger">${tx('heute.ein_abschnitt')}</button><button class="textlink" id="mehr">${tx('heute.ein_abschnitt_2')}</button></div>`}
     ${lernHTML}
     ${istFreitag ? `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
-      <p>${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
+      <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
+      ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)), ziel: prozent(bq.ziel) })}</p>`; })()}
       <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]), titel: esc(D.A[Z.schwaechste(1)[0].id].titel) }) : '' })}</p></div>` : ''}
     <div class="titel-klein">${tx('heute.hatma', { a: P.zyklus.khatma + 1 })}</div>
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
@@ -676,7 +677,7 @@ async function ueben(idText, quelle, fokusText) {
   const k = Z.karte(id);
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
-  let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false;
+  let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false, hilfeFrei = false;
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
   // Übungszeit für die Auswertung: zählt nur, solange die Seite sichtbar ist; fortgesetzte Übungen werden nicht gemessen
@@ -798,6 +799,7 @@ async function ueben(idText, quelle, fokusText) {
     'ueben-2': () => [
       { ziel: jetzt, titel: tx('ueben.vergleichen'), text: tx('ueben.jetzt_siehst_du_die_aya_vergleiche_wort') },
       { ziel: () => app.querySelector('#hoeren'), titel: tx('ueben.anhoeren'), text: tx('ueben.hier_hoerst_du_deine_aufnahme_danach') },
+      { ziel: () => app.querySelector('#z'), titel: tx('ueben.gezoegert'), text: tx('ueben.gezoegert_hinweis') },
       { ziel: () => app.querySelector('#r'), titel: tx('ueben.richtig'), text: tx('ueben.die_aya_war_fehlerfrei_und_ohne_stocken') },
       { ziel: () => app.querySelector('#f'), titel: tx('allg.fehler'), text: tx('ueben.ein_wort_verwechselt_oder_ausgelassen'), los: tx('ueben.verstanden') }
     ],
@@ -901,15 +903,18 @@ async function ueben(idText, quelle, fokusText) {
       K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
-      if (E.hilfe && L?.ph !== 1) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? tx('ueben.noch_ein_wort') : ti ? tx('ueben.naechstes_wort') : tx('ueben.erstes_wort')}</button>`);
-      if ((L ? L.ph === 0 : E.vorueben) && start) links.push(`<button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>`);
+      const hilfeVersteckt = !L && k.st >= 3 && !hilfeFrei && !hilfe && !ti;   // ab „sicher“ erst nach „Hilfe?“ (Hilfen zurücknehmen, wenn das Können wächst)
+      if (E.hilfe && L?.ph !== 1 && hilfeVersteckt) links.push(`<button class="textlink mini leiser" id="hilfe-frage">${tx('ueben.hilfe_frage')}</button>`);
+      else if (E.hilfe && L?.ph !== 1) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? tx('ueben.noch_ein_wort') : ti ? tx('ueben.naechstes_wort') : tx('ueben.erstes_wort')}</button>`);
+      if ((L ? L.ph === 0 : E.vorueben && k.st <= 1) && start) links.push(`<button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>`);
       if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push(`<button class="textlink mini" id="neu-bewerten">${tx('ueben.vorige_aya_neu_bewerten')}</button>`);
       if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
       const satz = L?.ph === 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? tx('ueben.sofortkorrektur_diese_aya_noch_einmal') : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
-      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz) + (links.length ? '<br>' + links.join('') : '');
+      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz + (start ? ` ${tx('ueben.laut_hinweis')}` : '')) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
       // Hilfe Wort für Wort: jedes Tippen deckt das nächste verdeckte Wort auf, die Āya zählt dann als „mit Hilfe“
+      const hf = app.querySelector('#hilfe-frage'); if (hf) hf.onclick = () => { hilfeFrei = true; zeichne(); };
       const hb = app.querySelector('#hilfe'); if (hb) hb.onclick = () => {
         hilfe = true; const s = spans(vi).find(x => x.classList.contains('zu'));
         if (s) { s.classList.remove('zu', 'naechste'); s.classList.add('erstes'); }
@@ -921,7 +926,7 @@ async function ueben(idText, quelle, fokusText) {
       const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
       sichtbar(teile[ti]?.[0]);
     } else {
-      K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button><button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
+      K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
       H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : tx('ueben.warst_du_sicher_und_fehlerfrei');
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
         if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
@@ -930,6 +935,7 @@ async function ueben(idText, quelle, fokusText) {
       };
       app.querySelector('#r').onclick = () => bewerte(hilfe ? 'hilfe' : 'ok');
       app.querySelector('#f').onclick = () => bewerte('fehler');
+      const zb = app.querySelector('#z'); if (zb) zb.onclick = () => bewerte('zoegern');
     }
   }
   function aufdecken() {
@@ -946,7 +952,7 @@ async function ueben(idText, quelle, fokusText) {
   }
   function bewerte(x) {
     const vi = liste[pos];
-    const sp = spans(vi); sp.forEach(s => { s.classList.remove('alt', 'ok', 'hilfe', 'fehler'); s.classList.add(x); });
+    const sp = spans(vi); sp.forEach(s => { s.classList.remove('alt', 'ok', 'hilfe', 'fehler', 'zoegern'); s.classList.add(x); });
     if (phase === 'korrektur') { korr[pos] = x; if (x !== 'fehler') punktePop('✓', sp[sp.length - 1]); return naechsteAya(); }
     erg[pos] = x; status.set(vi, x);
     if (x !== 'fehler' && art !== 'stelle') punktePop(x === 'ok' ? '+10' : '+5', sp[sp.length - 1]);
@@ -968,7 +974,7 @@ async function ueben(idText, quelle, fokusText) {
     pos = v.pos; const vi = ayat[pos], war = erg[pos];
     erg.length = pos; status.delete(vi);
     if (v.fs) { Z.fehlerstellenSetzen(v.fs); const fst = Z.fehlerstellenSet(); spans(vi).forEach(s => s.classList.toggle('fs', fst.has(s.dataset.v + '.' + s.dataset.i))); }
-    spans(vi).forEach(s => { s.classList.remove('ok', 'hilfe', 'fehler'); if (alt.has(vi)) s.classList.add('alt'); });
+    spans(vi).forEach(s => { s.classList.remove('ok', 'hilfe', 'fehler', 'zoegern'); if (alt.has(vi)) s.classList.add('alt'); });
     offen = true; hilfe = war === 'hilfe'; ti = 0; markieren = false;
     zwischenSpeichern(); zeichne(); sichtbar(spans(vi)[0]);
   }
@@ -976,7 +982,7 @@ async function ueben(idText, quelle, fokusText) {
   // Ende einer Runde: nach der Hauptrunde die Fehler-Āyāt sofort noch einmal (wenn eingeschaltet), dann Abschluss
   function rundeFertig() {
     if (phase === 'haupt' && art !== 'stelle' && E.sofort !== false) {
-      const f = ayat.filter((vi, i) => erg[i] === 'fehler' || erg[i] === 'hilfe');   // auch Āyāt mit Hilfe sitzen noch nicht
+      const f = ayat.filter((vi, i) => erg[i] === 'fehler' || erg[i] === 'hilfe' || erg[i] === 'zoegern');   // auch Āyāt mit Hilfe sitzen noch nicht
       if (f.length) {
         phase = 'korrektur'; liste = f; pos = 0; offen = false; hilfe = false; ti = 0; korr = [];
         f.forEach(vi => { zu.add(vi); spans(vi).forEach(s => { s.classList.remove('fehler'); s.classList.add('zu'); }); });
@@ -1010,7 +1016,7 @@ async function ueben(idText, quelle, fokusText) {
       pos = ayat.length; abschluss();
     };
   }
-  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
+  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; hilfeFrei = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
   function markierenFertig() {
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
     if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
@@ -1048,6 +1054,7 @@ async function ueben(idText, quelle, fokusText) {
     else if (!offen && (ev.key === 's' || ev.key === 'ArrowDown')) { ev.preventDefault(); app.querySelector('#teil')?.click(); }
     else if (offen && (ev.key === 'r' || ev.key === 'ArrowRight')) bewerte(hilfe ? 'hilfe' : 'ok');
     else if (offen && (ev.key === 'f' || ev.key === 'ArrowLeft')) bewerte('fehler');
+    else if (offen && !hilfe && ev.key === 'z') bewerte('zoegern');
   };
   addEventListener('keydown', tasten);
   function stelleAbschluss() {
@@ -1093,7 +1100,7 @@ async function ueben(idText, quelle, fokusText) {
   }
   // angefangene Übung von heute fortsetzen?
   const zw = art !== 'stelle' ? Z.zwischenstandLaden(id, quelle) : null;
-  if (zw?.erg?.length && zw.erg.length <= ayat.length && zw.erg.every(x => ['ok', 'hilfe', 'fehler'].includes(x))) {
+  if (zw?.erg?.length && zw.erg.length <= ayat.length && zw.erg.every(x => ['ok', 'hilfe', 'fehler', 'zoegern'].includes(x))) {
     const weiter = await dialog({ titel: tx('ueben.weitermachen'), html: `<p>${tx('ueben.du_hast_diesen_abschnitt_heute_schon', { n: zw.erg.length, n2: ayat.length })}</p>`, ja: zw.erg.length < ayat.length ? tx('ueben.bei_aya_weiter', { a: zw.erg.length + 1 }) : tx('allg.weiter'), nein: tx('ueben.neu_beginnen') });
     if (weiter) {
       zw.erg.forEach((x, i) => { const vi = ayat[i]; erg[i] = x; status.set(vi, x); zu.delete(vi); spans(vi).forEach(s => { s.classList.remove('zu', 'alt'); s.classList.add(x); }); });
@@ -2027,6 +2034,8 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
+      <div class="wahl" id="zielquote" style="margin-top:10px">${[90, 95, 98].map(w => `<button data-w="${w}" class="${(E.zielQuote ?? 95) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
@@ -2077,6 +2086,7 @@ function einstellungen() {
   wahl('ausgabe', w => { if (w === E.ausgabe) return; if (E.modus === 'seite') Z.schnappschuss('vor dem Gliederungswechsel'); E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast(tx('einstellungen.abschnitte_werden_umgestellt')); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
+  wahl('zielquote', w => { E.zielQuote = +w; });
   wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });

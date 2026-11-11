@@ -617,35 +617,36 @@ function lernSchritt(L, k, id, datum, f, h, ereignisse) {
 // dauer: aktive Übungszeit in Sekunden (ohne Zeit im Hintergrund), fehlt bei fortgesetzten Übungen
 export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const datum = heute(), t = tagesplan(datum);
-  const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length;
+  const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length, z = ergebnisse.filter(x => x === 'zoegern').length;
   if (quelle === 'lern' && !(P.lern?.[id]?.ph < 2)) quelle = 'frei';
   const art = quelle || t.art[id] || 'frei';
   // Punkte: Rückmeldung über Können
-  let punkte = 10 * r + 5 * h, teile = [[tx('zustand.ayat_richtig', { r }), 10 * r]];
+  let punkte = 10 * r + 5 * h + 5 * z, teile = [[tx('zustand.ayat_richtig', { r }), 10 * r]];
   if (h) teile.push([tx('zustand.mit_hilfe', { h }), 5 * h]);
-  if (!f && !h) { const b = Math.round(punkte * 0.25); punkte += b; teile.push([tx('zustand.fehlerfrei'), b]); }
+  if (z) teile.push([tx('zustand.gezoegert', { z }), 5 * z]);
+  if (!f && !h && !z) { const b = Math.round(punkte * 0.25); punkte += b; teile.push([tx('zustand.fehlerfrei'), b]); }
   if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push([tx('zustand.bonusabschnitt_50'), b]); }
   const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   // hw: seit 1.17 zählt eine Āya mit Hilfe für Stufe und Wiederholung wie ein Fehler (ältere Einträge ohne hw bleiben bei der alten Regel)
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte, ...(h ? { hw: 1 } : {}) });
-  return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
+  return { punkte, teile, hasanat: erg.hasanat, r, f, h: h + z, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
 }
-const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f' };
+const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };   // z: gezögert, zählt halb, ohne Stufenverlust, Wiederkehr nach spätestens 3 Tagen
 function abschlussAnwenden(e0) {
   const datum = e0.d, id = e0.id, t = tagSicher(datum), e = D.A[id], k = { ...karte(id) };
   const ergebnisse = [...e0.e], art = e0.q, punkte = e0.p, dauer = e0.s || 0;
-  const r = ergebnisse.filter(x => x === 'o').length, h = ergebnisse.filter(x => x === 'h').length, f = ergebnisse.filter(x => x === 'f').length;
+  const r = ergebnisse.filter(x => x === 'o').length, h = ergebnisse.filter(x => x === 'h').length, f = ergebnisse.filter(x => x === 'f').length, z = ergebnisse.filter(x => x === 'z').length;
   const hasanat = e.buchstaben * 10;
   // Karteisystem
   const vorher = k.st, ereignisse = [];
   // Neu lernen: eine offene Lektion folgt ihren eigenen Regeln, nicht dem Karteisystem
   const L = art === 'lern' && P.lern?.[id]?.ph < 2 ? P.lern[id] : null;
-  const lern = L ? lernSchritt(L, k, id, datum, f, h, ereignisse) : null;
+  const lern = L ? lernSchritt(L, k, id, datum, f, h + z, ereignisse) : null;
   if (L) { /* Stufe steht schon */ }
   else if (f || (e0.hw && h)) { const u = f + (e0.hw ? h : 0); if (f) k.fz = datum; k.st = Math.max(0, k.st - (u / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
-  else if (h) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
+  else if (h || z) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
   else {
     k.st = Math.min(4, k.st + 1);
     if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < FEHLER_ABSTAND.length ? plusTage(datum, FEHLER_ABSTAND[k.fs]) : null; if (!k.fae) k.fs = 0; }
@@ -657,8 +658,8 @@ function abschlussAnwenden(e0) {
   // Tag und Summen
   if (!t.fertig.includes(id)) t.fertig.push(id);
   if (art === 'bonus' && !t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'bonus'; }
-  Object.assign(t, { punkte: t.punkte + punkte, hasanat: t.hasanat + hasanat, r: t.r + r, f: t.f + f, h: t.h + h });
-  Object.assign(P.summe, { punkte: P.summe.punkte + punkte, hasanat: P.summe.hasanat + hasanat, r: P.summe.r + r, f: P.summe.f + f, h: P.summe.h + h, abschnitte: P.summe.abschnitte + 1 });
+  Object.assign(t, { punkte: t.punkte + punkte, hasanat: t.hasanat + hasanat, r: t.r + r, f: t.f + f, h: t.h + h + z });
+  Object.assign(P.summe, { punkte: P.summe.punkte + punkte, hasanat: P.summe.hasanat + hasanat, r: P.summe.r + r, f: P.summe.f + f, h: P.summe.h + h + z, abschnitte: P.summe.abschnitte + 1 });
   // Zyklus / Ḫatma
   if (art !== 'frei' && art !== 'lern' && !P.zyklus.erledigt.includes(id)) {
     P.zyklus.erledigt.push(id);
@@ -786,6 +787,12 @@ export function letzteTage(n = 30) {
   return aus;
 }
 // Auswertung: Fehlerarten, Sūren, Quote, Zeit
+// Behaltensquote: Anteil der Āyāt der letzten Tage, die beim ersten Versuch ohne Fehler, ohne Hilfe und ohne Zögern kamen
+export function behaltensquote(tage = 30) {
+  let r = 0, n = 0;
+  for (let i = 0; i < tage; i++) { const t = P.tage[plusTage(heute(), -i)]; if (t) { r += t.r || 0; n += (t.r || 0) + (t.f || 0) + (t.h || 0); } }
+  return { quote: n >= 10 ? 100 * r / n : null, n, ziel: P.einst.zielQuote ?? 95 };
+}
 export function auswertung(tage = 30) {
   const arten = FEHLERARTEN.map(([w, l]) => ({ art: w, name: l, n: P.statistik?.arten?.[w] || 0 }));
   const getippt = arten.reduce((s, x) => s + x.n, 0);
