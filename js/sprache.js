@@ -22,8 +22,14 @@ let wandel = null;
 const fertig = new Map();
 // Fassung der Meldungen für einen Lernmodus: Im Bereich <fassung> der Sprachdatei steht unter 'bereich__name' der Text,
 // der in diesem Modus an die Stelle von 'bereich.name' tritt (Modus „Ganze Seiten“: Seiten statt Abschnitte).
-let fassung = null;
-export function fassungSetzen(f) { if (f !== fassung) { fassung = f; fertig.clear(); } }
+// Fassung 'durchlauf': Wer nicht alle 30 Aǧzāʾ wiederholt, macht keine Ḫatma, sondern einen Durchlauf. Beides zugleich: 'durchlauf_ganzseite'.
+let modusFassung = null, durchlauf = false, fassungen = [];
+function fassungenBauen() {
+  fassungen = [...(durchlauf && modusFassung ? ['durchlauf_' + modusFassung] : []), ...(durchlauf ? ['durchlauf'] : []), ...(modusFassung ? [modusFassung] : [])];
+  fertig.clear();
+}
+export function fassungSetzen(f) { if (f !== modusFassung) { modusFassung = f; fassungenBauen(); } }
+export function durchlaufSetzen(d) { if (!!d !== durchlauf) { durchlauf = !!d; fassungenBauen(); } }
 
 // Angaben der geladenen Sprache: gebiet('code'), gebiet('datum'), gebiet('zahl'), gebiet('hidschri'), gebiet('richtung')
 export const gebiet = art => texte._[art] ?? de._[art];
@@ -82,7 +88,8 @@ export function tx(schluessel, w) {
   if (f === undefined) {
     const p = schluessel.indexOf('.');
     const b = schluessel.slice(0, p), s = schluessel.slice(p + 1);
-    const eigen = fassung ? texte[fassung]?.[b + '__' + s] ?? de[fassung]?.[b + '__' + s] : undefined;
+    let eigen;
+    for (const fa of fassungen) { eigen = texte[fa]?.[b + '__' + s] ?? de[fa]?.[b + '__' + s]; if (eigen !== undefined) break; }
     const roh = eigen ?? texte[b]?.[s] ?? de[b]?.[s] ?? schluessel;
     f = roh.includes('{') ? bauen(roh) : roh;
     fertig.set(schluessel, f);

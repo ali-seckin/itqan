@@ -9,7 +9,7 @@ import * as S from './suche.js';
 import * as NL from './aehnlich.js';
 import * as RB from './rueckblick.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
-import { tx, gebiet, SPRACHEN, spracheMerken } from './sprache.js';
+import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen } from './sprache.js';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -314,6 +314,7 @@ async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'start' && name !== 'einfuehrung') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
+  durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
@@ -409,7 +410,7 @@ function start() {
   const tageText = () => {
     const ganz = s.modus === 'seite';
     const ids = ganz ? [...s.juz].reduce((n, j) => n + (j < 30 ? juzStart(j + 1) : 605) - juzStart(j), 0) : D.A.filter(e => s.juz.has(e.juz)).length;
-    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
+    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${s.juz.size === 30 ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
@@ -946,7 +947,7 @@ async function ueben(idText, quelle, fokusText) {
   // Ende einer Runde: nach der Hauptrunde die Fehler-Āyāt sofort noch einmal (wenn eingeschaltet), dann Abschluss
   function rundeFertig() {
     if (phase === 'haupt' && art !== 'stelle' && E.sofort !== false) {
-      const f = ayat.filter((vi, i) => erg[i] === 'fehler');
+      const f = ayat.filter((vi, i) => erg[i] === 'fehler' || erg[i] === 'hilfe');   // auch Āyāt mit Hilfe sitzen noch nicht
       if (f.length) {
         phase = 'korrektur'; liste = f; pos = 0; offen = false; hilfe = false; ti = 0; korr = [];
         f.forEach(vi => { zu.add(vi); spans(vi).forEach(s => { s.classList.remove('fehler'); s.classList.add('zu'); }); });
@@ -1051,7 +1052,7 @@ async function ueben(idText, quelle, fokusText) {
         <div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div></div>
       <p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
-      ${res.f && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.die_morgen_wieder_dran_dann_mit', { a: res.f === 1 ? tx('ueben.fehler_aya_kommt') : tx('ueben.fehler_ayat_kommen', { f: res.f }) })}</div>` : ''}
+      ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
       ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}${orn}
       <div style="display:grid;gap:10px;margin-top:16px">
       ${res.lern ? `<button class="knopf haupt" id="uebersicht">${tx('lernen.zu_den_lektionen')}</button>` : wirdJetzt ? `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>` : naechster != null && art !== 'frei' ? `<button class="knopf haupt" id="naechster">${tx('ueben.naechster_abschnitt')}</button><button class="knopf leise" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>` : `<button class="knopf haupt" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>`}

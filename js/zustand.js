@@ -78,7 +78,14 @@ export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', 
 export function ersetzeProfil(neu, stand) { P = ergaenzen(neu); sockelWechsel(stand); speichern(); }
 // Einen Stand unverändert übernehmen (nach dem Zusammenführen, später nach dem Abgleich mit dem Server):
 // kein neuer Sockel, log sind die Einträge, die noch nicht abgeglichen sind.
-export function standUebernehmen(profil, log = []) { P = ergaenzen(kopie(profil)); P.log = kopie(log); schattenNeu(); speichern(); return P; }
+export function standUebernehmen(profil, log = []) { P = ergaenzen(kopie(profil)); P.log = kopie(log); geraetNachziehen(); schattenNeu(); speichern(); return P; }
+// Zähler und Zeit dieses Geräts hinter seine eigenen Einträge im übernommenen Protokoll setzen. Sonst bekäme ein neuer
+// Eintrag eine schon vergebene Kennung, und eine Rücknahme („Vorige Āya neu bewerten“) erfasste alte Fehlerstellen mit.
+function geraetNachziehen() {
+  const g = geraetLesen(), vor = g.g + '-';
+  for (const e of P.log || []) if (e.i?.startsWith(vor)) { g.n = Math.max(g.n, parseInt(e.i.slice(vor.length), 36) || 0); g.z = Math.max(g.z, e.z || 0); }
+  geraetSichern();
+}
 
 // ---------- Protokoll (Beschreibung: konzept/datenmodell.md) ----------
 // Jede Änderung am Lernstand ist ein Eintrag { i: 'Gerät-Zähler', z: Zeit in ms, y: Art, ... }.
@@ -608,7 +615,8 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
-  const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte });
+  // hw: seit 1.17 zählt eine Āya mit Hilfe für Stufe und Wiederholung wie ein Fehler (ältere Einträge ohne hw bleiben bei der alten Regel)
+  const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte, ...(h ? { hw: 1 } : {}) });
   return { punkte, teile, hasanat: erg.hasanat, r, f, h, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
 }
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f' };
@@ -623,7 +631,7 @@ function abschlussAnwenden(e0) {
   const L = art === 'lern' && P.lern?.[id]?.ph < 2 ? P.lern[id] : null;
   const lern = L ? lernSchritt(L, k, id, datum, f, h, ereignisse) : null;
   if (L) { /* Stufe steht schon */ }
-  else if (f) { k.fz = datum; k.st = Math.max(0, k.st - (f / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
+  else if (f || (e0.hw && h)) { const u = f + (e0.hw ? h : 0); if (f) k.fz = datum; k.st = Math.max(0, k.st - (u / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
   else if (h) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
   else {
     k.st = Math.min(4, k.st + 1);

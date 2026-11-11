@@ -203,3 +203,14 @@ test('Neu bewerten: Fehlerstellen lassen sich auf den Stand davor zurücksetzen'
 test('Abhören: Āyāt mit markiertem Wort sind Fehler, die übrigen richtig', () => {
   assert.deepEqual(Z.abhoerErgebnis([5, 6, 7, 8], new Set([6, 8])), ['ok', 'fehler', 'ok', 'fehler']);
 });
+
+test('Hilfe beim Aufdecken: Stufe sinkt, Abschnitt kommt am nächsten Tag wie nach einem Fehler', () => {
+  frisch({ pensum: 1 });
+  const id = Z.tagesplan().plan[0], n = D.A[id].ayat;
+  Z.P.karten[id] = { ...Z.karte(id), st: 3 };
+  const r = Z.abschnittAbschliessen(id, ['hilfe', ...Array(n - 1).fill('ok')]);
+  assert.equal(r.punkte, 10 * (n - 1) + 5, 'Punkte bleiben');
+  const k = Z.karte(id);
+  assert.equal(k.st, n > 3 ? 2 : 1);
+  assert.equal(k.fae, Z.plusTage(Z.heute(), 1));
+});
