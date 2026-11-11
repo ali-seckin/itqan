@@ -2015,41 +2015,42 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.name')}</h3><div class="feld"><input type="text" id="name" aria-label="${tx('einstellungen.name')}" autocomplete="given-name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erscheinungsbild')}</h3><div class="wahl" id="thema">${[['hell', tx('einstellungen.hell')], ['dunkel', tx('einstellungen.dunkel')], ['auto', tx('einstellungen.wie_geraet')]].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
     ${sprachen.length > 1 ? `<div class="abschnitt"><h3>${tx('einstellungen.sprache')}</h3><div class="wahl" id="sprache">${sprachen.map(s => `<button data-w="${s.code}" lang="${s.code}" class="${s.code === gebiet('code') ? 'an' : ''}">${s.name}</button>`).join('')}</div></div>` : ''}
-    <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
-      <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
-      <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
-      <div class="wahl" id="textgroesse" role="group" aria-label="${tx('einstellungen.schriftgroesse')}" style="margin-top:10px">${[[100, tx('einstellungen.normal')], [112, tx('einstellungen.gross')], [125, tx('einstellungen.sehr_gross')]].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
-      <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', tx('einstellungen.druck_1405')], ['v2', tx('einstellungen.druck_1421')]].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
       <label class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><select id="alle">${gleich() ? '' : `<option value="" selected>${tx('einstellungen.verschieden')}</option>`}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
-      <div class="tagesliste">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen([0, ...bis(E.pensum[i])], E.pensum[i], x => x ? x : tx('allg.ruhetag'))}</select></label>`).join('')}</div>
+      <button type="button" class="knopf leise klein" id="tage-einzeln" aria-expanded="${gleich() ? 'false' : 'true'}" style="margin-top:10px">${gleich() ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus')}</button>
+      <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen([0, ...bis(E.pensum[i])], E.pensum[i], x => x ? x : tx('allg.ruhetag'))}</select></label>`).join('')}</div>
       <p class="unter" style="margin-top:10px" id="dauer">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
         <p class="unter" style="margin-top:8px">${tx('einstellungen.jede_hatma_bleibt_vollstaendig_zufaellig')}</p></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div><div class="hinweisbox verdeckt" id="heute-frage" role="status"></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">${tx('einstellungen.erlaubt')}</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.sofortkorrektur')}</h3><p class="unter">${tx('einstellungen.hattest_du_in_einem_abschnitt_fehler')}</p>
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
-      <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.tageswechsel')}</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? tx('einstellungen.um_uhr', { x }) : tx('einstellungen.mitternacht'))}</select></label></div>
     <div class="abschnitt"><h3>${tx('einstellungen.abhoeren_durch_eine_zweite_person')}</h3><p class="unter">${tx('einstellungen.zu_beginn_eines_abschnitts_steht_klein')}</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
+      <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.tageswechsel')}</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? tx('einstellungen.um_uhr', { x }) : tx('einstellungen.mitternacht'))}</select></label></div>
     <div class="abschnitt"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
       <div class="zeitwahl"><select id="std" aria-label="${tx('einstellungen.stunde')}">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="${tx('einstellungen.minute')}">${optionen(minuten, mm, zwei)}</select><span>${tx('einstellungen.uhr')}</span></div>
       <button class="knopf leise" id="ics">${tx('einstellungen.in_den_kalender_eintragen')}</button></div>
+    <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
+      <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
+      <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
+      <div class="wahl" id="textgroesse" role="group" aria-label="${tx('einstellungen.schriftgroesse')}" style="margin-top:10px">${[[100, tx('einstellungen.normal')], [112, tx('einstellungen.gross')], [125, tx('einstellungen.sehr_gross')]].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.offline')}</h3><p class="unter">${tx('einstellungen.laedt_alle_604_seiten_des_drucks_damit', { a: D.ausgabe === 'v1' ? tx('einstellungen.1405_etwa_48_mb') : tx('einstellungen.1421_etwa_95_mb') })}</p>
       <p class="offline-stand" id="offline-stand">${tx('einstellungen.gespeicherte_seiten_werden_gezaehlt')}</p><div class="balken verdeckt" id="offline-balken"><div style="width:0%"></div></div>
       <button class="knopf leise" id="offline" style="margin-top:10px">${tx('einstellungen.alle_seiten_speichern')}</button></div>
@@ -2082,6 +2083,10 @@ function einstellungen() {
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
   app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast(tx('einstellungen.gilt_ab_sofort')); };
   const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
+  app.querySelector('#tage-einzeln').onclick = ev => {
+    const zu = app.querySelector('.tagesliste').classList.toggle('verdeckt');
+    ev.target.setAttribute('aria-expanded', String(!zu)); ev.target.textContent = zu ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus');
+  };
   alle.onchange = () => {
     const n = +alle.value; if (!n) return;
     E.pensum = Array(7).fill(n); tage.forEach(x => x.value = String(n));
