@@ -1,5 +1,5 @@
 // Itqān · Suche ohne Vokale und Mutašābihāt (ähnliche Āyāt)
-// Text: daten/text.json (quran.com API v4, Wort für Wort; n = gewöhnliche Schreibweise vereinheitlicht, u = Uthmani)
+// Text: daten/text.json (QUL, Wort für Wort; n = gewöhnliche Schreibweise vereinheitlicht, u = Uthmani)
 // Paare: daten/mutashabihat.json [viA, viB, Ähnlichkeit %, abweichende Wörter in A, in B] (werkzeuge/mutashabihat.py)
 import { D } from './daten.js';
 

@@ -13,7 +13,7 @@ const findet = async (q, ...stellen) => {
   return r;
 };
 
-test('Probesuchen: 40 Wortfolgen aus der vereinfachten Fassung von quran.com finden ihre Āya', async () => {
+test('Probesuchen: 40 Wortfolgen aus einer vereinfachten Fassung finden ihre Āya', async () => {
   assert.equal(PROBE.auto.length, 40);
   for (const p of PROBE.auto) { const [s, a] = p.k.split(':').map(Number); await findet(p.q, [s, a]); }
 });

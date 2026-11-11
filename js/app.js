@@ -2049,8 +2049,7 @@ function einstellungen() {
       <button class="knopf leise" id="offline" style="margin-top:10px">${tx('einstellungen.alle_seiten_speichern')}</button></div>
     <div class="abschnitt"><h3>${tx('einstellungen.schnappschuesse')}</h3><p class="unter">${tx('einstellungen.itqan_legt_einmal_am_tag_und_vor')}</p>
       <div style="margin-top:10px">${schnappschussListe()}</div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p>
-      <p class="unter" lang="en" style="margin-top:8px">${tx('einstellungen.quran_fonts_provided_by_quran_foundation')}</p></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.neu_beginnen')}</h3><p class="unter">${tx('einstellungen.loescht_dein_profil_auf_diesem_geraet')}</p><button class="knopf schlecht" id="reset" style="margin-top:10px">${tx('einstellungen.profil_loeschen')}</button></div>`;
   const dauer = () => app.querySelector('#dauer').innerHTML = tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) });
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast(tx('einstellungen.gespeichert')); };
