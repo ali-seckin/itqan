@@ -439,7 +439,7 @@ function einfuehrung() {
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort', hasanat: '1' };
   const tageText = () => {
     const ganz = s.modus === 'seite';
     const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
@@ -454,13 +454,17 @@ function start() {
     <div class="abschnitt"><h3>${tx('start.wie_heisst_du')}</h3><div class="feld"><input type="text" id="name" placeholder="${tx('start.dein_name_fuer_deine_profildatei')}" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>${tx('start.was_wiederholst_du')}</h3><p class="unter">${tx('start.waehle_die_agza_die_du_auswendig_kannst')}</p>
       <div id="auswahl"></div></div>
-    <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3 id="pensum-titel">${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p>
       <div class="zaehler"><button id="minus" aria-label="${tx('start.weniger')}">−</button><b id="pensum">3</b><button id="plus" aria-label="${tx('start.mehr')}">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
+      <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
+    <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
+    <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">${tx('start.bei_mehreren_abschnitten_am_tag')}</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">${tx('start.verstreute_stellen')}</button><button data-w="block">${tx('start.eine_stelle_am_stueck')}</button></div></div></div>
     <div class="abschnitt"><h3>${tx('start.erscheinungsbild')}</h3><div class="wahl" id="thema"><button data-w="hell">${tx('start.hell')}</button><button data-w="dunkel">${tx('start.dunkel')}</button><button data-w="auto" class="an">${tx('start.wie_geraet')}</button></div></div>
+    </details>
     <button class="knopf haupt" id="los" style="margin-top:18px">${tx('start.bismillah_beginnen')}</button>`;
   app.querySelector('#start-laden').onclick = profilLaden;
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
@@ -469,7 +473,7 @@ function start() {
   wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen, { leer: tx('auswahl.leer_start') });
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
-  for (const id of ['reihenfolge', 'zufall', 'thema', 'modus']) app.querySelector('#' + id).onclick = e => {
+  for (const id of ['reihenfolge', 'zufall', 'thema', 'modus', 'hasanat']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.closest('button')?.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
     if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
@@ -480,7 +484,7 @@ function start() {
     if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
     const bereich = zuAbschnitten(s.sel);
     Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
-    Z.P.einst.zufall = s.zufall;
+    Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0';
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
     Z.speichern();
@@ -546,6 +550,7 @@ function heute() {
   const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
   const installKarte = UEBERGANG.installieren && !istInstalliert() && istTouch() && !installWeg;
+  const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
   const lekt = Z.lektionen();
   const lernHTML = lekt.length || Z.lernVorschlag() != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
@@ -553,7 +558,7 @@ function heute() {
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${datumText()}</small></div>
       <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
-    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>
+    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
@@ -566,7 +571,7 @@ function heute() {
       <circle cx="105" cy="105" r="74" fill="none" stroke="var(--rand)" stroke-width="1" stroke-dasharray="2 6"/></svg>
       <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">${tx('allg.abschnitte')}</span></div></div>
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
-      <div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>
+      ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
@@ -591,6 +596,7 @@ function heute() {
   const mehr = app.querySelector('#mehr'); if (mehr) mehr.onclick = () => { Z.pensumHeuteAendern(1); heute(); };
   const weniger = app.querySelector('#weniger'); if (weniger) weniger.onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
+  const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
   const js = app.querySelector('#jetzt-sichern'); if (js) js.onclick = async () => { if (await profilSichern()) heute(); };
@@ -1085,8 +1091,8 @@ async function ueben(idText, quelle, fokusText) {
       <h2>${res.f ? tx('ueben.abschnitt_beendet') : res.h ? tx('ueben.gut_gemacht') : tx('ueben.fehlerfrei_ma_saa_llah')}</h2>
       <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)} · ${tx('ueben.stufe', { a: Z.STUFEN[res.stufe], b: res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : '' })}</span></p>
       <div class="ernte"><div><b>${res.r + res.h}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div><div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>
-        <div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div></div>
-      <p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>
+        ${E.hasanat === false ? '' : `<div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
+      ${E.hasanat === false ? '' : `<p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
       ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
       ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}${orn}
@@ -1128,8 +1134,8 @@ function fertig() {
     <div class="ar">اللَّهُمَّ بَارِكْ</div><h2>${tx('fertig.allahumma_barik')}</h2>
     <p>${tx('fertig.dein_wird_fuer_heute_ist_vollbracht_die', { n: P.kette.n })}</p>
     <div class="ernte"><div><b>${quote}</b><span>${tx('fertig.ayat_gekonnt')}</span></div><div><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>${tx('fertig.itqan_punkte_heute')}</span></div>
-      <div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div><div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette')}</span></div></div>
-    <p class="niyya">${tx('fertig.hasanat_nach_dem_hadit_jeder_buchstabe')}</p>
+      ${P.einst.hasanat === false ? '' : `<div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div>`}<div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette')}</span></div></div>
+    ${P.einst.hasanat === false ? '' : `<p class="niyya">${tx('fertig.hasanat_nach_dem_hadit_jeder_buchstabe')}</p>`}
     ${extra}
     ${bonusId != null ? `<div class="angebot"><b>${tx('fertig.noch_kraft_fuer_mehr')}</b><p>${tx('fertig.ein_bonusabschnitt_bringt_dir_heute_50', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('fertig.bonusabschnitt_beginnen')}</button></div>` : ''}
     <button class="textlink" id="genug" style="margin-top:12px">${tx('fertig.fuer_heute_genug')}</button></div>`;
@@ -1424,7 +1430,7 @@ function profil() {
   const vergoldet = gesammelt.filter(sn => P.meilen.includes('sure-mutqan-' + sn)).length;
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
     ${rangKarte()}
-    <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div><div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div><div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
+    <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div class="zahl"><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div class="zahl"><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div>
     <div class="titel-klein">${tx('profil.itqan_punkte_der_letzten_30_tage')}</div>
     <div class="diagramm" role="img" aria-label="${tx('profil.itqan_punkte_der_letzten_30_tage_2', { a: zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0)), b: zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0))), n: tage.filter(x => x.t?.punkte).length })}">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
@@ -1561,6 +1567,7 @@ function lernMeldung(l) {
 function lernenSeite(wahlText) {
   navSetzen('heute');
   const lekt = Z.lektionen(), gemeistert = Z.lernFertig().length, dz = Z.dachZahlen();
+  const tp = Z.tagesplan(), alteOffen = !tp.ruhe && tp.plan.some(id => !tp.fertig.includes(id) && tp.art[id] !== 'bonus');   // Altes zuerst, nur als Rat
   const wahl = wahlText != null && Z.lernbar(+wahlText) ? +wahlText : null, vor = wahl ?? Z.lernVorschlag();
   const namen = [tx('lernen.hifz_voll'), tx('lernen.dabt_voll'), tx('lernen.itqan_voll')], texte = [tx('lernen.hifz_text'), tx('lernen.dabt_text'), tx('lernen.itqan_text')];
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#heute'">${zurueckPfeil}${tx('lernen.zurueck')}</button>
@@ -1568,6 +1575,8 @@ function lernenSeite(wahlText) {
     <div class="titel-klein">${tx('lernen.deine_lektionen')}</div>
     ${lekt.length ? lekt.map((l, i) => `${lektionKarte(l, i)}<div class="klein-zeile" style="justify-content:flex-end;gap:14px;margin:-4px 0 10px">${l.offen ? `<a class="textlink" href="#ueben/${l.id}/stelle/${l.stellen[0]}">${tx('lernen.stellen_ueben')}</a>` : ''}<button class="textlink" data-ab="${l.id}">${tx('lernen.abbrechen')}</button></div>`).join('') : `<p class="unter">${tx('lernen.keine_lektion')}</p>`}
     <div class="titel-klein">${tx('lernen.neue_lektion')}</div>
+    ${alteOffen ? `<div class="hinweisbox"><p>${tx('lernen.alt_zuerst')}</p><div class="reihe" style="margin-top:8px"><a class="knopf leise klein" href="#heute" style="text-decoration:none">${tx('lernen.zur_wiederholung')}</a></div></div>` : ''}
+    <p class="unter" style="margin-bottom:10px">${tx('lernen.abend_morgen')}</p>
     ${vor == null ? `<p class="unter">${tx('lernen.alles_im_bereich')}</p>` : `<div class="abschnitt" style="margin-top:0"><p>${wahl != null ? tx('lernen.gewaehlt', { name: abschnittName(D.A[vor]), titel: esc(D.A[vor].titel) }) : tx('lernen.vorschlag', { name: abschnittName(D.A[vor]), titel: esc(D.A[vor].titel) })}</p>
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="l-beginn">${tx('lernen.beginnen')}</button></div>
       <p class="unter" style="margin:14px 0 8px">${tx('lernen.anderer')}</p>${stellenWahl()}</div>`}
@@ -2017,6 +2026,7 @@ function einstellungen() {
   const [hh, mm] = (E.erinnerung || '05:30').split(':').map(Number);
   const minuten = [...new Set([...Array.from({ length: 12 }, (_, i) => i * 5), mm])].sort((a, b) => a - b);
   const zwei = x => String(x).padStart(2, '0');
+  const ANKER = { fajr: tx('einstellungen.anker_fajr'), zuhr: tx('einstellungen.anker_zuhr'), asr: tx('einstellungen.anker_asr'), maghrib: tx('einstellungen.anker_maghrib'), isha: tx('einstellungen.anker_isha'), schlaf: tx('einstellungen.anker_schlaf') };
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('allg.einstellungen')}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.name')}</h3><div class="feld"><input type="text" id="name" aria-label="${tx('einstellungen.name')}" autocomplete="given-name" value="${esc(P.name)}"></div></div>
@@ -2050,11 +2060,15 @@ function einstellungen() {
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.abhoeren_durch_eine_zweite_person')}</h3><p class="unter">${tx('einstellungen.zu_beginn_eines_abschnitts_steht_klein')}</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
+      <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="${E.hasanat !== false ? 'an' : ''}">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0" class="${E.hasanat !== false ? '' : 'an'}">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
       <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.tageswechsel')}</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? tx('einstellungen.um_uhr', { x }) : tx('einstellungen.mitternacht'))}</select></label></div>
     <div class="abschnitt"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
       <div class="zeitwahl"><select id="std" aria-label="${tx('einstellungen.stunde')}">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="${tx('einstellungen.minute')}">${optionen(minuten, mm, zwei)}</select><span>${tx('einstellungen.uhr')}</span></div>
-      <button class="knopf leise" id="ics">${tx('einstellungen.in_den_kalender_eintragen')}</button></div>
+      <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.anker')}</span><select id="anker">${['', 'fajr', 'zuhr', 'asr', 'maghrib', 'isha', 'schlaf'].map(k => `<option value="${k}"${(E.anker || '') === k ? ' selected' : ''}>${k ? ANKER[k] : tx('einstellungen.anker_ohne')}</option>`).join('')}</select></label>
+      <p class="unter" style="margin-top:6px">${tx('einstellungen.anker_text')}</p>
+      <button class="knopf leise" id="ics" style="margin-top:10px">${tx('einstellungen.in_den_kalender_eintragen')}</button></div>
     <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
       <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
@@ -2086,6 +2100,7 @@ function einstellungen() {
   wahl('ausgabe', w => { if (w === E.ausgabe) return; if (E.modus === 'seite') Z.schnappschuss('vor dem Gliederungswechsel'); E.ausgabe = w; Z.speichern(); location.reload(); });
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast(tx('einstellungen.abschnitte_werden_umgestellt')); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
+  wahl('hasanat', w => { E.hasanat = w === '1'; });
   wahl('zielquote', w => { E.zielQuote = +w; });
   wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   pauseBinden();
@@ -2129,11 +2144,12 @@ function einstellungen() {
   addEventListener('hashchange', verlassen);
   const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); };
   app.querySelector('#std').onchange = zeit; app.querySelector('#min').onchange = zeit;
+  app.querySelector('#anker').onchange = ev => { E.anker = ev.target.value; Z.speichern(); };
   app.querySelector('#ics').onclick = () => {
     const [h, m] = (E.erinnerung || '05:30').split(':'), d = Z.heute().replace(/-/g, '');
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Itqan//Wird//DE', 'BEGIN:VEVENT', `UID:itqan-wird-${Date.now()}@itqan`, `DTSTAMP:${stamp}`,
-      `DTSTART:${d}T${h}${m}00`, 'DURATION:PT20M', 'RRULE:FREQ=DAILY', `SUMMARY:${tx('einstellungen.kalender_titel')}`, `DESCRIPTION:${tx('einstellungen.kalender_text')}. ${location.href.split('#')[0]}`,
+      `DTSTART:${d}T${h}${m}00`, 'DURATION:PT20M', 'RRULE:FREQ=DAILY', `SUMMARY:${tx('einstellungen.kalender_titel')}${E.anker ? ' · ' + ANKER[E.anker] : ''}`, `DESCRIPTION:${tx('einstellungen.kalender_text')}. ${location.href.split('#')[0]}`,
       'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', `DESCRIPTION:${tx('einstellungen.kalender_text')}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
     herunterladen('Itqan-Wird.ics', ics, 'text/calendar');
   };

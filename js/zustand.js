@@ -349,6 +349,17 @@ export const SCHWAECHEN = { khatma: 0, ausgewogen: 0.03, schwaechen: 0.065 };
 // schwach: ein Fehler innerhalb der letzten zwei Runden (fz: Tag des letzten Fehlers) oder im Schnitt viele Fehler je Durchgang
 const istSchwach = (k, seit) => k.n > 0 && k.fe > 0 && ((k.fz && k.fz >= seit) || k.fe / k.n >= 0.5);
 export const schwachWert = k => (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0);
+// versäumte Wird-Tage zwischen dem letzten erfüllten Tag und datum (Ruhetage und Pause zählen nicht)
+function ausgefallenSeit(zuletzt, datum) {
+  let n = 0;
+  for (let d = plusTage(zuletzt, 1); d < datum; d = plusTage(d, 1)) if (!ruhetag(d)) n++;
+  return n;
+}
+// den Wiedereinstieg beenden: das übliche Pensum für heute auffüllen
+export function comebackBeenden() {
+  const d = heute(), t = tagesplan(d); if (!t.cb) return;
+  for (let i = t.plan.length; i < pensumAm(d); i++) pensumHeuteAendern(1);
+}
 export function tagesplan(datum = heute(), trotzdem = false) {
   if (P.tage[datum] && !(trotzdem && P.tage[datum].ruhe)) return P.tage[datum];
   if (ruhetag(datum) && !trotzdem) {
@@ -357,6 +368,14 @@ export function tagesplan(datum = heute(), trotzdem = false) {
   }
   const frei = ruhetag(datum);
   let n = frei ? pensumUeblich() : pensumAm(datum), qadaa = 0;
+  // Wiedereinstieg: nach drei oder mehr versäumten Wird-Tagen drei Tage lang das halbe Pensum, ohne Rückstau (cb zählt die Tage)
+  let cb = 0;
+  if (!frei) {
+    const vortag = P.tage[plusTage(datum, -1)], zl = P.kette.zuletzt;
+    if (vortag?.cb && vortag.cb < 3) cb = vortag.cb + 1;
+    else if (zl && ausgefallenSeit(zl, datum) >= 3) cb = 1;
+  }
+  if (cb) n = Math.max(1, Math.ceil(n / 2));
   // Qaḍāʾ: der letzte Wird-Tag ist ausgefallen, der davor war erfüllt, die Kette läuft → dessen Pensum nachholen
   const w1 = vorigerWirdTag(datum), w2 = vorigerWirdTag(w1), z = P.kette.zuletzt;
   if (!frei && P.kette.n > 0 && z && z >= w2 && z < w1) qadaa = pensumAm(w1);
@@ -382,7 +401,7 @@ export function tagesplan(datum = heute(), trotzdem = false) {
   }
   const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan), datum);
   naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
-  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(frei ? { freiwillig: true } : {}) }, ...(anteil > 0 ? { k: konto } : {}) });
+  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(cb ? { cb } : {}), ...(frei ? { freiwillig: true } : {}) }, ...(anteil > 0 ? { k: konto } : {}) });
   return P.tage[datum];
 }
 // Tagesplan anwenden. Gibt es für den Tag schon einen Plan (zweites Gerät), bleibt der erste;
