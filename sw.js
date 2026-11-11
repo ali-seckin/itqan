@@ -1,7 +1,7 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v81';
+const SCHALE = 'itqan-schale-v82';
 const SEITEN = 'itqan-seiten-v1';
-const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/sprache.js', 'js/sprache/de.js', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/auswahl.js', 'js/mushaf.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
+const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/sprache.js', 'js/sprache/de.js', 'js/app.js', 'js/daten.js', 'js/zustand.js', 'js/abfragen.js', 'js/auswahl.js', 'js/mushaf.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/abschnitte_seite_v1.json', 'daten/abschnitte_seite_v2.json',
   'daten/gliederungen/fort-1.json', 'daten/gliederungen/fort-2.json', 'daten/gliederungen/anf-1.json', 'daten/gliederungen/seite-v1.json', 'daten/gliederungen/seite-v2.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
   'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];

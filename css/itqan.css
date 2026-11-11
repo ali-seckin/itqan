@@ -25,6 +25,13 @@ button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
+.kurz-liste{display:grid;gap:10px;margin-top:14px}
+.kurz-karte{display:block;text-align:start;text-decoration:none;color:inherit;background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:12px 14px;min-height:44px;font:inherit;width:100%}
+.kurz-karte b{display:block}.kurz-karte span{display:block;font-size:var(--s-klein);margin-top:2px}
+.zeilenwahl{display:grid;gap:5px;margin-top:14px}
+.zeilenwahl button{min-height:44px;border-radius:10px;border:1px solid var(--rand);background:var(--karte);text-align:start;padding:0 14px;font-size:var(--s-klein)}
+.zeilenwahl button.richtig{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
+.zeilenwahl button.gewaehlt{box-shadow:inset 0 0 0 2px var(--akzentF)}
 .start-mehr{margin:14px 0;border:1px solid var(--rand);border-radius:16px;padding:4px 14px;background:var(--karte)}
 .start-mehr summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
 

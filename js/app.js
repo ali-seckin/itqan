@@ -7,6 +7,7 @@ import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
+import * as AF from './abfragen.js';
 import { wahlZeichnen, ausAbschnitten, ausBereiche, zuBereichen, zuAbschnitten, istAlles, istLeer, seitenZahl, alles } from './auswahl.js';
 import * as RB from './rueckblick.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
@@ -299,10 +300,47 @@ async function vorratSpeichern() {
   } catch (e) {}
 }
 
+// ---------- Kurzübungen ----------
+function kurzSeite(was) {
+  navSetzen('heute');
+  if (was === 'zeile') return zeileSeite();
+  const arten = [['seite', tx('kurz.seite'), tx('kurz.seite_t')], ['juz', tx('kurz.juz'), tx('kurz.juz_t')], ['uebergang', tx('kurz.uebergang'), tx('kurz.uebergang_t')], ['mitte', tx('kurz.mitte'), tx('kurz.mitte_t')], ['titel', tx('kurz.titel_aufgabe'), tx('kurz.titel_aufgabe_t')]];
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#heute'">${zurueckPfeil}${tx('titel.heute')}</button>
+    <div class="marke">${tx('kurz.titel')}<small>${tx('kurz.untertitel')}</small></div>
+    <div class="kurz-liste">${arten.map(([k, l, t]) => `<button type="button" class="kurz-karte" data-k="${k}"><b>${l}</b><span>${t}</span></button>`).join('')}
+      <a class="kurz-karte" href="#kurz/zeile"><b>${tx('kurz.zeile')}</b><span>${tx('kurz.zeile_t')}</span></a>
+      <button type="button" class="kurz-karte" data-k="zwillinge"><b>${tx('kurz.zwillinge')}</b><span>${tx('kurz.zwillinge_t')}</span></button></div>
+    <p class="leer verdeckt" id="kurz-leer" role="status">${tx('kurz.nichts')}</p>`;
+  app.querySelector('.kurz-liste').onclick = async ev => {
+    const b = ev.target.closest('[data-k]'); if (!b) return;
+    const h = b.dataset.k === 'zwillinge' ? await AF.zwillingsZiel() : AF.naechste(b.dataset.k);
+    if (h) location.hash = h; else app.querySelector('#kurz-leer').classList.remove('verdeckt');
+  };
+  window.scrollTo(0, 0);
+}
+// Zeile auf der Seite: Seite und Āya sind genannt, gefragt ist die Zeile, in der die Āya beginnt
+function zeileSeite() {
+  const a = AF.zeilenAufgabe();
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#kurz'">${zurueckPfeil}${tx('kurz.titel')}</button>
+    <div class="marke">${tx('kurz.zeile')}<small>${a ? tx('kurz.zeile_frage', { p: a.p, name: esc(sureName(a.s)), aya: a.a }) : ''}</small></div>
+    ${a ? `<div class="zeilenwahl" role="group">${Array.from({ length: a.zeilenZahl }, (_, i) => `<button type="button" data-z="${i + 1}" aria-label="${tx('kurz.zeile_nr', { n: i + 1 })}"><span>${i + 1}</span></button>`).join('')}</div>
+      <p class="unter" id="zeile-ergebnis" role="status" style="margin-top:10px"></p>
+      <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein verdeckt" id="zeile-weiter">${tx('kurz.nochmal')}</button></div>` : `<p class="leer">${tx('kurz.nichts')}</p>`}`;
+  if (!a) return;
+  const w = app.querySelector('.zeilenwahl');
+  w.onclick = ev => {
+    const b = ev.target.closest('button'); if (!b || w.dataset.fertig) return; w.dataset.fertig = '1';
+    const d = Math.abs(+b.dataset.z - a.zeile); b.classList.add('gewaehlt'); w.querySelector(`[data-z="${a.zeile}"]`).classList.add('richtig');
+    app.querySelector('#zeile-ergebnis').textContent = d === 0 ? tx('kurz.zeile_genau') : d === 1 ? tx('kurz.zeile_nah') : tx('kurz.zeile_fern', { n: d });
+    app.querySelector('#zeile-weiter').classList.remove('verdeckt');
+  };
+  app.querySelector('#zeile-weiter').onclick = zeileSeite;
+  window.scrollTo(0, 0);
+}
 // ---------- Router ----------
-const ROUTEN = { sprachwahl, heute, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+const TITEL = { kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
   lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
@@ -577,6 +615,7 @@ function heute() {
     <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
     <div class="klein-zeile" style="justify-content:center;gap:4px"><button class="textlink" id="weniger">${tx('heute.ein_abschnitt')}</button><button class="textlink" id="mehr">${tx('heute.ein_abschnitt_2')}</button></div>`}
     ${lernHTML}
+    <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#kurz">${tx('heute.kurzuebungen')}</a></div>
     ${istFreitag ? `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
       ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)), ziel: prozent(bq.ziel) })}</p>`; })()}
@@ -666,14 +705,22 @@ async function ueben(idText, quelle, fokusText) {
     const fv = +fokusText; if (!(fv >= e.v[0] && fv <= e.v[1])) { location.hash = '#fehlerstellen'; return; }
     e = { ...e, v: [fv, fv], von: [D.V[fv][0], D.V[fv][1]], bis: [D.V[fv][0], D.V[fv][1]], ayat: 1, seiten: [...new Set(ayaWoerter(fv).map(x => x[5]))].sort((a, b) => a - b) };
   }
+  // Kurzübung (siehe abfragen.js): eine oder wenige Āyāt aus dem Abschnitt mit eigenem Hinweis, ohne Wirkung auf Stufe und Karte
+  const ABF = quelle === 'abfrage' ? (([av, ab, ac, ak, an]) => ({ von: +av, bis: +ab, ctx: ac === '1', art: ak, n: +an }))(String(fokusText).split('_')) : null;
+  if (ABF) {
+    if (!(ABF.von >= 0 && ABF.bis >= ABF.von && ABF.bis < D.V.length)) { location.hash = '#kurz'; return; }
+    e = { ...e, v: [ABF.von, ABF.bis], von: [D.V[ABF.von][0], D.V[ABF.von][1]], bis: [D.V[ABF.bis][0], D.V[ABF.bis][1]], ayat: ABF.bis - ABF.von + 1,
+      seiten: [...new Set(Array.from({ length: ABF.bis - ABF.von + 1 }, (_, i) => ayaWoerter(ABF.von + i)).flat().map(x => x[5]))].sort((a, b) => a - b) };
+  }
+  const abfrageTitel = () => ABF.art === 'seite' ? tx('ueben.abfrage_seite', { n: ABF.n }) : ABF.art === 'juz' ? tx('ueben.abfrage_juz', { n: ABF.n }) : ABF.art === 'uebergang' ? tx('ueben.abfrage_uebergang') : ABF.art === 'mitte' ? tx('ueben.abfrage_mitte') : tx('ueben.abfrage_titel', { titel: esc(D.A[ABF.n]?.titel || '') });
   app.innerHTML = `<div class="lade">${tx('ueben.seiten_werden_geladen')}</div>`;
-  const E = Z.P.einst, t = Z.tagesplan(), art = quelle || t.art[id];
+  const E = Z.P.einst, t = Z.tagesplan(), art = ABF ? 'stelle' : quelle || t.art[id];
   // Neu lernen: die offene Lektion dieses Abschnitts (ph 0 Ḥifẓ, 1 Ḍabṭ)
   const L = quelle === 'lern' ? Z.lektionen().find(x => x.id === id) : null;
   if (quelle === 'lern' && !L) { location.replace('#lernen'); return; }
   // Bei Zufall und Fehlerwiederholung: die Āya davor deutlich zeigen, damit man weiß, wo man ist
   const vorVi = e.v[0] - 1;
-  const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler' || art === 'stelle' || L?.ph === 1);   // im Ḍabṭ: Einsatz aus der Āya davor
+  const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler' || (art === 'stelle' && (!ABF || ABF.ctx)) || L?.ph === 1);   // im Ḍabṭ: Einsatz aus der Āya davor
   const kWoerter = kontext ? ayaWoerter(vorVi) : [];
   const kSeiten = [...new Set(kWoerter.map(x => x[5]))];
   const dop = doppelseitig(), gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]), alleSeiten = gezeigt.flat();
@@ -683,6 +730,7 @@ async function ueben(idText, quelle, fokusText) {
   const k = Z.karte(id);
   const ayat = []; for (let v = e.v[0]; v <= e.v[1]; v++) ayat.push(v);
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
+  if (ABF && ['seite', 'juz', 'titel'].includes(ABF.art)) for (const p of e.seiten) for (const z of D.L[p - 1]) if (z?.w) for (const w of z.w) zu.add(w[1]);   // ganze Seite verdeckt
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false, hilfeFrei = false;
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
@@ -734,7 +782,7 @@ async function ueben(idText, quelle, fokusText) {
   addEventListener('hashchange', mikroAus, { once: true });
   const zusatz = art === 'bonus' ? ` · ${tx('allg.bonus')}` : art === 'fehler' ? ` · ${tx('allg.wiederholung_nach_fehler')}` : art === 'festigen' ? ` · ${tx('allg.festigen')}` : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="${tx('allg.zurueck')}">${zurueckPfeil}</button>
-      <div class="info">${art === 'stelle' ? `<b>${tx('ueben.fehlerstelle')}</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${tx('ueben.ayat', { ayat: e.ayat })} · ${tx('allg.zeilen', { zeilen: e.zeilen })}`} · ${tx('ueben.s')} ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="${tx('ueben.seite_seite', { p, a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('ueben.r') : tx('ueben.l')}</button>`).join(' ')}</div></div>
+      <div class="info">${ABF ? `<b>${abfrageTitel()}</b>${['uebergang', 'mitte'].includes(ABF.art) ? ` · ${e.von[0]}:${e.von[1]}` : ''}` : art === 'stelle' ? `<b>${tx('ueben.fehlerstelle')}</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${tx('ueben.ayat', { ayat: e.ayat })} · ${tx('allg.zeilen', { zeilen: e.zeilen })}`} · ${tx('ueben.s')} ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="${tx('ueben.seite_seite', { p, a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('ueben.r') : tx('ueben.l')}</button>`).join(' ')}</div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>${tx('ueben.davor')} · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([, vi, , i]) => wortHTML(vi, i)).join('')}</div></div>` : ''}
     <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div style="height:190px"></div>
@@ -1063,6 +1111,15 @@ async function ueben(idText, quelle, fokusText) {
     else if (offen && !hilfe && ev.key === 'z') bewerte('zoegern');
   };
   addEventListener('keydown', tasten);
+  function abfrageAbschluss() {
+    mikroAus(); removeEventListener('keydown', tasten);
+    document.querySelector('.steuerung')?.remove();
+    const wieder = AF.naechste(ABF.art), gut = erg.every(x => x === 'ok');
+    app.innerHTML = `<div class="feier">${qandil()}<h2>${gut ? tx('ueben.richtig') : tx('ueben.noch_nicht_sicher')}</h2>
+      <p>${tx('kurz.fertig')}</p>
+      <div style="display:grid;gap:10px;margin-top:16px">${wieder ? `<a class="knopf haupt" href="${wieder}" style="text-decoration:none">${tx('kurz.nochmal')}</a>` : ''}<a class="knopf leise" href="#kurz" style="text-decoration:none">${tx('kurz.titel')}</a></div></div>`;
+    window.scrollTo(0, 0);
+  }
   function stelleAbschluss() {
     mikroAus(); removeEventListener('keydown', tasten);
     const r = Z.fehlerstelleGeuebt(ayat[0], erg[0]), ok = erg[0] === 'ok';
@@ -1076,7 +1133,7 @@ async function ueben(idText, quelle, fokusText) {
     window.scrollTo(0, 0);
   }
   function abschluss() {
-    if (art === 'stelle') return stelleAbschluss();
+    if (art === 'stelle') return ABF ? abfrageAbschluss() : stelleAbschluss();
     mikroAus(); Z.zwischenstandLoeschen();
     removeEventListener('keydown', tasten);
     const res = Z.abschnittAbschliessen(id, erg, ['frei', 'bonus', 'lern'].includes(art) ? art : undefined, zeitGanz ? zeitSekunden() : 0);
@@ -1096,13 +1153,15 @@ async function ueben(idText, quelle, fokusText) {
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
       ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
       ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}${orn}
-      <div style="display:grid;gap:10px;margin-top:16px">
+      <div style="display:grid;gap:10px;margin-top:16px" id="abschl-knoepfe">
       ${res.lern ? `<button class="knopf haupt" id="uebersicht">${tx('lernen.zu_den_lektionen')}</button>` : wirdJetzt ? `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>` : naechster != null && art !== 'frei' ? `<button class="knopf haupt" id="naechster">${tx('ueben.naechster_abschnitt')}</button><button class="knopf leise" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>` : `<button class="knopf haupt" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>`}
       </div></div>`;
     const w = app.querySelector('#weiter'); if (w) w.onclick = () => location.hash = '#fertig';
     const n = app.querySelector('#naechster'); if (n) n.onclick = () => location.replace(`#ueben/${naechster}`);
     const u = app.querySelector('#uebersicht'); if (u) u.onclick = () => location.hash = res.lern ? '#lernen' : '#heute';
     window.scrollTo(0, 0); hochzaehlen(app);
+    // Zwillings-Übung (Mutašābihāt): nach einem sicheren Abschnitt, wenn es eine ähnliche Stelle gibt
+    if (!res.lern && res.stufe >= 2) AF.zwillingZu(e.v[0], e.v[1]).then(z => { const kn = app.querySelector('#abschl-knoepfe'); if (z && kn) kn.insertAdjacentHTML('beforeend', `<a class="knopf leise" href="#vergleich/${z.key}/ueben" style="text-decoration:none">${tx('ueben.zwillinge_knopf', { a: NL.stelleKurz(z.a), b: NL.stelleKurz(z.b) })}</a>`); });
   }
   // angefangene Übung von heute fortsetzen?
   const zw = art !== 'stelle' ? Z.zwischenstandLaden(id, quelle) : null;
