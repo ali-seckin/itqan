@@ -1262,6 +1262,10 @@ export default {
     ornament_sura: 'Ornament Sūra {s}',
   },
   version: {
+    sprachen_titel: 'Sechs Sprachen',
+    sprachen_1: 'Itqān gibt es jetzt auf Deutsch, Englisch, Türkisch, Arabisch, Französisch und Spanisch. Die Sprache wählst du in den Einstellungen.',
+    sprachen_2: 'Auch die Titel der Abschnitte und die Namen der Sūren erscheinen in der gewählten Sprache, auf Arabisch von rechts nach links.',
+    sprachen_3: 'Die neuen Sprachen werden noch gegengelesen. Rückmeldungen dazu sind willkommen.',
     ganze_seiten_titel: 'Ganze Seiten als dritter Lernmodus',
     ganze_seiten_1: 'Neu in den Einstellungen unter „Länge der Abschnitte“: Ganze Seiten. Jede Lerneinheit ist dann eine Muṣḥaf-Seite, gezählt von 1 bis 604.',
     ganze_seiten_2: 'In diesem Modus hat die Muṣḥaf-Seite keine farbigen Abschnitte, und die Lichtkarte zählt nur Seiten.',
@@ -1368,6 +1372,7 @@ export default {
     keine_klare_regel_stellen_in_der_einen: 'Keine klare Regel: {na} in der einen, {nb} in der anderen Reihenfolge.',
   },
   daten: {
+    titel_teil: '{titel} (Teil {a}/{b})',
     seite_n: 'Seite {n}',
     suren_bis: '{a} bis {b}',
     sammelkarte: 'Sammelkarte',

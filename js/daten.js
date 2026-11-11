@@ -11,6 +11,24 @@ export function modusAnwenden(A, modus) {
   for (const e of A) if (e.seite) e.titel = tx('daten.seite_n', { n: e.seite });
 }
 
+// Titel der Abschnitte in der gewählten Sprache: daten/titel/de.json listet jeden deutschen Titel einmal,
+// daten/titel/<code>.json hat an derselben Stelle seine Übersetzung. Die Anfänger-Teile tragen „(Teil a/b)“ hinter
+// dem Titel des ganzen Abschnitts. Fehlt eine Übersetzung, bleibt der deutsche Titel.
+const TEIL = / \(Teil (\d+)\/(\d+)\)$/;
+async function titelUebersetzen(A) {
+  const code = gebiet('code');
+  if (code === 'de') return;
+  const holen = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+  const [liste, ueber] = await Promise.all([holen('daten/titel/de.json'), holen(`daten/titel/${code}.json`)]);
+  if (!liste || !ueber) return;
+  const t = new Map(liste.map((d, i) => [d, ueber[i]]));
+  for (const e of A) {
+    if (e.seite || !e.titel) continue;
+    const m = e.titel.match(TEIL), grund = m ? e.titel.slice(0, m.index) : e.titel, ue = t.get(grund);
+    if (ue) e.titel = m ? tx('daten.titel_teil', { titel: ue, a: m[1], b: m[2] }) : ue;
+  }
+}
+
 // ausgabe: 'v1' = Druck 1405, 'v2' = Druck 1421, jeweils mit eigenen Seiten und Zeilen
 const LAYOUT = { v1: 'daten/layout_v1.json', v2: 'daten/layout_v2.json' };
 export async function ladeDaten(ausgabe = 'v2', modus = 'fort') {
@@ -22,6 +40,7 @@ export async function ladeDaten(ausgabe = 'v2', modus = 'fort') {
   const [L, V, A, S] = await Promise.all([j(LAYOUT[ausgabe]), j('daten/verse.json'), j(G.datei), j('daten/suren.json')]);
   Object.assign(D, { L, V, A, S, ausgabe, modus, gliederung: G.name });
   modusAnwenden(A, modus);
+  await titelUebersetzen(A);
   for (const e of A) e.juz = juzVonSeite(e.seiten[0]);   // Ǧuzʾ immer nach 1405, damit der gewählte Bereich gleich bleibt
   if (ausgabe === 'v2') {   // Seiten, Zeilen und Āya-Seite nach den Umbrüchen von 1421 neu bestimmen
     const seiten = new Map(), zeilen = new Map();
@@ -66,7 +85,8 @@ const JUZ = [1, 22, 42, 62, 82, 102, 121, 142, 162, 182, 201, 222, 242, 262, 282
 export function juzVonSeite(p) { let j = 1; for (let i = 0; i < 30; i++) if (p >= JUZ[i]) j = i + 1; return j; }
 export const juzStart = j => JUZ[j - 1];
 
-export const sureName = s => umschrift(D.S[s][1]);
+// Namen der Sūren: eine Sprache kann im Kopf ihrer Datei eine eigene Liste nennen (suren: [...] oder 'arabisch')
+export const sureName = s => { const l = gebiet('suren'); return l === 'arabisch' ? D.S[s][0] : Array.isArray(l) ? l[s - 1] : umschrift(D.S[s][1]); };
 export const sureArabisch = s => D.S[s][0];
 export const vers = vi => ({ s: D.V[vi][0], a: D.V[vi][1], b: D.V[vi][2], p: D.V[vi][3] });
 

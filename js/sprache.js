@@ -12,7 +12,11 @@ import de from './sprache/de.js';
 // frei: Die Sprache erscheint in den Einstellungen zur Auswahl. Ohne Freigabe ist sie nur über ?sprache=<code> erreichbar (für das Lektorat).
 export const SPRACHEN = [
   { code: 'de', name: 'Deutsch', frei: true },
-  { code: 'en', name: 'English', frei: false },
+  { code: 'en', name: 'English', frei: true },
+  { code: 'tr', name: 'Türkçe', frei: true },
+  { code: 'ar', name: 'العربية', frei: true },
+  { code: 'fr', name: 'Français', frei: true },
+  { code: 'es', name: 'Español', frei: true },
 ];
 const MERKER = 'itqan-sprache';
 
