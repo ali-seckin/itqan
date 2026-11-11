@@ -445,10 +445,23 @@ export function pensumHeuteAendern(delta) {
   if (id != null) eintrag('pa', delta > 0 ? { d, plus: id } : { d, minus: id }); else speichern();
   return P.tage[d];
 }
+// plus und minus sind je eine Nummer (ein Abschnitt mehr oder weniger) oder eine Liste (Plan nach geändertem Bereich)
 function pensumAnwenden(e) {
   const t = P.tage[e.d]; if (!t) return;
-  if (e.plus != null) { if (!t.plan.includes(e.plus)) { t.plan.push(e.plus); t.art[e.plus] = 'zyklus'; t.voll = false; } }
-  else if (t.plan.includes(e.minus) && !t.fertig.includes(e.minus) && t.plan.length > 1) { t.plan = t.plan.filter(x => x !== e.minus); delete t.art[e.minus]; }
+  for (const id of [].concat(e.plus ?? [])) if (!t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; }
+  for (const id of [].concat(e.minus ?? [])) if (t.plan.includes(id) && !t.fertig.includes(id) && t.plan.length > 1) { t.plan = t.plan.filter(x => x !== id); delete t.art[id]; }
+}
+// Abschnitte auf dem heutigen Plan, die noch offen sind und nicht (mehr) im gewählten Bereich liegen
+export function heuteAusserhalb() {
+  const t = P.tage[heute()]; if (!t || t.ruhe) return [];
+  return t.plan.filter(id => !t.fertig.includes(id) && !imBereich(id));
+}
+// ersetzt sie durch die nächsten Abschnitte des Zyklus aus dem Bereich
+export function heuteAnBereichAnpassen() {
+  const d = heute(), raus = heuteAusserhalb(); if (!raus.length) return 0;
+  const t = P.tage[d], rein = naechsteImZyklus(raus.length, new Set(t.plan.filter(id => !raus.includes(id))), d).filter(id => imBereich(id) && !t.plan.includes(id));
+  eintrag('pa', { d, plus: rein, minus: raus });
+  return raus.length;
 }
 export function bonusVorschlag() { return fortsetzung(tagesplan()); }
 

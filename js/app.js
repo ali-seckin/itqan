@@ -2036,7 +2036,7 @@ function einstellungen() {
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
         <p class="unter" style="margin-top:8px">${tx('einstellungen.jede_hatma_bleibt_vollstaendig_zufaellig')}</p></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div><div class="hinweisbox verdeckt" id="heute-frage" role="status"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
@@ -2094,10 +2094,21 @@ function einstellungen() {
     else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', `<option value="">${tx('einstellungen.verschieden')}</option>`); alle.value = ''; }
   });
   // Alles abwählen ist erlaubt (bequem zum Neuwählen); gespeichert wird erst, wenn etwas gewählt ist
+  const frage = app.querySelector('#heute-frage');
+  const frageZeigen = () => {   // steht auf dem Plan von heute noch Offenes außerhalb der neuen Auswahl, wird angeboten, es zu ersetzen
+    const n = Z.heuteAusserhalb().length;
+    frage.classList.toggle('verdeckt', !n);
+    if (n) frage.innerHTML = `<p>${tx('auswahl.heute_frage', { n })}</p><div class="reihe" style="margin-top:10px"><button type="button" class="knopf haupt klein" data-ja>${tx('auswahl.heute_ersetzen')}</button><button type="button" class="knopf leise klein" data-nein>${tx('auswahl.heute_lassen')}</button></div>`;
+  };
+  frage.onclick = ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if ('ja' in b.dataset) { Z.heuteAnBereichAnpassen(); toast(tx('auswahl.heute_angepasst')); }
+    frage.classList.add('verdeckt');
+  };
   wahlZeichnen(app.querySelector('#auswahl'), sel, s => {
     if (istLeer(s)) return;
     if (istAlles(s)) { E.bereich = null; delete E.auswahl; } else { E.auswahl = zuBereichen(s); E.bereich = zuAbschnitten(s); }
-    Z.speichern(); dauer();
+    Z.speichern(); dauer(); frageZeigen();
   }, { leer: tx('auswahl.leer_einst') });
   const verlassen = () => { removeEventListener('hashchange', verlassen); if (istLeer(sel)) toast(tx('auswahl.leer_verlassen')); };
   addEventListener('hashchange', verlassen);
