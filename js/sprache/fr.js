@@ -1269,6 +1269,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    rechtslinks_titel: 'Droite et gauche dans chaque langue',
+    rechtslinks_1: 'L’indication qui montre si une page se trouve à droite ou à gauche dans le Mushaf imprimé suit désormais l’abréviation courante de chaque langue. En français, cela reste D et G.',
     doppelseite_titel: 'Double page sans D ni G',
     doppelseite_1: 'Là où le Mushaf s’affiche en double page, sur ordinateur, sur tablette ou dans une fenêtre large, les boutons droite et gauche disparaissent. On voit de toute façon les deux pages.',
     sprachen3_titel: 'Toutes les langues retravaillées',

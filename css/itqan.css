@@ -110,9 +110,9 @@ button.karte:active{transform:scale(.99)}
 /* Bei Doppelseite sieht man beide Seiten: R/L-Knopf, R/L-Marken und Lage-Info entfallen */
 body.doppelt #lage,body.doppelt .seitenlage[data-lage],body.doppelt .lageinfo{display:none!important}
 .reihe-k{display:flex;align-items:center;gap:8px}
-.seitenlage{width:44px;height:44px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzentT);font:600 var(--s-text) var(--fliess);display:grid;place-items:center;padding:0}
+.seitenlage{min-width:44px;width:auto;height:44px;border-radius:22px;padding:0 10px;white-space:nowrap;border:1px solid var(--akzent);background:var(--karte);color:var(--akzentT);font:600 var(--s-text) var(--fliess);display:grid;place-items:center}
 [data-modus=dunkel] .seitenlage{color:var(--akzent2)}
-.seitenlage.klein{display:inline-grid;width:24px;height:24px;font-size:var(--s-etikett);margin:0 3px 0 5px;vertical-align:1px}
+.seitenlage.klein{display:inline-grid;min-width:24px;height:24px;border-radius:12px;padding:0 6px;font-size:var(--s-etikett);margin:0 3px 0 5px;vertical-align:1px}
 .lageinfo:not(.verdeckt){display:flex;gap:14px;align-items:center;border-style:solid}
 .buch{width:96px;flex:none}
 .buch path{stroke:var(--akzent);stroke-width:1.5;stroke-linejoin:round}

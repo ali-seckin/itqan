@@ -1265,6 +1265,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    rechtslinks_titel: 'Rechts und links in jeder Sprache',
+    rechtslinks_1: 'Die Angabe, ob eine Seite im gedruckten Muṣḥaf rechts oder links liegt, steht jetzt so, wie man es in jeder Sprache im Alltag abkürzt, etwa Sağ/Sol auf Türkisch oder يمين/يسار auf Arabisch.',
     doppelseite_titel: 'Doppelseite ohne R und L',
     doppelseite_1: 'Wo der Muṣḥaf als Doppelseite erscheint, am PC, am Tablet und im breiten Fenster, entfallen die Knöpfe R und L. Man sieht ja beide Seiten.',
     sprachen3_titel: 'Alle Sprachen überarbeitet',
