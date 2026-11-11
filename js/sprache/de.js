@@ -1327,6 +1327,8 @@ export default {
     sprachwahl_1: 'Die Sprachauswahl in den Einstellungen steht jetzt auf zwei Zeilen, damit jeder Name genug Platz hat.',
     heuteplan_titel: 'Auswahl auch für heute übernehmen',
     heuteplan_1: 'Nach einer geänderten Auswahl fragt Itqān, ob der Plan für heute gleich angepasst werden soll. Offene Abschnitte außerhalb der neuen Auswahl werden dann ersetzt, Erledigtes bleibt.',
+    sprachmitte_titel: 'Sprachwahl symmetrisch',
+    sprachmitte_1: 'In der Sprachauswahl steht die untere Zeile jetzt mittig, damit die Auswahl ausgewogen aussieht.',
     doppelseite_titel: 'Doppelseite ohne R und L',
     doppelseite_1: 'Wo der Muṣḥaf als Doppelseite erscheint, am PC, am Tablet und im breiten Fenster, entfallen die Knöpfe R und L. Man sieht ja beide Seiten.',
     sprachen3_titel: 'Alle Sprachen überarbeitet',

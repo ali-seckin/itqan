@@ -1331,6 +1331,8 @@ export default {
     sprachwahl_1: 'La elección del idioma en los ajustes se reparte ahora en dos filas, para que cada nombre tenga espacio suficiente.',
     heuteplan_titel: 'Aplicar la nueva elección también a hoy',
     heuteplan_1: 'Tras cambiar tu elección, Itqān pregunta si el plan de hoy debe adaptarse enseguida. Las secciones abiertas fuera de la nueva elección se sustituyen y las terminadas se mantienen.',
+    sprachmitte_titel: 'Elección de idioma equilibrada',
+    sprachmitte_1: 'En la elección del idioma, la última fila queda ahora centrada para que el conjunto se vea equilibrado.',
     doppelseite_titel: 'Doble página sin D ni I',
     doppelseite_1: 'Donde el Mushaf aparece a doble página, en el ordenador, en la tableta o en una ventana ancha, ya no están los botones derecha e izquierda. Total, ves las dos páginas.',
     sprachen3_titel: 'Todos los idiomas revisados',

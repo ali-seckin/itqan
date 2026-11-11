@@ -1331,6 +1331,8 @@ export default {
     sprachwahl_1: 'The language choice in the settings now sits on two rows, so each name has enough room.',
     heuteplan_titel: 'Apply a new choice to today as well',
     heuteplan_1: 'After you change your choice, Itqān asks whether today’s plan should be adjusted right away. Open sections outside the new choice are then replaced, finished ones stay.',
+    sprachmitte_titel: 'Balanced language choice',
+    sprachmitte_1: 'In the language choice, the bottom row is now centred so the choice looks balanced.',
     doppelseite_titel: 'Two-page view without R and L',
     doppelseite_1: 'Wherever the Mushaf is shown as a two-page spread, on a computer, a tablet or in a wide window, the R and L buttons are gone. You can see both pages anyway.',
     sprachen3_titel: 'All languages reworked',

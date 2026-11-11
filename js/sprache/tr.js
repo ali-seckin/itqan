@@ -1331,6 +1331,8 @@ export default {
     sprachwahl_1: 'Ayarlardaki dil seçimi artık iki satırda duruyor, böylece her ada yeterli yer kalıyor.',
     heuteplan_titel: 'Yeni seçimi bugüne de uygulamak',
     heuteplan_1: 'Seçimini değiştirdikten sonra Itqān, bugünkü planın hemen güncellenip güncellenmeyeceğini sorar. Yeni seçimin dışındaki açık bölümler değiştirilir, tamamlananlar kalır.',
+    sprachmitte_titel: 'Dengeli dil seçimi',
+    sprachmitte_1: 'Dil seçiminde alt satır artık ortalanmış durumda, böylece seçim dengeli görünüyor.',
     doppelseite_titel: 'Çift sayfada sağ/sol işareti yok',
     doppelseite_1: 'Mushaf’ın çift sayfa göründüğü yerlerde, bilgisayarda, tablette ve geniş pencerede, sağ ve sol düğmeleri artık yok. Zaten iki sayfayı birden görüyorsun.',
     sprachen3_titel: 'Bütün diller elden geçirildi',
