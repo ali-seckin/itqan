@@ -498,6 +498,22 @@ select option,select optgroup{background-color:var(--liste);color:var(--text)}
 .zeitwahl select{width:80px;font-size:var(--s-unter)}
 .zeitwahl span{color:var(--leise)}
 .wahl button{line-height:1.2}
+.wahl button small{display:block;pointer-events:none;font-size:var(--s-klein)}
+.wahl.reihenfolge-wahl{display:grid;grid-template-columns:1fr 1fr;border-radius:26px}
+.reihenfolge-wahl button[data-w=zufall]{grid-column:1/-1}
+.wahl-baum .juzwahl button.teil,.wahl-baum .a-chip.teil,.wahl-baum .a-page.teil{border-color:var(--akzentF);box-shadow:inset 0 0 0 2px var(--akzentF)}
+.wahl-baum .juzwahl button.an,.wahl-baum .a-chip.an,.wahl-baum .a-page.an{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
+.a-gruppe{border-top:1px solid var(--rand)}.a-gruppe summary{display:flex;gap:10px;min-height:44px;align-items:center;cursor:pointer;list-style:none}
+.a-gruppe summary::-webkit-details-marker{display:none}
+.a-gruppe summary .a-stand{margin-inline-start:auto;font-size:var(--s-klein)}
+.a-gruppe summary::after{content:'▾';transition:transform .15s}
+.a-gruppe[open] summary::after{transform:rotate(180deg)}
+.a-sure{display:flex;gap:6px;margin-top:6px}
+.a-chip{flex:1;text-align:start;padding:8px 12px;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-text);min-height:44px}
+.a-chip small{display:block;font-size:var(--s-klein)}
+.a-seiten{flex:none;padding:0 14px;border-radius:10px;border:1px solid var(--rand);background:none;font-size:var(--s-klein);min-height:44px}
+.a-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin:6px 0 10px}
+.a-page{padding:8px 0;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-text);min-height:44px}
 .wahl.drei button{font-size:var(--s-klein);padding:8px 4px}
 
 /* Abschnittsnummer fett (Muṣḥaf: Abschnitte auf dieser Seite) */

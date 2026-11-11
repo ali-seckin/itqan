@@ -7,6 +7,7 @@ import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
+import { wahlZeichnen, ausAbschnitten, ausBereiche, zuBereichen, zuAbschnitten, istAlles, istLeer, seitenZahl, alles } from './auswahl.js';
 import * as RB from './rueckblick.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
 import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
@@ -438,11 +439,11 @@ function einfuehrung() {
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', juz: new Set(Array.from({ length: 30 }, (_, i) => i + 1)), thema: 'auto', modus: 'fort' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort' };
   const tageText = () => {
     const ganz = s.modus === 'seite';
-    const ids = ganz ? [...s.juz].reduce((n, j) => n + (j < 30 ? juzStart(j + 1) : 605) - juzStart(j), 0) : D.A.filter(e => s.juz.has(e.juz)).length;
-    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${s.juz.size === 30 ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
+    const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
+    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${istAlles(s.sel) ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
@@ -452,47 +453,43 @@ function start() {
       <div id="start-schnapp-liste" class="verdeckt" style="margin-top:12px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>${tx('start.wie_heisst_du')}</h3><div class="feld"><input type="text" id="name" placeholder="${tx('start.dein_name_fuer_deine_profildatei')}" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>${tx('start.was_wiederholst_du')}</h3><p class="unter">${tx('start.waehle_die_agza_die_du_auswendig_kannst')}</p>
-      <div class="reihe" style="margin:12px 0"><button class="knopf leise klein" id="alle">${tx('start.alle_30')}</button><button class="knopf leise klein" id="keine">${tx('start.keinen')}</button></div>
-      <div class="juzwahl" id="juz"></div></div>
+      <div id="auswahl"></div></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3 id="pensum-titel">${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p>
       <div class="zaehler"><button id="minus" aria-label="${tx('start.weniger')}">−</button><b id="pensum">3</b><button id="plus" aria-label="${tx('start.mehr')}">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
-    <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.ab_al_fatihah')}</button><button data-w="rueckwaerts">${tx('start.ab_an_nas')}</button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
+    <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">${tx('start.bei_mehreren_abschnitten_am_tag')}</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">${tx('start.verstreute_stellen')}</button><button data-w="block">${tx('start.eine_stelle_am_stueck')}</button></div></div></div>
     <div class="abschnitt"><h3>${tx('start.erscheinungsbild')}</h3><div class="wahl" id="thema"><button data-w="hell">${tx('start.hell')}</button><button data-w="dunkel">${tx('start.dunkel')}</button><button data-w="auto" class="an">${tx('start.wie_geraet')}</button></div></div>
     <button class="knopf haupt" id="los" style="margin-top:18px">${tx('start.bismillah_beginnen')}</button>`;
   app.querySelector('#start-laden').onclick = profilLaden;
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
   schnappschussBinden(app);
-  const juzEl = app.querySelector('#juz');
-  const juzZeichnen = () => { juzEl.innerHTML = Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${s.juz.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join(''); app.querySelector('#dauer').innerHTML = tageText(); };
-  juzEl.onclick = e => { const j = +e.target.dataset.j; if (!j) return; s.juz.has(j) ? s.juz.delete(j) : s.juz.add(j); juzZeichnen(); };
-  app.querySelector('#alle').onclick = () => { for (let i = 1; i <= 30; i++) s.juz.add(i); juzZeichnen(); };
-  app.querySelector('#keine').onclick = () => { s.juz.clear(); juzZeichnen(); };
+  const dauerZeigen = () => { app.querySelector('#dauer').innerHTML = tageText(); };
+  wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen);
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
   for (const id of ['reihenfolge', 'zufall', 'thema', 'modus']) app.querySelector('#' + id).onclick = e => {
-    const w = e.target.dataset.w; if (!w) return; s[id] = w;
+    const w = e.target.closest('button')?.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
     if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
     if (id === 'thema') { try { localStorage.setItem('itqan-thema', w); } catch (x) {} themaAnwenden(); }
     if (id === 'modus') { app.querySelector('#pensum-titel').textContent = w === 'seite' ? tx('start.wie_viele_seiten_am_tag') : tx('start.wie_viele_abschnitte_am_tag'); app.querySelector('#dauer').innerHTML = tageText(); }
   };
   app.querySelector('#los').onclick = () => {
-    if (!s.juz.size) { toast(tx('start.waehle_mindestens_einen_guz')); return; }
-    const bereich = s.juz.size === 30 ? null : D.A.filter(e => s.juz.has(e.juz)).map(e => e.id);
+    if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
+    const bereich = zuAbschnitten(s.sel);
     Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
     Z.P.einst.zufall = s.zufall;
-    // Bereich als Aǧzāʾ merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Neustart
-    if (bereich) Z.P.einst.bereichJuz = [...s.juz];
+    // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
+    if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
     Z.speichern();
     if (s.modus !== D.modus) { location.hash = '#heute'; location.reload(); return; }
-    if (bereich) { Z.P.einst.bereich = bereich; delete Z.P.einst.bereichJuz; Z.speichern(); }
+    if (bereich) { Z.P.einst.bereich = bereich; Z.speichern(); }
     navigator.storage?.persist?.();
     location.hash = '#heute';
   };
-  juzZeichnen();
+  dauerZeigen();
 }
 
 // Sūrenname und Abschnittsnummer fett; die Nummer zeigt farbig, wie gut der Abschnitt sitzt
@@ -2007,7 +2004,7 @@ function einstellungen() {
   const P = Z.P, E = P.einst;
   // Wählbar ist jede freigegebene Sprache, dazu die gerade geladene (so kommt man aus einer Probesprache zurück)
   const sprachen = SPRACHEN.filter(s => s.frei || s.code === gebiet('code'));
-  const juzAn = new Set(E.bereich ? D.A.filter(e => E.bereich.includes(e.id)).map(e => e.juz) : Array.from({ length: 30 }, (_, i) => i + 1));
+  const sel = E.auswahl ? ausBereiche(E.auswahl) : E.bereich ? ausAbschnitten(E.bereich) : alles();
   const bis = n => Array.from({ length: Math.max(30, n) }, (_, i) => i + 1);
   const gleich = () => E.pensum.every(x => x === E.pensum[0]);
   const [hh, mm] = (E.erinnerung || '05:30').split(':').map(Number);
@@ -2035,11 +2032,11 @@ function einstellungen() {
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
-    <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl" id="reihenfolge">${[['vorwaerts', tx('einstellungen.ab_al_fatihah')], ['rueckwaerts', tx('einstellungen.ab_an_nas')], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+    <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
         <p class="unter" style="margin-top:8px">${tx('einstellungen.jede_hatma_bleibt_vollstaendig_zufaellig')}</p></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div class="juzwahl" id="juz">${Array.from({ length: 30 }, (_, i) => `<button data-j="${i + 1}" class="${juzAn.has(i + 1) ? 'an' : ''}">${i + 1}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
@@ -2096,12 +2093,10 @@ function einstellungen() {
     if (gleich()) { alle.querySelector('option[value=""]')?.remove(); alle.value = String(E.pensum[0]); }
     else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', `<option value="">${tx('einstellungen.verschieden')}</option>`); alle.value = ''; }
   });
-  app.querySelector('#juz').onclick = ev => {
-    const j = +ev.target.dataset.j; if (!j) return;
-    ev.target.classList.toggle('an'); juzAn.has(j) ? juzAn.delete(j) : juzAn.add(j);
-    if (!juzAn.size) { juzAn.add(j); ev.target.classList.add('an'); toast(tx('einstellungen.mindestens_ein_guz')); return; }
-    E.bereich = juzAn.size === 30 ? null : D.A.filter(e => juzAn.has(e.juz)).map(e => e.id); Z.speichern(); dauer();
-  };
+  wahlZeichnen(app.querySelector('#auswahl'), sel, s => {
+    if (istAlles(s)) { E.bereich = null; delete E.auswahl; } else { E.auswahl = zuBereichen(s); E.bereich = zuAbschnitten(s); }
+    Z.speichern(); dauer();
+  }, { pruefen: s => { if (istLeer(s)) { toast(tx('auswahl.mindestens_etwas')); return false; } return true; } });
   const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); };
   app.querySelector('#std').onchange = zeit; app.querySelector('#min').onchange = zeit;
   app.querySelector('#ics').onclick = () => {
@@ -2198,6 +2193,12 @@ async function lehrer() {
     await ladeDaten(Z.P?.einst.ausgabe || 'v2', Z.P?.einst.modus || 'fort');
     if (await Z.gliederungAbgleichen()) toast(tx('app.abschnitte_umgestellt_dein_fortschritt'));
     if (Z.P?.einst.bereichJuz) { const j = new Set(Z.P.einst.bereichJuz); Z.P.einst.bereich = D.A.filter(e => j.has(e.juz)).map(e => e.id); delete Z.P.einst.bereichJuz; Z.speichern(); }
+    if (Z.P) {   // Auswahl (Āya-Bereiche) ist maßgeblich; ältere Profile bekommen sie aus ihren Abschnitten
+      const E = Z.P.einst, vor = JSON.stringify([E.bereich, E.auswahl]);
+      if (E.auswahl) E.bereich = zuAbschnitten(ausBereiche(E.auswahl)); else if (E.bereich) E.auswahl = zuBereichen(ausAbschnitten(E.bereich));
+      if (E.auswahl && !E.bereich) delete E.auswahl;
+      if (JSON.stringify([E.bereich, E.auswahl]) !== vor) Z.speichern();
+    }
   }
   catch (e) { app.innerHTML = `<div class="lade">${tx('app.die_daten_konnten_nicht_geladen_werden')}</div>`; return; }
   Z.tagesSchnappschuss();
