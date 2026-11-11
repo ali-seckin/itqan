@@ -128,7 +128,7 @@ function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbr
 }
 
 // ---------- Gerät und Installation ----------
-const istInstalliert = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const istInstalliert = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true || !!globalThis.Capacitor?.isNativePlatform?.();
 const istTouch = () => matchMedia('(pointer: coarse)').matches;
 function geraet() {
   const ua = navigator.userAgent;

@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.15';
+export const VERSION = '1.16';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
@@ -11,6 +11,11 @@ export const RUECKMELDUNG_AN = '';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '1.16', datum: '2026-11-11', titel: tx('version.huelle_titel'), punkte: [
+    tx('version.huelle_1'),
+    tx('version.huelle_2'),
+    tx('version.huelle_3')
+  ] },
   { v: '1.15', datum: '2026-11-11', titel: tx('version.ganze_seiten_titel'), punkte: [
     tx('version.ganze_seiten_1'),
     tx('version.ganze_seiten_2'),
