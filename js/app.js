@@ -466,7 +466,7 @@ function start() {
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
   schnappschussBinden(app);
   const dauerZeigen = () => { app.querySelector('#dauer').innerHTML = tageText(); };
-  wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen);
+  wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen, { leer: tx('auswahl.leer_start') });
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
   for (const id of ['reihenfolge', 'zufall', 'thema', 'modus']) app.querySelector('#' + id).onclick = e => {
@@ -2093,10 +2093,14 @@ function einstellungen() {
     if (gleich()) { alle.querySelector('option[value=""]')?.remove(); alle.value = String(E.pensum[0]); }
     else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', `<option value="">${tx('einstellungen.verschieden')}</option>`); alle.value = ''; }
   });
+  // Alles abwählen ist erlaubt (bequem zum Neuwählen); gespeichert wird erst, wenn etwas gewählt ist
   wahlZeichnen(app.querySelector('#auswahl'), sel, s => {
+    if (istLeer(s)) return;
     if (istAlles(s)) { E.bereich = null; delete E.auswahl; } else { E.auswahl = zuBereichen(s); E.bereich = zuAbschnitten(s); }
     Z.speichern(); dauer();
-  }, { pruefen: s => { if (istLeer(s)) { toast(tx('auswahl.mindestens_etwas')); return false; } return true; } });
+  }, { leer: tx('auswahl.leer_einst') });
+  const verlassen = () => { removeEventListener('hashchange', verlassen); if (istLeer(sel)) toast(tx('auswahl.leer_verlassen')); };
+  addEventListener('hashchange', verlassen);
   const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); };
   app.querySelector('#std').onchange = zeit; app.querySelector('#min').onchange = zeit;
   app.querySelector('#ics').onclick = () => {

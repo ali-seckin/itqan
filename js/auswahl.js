@@ -51,7 +51,7 @@ function baum() {
 const juzBereich = (b, j) => [b[j - 1][0].v0, b[j - 1][b[j - 1].length - 1].v1];
 
 // Zeichnet die Auswahl in host. s wird verändert; onChange(s) folgt nach jeder Änderung.
-// opts.pruefen(s) → false: Änderung zurücknehmen (z. B. wenn nichts mehr gewählt wäre).
+// opts.leer: Hinweis, solange nichts gewählt ist (Alles abwählen ist erlaubt; ob das gilt, entscheidet der Aufrufer).
 export function wahlZeichnen(host, s, onChange, opts = {}) {
   const B = baum();
   const knopf = (v0, v1, inhalt, klasse) => `<button type="button" class="${klasse}" data-v0="${v0}" data-v1="${v1}" aria-pressed="false">${inhalt}</button>`;
@@ -60,6 +60,7 @@ export function wahlZeichnen(host, s, onChange, opts = {}) {
     <div class="reihe" style="margin:12px 0"><button type="button" class="knopf leise klein" data-alle>${tx('start.alle_30')}</button><button type="button" class="knopf leise klein" data-keine>${tx('start.keinen')}</button></div>
     <div class="juzwahl">${juzReihe}</div>
     <p class="unter a-summe" role="status" style="margin-top:10px"></p>
+    <p class="unter a-leer verdeckt" role="alert" style="margin-top:4px"></p>
     <button type="button" class="knopf leise klein a-genauer" aria-expanded="false" style="margin-top:6px">${tx('auswahl.genauer')}</button>
     <div class="a-detail verdeckt"><p class="unter" style="margin:10px 0">${tx('auswahl.hinweis')}</p></div></div>`;
   const detail = host.querySelector('.a-detail'), summe = host.querySelector('.a-summe');
@@ -83,10 +84,10 @@ export function wahlZeichnen(host, s, onChange, opts = {}) {
       d.querySelector('.a-stand').textContent = st === 2 ? tx('auswahl.ganz') : st === 1 ? tx('auswahl.teilweise') : '';
     });
     summe.textContent = tx('auswahl.summe', { n: seitenZahl(s) });
+    const le = host.querySelector('.a-leer'); le.textContent = opts.leer || ''; le.classList.toggle('verdeckt', !istLeer(s));
   };
   const aendern = (v0, v1, an) => {
-    const vor = s.slice(); s.fill(an ? 1 : 0, v0, v1 + 1);
-    if (opts.pruefen && !opts.pruefen(s)) { s.set(vor); aktualisieren(); return; }
+    s.fill(an ? 1 : 0, v0, v1 + 1);
     aktualisieren(); onChange(s);
   };
   host.onclick = ev => {
