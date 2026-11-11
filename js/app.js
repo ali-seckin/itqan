@@ -10,6 +10,7 @@ import * as NL from './aehnlich.js';
 import * as RB from './rueckblick.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
 import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
+const komma = () => gebiet('komma') ?? ', ';
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
@@ -341,7 +342,7 @@ function sprachwahl() {
   const vorschlag = gebiet('code') !== 'de' ? gebiet('code') : geraeteSprache();
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('sprachwahl.titel')}</p></div>
-    <div class="sprachwahl" id="sprachwahl">${SPRACHEN.filter(s => s.frei).map(s => `<button class="knopf ${s.code === vorschlag ? 'haupt' : 'leise'}" data-w="${s.code}" lang="${s.code}" dir="${s.code === 'ar' ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>`;
+    <div class="sprachwahl" id="sprachwahl">${SPRACHEN.filter(s => s.frei).map(s => `<button class="knopf ${s.code === vorschlag ? 'haupt' : 'leise'}" data-w="${s.code}" lang="${s.code}" dir="${['ar', 'ur'].includes(s.code) ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>`;
   app.querySelector('#sprachwahl').onclick = ev => {
     const w = ev.target.closest('button')?.dataset.w; if (!w) return;
     spracheMerken(w);
@@ -484,7 +485,7 @@ const STAND_TEXT = { nie: tx('stand_text.noch_nie_wiederholt'), neu: tx('allg.ne
 function abschnittMarke(e) {
   const st = Z.abschnittStand(e.id);
   if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}</strong>`;
-  return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span><span class="nur-leser">, ${STAND_TEXT[st]}</span></strong>`;
+  return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span><span class="nur-leser">${komma()}${STAND_TEXT[st]}</span></strong>`;
 }
 
 // Wahl zwischen Anfänger, Fortgeschritten und ganzen Seiten; empfohlen bleiben die Sinnabschnitte
@@ -540,7 +541,7 @@ function heute() {
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${datumText()}</small></div>
       <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
-    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? ', ' + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>
+    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
@@ -1931,7 +1932,7 @@ function fehlerstellenSeite() {
     <div class="marke">${tx('allg.fehlerstellen')}<small>${tx('fehlerstellenseite.die_woerter_bei_denen_du_dich_vertan')}</small></div>
     <div style="margin-top:16px">${fl.length ? fl.map(f => {
       const w = D.W.get(f.s); if (!w) return '';
-      const arten = Object.entries(f.t).sort((a, b) => b[1] - a[1]).map(([x]) => Z.FEHLERARTEN.find(y => y[0] === x)?.[1]).filter(Boolean).join(', ');
+      const arten = Object.entries(f.t).sort((a, b) => b[1] - a[1]).map(([x]) => Z.FEHLERARTEN.find(y => y[0] === x)?.[1]).filter(Boolean).join(komma());
       const ab = abschnittVon(f.vi), gut = f.gut || 0;
       return `<div class="fs-karte" data-vi="${f.vi}"><a class="wortbild" href="#mushaf/${w[0]}" aria-label="${tx('fehlerstellenseite.im_mushaf_zeigen')}"><span class="nb">${wortBild(f.vi + '.' + (f.i - 1))}</span>${wortBild(f.s)}<span class="nb">${wortBild(f.vi + '.' + (f.i + 1))}</span></a>
         <div class="fs-unten"><div class="t"><b>${sureName(D.V[f.vi][0])} ${D.V[f.vi][0]}:${D.V[f.vi][1]}</b><span>${tx('fehlerstellenseite.vertan', { n: f.n, a: arten ? ' · ' + arten : '' })}</span>

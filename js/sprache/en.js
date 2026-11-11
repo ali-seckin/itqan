@@ -1266,9 +1266,11 @@ export default {
     ornament_sura: 'Ornament Surah {s}',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'Urdu as the seventh language',
+    urdu_1: 'Itqān is now also available in Urdu, from right to left, with Para and the Arabic names of the Surahs.',
     reihenfolge_titel: 'Similar passages in all languages',
     sprachwahl_1: 'On first start you now choose your language first. The introduction and profile setup then appear in that language right away.',
     reihenfolge_1: 'The themes, notes and group titles in the “Word order” part of the similar passages now also appear in the chosen language.',

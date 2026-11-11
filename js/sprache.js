@@ -15,6 +15,7 @@ export const SPRACHEN = [
   { code: 'en', name: 'English', frei: true },
   { code: 'tr', name: 'Türkçe', frei: true },
   { code: 'ar', name: 'العربية', frei: true },
+  { code: 'ur', name: 'اردو', frei: true },
   { code: 'fr', name: 'Français', frei: true },
   { code: 'es', name: 'Español', frei: true },
 ];

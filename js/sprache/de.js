@@ -1262,9 +1262,11 @@ export default {
     ornament_sura: 'Ornament Sūra {s}',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'Urdu als siebte Sprache',
+    urdu_1: 'Itqān gibt es jetzt auch auf Urdu, von rechts nach links, mit Pāra und den arabischen Namen der Sūren.',
     reihenfolge_titel: 'Ähnliche Stellen in allen Sprachen',
     sprachwahl_1: 'Beim ersten Start wählst du zuerst deine Sprache. Einführung und Profil erscheinen dann gleich in dieser Sprache.',
     reihenfolge_1: 'Auch die Themen, Hinweise und Gruppentitel im Bereich „Reihenfolge“ der ähnlichen Stellen erscheinen jetzt in der gewählten Sprache.',

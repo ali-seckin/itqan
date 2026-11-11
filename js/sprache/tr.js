@@ -1266,9 +1266,11 @@ export default {
     ornament_sura: '{s}. sure tezhibi',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'Yedinci dil olarak Urduca',
+    urdu_1: 'Itqān artık Urduca da var, sağdan sola, para (cüz) ve surelerin Arapça adlarıyla.',
     reihenfolge_titel: 'Benzer yerler tüm dillerde',
     sprachwahl_1: 'İlk açılışta önce dilini seçersin. Tanıtım ve profil oluşturma hemen bu dilde görünür.',
     reihenfolge_1: 'Benzer yerlerin “Sıra” bölümündeki konular, açıklamalar ve grup başlıkları da artık seçilen dilde görünür.',

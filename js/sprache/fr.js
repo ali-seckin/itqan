@@ -1266,9 +1266,11 @@ export default {
     ornament_sura: 'Ornement de la sourate {s}',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'L’ourdou, septième langue',
+    urdu_1: 'Itqān existe maintenant aussi en ourdou, de droite à gauche, avec le pâra et les noms arabes des sourates.',
     reihenfolge_titel: 'Passages semblables dans toutes les langues',
     sprachwahl_1: 'Au premier démarrage, tu choisis d’abord ta langue. L’introduction et la création du profil apparaissent ensuite directement dans cette langue.',
     reihenfolge_1: 'Les thèmes, remarques et titres de groupes de la partie « Ordre des mots » des passages semblables apparaissent désormais aussi dans la langue choisie.',

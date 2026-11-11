@@ -5,7 +5,9 @@ export default {
   _: {
     code: 'ar', name: 'العربية', richtung: 'rtl', datum: 'ar-u-nu-latn', zahl: 'ar-u-nu-latn', hidschri: 'ar-u-ca-islamic-umalqura-nu-latn',
     // Namen der Sūren im arabischen Original aus den Daten
-    suren: 'arabisch'
+    suren: 'arabisch',
+    // Komma in Sätzen, die der Code zusammensetzt
+    komma: '، '
   },
   allg: {
     guz_nr: 'الجزء {j}',
@@ -1266,9 +1268,11 @@ export default {
     ornament_sura: 'زخرفة السورة {s}',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'الأردية لغةً سابعة',
+    urdu_1: 'إتقان متاح الآن بالأردية أيضًا، من اليمين إلى اليسار، مع «پارہ» للجزء وأسماء السور العربية.',
     reihenfolge_titel: 'المواضع المتشابهة بكل اللغات',
     sprachwahl_1: 'عند التشغيل الأول تختار لغتك أولًا، فتظهر المقدّمة وإنشاء الملف بهذه اللغة مباشرة.',
     reihenfolge_1: 'صارت الموضوعات والتنبيهات وعناوين المجموعات في قسم «الترتيب» من المواضع المتشابهة تظهر أيضًا باللغة المختارة.',

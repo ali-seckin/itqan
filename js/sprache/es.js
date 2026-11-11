@@ -1266,9 +1266,11 @@ export default {
     ornament_sura: 'Ornamento de la sura {s}',
   },
   sprachwahl: {
-    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma',
+    titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    urdu_titel: 'El urdu como séptimo idioma',
+    urdu_1: 'Itqān está ahora también en urdu, de derecha a izquierda, con el para y los nombres árabes de las suras.',
     reihenfolge_titel: 'Pasajes parecidos en todos los idiomas',
     sprachwahl_1: 'En el primer inicio eliges primero tu idioma. La introducción y la creación del perfil aparecen enseguida en ese idioma.',
     reihenfolge_1: 'Los temas, notas y títulos de grupo de la parte «Orden de palabras» de los pasajes parecidos aparecen ahora también en el idioma elegido.',
