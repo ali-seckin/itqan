@@ -970,6 +970,8 @@ export default {
   stellenwahl: {
     sura_waehlen: 'Choose Surah …',
     sura: 'Surah',
+    aya: 'Ayah',
+    aya_waehlen: 'Choose an ayah',
   },
   abschnittoptionen: {
     abschnitt: 'Section …',
@@ -1272,6 +1274,8 @@ export default {
     rechtslinks_1: 'The marker showing whether a page lies on the right or left in the printed Mushaf now uses the everyday short form of each language, for example Sağ/Sol in Turkish or يمين/يسار in Arabic.',
     datenquelle_titel: 'A new data source',
     datenquelle_1: 'The wording, lines and fonts of the Mushaf pages now come from the Quranic Universal Library (QUL). In a few places, line breaks or word boundaries change slightly as a result.',
+    aya_wahl_titel: 'Pick an ayah directly',
+    aya_wahl_1: 'On the Mushaf page, next to the section menu there is now a second menu for the ayah number. It takes you straight to the ayah you are looking for and highlights it briefly.',
     doppelseite_titel: 'Two-page view without R and L',
     doppelseite_1: 'Wherever the Mushaf is shown as a two-page spread, on a computer, a tablet or in a wide window, the R and L buttons are gone. You can see both pages anyway.',
     sprachen3_titel: 'All languages reworked',

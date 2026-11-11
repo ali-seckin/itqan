@@ -1219,9 +1219,16 @@ function lageInfo(p) {
   return `${buch}<div>${tx('lageinfo.im_gedruckten_mushaf_liegt_seite', { a: r ? tx('lageinfo.rechte_seite') : tx('lageinfo.linke_seite'), p, b: r ? tx('lageinfo.rechts') : tx('lageinfo.links'), c: links <= 604 && rechts >= 1 ? tx('lageinfo.aufgeschlagen_zusammen_mit_seite_daneben', { a: r ? links : rechts, b: r ? tx('lageinfo.links') : tx('lageinfo.rechts') }) : '' })}</div>`;
 }
 // Auswahl Sūra → Abschnitt, springt zur Stelle im Muṣḥaf
-function stellenWahl(sJetzt = 0) {
-  return `<div class="stellenwahl"><select id="wahl-sure" aria-label="${tx('stellenwahl.sura')}"><option value="">${tx('stellenwahl.sura_waehlen')}</option>${Array.from({ length: 114 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
-    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt)}</select></div>`;
+function stellenWahl(sJetzt = 0, mitVers = false) {
+  return `<div class="stellenwahl${mitVers ? ' mit-vers' : ''}"><select id="wahl-sure" aria-label="${tx('stellenwahl.sura')}"><option value="">${tx('stellenwahl.sura_waehlen')}</option>${Array.from({ length: 114 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
+    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt)}</select>${mitVers ? `<select id="wahl-vers" aria-label="${tx('stellenwahl.aya_waehlen')}"${sJetzt ? '' : ' disabled'}>${versOptionen(sJetzt)}</select>` : ''}</div>`;
+}
+// Āya-Nummern einer Sūra (Wert = Āya-Index im Datensatz), als Alternative zum Abschnitt
+function versOptionen(s) {
+  const kopf = `<option value="">${tx('stellenwahl.aya')}</option>`;
+  if (!s) return kopf;
+  const von = D.V.findIndex(v => v[0] === s); let n = 0; while (D.V[von + n]?.[0] === s) n++;
+  return kopf + Array.from({ length: n }, (_, i) => `<option value="${von + i}">${i + 1}</option>`).join('');
 }
 function abschnittOptionen(s) {
   if (!s) return `<option value="">${tx('abschnittoptionen.abschnitt')}</option>`;
@@ -1229,8 +1236,9 @@ function abschnittOptionen(s) {
     .map(e => `<option value="${e.id}">${e.nr ? e.nr + '. ' : ''}${esc(e.titel)} (${bereichText(e)})</option>`).join('')}`;
 }
 function stellenWahlBinden() {
-  const ss = app.querySelector('#wahl-sure'), sa = app.querySelector('#wahl-abschnitt');
-  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value); sa.disabled = !ss.value; if (ss.value) sa.focus(); };
+  const ss = app.querySelector('#wahl-sure'), sa = app.querySelector('#wahl-abschnitt'), sv = app.querySelector('#wahl-vers');
+  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value); sa.disabled = !ss.value; if (sv) { sv.innerHTML = versOptionen(+ss.value); sv.disabled = !ss.value; } if (ss.value) sa.focus(); };
+  if (sv) sv.onchange = () => { if (sv.value !== '') location.hash = `#mushaf/${seiteVon(+sv.value)}/v${sv.value}`; };
   sa.onchange = () => { const e = D.A[+sa.value]; if (e) location.hash = `#mushaf/${e.seiten[0]}/${e.id}`; };
 }
 // Seitenauswahl, nach Aǧzāʾ gruppiert
@@ -1264,7 +1272,7 @@ async function mushaf(pText, aText) {
   app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${seiten.length > 1 ? `${tx('allg.seiten')} ${seiten.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p })} · ${sureName(s)} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(p) })}</small></div>
       <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button><select id="nr" class="seitenwahl" aria-label="${tx('mushaf.seite_3')}">${seitenOptionen(p)}</select></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
-    ${stellenWahl(s)}
+    ${stellenWahl(s, true)}
     <div class="reihe blaettern" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
     <div id="seite" class="${dop ? 'doppel' : ''}"><div class="roller">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}</div><button class="vollbild-knopf" id="vollbild" aria-label="${tx('mushaf.seite_im_vollbild_zeigen')}">${vollbildIcon}</button></div>
     <div class="titel-klein">${tx('mushaf.abschnitte_auf', { a: seiten.length > 1 ? tx('mushaf.diesen_seiten') : tx('mushaf.dieser_seite') })}</div>
@@ -1305,7 +1313,8 @@ async function mushaf(pText, aText) {
     const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (k) blitz(k);
   };
   // aus der Auswahl angesprungen: Abschnitt auf der Seite kurz aufleuchten lassen
-  const ziel = aText != null ? D.A[+aText] : null;
+  // „v<Āya-Index>“: eine einzelne Āya aus der Āya-Auswahl; sonst Abschnitts-Nummer
+  const ziel = aText == null ? null : /^v\d+$/.test(aText) ? { v: [+aText.slice(1), +aText.slice(1)] } : D.A[+aText];
   if (ziel) {
     const ws = [...seiteEl.querySelectorAll('.w')].filter(w => +w.dataset.v >= ziel.v[0] && +w.dataset.v <= ziel.v[1]);
     ws.forEach(w => w.classList.add('angesprungen')); setTimeout(() => ws.forEach(w => w.classList.remove('angesprungen')), 2600);

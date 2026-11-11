@@ -970,6 +970,8 @@ export default {
   stellenwahl: {
     sura_waehlen: 'Elegir sura …',
     sura: 'Sura',
+    aya: 'Aleya',
+    aya_waehlen: 'Elegir una aleya',
   },
   abschnittoptionen: {
     abschnitt: 'Sección …',
@@ -1272,6 +1274,8 @@ export default {
     rechtslinks_1: 'La marca que indica si una página queda a la derecha o a la izquierda en el Mushaf impreso usa ahora la abreviatura habitual: «Dcha.» e «Izq.».',
     datenquelle_titel: 'Una nueva fuente de datos',
     datenquelle_1: 'El texto, las líneas y las tipografías de las páginas del Mushaf proceden ahora de la Quranic Universal Library (QUL). En unos pocos lugares cambian ligeramente los saltos de línea o los límites de palabra.',
+    aya_wahl_titel: 'Elegir la aleya directamente',
+    aya_wahl_1: 'En la página del Mushaf hay ahora, junto al menú de la sección, otro menú para el número de aleya. Te lleva directamente a la aleya que buscas y la resalta un momento.',
     doppelseite_titel: 'Doble página sin D ni I',
     doppelseite_1: 'Donde el Mushaf aparece a doble página, en el ordenador, en la tableta o en una ventana ancha, ya no están los botones derecha e izquierda. Total, ves las dos páginas.',
     sprachen3_titel: 'Todos los idiomas revisados',

@@ -970,6 +970,8 @@ export default {
   stellenwahl: {
     sura_waehlen: 'Choisir une sourate …',
     sura: 'Sourate',
+    aya: 'Verset',
+    aya_waehlen: 'Choisir un verset',
   },
   abschnittoptionen: {
     abschnitt: 'Section …',
@@ -1272,6 +1274,8 @@ export default {
     rechtslinks_1: 'L’indication qui montre si une page se trouve à droite ou à gauche dans le Mushaf imprimé suit désormais l’abréviation courante de chaque langue. En français, cela reste D et G.',
     datenquelle_titel: 'Une nouvelle source de données',
     datenquelle_1: 'Le texte, les lignes et les polices des pages du Mushaf proviennent désormais de la Quranic Universal Library (QUL). À quelques endroits, les sauts de ligne ou les limites de mots changent légèrement.',
+    aya_wahl_titel: 'Choisir directement le verset',
+    aya_wahl_1: 'Sur la page du Mushaf, un second menu pour le numéro de verset se trouve désormais à côté de celui de la section. Il mène droit au verset cherché et le met brièvement en évidence.',
     doppelseite_titel: 'Double page sans D ni G',
     doppelseite_1: 'Là où le Mushaf s’affiche en double page, sur ordinateur, sur tablette ou dans une fenêtre large, les boutons droite et gauche disparaissent. On voit de toute façon les deux pages.',
     sprachen3_titel: 'Toutes les langues retravaillées',

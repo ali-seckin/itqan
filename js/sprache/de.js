@@ -966,6 +966,8 @@ export default {
   stellenwahl: {
     sura_waehlen: 'Sūra wählen …',
     sura: 'Sūra',
+    aya: 'Āya',
+    aya_waehlen: 'Āya wählen',
   },
   abschnittoptionen: {
     abschnitt: 'Abschnitt …',
@@ -1268,6 +1270,8 @@ export default {
     rechtslinks_1: 'Die Angabe, ob eine Seite im gedruckten Muṣḥaf rechts oder links liegt, steht jetzt so, wie man es in jeder Sprache im Alltag abkürzt, etwa Sağ/Sol auf Türkisch oder يمين/يسار auf Arabisch.',
     datenquelle_titel: 'Neue Datenquelle',
     datenquelle_1: 'Wortlaut, Zeilen und Schriften der Muṣḥaf-Seiten kommen jetzt aus der Quranic Universal Library (QUL). An wenigen Stellen ändern sich dadurch Zeilenumbrüche oder Wortgrenzen geringfügig.',
+    aya_wahl_titel: 'Āya direkt wählen',
+    aya_wahl_1: 'Auf der Muṣḥaf-Seite gibt es neben dem Abschnitt eine zweite Auswahl für die Āya-Nummer. So springst du direkt zur gesuchten Āya, sie leuchtet kurz auf.',
     doppelseite_titel: 'Doppelseite ohne R und L',
     doppelseite_1: 'Wo der Muṣḥaf als Doppelseite erscheint, am PC, am Tablet und im breiten Fenster, entfallen die Knöpfe R und L. Man sieht ja beide Seiten.',
     sprachen3_titel: 'Alle Sprachen überarbeitet',

@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.25';
+export const VERSION = '1.26';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = '';
@@ -11,6 +11,9 @@ export const RUECKMELDUNG_AN = '';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '1.26', datum: '2026-11-11', titel: tx('version.aya_wahl_titel'), punkte: [
+    tx('version.aya_wahl_1')
+  ] },
   { v: '1.25', datum: '2026-11-11', titel: tx('version.datenquelle_titel'), punkte: [
     tx('version.datenquelle_1')
   ] },

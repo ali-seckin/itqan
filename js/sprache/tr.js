@@ -970,6 +970,8 @@ export default {
   stellenwahl: {
     sura_waehlen: 'Sure seç …',
     sura: 'Sure',
+    aya: 'Ayet',
+    aya_waehlen: 'Ayet seç',
   },
   abschnittoptionen: {
     abschnitt: 'Bölüm …',
@@ -1272,6 +1274,8 @@ export default {
     rechtslinks_1: 'Sayfanın basılı Mushaf’ta sağda mı solda mı durduğunu gösteren işaret artık açıkça “Sağ” ve “Sol” yazıyor.',
     datenquelle_titel: 'Yeni veri kaynağı',
     datenquelle_1: 'Mushaf sayfalarının metni, satırları ve yazı tipleri artık Quranic Universal Library’den (QUL) geliyor. Bu nedenle birkaç yerde satır sonları veya kelime sınırları hafifçe değişiyor.',
+    aya_wahl_titel: 'Ayeti doğrudan seçmek',
+    aya_wahl_1: 'Mushaf sayfasında bölüm menüsünün yanında artık ayet numarası için ikinci bir menü var. Aradığın ayete doğrudan götürür ve ayeti kısaca vurgular.',
     doppelseite_titel: 'Çift sayfada sağ/sol işareti yok',
     doppelseite_1: 'Mushaf’ın çift sayfa göründüğü yerlerde, bilgisayarda, tablette ve geniş pencerede, sağ ve sol düğmeleri artık yok. Zaten iki sayfayı birden görüyorsun.',
     sprachen3_titel: 'Bütün diller elden geçirildi',

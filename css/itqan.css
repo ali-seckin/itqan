@@ -333,6 +333,7 @@ html.tippt .nav{display:none}
 /* Sūra- und Abschnittsauswahl, Seitenauswahl */
 .stellenwahl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;margin:14px 0 0}
 .stellenwahl select{width:100%;font-size:var(--s-klein);text-overflow:ellipsis}
+.stellenwahl.mit-vers{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,.62fr)}
 .stellenwahl select:disabled{opacity:.5}
 .seitenwahl{border-radius:999px;padding:7px 30px 7px 14px;font-size:var(--s-text);min-width:84px}
 .w.angesprungen::before{animation:angesprungen 2.6s ease}
