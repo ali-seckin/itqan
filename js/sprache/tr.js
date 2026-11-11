@@ -1269,6 +1269,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    doppelseite_titel: 'Çift sayfada sağ/sol işareti yok',
+    doppelseite_1: 'Mushaf’ın çift sayfa göründüğü yerlerde, bilgisayarda, tablette ve geniş pencerede, sağ ve sol düğmeleri artık yok. Zaten iki sayfayı birden görüyorsun.',
     sprachen3_titel: 'Bütün diller elden geçirildi',
     sprachen3_1: 'Yardım, ayarlar, değerlendirme, istatistik ve diğer bütün bölümler artık her dilde doğal; düğme ve seviye adları da her yerde aynı.',
     sprachen3_2: 'Dil seçiminde Kur’an’ın dili Arapça artık en başta.',

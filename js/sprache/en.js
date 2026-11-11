@@ -1269,6 +1269,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    doppelseite_titel: 'Two-page view without R and L',
+    doppelseite_1: 'Wherever the Mushaf is shown as a two-page spread, on a computer, a tablet or in a wide window, the R and L buttons are gone. You can see both pages anyway.',
     sprachen3_titel: 'All languages reworked',
     sprachen3_1: 'Help, Settings, review, statistics and every other part now read naturally in each language, with consistent names for buttons and levels.',
     sprachen3_2: 'Arabic, the language of the Qur’an, now comes first in the language choice.',

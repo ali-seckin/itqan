@@ -1265,6 +1265,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    doppelseite_titel: 'Doppelseite ohne R und L',
+    doppelseite_1: 'Wo der Muṣḥaf als Doppelseite erscheint, am PC, am Tablet und im breiten Fenster, entfallen die Knöpfe R und L. Man sieht ja beide Seiten.',
     sprachen3_titel: 'Alle Sprachen überarbeitet',
     sprachen3_1: 'Hilfe, Einstellungen, Rückblick, Auswertung und alle übrigen Bereiche klingen jetzt in jeder Sprache natürlich, mit einheitlichen Namen für Knöpfe und Stufen.',
     sprachen3_2: 'In der Sprachwahl steht Arabisch als Sprache des Qurʾān an erster Stelle.',

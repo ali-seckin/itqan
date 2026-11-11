@@ -1269,6 +1269,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    doppelseite_titel: 'Doble página sin D ni I',
+    doppelseite_1: 'Donde el Mushaf aparece a doble página, en el ordenador, en la tableta o en una ventana ancha, ya no están los botones derecha e izquierda. Total, ves las dos páginas.',
     sprachen3_titel: 'Todos los idiomas revisados',
     sprachen3_1: 'La ayuda, los ajustes, el resumen, las estadísticas y todas las demás partes suenan ahora naturales en cada idioma, con nombres coherentes para botones y niveles.',
     sprachen3_2: 'En la elección de idioma, el árabe, lengua del Corán, aparece ahora en primer lugar.',

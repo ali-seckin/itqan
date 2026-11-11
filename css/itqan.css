@@ -107,6 +107,8 @@ button.karte:active{transform:scale(.99)}
 .seite{container-type:inline-size;background:linear-gradient(180deg,var(--seite),var(--seite2));color:var(--seitetext);border-radius:6px;padding:4.5cqw 3.6cqw 2cqw;box-shadow:var(--schatten);border:var(--seitenrand)}
 [data-modus=dunkel] .seite{outline:3px double rgba(201,164,92,.7);outline-offset:3px;margin:4px}
 /* Lage im doppelseitigen Muṣḥaf: R oder L neben der Seitenzahl */
+/* Bei Doppelseite sieht man beide Seiten: R/L-Knopf, R/L-Marken und Lage-Info entfallen */
+body.doppelt #lage,body.doppelt .seitenlage[data-lage],body.doppelt .lageinfo{display:none!important}
 .reihe-k{display:flex;align-items:center;gap:8px}
 .seitenlage{width:44px;height:44px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzentT);font:600 var(--s-text) var(--fliess);display:grid;place-items:center;padding:0}
 [data-modus=dunkel] .seitenlage{color:var(--akzent2)}
