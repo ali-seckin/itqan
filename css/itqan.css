@@ -247,6 +247,12 @@ html.tippt .nav{display:none}
 /* Start */
 .start{text-align:center;padding-top:24px}
 .sprachwahl{display:grid;gap:10px;max-width:360px;margin:24px auto 0}
+.knopf.mit-pfeil{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+#sprachwahl{grid-template-columns:1fr 1fr}
+#sprachwahl button:last-child:nth-child(odd){grid-column:1/-1}
+.sw-wahl.an{border-color:var(--akzent);box-shadow:inset 0 0 0 1px var(--akzent);color:var(--text);background:color-mix(in srgb,var(--akzent) 16%,transparent)}
+.sw-wahl.an::before{content:'✓ ';color:var(--akzent)}
+.sw-los{margin-top:20px}
 .start .qandil{height:150px}
 .start h1{font-size:var(--s-anzeige);color:var(--akzentT);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}

@@ -11,14 +11,15 @@ import de from './sprache/de.js';
 
 // frei: Die Sprache erscheint in den Einstellungen zur Auswahl. Ohne Freigabe ist sie nur über ?sprache=<code> erreichbar (für das Lektorat).
 export const SPRACHEN = [
-  { code: 'de', name: 'Deutsch', frei: true },
-  { code: 'en', name: 'English', frei: true },
-  { code: 'tr', name: 'Türkçe', frei: true },
-  { code: 'ar', name: 'العربية', frei: true },
-  { code: 'ur', name: 'اردو', frei: true },
-  { code: 'fr', name: 'Français', frei: true },
-  { code: 'es', name: 'Español', frei: true },
+  { code: 'de', name: 'Deutsch', frei: true, los: 'Weiter auf Deutsch' },
+  { code: 'en', name: 'English', frei: true, los: 'Continue in English' },
+  { code: 'tr', name: 'Türkçe', frei: true, los: 'Türkçe devam et' },
+  { code: 'ar', name: 'العربية', frei: true, los: 'المتابعة بالعربية', rtl: true },
+  { code: 'ur', name: 'اردو', frei: true, los: 'اردو میں جاری رکھیں', rtl: true },
+  { code: 'fr', name: 'Français', frei: true, los: 'Continuer en français' },
+  { code: 'es', name: 'Español', frei: true, los: 'Continuar en español' },
 ];
+// los: Text des Bestätigungsknopfs in der Sprachwahl, in der jeweiligen Sprache selbst
 const MERKER = 'itqan-sprache';
 
 let texte = de;

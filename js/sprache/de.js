@@ -1265,6 +1265,9 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    sprachwahl2_titel: 'Sprachwahl mit Bestätigen',
+    sprachwahl2_1: 'Beim ersten Start wählst du die Sprache in Ruhe aus und bestätigst sie erst mit dem Knopf darunter. Von der ersten Seite der Einführung kommst du zur Sprachwahl zurück.',
+    sprachwahl2_2: 'Die Übersetzungen klingen natürlicher, mit Ordnungszahlen in der Art jeder Sprache.',
     urdu_titel: 'Urdu als siebte Sprache',
     urdu_1: 'Itqān gibt es jetzt auch auf Urdu, von rechts nach links, mit Pāra und den arabischen Namen der Sūren.',
     reihenfolge_titel: 'Ähnliche Stellen in allen Sprachen',

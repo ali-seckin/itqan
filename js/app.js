@@ -336,16 +336,27 @@ addEventListener('hashchange', zeige);
 const EINF_KEY = 'itqan-einfuehrung';
 const einfuehrungGesehen = () => { try { return localStorage.getItem(EINF_KEY) === '1'; } catch (e) { return true; } };
 // ---------- Sprachwahl beim ersten Start ----------
-// Die Sprache gilt für das Gerät und wird beim Start geladen. Nach der Wahl lädt die App neu und beginnt mit der Einführung.
+// Die Sprache gilt für das Gerät und wird beim Start geladen. Antippen wählt nur aus, erst der Knopf darunter bestätigt
+// (in der gewählten Sprache beschriftet). Danach lädt die App neu und beginnt mit der Einführung.
 function sprachwahl() {
   navSetzen(null);
-  const vorschlag = gebiet('code') !== 'de' ? gebiet('code') : geraeteSprache();
+  const frei = SPRACHEN.filter(s => s.frei);
+  let wahl = spracheGewaehlt() ? gebiet('code') : geraeteSprache();
+  if (!frei.some(s => s.code === wahl)) wahl = 'de';
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('sprachwahl.titel')}</p></div>
-    <div class="sprachwahl" id="sprachwahl">${SPRACHEN.filter(s => s.frei).map(s => `<button class="knopf ${s.code === vorschlag ? 'haupt' : 'leise'}" data-w="${s.code}" lang="${s.code}" dir="${['ar', 'ur'].includes(s.code) ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>`;
-  app.querySelector('#sprachwahl').onclick = ev => {
-    const w = ev.target.closest('button')?.dataset.w; if (!w) return;
-    spracheMerken(w);
+    <div class="sprachwahl" id="sprachwahl" role="radiogroup" aria-label="${esc(tx('sprachwahl.titel'))}">${frei.map(s => `<button class="knopf leise sw-wahl" role="radio" data-w="${s.code}" lang="${s.code}" dir="${s.rtl ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>
+    <div class="sprachwahl sw-los"><button class="knopf haupt" id="sw-los">${esc(frei.find(s => s.code === wahl).los)}</button></div>`;
+  const los = app.querySelector('#sw-los');
+  const zeigen = () => {
+    for (const b of app.querySelectorAll('.sw-wahl')) { const an = b.dataset.w === wahl; b.classList.toggle('an', an); b.setAttribute('aria-checked', an ? 'true' : 'false'); }
+    const s = frei.find(x => x.code === wahl);
+    los.textContent = s.los; los.lang = s.code; los.dir = s.rtl ? 'rtl' : 'ltr';
+  };
+  zeigen();
+  app.querySelector('#sprachwahl').onclick = ev => { const w = ev.target.closest('button')?.dataset.w; if (w) { wahl = w; zeigen(); } };
+  los.onclick = () => {
+    spracheMerken(wahl);
     const u = new URL(location.href); u.searchParams.delete('sprache'); u.hash = Z.P ? '#heute' : '#einfuehrung';
     history.replaceState(null, '', u); location.reload();
   };
@@ -393,7 +404,11 @@ function einfuehrung() {
     const s = SCHRITTE[i];
     buehne.innerHTML = `<div class="tut-schritt ${richtung < 0 ? 'rueckwaerts' : ''}"><div class="tut-bild">${s.bild}</div><h2>${s.titel}</h2><div class="tut-text">${s.text}</div></div>`;
     app.querySelectorAll('#tut-punkte i').forEach((p, k) => p.classList.toggle('an', k === i));
-    zurueck.style.visibility = i ? 'visible' : 'hidden';
+    const zurSprache = !i && !Z.P;
+    zurueck.style.visibility = i || zurSprache ? 'visible' : 'hidden';
+    // Pfeil als eigenes Flex-Element: steht so in jeder Schreibrichtung außen und zeigt zurück
+    zurueck.classList.toggle('mit-pfeil', zurSprache);
+    zurueck.innerHTML = zurSprache ? `<span aria-hidden="true">${gebiet('richtung') === 'rtl' ? '→' : '←'}</span><span>${esc(tx('einstellungen.sprache'))}</span>` : esc(tx('allg.zurueck'));
     weiter.textContent = i === SCHRITTE.length - 1 ? (Z.P ? tx('einfuehrung.fertig') : tx('einfuehrung.profil_erstellen')) : tx('allg.weiter');
     window.scrollTo(0, 0);
   }
@@ -407,7 +422,7 @@ function einfuehrung() {
   }
   hoeheFestlegen(); addEventListener('resize', function r() { if (!buehne.isConnected) return removeEventListener('resize', r); hoeheFestlegen(); });
   weiter.onclick = () => i === SCHRITTE.length - 1 ? fertig() : zeigeSchritt(i + 1, 1);
-  zurueck.onclick = () => zeigeSchritt(i - 1, -1);
+  zurueck.onclick = () => (!i && !Z.P ? (location.hash = '#sprachwahl') : zeigeSchritt(i - 1, -1));
   app.querySelector('#tut-weg').onclick = fertig;
   app.querySelector('#tut-punkte').onclick = ev => { const k = ev.target.dataset.k; if (k != null) zeigeSchritt(+k, +k > i ? 1 : -1); };
   // Wischen: nach links weiter, nach rechts zurück
