@@ -1319,6 +1319,8 @@ export default {
     auswahl_1: 'Beim Wiederholungspool wählst du jetzt nicht mehr nur ganze Aǧzāʾ: Darunter lassen sich einzelne Sūren und sogar einzelne Seiten dazunehmen oder abwählen. Die Reihenfolge heißt jetzt Vorwärts, Rückwärts oder Zufällig.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
+    sprachwahl_titel: 'Sprachwahl mit mehr Platz',
+    sprachwahl_1: 'Die Sprachauswahl in den Einstellungen steht jetzt auf zwei Zeilen, damit jeder Name genug Platz hat.',
     doppelseite_titel: 'Doppelseite ohne R und L',
     doppelseite_1: 'Wo der Muṣḥaf als Doppelseite erscheint, am PC, am Tablet und im breiten Fenster, entfallen die Knöpfe R und L. Man sieht ja beide Seiten.',
     sprachen3_titel: 'Alle Sprachen überarbeitet',

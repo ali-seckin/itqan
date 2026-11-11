@@ -1323,6 +1323,8 @@ export default {
     auswahl_1: 'Pour ta sélection de révision, tu n’es plus limité aux juz’ entiers : dessous, tu peux ajouter ou retirer des sourates isolées et même des pages isolées. L’ordre est désormais En avant, En arrière ou Aléatoire.',
     abwaehlen_titel: 'Tout désélectionner sans message d’erreur',
     abwaehlen_1: 'Dans le choix de ce que tu révises, « Tout désélectionner » efface désormais tout d’un coup pour que tu puisses choisir de nouveau. Si rien n’est choisi à la fin, ton choix précédent est conservé et tu reçois une note.',
+    sprachwahl_titel: 'Plus de place pour le choix de la langue',
+    sprachwahl_1: 'Le choix de la langue dans les réglages se répartit désormais sur deux lignes, pour que chaque nom ait assez de place.',
     doppelseite_titel: 'Double page sans D ni G',
     doppelseite_1: 'Là où le Mushaf s’affiche en double page, sur ordinateur, sur tablette ou dans une fenêtre large, les boutons droite et gauche disparaissent. On voit de toute façon les deux pages.',
     sprachen3_titel: 'Toutes les langues retravaillées',

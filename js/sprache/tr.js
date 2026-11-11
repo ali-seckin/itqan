@@ -1323,6 +1323,8 @@ export default {
     auswahl_1: 'Tekrar havuzunu artık yalnız tam cüzlerle kurmak zorunda değilsin: altında tek tek sureleri, hatta tek tek sayfaları ekleyip çıkarabilirsin. Sıra artık İleri, Geri veya Rastgele.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
+    sprachwahl_titel: 'Dil seçiminde daha fazla yer',
+    sprachwahl_1: 'Ayarlardaki dil seçimi artık iki satırda duruyor, böylece her ada yeterli yer kalıyor.',
     doppelseite_titel: 'Çift sayfada sağ/sol işareti yok',
     doppelseite_1: 'Mushaf’ın çift sayfa göründüğü yerlerde, bilgisayarda, tablette ve geniş pencerede, sağ ve sol düğmeleri artık yok. Zaten iki sayfayı birden görüyorsun.',
     sprachen3_titel: 'Bütün diller elden geçirildi',

@@ -1323,6 +1323,8 @@ export default {
     auswahl_1: 'For your revision pool you no longer have to pick whole Ajza only: below them you can add or remove single surahs and even single pages. The order is now Forwards, Backwards or Random.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
+    sprachwahl_titel: 'More room in the language choice',
+    sprachwahl_1: 'The language choice in the settings now sits on two rows, so each name has enough room.',
     doppelseite_titel: 'Two-page view without R and L',
     doppelseite_1: 'Wherever the Mushaf is shown as a two-page spread, on a computer, a tablet or in a wide window, the R and L buttons are gone. You can see both pages anyway.',
     sprachen3_titel: 'All languages reworked',

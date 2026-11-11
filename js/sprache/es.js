@@ -1323,6 +1323,8 @@ export default {
     auswahl_1: 'Para tu selección de repaso ya no estás limitado a yuz completos: debajo puedes añadir o quitar suras sueltas e incluso páginas sueltas. El orden es ahora Hacia delante, Hacia atrás o Aleatorio.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',
     abwaehlen_1: 'En la elección de lo que repasas, «Quitar todos» borra ahora todo de una vez para que puedas elegir de nuevo. Si al final no queda nada elegido, se mantiene tu elección anterior y recibes un aviso.',
+    sprachwahl_titel: 'Más espacio en la elección del idioma',
+    sprachwahl_1: 'La elección del idioma en los ajustes se reparte ahora en dos filas, para que cada nombre tenga espacio suficiente.',
     doppelseite_titel: 'Doble página sin D ni I',
     doppelseite_1: 'Donde el Mushaf aparece a doble página, en el ordenador, en la tableta o en una ventana ancha, ya no están los botones derecha e izquierda. Total, ves las dos páginas.',
     sprachen3_titel: 'Todos los idiomas revisados',
