@@ -73,8 +73,7 @@ export function juzMittel() {
 
 const katName = k => k === 0 ? tx('lichtkarte.k_ungeprueft') : Z.STUFEN[k];
 const ANSICHTEN = {
-  stand: { wert: s => s.k, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, Z.STUFEN[1]], [2, Z.STUFEN[2]], [3, Z.STUFEN[3]], [4, Z.STUFEN[4]]], hinweis: () => tx('lichtkarte.hinweis_stand') },
-  frische: { wert: s => s.f, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, tx('lichtkarte.f_faellig')], [2, tx('lichtkarte.f_bald')], [3, tx('lichtkarte.f_stabil')], [4, tx('lichtkarte.f_frisch')]], hinweis: () => tx('lichtkarte.hinweis_frische') }
+  stand: { wert: s => s.k, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, Z.STUFEN[1]], [2, Z.STUFEN[2]], [3, Z.STUFEN[3]], [4, Z.STUFEN[4]]], hinweis: () => tx('lichtkarte.hinweis_stand') }
 };
 // Balken mit vielen Abschnitten (al-Baqarah) auf höchstens max Teile verdichten: der schwächste Wert je Gruppe zählt
 const kompakt = (werte, max = 24) => {
@@ -193,7 +192,6 @@ export function zeichne(app, K) {
         <circle cx="55" cy="55" r="46" fill="none" stroke="var(--rand)" stroke-width="8"/><circle class="lk-fort" cx="55" cy="55" r="46" fill="none" stroke="url(#lkv)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 55 55)"/></svg>
         <div class="lk-mitte"><b data-hoch="${Math.round(share * 100)}">${Math.round(share * 100)}</b><span>%</span></div></div>
       <div class="lk-hero-t"><p><b>${tx('lichtkarte.hero_prozent')}</b></p><p>${tx('lichtkarte.hero_licht', { a: licht, b: nBer })}</p><p>${tx('lichtkarte.hero_woche', { n: wochen })}</p>${blass ? `<p>${tx('lichtkarte.hero_blass', { n: blass })}</p>` : ''}</div></div>
-    <div class="lk-seg" role="tablist">${[['stand', tx('lichtkarte.tab_stand')], ['frische', tx('lichtkarte.tab_frische')]].map(([a, t]) => `<button type="button" role="tab" data-a="${a}" aria-selected="false">${t}</button>`).join('')}</div>
     <p class="lk-hinweis" role="status"></p>
     <div class="lk-kacheln" role="group"></div>
     <div class="lk-info verdeckt" role="status"></div>
@@ -210,15 +208,15 @@ export function zeichne(app, K) {
       const s = m.seiten[+z.dataset.p], v = A.wert(s);
       z.dataset.k = v;
       if (merk.ansicht === 'stand' && s.b > s.k) z.dataset.b = s.b; else delete z.dataset.b;
-      if (merk.ansicht === 'frische' && s.f === 1) z.dataset.d = '1'; else delete z.dataset.d;
+      if (s.f === 1) z.dataset.d = '1'; else delete z.dataset.d;   // jetzt dran: fällig oder heute auf dem Plan
       if (s.fehler) z.dataset.e = '1'; else delete z.dataset.e;
       z.setAttribute('aria-label', tx('lichtkarte.seite_2', { p: s.p, a: A.kats().find(x => x[0] === v)?.[1] ?? katName(v) }));
     }
     hinweis.textContent = A.hinweis();
     const zaehl = {}; for (const s of m.seiten) if (s && !s.aus) { const v = A.wert(s); zaehl[v] = (zaehl[v] || 0) + 1; }
-    kacheln.innerHTML = A.kats().map(([k, name]) => `<button type="button" class="lk-kachel${fokus === k ? ' an' : ''}" data-k="${k}" aria-pressed="${fokus === k}"><i data-k="${k}"></i><b>${zaehl[k] || 0}</b><span>${name}</span></button>`).join('');
-    kacheln.style.setProperty('--n', A.kats().length);
-    app.querySelectorAll('.lk-seg button').forEach(b => { const an = b.dataset.a === merk.ansicht; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
+    const nDran = m.seiten.filter(x => x && !x.aus && x.f === 1).length;
+    kacheln.innerHTML = A.kats().map(([k, name]) => `<button type="button" class="lk-kachel${fokus === k ? ' an' : ''}" data-k="${k}" aria-pressed="${fokus === k}"><i data-k="${k}"></i><b>${zaehl[k] || 0}</b><span>${name}</span></button>`).join('')
+      + `<button type="button" class="lk-kachel lk-dran${fokus === 'd' ? ' an' : ''}" data-k="d" aria-pressed="${fokus === 'd'}"><i class="lk-puls"></i><b>${nDran}</b><span>${tx('lichtkarte.f_faellig')}</span></button>`;
     app.querySelectorAll('.lk-gruppe button').forEach(b => { const an = b.dataset.g === merk.gruppe; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
     for (const b of wurzel.querySelectorAll('.lk-sure')) {
       const ids = sureAb[+b.dataset.s], bal = b.querySelectorAll('.lk-balken i'); kompakt(ids.map(id => A.wert(m.ab[id]))).forEach((v, i) => { if (bal[i]) bal[i].dataset.k = v; });
@@ -227,12 +225,12 @@ export function zeichne(app, K) {
   };
   const dimmen = () => {
     const A = ANSICHTEN[merk.ansicht];
-    for (const z of wurzel.querySelectorAll('.lk-z')) z.classList.toggle('lk-dim', fokus != null && z.dataset.k !== String(fokus));
-    for (const b of wurzel.querySelectorAll('.lk-sure')) { const ids = sureAb[+b.dataset.s]; b.classList.toggle('lk-dim', fokus != null && !ids.some(id => A.wert(m.ab[id]) === fokus)); }
-    kacheln.querySelectorAll('.lk-kachel').forEach(b => { const an = fokus === +b.dataset.k; b.classList.toggle('an', an); b.setAttribute('aria-pressed', an); });
-    const zeigen = fokus != null && merk.ansicht === 'stand';
+    for (const z of wurzel.querySelectorAll('.lk-z')) z.classList.toggle('lk-dim', fokus != null && (fokus === 'd' ? z.dataset.d !== '1' : z.dataset.k !== String(fokus)));
+    for (const b of wurzel.querySelectorAll('.lk-sure')) { const ids = sureAb[+b.dataset.s]; b.classList.toggle('lk-dim', fokus != null && !ids.some(id => fokus === 'd' ? m.ab[id].f === 1 : A.wert(m.ab[id]) === fokus)); }
+    kacheln.querySelectorAll('.lk-kachel').forEach(b => { const an = String(fokus) === b.dataset.k; b.classList.toggle('an', an); b.setAttribute('aria-pressed', an); });
+    const zeigen = fokus != null;
     info.classList.toggle('verdeckt', !zeigen);
-    if (zeigen) info.innerHTML = `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>`;
+    if (zeigen) info.innerHTML = fokus === 'd' ? `<b>${tx('lichtkarte.f_faellig')}</b><p>${tx('lichtkarte.info_dran')}</p>` : `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>`;
   };
   const baueKarte = () => {
     wurzel.innerHTML = merk.gruppe === 'guz' ? juzZeilen : `<div class="lk-sureliste">${sureZeilen()}</div>`;
@@ -240,9 +238,8 @@ export function zeichne(app, K) {
   };
   baueKarte();
 
-  app.querySelector('.lk-seg').onclick = ev => { const b = ev.target.closest('button[data-a]'); if (!b || b.dataset.a === merk.ansicht) return; merk.ansicht = b.dataset.a; fokus = null; setzen(); };
   app.querySelector('.lk-gruppe').onclick = ev => { const b = ev.target.closest('button[data-g]'); if (!b || b.dataset.g === merk.gruppe) return; merk.gruppe = b.dataset.g; wurzel.classList.remove('lk-neu'); baueKarte(); };
-  kacheln.onclick = ev => { const b = ev.target.closest('.lk-kachel'); if (!b) return; const k = +b.dataset.k; fokus = fokus === k ? null : k; dimmen(); };
+  kacheln.onclick = ev => { const b = ev.target.closest('.lk-kachel'); if (!b) return; const k = b.dataset.k === 'd' ? 'd' : +b.dataset.k; fokus = fokus === k ? null : k; dimmen(); };
   wurzel.onclick = ev => {
     const z = ev.target.closest('.lk-z[data-p]'), j = ev.target.closest('.lk-jbtn'), s = ev.target.closest('.lk-sure[data-s]');
     if (z) { m = modell(); seitenBlatt(+z.dataset.p, m); } else if (j) { m = modell(); juzBlatt(+j.dataset.j, m); } else if (s) { m = modell(); sureBlatt(+s.dataset.s, m); }
