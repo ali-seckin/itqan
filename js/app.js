@@ -621,10 +621,10 @@ function heute() {
       ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
-    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
-    <div class="klein-zeile" style="justify-content:center;gap:4px"><button class="textlink" id="weniger">${tx('heute.ein_abschnitt')}</button><button class="textlink" id="mehr">${tx('heute.ein_abschnitt_2')}</button></div>`}
+    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}`}
+    <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
+      <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
-    <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#kurz">${tx('heute.kurzuebungen')}</a></div>
     ${istFreitag ? `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
       ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)), ziel: prozent(bq.ziel) })}</p>`; })()}
@@ -641,8 +641,6 @@ function heute() {
       return `<span aria-hidden="true" class="${o == null ? 'aus' : o >= 0.585 ? 'voll' : ''}"${o != null ? ` style="background:color-mix(in srgb,var(--akzent) ${Math.round(o * 100)}%,var(--bg))"` : ''}>${i + 1}</span>`;
     }).join('')}</a>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
-  const mehr = app.querySelector('#mehr'); if (mehr) mehr.onclick = () => { Z.pensumHeuteAendern(1); heute(); };
-  const weniger = app.querySelector('#weniger'); if (weniger) weniger.onclick = () => { Z.pensumHeuteAendern(-1); heute(); };
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };

@@ -25,6 +25,10 @@ button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
+.kurz-angebot{margin-top:22px;padding-top:6px;border-top:1px solid var(--rand)}
+.kurz-heute{text-decoration:none;color:inherit;border-color:var(--akzentF)}
+.kurz-heute .t b{color:var(--akzentT)}
+.kurz-heute .pfeil{font-size:var(--s-titel);color:var(--akzentT);padding:0 4px}
 .profil-gruppe{margin:12px 0;border:1px solid var(--rand);border-radius:18px;background:var(--karte);padding:0 14px}
 .profil-gruppe > summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:8px 0;cursor:pointer;list-style:none}
 .profil-gruppe > summary::-webkit-details-marker{display:none}
