@@ -112,13 +112,13 @@ function blatt({ titel, unter, koerper, aktionen }) {
 
 function abschnittsZeile(e, m) {
   const k = Z.karte(e.id), a = m.ab[e.id];
-  const name = e.nr ? `${esc(sureName(e.von[0]))} <b>${e.nr}</b>` : esc(abschnittName(e));
+  const name = e.nr ? `${esc(sureName(e.von[0]))} <span class="lk-nr">${e.nr}</span>` : esc(abschnittName(e));
   const teile = [katName(a.k)];
   if (k.n) {
     teile.push(tx('lichtkarte.zuletzt', { n: Z.tageZwischen(k.zul || m.d, m.d) }));
     const r = faelligIn(k, m.ziel, m.d); teile.push(r <= 0 ? tx('lichtkarte.faellig_jetzt') : tx('lichtkarte.faellig_in', { n: r }));
   } else teile.push(tx('lichtkarte.nie'));
-  return `<div class="lk-ab"><i class="lk-punkt" data-k="${a.k}"></i><div class="t"><b>${name}: ${esc(e.titel)}</b><small>${bereichText(e)}</small><small>${teile.join(' · ')}</small></div>
+  return `<div class="lk-ab"><i class="lk-punkt" data-k="${a.k}"></i><div class="t"><b>${name}:</b><span class="lk-titel">${esc(e.titel)}</span><small>${bereichText(e)}</small><small>${teile.join(' · ')}</small></div>
     <a class="knopf leise klein" href="#ueben/${e.id}/frei" style="text-decoration:none">${tx('lichtkarte.frei_ueben')}</a></div>`;
 }
 const knopf = (href, text, haupt) => `<a class="knopf ${haupt ? 'haupt' : 'leise'} klein" href="${href}" style="text-decoration:none">${text}</a>`;
