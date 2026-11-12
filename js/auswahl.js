@@ -2,7 +2,7 @@
 // Die Auswahl ist eine Menge von Āyāt (Uint8Array je Āya-Index), unabhängig von der Gliederung.
 // Gespeichert wird sie als Āya-Bereiche in einst.auswahl; die Abschnitte dazu (einst.bereich) leitet Itqān für die
 // gerade geladene Gliederung daraus ab. Ein Abschnitt zählt dazu, wenn mindestens die Hälfte seiner Buchstaben gewählt ist.
-import { D, sureName, juzVonSeite, esc } from './daten.js';
+import { D, sureName, juzVonVers, esc } from './daten.js';
 import { tx } from './sprache.js';
 
 const seiteVon = vi => D.W?.get(vi + '.0')?.[0] || D.V[vi][3];
@@ -38,7 +38,7 @@ function baum() {
   const aus = Array.from({ length: 30 }, () => []);
   let teil = null;
   for (let vi = 0; vi < D.V.length; vi++) {
-    const [su, ay] = D.V[vi], j = juzVonSeite(D.V[vi][3]);
+    const [su, ay] = D.V[vi], j = juzVonVers(vi);
     if (!teil || teil.s !== su || teil.j !== j) { teil = { s: su, j, v0: vi, v1: vi, a0: ay, a1: ay, seiten: [] }; aus[j - 1].push(teil); }
     teil.v1 = vi; teil.a1 = ay;
     const p = seiteVon(vi), l = teil.seiten[teil.seiten.length - 1];

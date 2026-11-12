@@ -696,18 +696,29 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte, ...(h ? { hw: 1 } : {}) });
   return { punkte, teile, hasanat: erg.hasanat, r, f, h: h + z, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
 }
-const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };   // z: gezögert, zählt halb, ohne Stufenverlust, Wiederkehr nach spätestens 3 Tagen
+const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };
+// Nachträglich abhaken: außerhalb der App geübt (Gebet, unterwegs). Zählt für Tagesplan und Zyklus, ohne Punkte, Hasanat und Stufenänderung
+export function abschnittAbhaken(id) {
+  const datum = heute(), t = tagesplan(datum); if (t.fertig.includes(id) || t.art[id] !== 'zyklus') return null;
+  return eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: 'a'.repeat(D.A[id].ayat), q: 'zyklus', p: 0 });
+}
+export function heuteAbhakbar() {
+  const t = P.tage[heute()]; if (!t || t.ruhe) return [];
+  return t.plan.filter(id => t.art[id] === 'zyklus' && !t.fertig.includes(id));
+}   // z: gezögert, zählt halb, ohne Stufenverlust, Wiederkehr nach spätestens 3 Tagen
 function abschlussAnwenden(e0) {
   const datum = e0.d, id = e0.id, t = tagSicher(datum), e = D.A[id], k = { ...karte(id) };
   const ergebnisse = [...e0.e], art = e0.q, punkte = e0.p, dauer = e0.s || 0;
   const r = ergebnisse.filter(x => x === 'o').length, h = ergebnisse.filter(x => x === 'h').length, f = ergebnisse.filter(x => x === 'f').length, z = ergebnisse.filter(x => x === 'z').length;
-  const hasanat = e.buchstaben * 10;
+  const ab = ergebnisse.length > 0 && ergebnisse.every(x => x === 'a');   // außerhalb der App geübt
+  const hasanat = ab ? 0 : e.buchstaben * 10;
   // Karteisystem
   const vorher = k.st, ereignisse = [];
   // Neu lernen: eine offene Lektion folgt ihren eigenen Regeln, nicht dem Karteisystem
   const L = art === 'lern' && P.lern?.[id]?.ph < 2 ? P.lern[id] : null;
   const lern = L ? lernSchritt(L, k, id, datum, f, h + z, ereignisse) : null;
   if (L) { /* Stufe steht schon */ }
+  else if (ab) { /* Stufe und Fehlerwiederholung bleiben, wie sie sind */ }
   else if (f || (e0.hw && h)) { const u = f + (e0.hw ? h : 0); if (f) k.fz = datum; k.st = Math.max(0, k.st - (u / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, FEHLER_ABSTAND[0]); k.fs = 0; }
   else if (h || z) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
   else {
@@ -717,15 +728,16 @@ function abschlussAnwenden(e0) {
   // Behaltensmodell: Stabilität wächst bei Erfolg umso stärker, je mehr vergessen war (erwünschte Schwierigkeit); Fehler lassen sie fallen
   if (!L) {
     const S0 = stabilitaet(k), R = k.n ? abruf(k.zul ? tageZwischen(k.zul, datum) : 0, S0) : 1, anteilF = f / Math.max(1, ergebnisse.length);
-    k.S = !k.n ? (f ? 1 : (h || z) ? 2 : 4)
+    k.S = ab ? (k.n ? Math.max(1, S0 * 1.1) : 2)
+      : !k.n ? (f ? 1 : (h || z) ? 2 : 4)
       : f ? Math.max(1, S0 * (anteilF > 0.3 ? 0.25 : 0.4))
       : (h || z) ? Math.max(1, S0 * 1.1)
       : Math.min(365, S0 * (1.5 + 3 * (1 - R)));
     k.S = Math.round(k.S * 100) / 100;
   }
-  k.n++; k.fe += f; k.zul = datum; k.lf = f;   // lf: Fehler im letzten Durchgang
+  k.n++; k.fe += f; k.zul = datum; if (!ab) k.lf = f;   // lf: Fehler im letzten Durchgang
   if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
-  k.fa = ergebnisse.map((x, i) => x !== 'o' ? e.v[0] + i : -1).filter(i => i >= 0);
+  if (!ab) k.fa = ergebnisse.map((x, i) => x !== 'o' ? e.v[0] + i : -1).filter(i => i >= 0);
   P.karten[id] = k;
   // Tag und Summen
   if (!t.fertig.includes(id)) t.fertig.push(id);

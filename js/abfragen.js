@@ -2,7 +2,7 @@
 // Seitenanfang, Anfang eines Ǧuzʾ, Übergang zwischen Abschnitten, Einstieg aus der Mitte, Titel, Zeile auf der Seite, Zwillinge.
 // Alles nur aus dem eigenen Bereich (Pool). Die Übungen laufen im Üben-Bildschirm (Quelle „abfrage“), ohne Stufe und Karte zu ändern;
 // markierte Fehlerwörter landen wie sonst bei den Fehlerstellen.
-import { D, juzStart } from './daten.js';
+import { D, juzStartVers } from './daten.js';
 import * as Z from './zustand.js';
 
 const zufall = liste => liste[Math.floor(Math.random() * liste.length)];
@@ -23,7 +23,7 @@ export function naechste(art) {
     if (!ps.length) return null; const [p, vi] = zufall(ps); return ziel(vi, vi, false, 'seite', p);
   }
   if (art === 'juz') {
-    const js = []; for (let j = 1; j <= 30; j++) { const vi = ersteAyaDerSeite(juzStart(j)); if (vi != null && imPool(vi)) js.push([j, vi]); }
+    const js = []; for (let j = 1; j <= 30; j++) { const vi = juzStartVers(j); if (vi >= 0 && imPool(vi)) js.push([j, vi]); }
     if (!js.length) return null; const [j, vi] = zufall(js); return ziel(vi, vi, false, 'juz', j);
   }
   if (art === 'uebergang') {

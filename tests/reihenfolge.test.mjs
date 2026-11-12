@@ -22,3 +22,26 @@ test('Reihenfolge wechseln: Plan von heute wird sofort neu aufgebaut, Punkte ble
 test('Ganzer Abschnitt am Stück: Fehler gehen vor Zögern, gezögert wird je Vers gewählt', () => {
   assert.deepEqual(Z.ganzErgebnis([10, 11, 12, 13], new Set([11, 12]), new Set([12, 13])), ['ok', 'fehler', 'fehler', 'zoegern']);
 });
+
+test('Ǧuzʾ richtet sich nach der Āya, nicht nach der Seite (Aǧzāʾ beginnen teils mitten auf der Seite)', async () => {
+  const { juzVonVers } = await import('../js/daten.js');
+  const vi = (s, a) => D.V.findIndex(v => v[0] === s && v[1] === a);
+  assert.equal(juzVonVers(vi(45, 33)), 25); assert.equal(juzVonVers(vi(46, 1)), 26);
+  assert.equal(juzVonVers(vi(3, 92)), 3); assert.equal(juzVonVers(vi(3, 93)), 4);
+  assert.equal(juzVonVers(vi(5, 81)), 6); assert.equal(juzVonVers(vi(5, 82)), 7);
+  assert.equal(juzVonVers(vi(9, 92)), 10); assert.equal(juzVonVers(vi(9, 93)), 11);
+  assert.equal(juzVonVers(0), 1); assert.equal(juzVonVers(D.V.length - 1), 30);
+});
+
+test('Abhaken: zählt für Plan und Zyklus, aber ohne Punkte, Hasanat und Stufenänderung', () => {
+  frisch({ pensum: 2 });
+  const [a, b] = Z.tagesplan().plan, vorher = { ...Z.karte(a) };
+  assert.deepEqual(Z.heuteAbhakbar(), [a, b]);
+  const r = Z.abschnittAbhaken(a);
+  assert.ok(r); assert.equal(Z.abschnittAbhaken(a), null);       // nur einmal
+  const t = Z.tagesplan(), k = Z.karte(a);
+  assert.ok(t.fertig.includes(a)); assert.equal(t.punkte, 0); assert.equal(t.hasanat, 0);
+  assert.equal(k.st, vorher.st); assert.equal(k.n, 1); assert.ok(Z.P.zyklus.erledigt.includes(a));
+  assert.deepEqual(Z.heuteAbhakbar(), [b]);
+  Z.abschnittAbhaken(b); assert.equal(Z.tagesplan().voll, true);
+});

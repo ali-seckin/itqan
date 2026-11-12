@@ -84,6 +84,14 @@ export function ayaWoerter(vi) {
 const JUZ = [1, 22, 42, 62, 82, 102, 121, 142, 162, 182, 201, 222, 242, 262, 282, 302, 322, 342, 362, 382, 402, 422, 442, 462, 482, 502, 522, 542, 562, 582];
 export function juzVonSeite(p) { let j = 1; for (let i = 0; i < 30; i++) if (p >= JUZ[i]) j = i + 1; return j; }
 export const juzStart = j => JUZ[j - 1];
+// Die Aǧzāʾ beginnen teils mitten auf der Seite: die Zugehörigkeit einer Āya richtet sich nach der ersten Āya des Ǧuzʾ, nicht nach der Seite
+const JUZ_VERS = [[1, 1], [2, 142], [2, 253], [3, 93], [4, 24], [4, 148], [5, 82], [6, 111], [7, 88], [8, 41], [9, 93], [11, 6], [12, 53], [15, 1], [17, 1], [18, 75], [21, 1], [23, 1], [25, 21], [27, 56], [29, 46], [33, 31], [36, 28], [39, 32], [41, 47], [46, 1], [51, 31], [58, 1], [67, 1], [78, 1]];
+let juzVi = null;
+export function juzStartVers(j) {
+  if (!juzVi || juzVi.length !== 30 || juzVi.some(x => x < 0)) juzVi = JUZ_VERS.map(([s, a]) => D.V.findIndex(v => v[0] === s && v[1] === a));
+  return juzVi[j - 1];
+}
+export function juzVonVers(vi) { let j = 1; for (let i = 1; i < 30; i++) if (vi >= juzStartVers(i + 1)) j = i + 1; return j; }
 
 // Namen der Sūren: eine Sprache kann im Kopf ihrer Datei eine eigene Liste nennen (suren: [...] oder 'arabisch')
 export const sureName = s => { const l = gebiet('suren'); return l === 'arabisch' ? D.S[s][0] : Array.isArray(l) ? l[s - 1] : umschrift(D.S[s][1]); };

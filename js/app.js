@@ -301,6 +301,29 @@ async function vorratSpeichern() {
 }
 
 // ---------- Kurzübungen ----------
+// ---------- Nachträglich abhaken: außerhalb der App geübt (Gebet, unterwegs) ----------
+function abhakenSeite() {
+  navSetzen('heute');
+  const offen = Z.heuteAbhakbar();
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#heute'">${zurueckPfeil}${tx('titel.heute')}</button>
+    <div class="marke">${tx('abhaken.titel')}<small>${tx('abhaken.text')}</small></div>
+    ${offen.length ? `<div class="abh-liste" role="group" aria-label="${tx('abhaken.titel')}">${offen.map(id => `<label class="karte abh-zeile"><input type="checkbox" value="${id}"><div class="t"><b>${esc(abschnittName(D.A[id]))}</b><span>${esc(D.A[id].titel)}</span></div></label>`).join('')}</div>
+      <div class="reihe" style="margin-top:14px"><button type="button" class="knopf leise" id="abh-alle">${tx('abhaken.alle')}</button><button type="button" class="knopf haupt" id="abh-ok" disabled>${tx('abhaken.knopf')}</button></div>`
+    : `<p class="leer" style="margin-top:16px">${tx('abhaken.leer')}</p>`}`;
+  if (!offen.length) return;
+  const boxen = () => [...app.querySelectorAll('.abh-liste input')], ok = app.querySelector('#abh-ok');
+  const pruefen = () => { ok.disabled = !boxen().some(b => b.checked); };
+  app.querySelector('.abh-liste').onchange = pruefen;
+  app.querySelector('#abh-alle').onclick = () => { const an = !boxen().every(b => b.checked); boxen().forEach(b => { b.checked = an; }); pruefen(); };
+  ok.onclick = () => {
+    const ev = []; let n = 0;
+    for (const b of boxen()) if (b.checked) { const r = Z.abschnittAbhaken(+b.value); if (r) { n++; ev.push(...r.ereignisse); } }
+    letzteEreignisse.push(...ev);
+    toast(tx('abhaken.fertig', { n }));
+    location.hash = ev.some(x => x.typ === 'wird') ? '#fertig' : '#heute';
+  };
+}
+
 function kurzSeite(was) {
   navSetzen('heute');
   if (was === 'zeile') return zeileSeite();
@@ -338,9 +361,9 @@ function zeileSeite() {
   window.scrollTo(0, 0);
 }
 // ---------- Router ----------
-const ROUTEN = { sprachwahl, heute, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+const TITEL = { abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
   lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
@@ -621,7 +644,8 @@ function heute() {
       ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
-    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}`}
+    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
+    ${Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
     <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
       <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
@@ -2177,6 +2201,9 @@ function einstellungen() {
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
         <p class="unter" style="margin-top:8px">${tx('einstellungen.jede_hatma_bleibt_vollstaendig_zufaellig')}</p></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.ablauf_titel')}</h3>
+      <div class="wahl" id="ablauf" style="margin-top:10px"><button data-w="vers" class="${E.ablauf === 'ganz' ? '' : 'an'}">${tx('einstellungen.ablauf_vers')}</button><button data-w="ganz" class="${E.ablauf === 'ganz' ? 'an' : ''}">${tx('einstellungen.ablauf_ganz')}</button></div>
+      ${optionsListe([tx('einstellungen.ablauf_text')])}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div>
       ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
@@ -2193,9 +2220,6 @@ function einstellungen() {
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.ablauf_titel')}</h3>
-      <div class="wahl" id="ablauf" style="margin-top:10px"><button data-w="vers" class="${E.ablauf === 'ganz' ? '' : 'an'}">${tx('einstellungen.ablauf_vers')}</button><button data-w="ganz" class="${E.ablauf === 'ganz' ? 'an' : ''}">${tx('einstellungen.ablauf_ganz')}</button></div>
-      ${optionsListe([tx('einstellungen.ablauf_text')])}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">${tx('einstellungen.erlaubt')}</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.sofortkorrektur')}</h3><p class="unter">${tx('einstellungen.hattest_du_in_einem_abschnitt_fehler')}</p>
