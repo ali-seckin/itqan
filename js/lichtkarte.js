@@ -43,10 +43,11 @@ export function modell() {
     let f = 0, fa = false, w = false;
     if (k.n) {
       const R = Z.abruf(Z.tageZwischen(k.zul || d, d), Z.stabilitaet(k));
-      f = frischVon(R, ziel); fa = R < ziel || !!(k.fae && k.fae <= d);
+      fa = R < ziel || !!(k.fae && k.fae <= d);
+      f = fa || (plan.has(e.id) && !fertig.has(e.id)) ? 1 : frischVon(R, ziel);   // 1: jetzt dran (fällig oder auf dem Plan von heute)
       w = !!k.zul && Z.tageZwischen(k.zul, d) <= 6;
     }
-    ab[e.id] = { k: kk, f, h: plan.has(e.id) ? (fertig.has(e.id) ? 4 : 3) : 1, w, fa };
+    ab[e.id] = { k: kk, f, w, fa };
   }
   const seiten = new Array(605).fill(null);
   for (let p = 1; p <= 604; p++) {
@@ -55,7 +56,6 @@ export function modell() {
     const a = ids.map(id => ab[id]);
     seiten[p] = {
       p, ids, k: Math.min(...a.map(x => x.k)), b: Math.max(...a.map(x => x.k)), f: Math.min(...a.map(x => x.f)),
-      h: a.some(x => x.h === 3) ? 3 : a.some(x => x.h === 4) ? 4 : 1,
       fa: a.some(x => x.fa), w: a.some(x => x.w), fehler: fSeiten.has(p), su: idx.start[p] || null
     };
   }
@@ -74,10 +74,16 @@ export function juzMittel() {
 const katName = k => k === 0 ? tx('lichtkarte.k_ungeprueft') : Z.STUFEN[k];
 const ANSICHTEN = {
   stand: { wert: s => s.k, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, Z.STUFEN[1]], [2, Z.STUFEN[2]], [3, Z.STUFEN[3]], [4, Z.STUFEN[4]]], hinweis: () => tx('lichtkarte.hinweis_stand') },
-  frische: { wert: s => s.f, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, tx('lichtkarte.f_faellig')], [2, tx('lichtkarte.f_bald')], [3, tx('lichtkarte.f_stabil')], [4, tx('lichtkarte.f_frisch')]], hinweis: () => tx('lichtkarte.hinweis_frische') },
-  heute: { wert: s => s.h, kats: () => [[1, tx('lichtkarte.h_nicht')], [3, tx('lichtkarte.h_offen')], [4, tx('lichtkarte.h_fertig')]], hinweis: () => tx('lichtkarte.hinweis_heute') }
+  frische: { wert: s => s.f, kats: () => [[0, tx('lichtkarte.k_ungeprueft')], [1, tx('lichtkarte.f_faellig')], [2, tx('lichtkarte.f_bald')], [3, tx('lichtkarte.f_stabil')], [4, tx('lichtkarte.f_frisch')]], hinweis: () => tx('lichtkarte.hinweis_frische') }
 };
-const INFO_STAND = () => [tx('lichtkarte.info_ungeprueft'), tx('lichtkarte.info_aufbau'), tx('stufen_text.zwei_stufen_aufgebaut_meist_zwei'), tx('stufen_text.drei_stufen_mehrere_runden_fehlerfrei_du'), tx('stufen_text.die_hoechste_stufe_mindestens_vier')];
+// Balken mit vielen Abschnitten (al-Baqarah) auf höchstens max Teile verdichten: der schwächste Wert je Gruppe zählt
+const kompakt = (werte, max = 24) => {
+  if (werte.length <= max) return werte;
+  const g = Math.ceil(werte.length / max), aus = [];
+  for (let i = 0; i < werte.length; i += g) aus.push(Math.min(...werte.slice(i, i + g)));
+  return aus;
+};
+const INFO_STAND = () => [tx('lichtkarte.info_ungeprueft'), tx('lichtkarte.info_aufbau'), tx('lichtkarte.info_gefestigt'), tx('lichtkarte.info_sicher'), tx('lichtkarte.info_mutqan')];
 
 let merk = { ansicht: 'stand', gruppe: 'guz' };   // bleibt, solange die App offen ist
 
@@ -137,7 +143,7 @@ function juzBlatt(j, m) {
   const pruefen = AF.juzAufgabe(j);
   blatt({
     titel: tx('allg.guz_nr', { j }), unter: `${JUZ_NAMEN[j - 1]}`,
-    koerper: `<p class="lk-zahl">${n ? tx('lichtkarte.guz_stand', { a: gut, b: n }) : tx('lichtkarte.diese_seite_gehoert_nicht_zu_deinem')}</p>${karteBalken([...ids].map(id => m.ab[id].k))}`,
+    koerper: `<p class="lk-zahl">${n ? tx('lichtkarte.guz_stand', { a: gut, b: n }) : tx('lichtkarte.diese_seite_gehoert_nicht_zu_deinem')}</p>${karteBalken(kompakt([...ids].map(id => m.ab[id].k), 30))}`,
     aktionen: `${pruefen ? knopf(pruefen, tx('lichtkarte.guz_abfrage'), true) : ''}${knopf(`#mushaf/${von}`, tx('lichtkarte.zum_anfang'), !pruefen)}`
   });
 }
@@ -179,7 +185,7 @@ export function zeichne(app, K) {
   const sureZeilen = () => Array.from({ length: 114 }, (_, i) => {
     const s = i + 1, ids = sureAb[s], gut = ids.filter(id => m.ab[id].k >= 2).length;
     return `<button type="button" class="lk-sure${ids.length ? '' : ' aus'}" data-s="${s}" style="--i:${Math.min(i, 24)}"><span class="nr">${s}</span><span class="nm">${esc(sureName(s))}</span>
-      <span class="lk-balken" aria-hidden="true">${ids.map(id => `<i data-k="${ANSICHTEN[merk.ansicht].wert(m.ab[id])}"></i>`).join('')}</span><span class="pr">${ids.length ? pct(gut / ids.length) : ''}</span></button>`;
+      <span class="lk-balken" aria-hidden="true">${kompakt(ids.map(id => ANSICHTEN[merk.ansicht].wert(m.ab[id]))).map(v => `<i data-k="${v}"></i>`).join('')}</span><span class="pr">${ids.length ? pct(gut / ids.length) : ''}</span></button>`;
   }).join('');
 
   app.innerHTML = `<div class="marke">${tx('allg.lichtkarte')}<small>${tx('lichtkarte.hero_start')}</small></div>
@@ -187,7 +193,7 @@ export function zeichne(app, K) {
         <circle cx="55" cy="55" r="46" fill="none" stroke="var(--rand)" stroke-width="8"/><circle class="lk-fort" cx="55" cy="55" r="46" fill="none" stroke="url(#lkv)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 55 55)"/></svg>
         <div class="lk-mitte"><b data-hoch="${Math.round(share * 100)}">${Math.round(share * 100)}</b><span>%</span></div></div>
       <div class="lk-hero-t"><p><b>${tx('lichtkarte.hero_prozent')}</b></p><p>${tx('lichtkarte.hero_licht', { a: licht, b: nBer })}</p><p>${tx('lichtkarte.hero_woche', { n: wochen })}</p>${blass ? `<p>${tx('lichtkarte.hero_blass', { n: blass })}</p>` : ''}</div></div>
-    <div class="lk-seg" role="tablist" style="--pos:0">${[['stand', tx('lichtkarte.tab_stand')], ['frische', tx('lichtkarte.tab_frische')], ['heute', tx('lichtkarte.tab_heute')]].map(([a, t]) => `<button type="button" role="tab" data-a="${a}" aria-selected="false">${t}</button>`).join('')}</div>
+    <div class="lk-seg" role="tablist">${[['stand', tx('lichtkarte.tab_stand')], ['frische', tx('lichtkarte.tab_frische')]].map(([a, t]) => `<button type="button" role="tab" data-a="${a}" aria-selected="false">${t}</button>`).join('')}</div>
     <p class="lk-hinweis" role="status"></p>
     <div class="lk-kacheln" role="group"></div>
     <div class="lk-info verdeckt" role="status"></div>
@@ -204,10 +210,9 @@ export function zeichne(app, K) {
       const s = m.seiten[+z.dataset.p], v = A.wert(s);
       z.dataset.k = v;
       if (merk.ansicht === 'stand' && s.b > s.k) z.dataset.b = s.b; else delete z.dataset.b;
-      if (merk.ansicht === 'frische' && s.fa) z.dataset.d = '1'; else delete z.dataset.d;
+      if (merk.ansicht === 'frische' && s.f === 1) z.dataset.d = '1'; else delete z.dataset.d;
       if (s.fehler) z.dataset.e = '1'; else delete z.dataset.e;
-      const zusatz = merk.ansicht === 'frische' ? (v === 0 ? katName(0) : A.kats().find(x => x[0] === v)?.[1]) : merk.ansicht === 'heute' ? A.kats().find(x => x[0] === v)?.[1] : katName(v);
-      z.setAttribute('aria-label', tx('lichtkarte.seite_2', { p: s.p, a: `${zusatz}${s.fa ? ', ' + tx('lichtkarte.faellig_jetzt') : ''}` }));
+      z.setAttribute('aria-label', tx('lichtkarte.seite_2', { p: s.p, a: A.kats().find(x => x[0] === v)?.[1] ?? katName(v) }));
     }
     hinweis.textContent = A.hinweis();
     const zaehl = {}; for (const s of m.seiten) if (s && !s.aus) { const v = A.wert(s); zaehl[v] = (zaehl[v] || 0) + 1; }
@@ -216,7 +221,7 @@ export function zeichne(app, K) {
     app.querySelectorAll('.lk-seg button').forEach(b => { const an = b.dataset.a === merk.ansicht; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
     app.querySelectorAll('.lk-gruppe button').forEach(b => { const an = b.dataset.g === merk.gruppe; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
     for (const b of wurzel.querySelectorAll('.lk-sure')) {
-      const ids = sureAb[+b.dataset.s], bal = b.querySelectorAll('.lk-balken i'); ids.forEach((id, i) => { if (bal[i]) bal[i].dataset.k = A.wert(m.ab[id]); });
+      const ids = sureAb[+b.dataset.s], bal = b.querySelectorAll('.lk-balken i'); kompakt(ids.map(id => A.wert(m.ab[id]))).forEach((v, i) => { if (bal[i]) bal[i].dataset.k = v; });
     }
     dimmen();
   };
@@ -227,7 +232,7 @@ export function zeichne(app, K) {
     kacheln.querySelectorAll('.lk-kachel').forEach(b => { const an = fokus === +b.dataset.k; b.classList.toggle('an', an); b.setAttribute('aria-pressed', an); });
     const zeigen = fokus != null && merk.ansicht === 'stand';
     info.classList.toggle('verdeckt', !zeigen);
-    if (zeigen) info.innerHTML = `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>${fokus >= 1 ? `<p class="unter">${tx('stufen_regel.so_entstehen_die_stufen_jeder_durchgang')}</p>` : ''}`;
+    if (zeigen) info.innerHTML = `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>`;
   };
   const baueKarte = () => {
     wurzel.innerHTML = merk.gruppe === 'guz' ? juzZeilen : `<div class="lk-sureliste">${sureZeilen()}</div>`;

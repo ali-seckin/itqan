@@ -14,7 +14,7 @@ test('Lichtkarte: frisches Profil, alle Seiten ungeprüft, nach einem Durchgang 
   Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
   m = modell(); const p = D.A[id].seiten[0];
   assert.equal(m.seiten[p].k, 1);            // geprüft, im Aufbau
-  assert.equal(m.seiten[p].h, 4);            // heute erledigt
+  assert.equal(m.seiten[p].f, 4);            // frisch geübt
   assert.ok(m.seiten[p].w);                  // diese Woche geübt
   assert.equal(katVon({ n: 0, st: 0 }), 0); assert.equal(katVon({ n: 2, st: 0 }), 1); assert.equal(katVon({ n: 5, st: 4 }), 4);
 });
