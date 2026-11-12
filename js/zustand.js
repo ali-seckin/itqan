@@ -491,8 +491,26 @@ export function pensumHeuteAendern(delta) {
 // plus und minus sind je eine Nummer (ein Abschnitt mehr oder weniger) oder eine Liste (Plan nach geändertem Bereich)
 function pensumAnwenden(e) {
   const t = P.tage[e.d]; if (!t) return;
+  if (e.ers) {   // Reihenfolge geändert: die Abschnitte aus dem Zyklus werden durch neue ersetzt, Punkte und Erfolge des Tages bleiben, der Zähler beginnt neu
+    const alt = new Set(e.raus || []);
+    t.plan = [...t.plan.filter(id => !alt.has(id)), ...e.ers]; t.fertig = t.fertig.filter(id => !alt.has(id) || e.ers.includes(id));
+    for (const id of alt) delete t.art[id]; for (const id of e.ers) t.art[id] = 'zyklus'; t.voll = false; return;
+  }
   for (const id of [].concat(e.plus ?? [])) if (!t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'zyklus'; t.voll = false; }
   for (const id of [].concat(e.minus ?? [])) if (t.plan.includes(id) && !t.fertig.includes(id) && t.plan.length > 1) { t.plan = t.plan.filter(x => x !== id); delete t.art[id]; }
+}
+// Reihenfolge ändern: Zyklus-Abschnitte von heute (fertig oder offen) und wie viele davon schon abgegeben sind
+export function heuteZyklus() {
+  const t = P.tage[heute()]; if (!t || t.ruhe) return { n: 0, fertig: 0 };
+  const zy = t.plan.filter(id => t.art[id] === 'zyklus');
+  return { n: zy.length, fertig: zy.filter(id => t.fertig.includes(id)).length };
+}
+export function heuteNeuAufbauen() {
+  const d = heute(), t = P.tage[d]; if (!t || t.ruhe) return 0;
+  const zy = t.plan.filter(id => t.art[id] === 'zyklus'); if (!zy.length) return 0;
+  const ers = naechsteImZyklus(zy.length, new Set(t.plan.filter(id => !zy.includes(id))), d);
+  if (!ers.length) return 0;
+  eintrag('pa', { d, ers, raus: zy }); return ers.length;
 }
 // Abschnitte auf dem heutigen Plan, die noch offen sind und nicht (mehr) im gewählten Bereich liegen
 export function heuteAusserhalb() {
@@ -571,6 +589,8 @@ function unterscheidenAnwenden(e) {
 }
 // Abhören: jede Āya mit mindestens einem markierten Wort zählt als Fehler, alle anderen als richtig
 export const abhoerErgebnis = (ayat, fehlerVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : 'ok');
+// ganzer Abschnitt am Stück: Fehler gehen vor Zögern; gezögert wird je Vers gewählt
+export const ganzErgebnis = (ayat, fehlerVi, zoegernVi) => ayat.map(vi => fehlerVi.has(vi) ? 'fehler' : zoegernVi.has(vi) ? 'zoegern' : 'ok');
 
 // ---------- Zwischenstand einer angefangenen Übung (gilt nur am selben Tag und für dieselbe Gliederung) ----------
 const ZWISCHEN = 'itqan-zwischenstand';

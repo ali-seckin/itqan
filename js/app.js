@@ -741,6 +741,7 @@ async function ueben(idText, quelle, fokusText) {
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false, hilfeFrei = false;
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
+  let ganz = E.ablauf === 'ganz' && art !== 'stelle' && !ABF && !L, zg = new Set();   // Ablauf „ganzer Abschnitt am Stück“ (Einstellungen)
   // Übungszeit für die Auswertung: zählt nur, solange die Seite sichtbar ist; fortgesetzte Übungen werden nicht gemessen
   let zeitAktiv = 0, zeitSeit = document.hidden ? null : Date.now(), zeitGanz = true;
   const zeitTick = () => { if (document.hidden) { if (zeitSeit) zeitAktiv += Date.now() - zeitSeit; zeitSeit = null; } else if (!zeitSeit) zeitSeit = Date.now(); };
@@ -873,7 +874,7 @@ async function ueben(idText, quelle, fokusText) {
   };
   let tourAktiv = false;
   function tourPruefen() {
-    if (tourAktiv || vorschau || abhoeren || phase !== 'haupt' || pos >= liste.length) return;
+    if (tourAktiv || vorschau || abhoeren || ganz || phase !== 'haupt' || pos >= liste.length) return;
     const name = markieren ? 'ueben-3' : offen ? 'ueben-2' : pos === 0 && ti === 0 ? 'ueben-1' : null;
     if (!name || tourGesehen(name)) return;
     tourAktiv = true;
@@ -946,6 +947,7 @@ async function ueben(idText, quelle, fokusText) {
       app.querySelector('#pruefen').onclick = () => { vorschau = false; seitenEl.classList.remove('vorschau'); zeichne(); sichtbar(spans(ayat[0])[0]); };
       return;
     }
+    if (ganz && phase === 'haupt') return ganzSprechen();
     if (markieren) {
       A.classList.remove('verdeckt');
       A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
@@ -1054,12 +1056,64 @@ async function ueben(idText, quelle, fokusText) {
     abschluss();
   }
   // Abhören (Tasmīʿ): eine zweite Person sieht den Text offen und tippt Fehler aufs Wort; dezente Nebenfunktion
+  // ---------- Ablauf „ganzer Abschnitt am Stück“: erst alles sprechen (und aufnehmen), dann aufdecken, anhören, Fehler und Zögerstellen markieren ----------
+  const ganzAufnahmeTaste = () => {
+    const nimmt = rec?.state === 'recording';
+    return AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : '';
+  };
+  const ganzHoeren = hb => {
+    if (spieler && !spieler.paused) { spieler.pause(); hb.textContent = '▶'; return; }
+    spieler ??= new Audio(aufnahme); spieler.play().catch(() => {}); hb.textContent = '❚❚';
+    spieler.onended = () => { hb.textContent = '▶'; };
+  };
+  function ganzSprechen() {
+    Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
+    app.querySelector('#punkte').innerHTML = '';
+    const nimmt = rec?.state === 'recording', ansehen = E.vorueben && k.st <= 1 && !hilfe;
+    K.innerHTML = `${ganzAufnahmeTaste()}<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>`;
+    H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : `${tx('ueben.ganz_hinweis')} ${tx('ueben.laut_hinweis')}`) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
+    const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
+    app.querySelector('#g-auf').onclick = ganzAufdecken;
+    const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
+    sichtbar(spans(ayat[0])[0]);
+  }
+  function ganzAufdecken() {
+    aufnahmeStopp(); abhoeren = true; fArt = null; zg = new Set();
+    ayat.forEach(vi => { zu.delete(vi); spans(vi).forEach(s => s.classList.remove('zu', 'naechste', 'erstes')); });
+    zeichne(); sichtbar(spans(ayat[0])[0]);
+  }
+  function ganzAufraeumen() {
+    seitenEl.querySelectorAll('.w.fmark, .w.zmark').forEach(s => { s.classList.remove('fmark', 'zmark'); delete s.dataset.art; });
+  }
+  function ganzPruefenZeichnen() {
+    Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
+    app.querySelector('#punkte').innerHTML = '';
+    A.classList.remove('verdeckt');
+    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('') + `<button data-a="zg" class="${fArt === 'zg' ? 'an' : ''}">${tx('ueben.ganz_gezoegert')}</button>`;
+    K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>`;
+    H.innerHTML = fArt === 'zg' ? tx('ueben.ganz_gezoegert_text') : fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
+    const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
+    app.querySelector('#g-neu').onclick = () => {
+      aufnahmeVerwerfen(); abhoeren = false; zg = new Set(); ganzAufraeumen();
+      ayat.forEach(vi => { zu.add(vi); spans(vi).forEach(s => s.classList.add('zu')); }); zeichne();
+    };
+    app.querySelector('#g-fertig').onclick = () => {
+      const marken = [...seitenEl.querySelectorAll('.w.fmark')];
+      Z.ganzErgebnis(ayat, new Set(marken.map(s => +s.dataset.v)), zg).forEach((x, i) => { erg[i] = x; });
+      const gruppen = new Map();   // jedes Wort mit seiner Fehlerart; ohne Wahl gilt die zuletzt gewählte
+      for (const s of marken) { const a = s.dataset.art || (fArt && fArt !== 'zg' ? fArt : null); gruppen.set(a, [...(gruppen.get(a) || []), `${s.dataset.v}.${s.dataset.i}`]); }
+      for (const [a, keys] of gruppen) Z.fehlerstellenMerken(keys, a);
+      ganzAufraeumen(); abhoeren = false; ganz = false; aufnahmeVerwerfen();
+      pos = ayat.length; rundeFertig();
+    };
+  }
   function abhoerenStart() {
     aufnahmeVerwerfen(); abhoeren = true; fArt = null;
     ayat.forEach(vi => { zu.delete(vi); spans(vi).forEach(s => s.classList.remove('zu', 'naechste', 'erstes')); });
     zeichne();
   }
   function abhoerenZeichnen() {
+    if (ganz) return ganzPruefenZeichnen();
     Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
@@ -1089,12 +1143,17 @@ async function ueben(idText, quelle, fokusText) {
   A.onclick = ev => {
     const a = ev.target.dataset.a; if (!a) return; fArt = fArt === a ? null : a;
     A.querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.a === fArt));
-    H.innerHTML = fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2');
+    H.innerHTML = fArt === 'zg' ? tx('ueben.ganz_gezoegert_text') : fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2');
   };
   seitenEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
     const gedrueckt = () => { if (w.getAttribute('role') === 'button') w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false'); };
-    if (abhoeren) { if (w.classList.contains('in')) { w.classList.toggle('fmark'); gedrueckt(); } return; }
+    if (abhoeren) {
+      if (!w.classList.contains('in')) return;
+      if (ganz && fArt === 'zg') { const vi = +w.dataset.v; if (zg.has(vi)) zg.delete(vi); else zg.add(vi); spans(vi).forEach(s => s.classList.toggle('zmark', zg.has(vi))); return; }
+      w.classList.toggle('fmark'); if (ganz) { if (w.classList.contains('fmark') && fArt) w.dataset.art = fArt; else delete w.dataset.art; } gedrueckt(); return;
+    }
+    if (ganz && w.classList.contains('zu') && !vorschau) return ganzAufdecken();
     if (markieren) { if (+w.dataset.v === liste[pos]) { w.classList.toggle('fmark'); gedrueckt(); } return; }
     if (w.classList.contains('zu') && +w.dataset.v === liste[pos] && !offen && !vorschau) aufdecken();
   };
@@ -1104,6 +1163,7 @@ async function ueben(idText, quelle, fokusText) {
     if (ev.target.closest?.('input,select,textarea') || document.querySelector('.dialog')) return;
     const pfeil = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key);
     if (abhoeren) { if (pfeil) { ev.preventDefault(); wortEinstieg(); } return; }
+    if (ganz && phase === 'haupt') { if (!vorschau && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); app.querySelector('#g-auf')?.click(); } else if (vorschau && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
     if (pos >= liste.length) return;
     if (vorschau) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); app.querySelector('#pruefen')?.click(); } return; }
     if (markieren) {
@@ -1176,7 +1236,7 @@ async function ueben(idText, quelle, fokusText) {
     const weiter = await dialog({ titel: tx('ueben.weitermachen'), html: `<p>${tx('ueben.du_hast_diesen_abschnitt_heute_schon', { n: zw.erg.length, n2: ayat.length })}</p>`, ja: zw.erg.length < ayat.length ? tx('ueben.bei_aya_weiter', { a: zw.erg.length + 1 }) : tx('allg.weiter'), nein: tx('ueben.neu_beginnen') });
     if (weiter) {
       zw.erg.forEach((x, i) => { const vi = ayat[i]; erg[i] = x; status.set(vi, x); zu.delete(vi); spans(vi).forEach(s => { s.classList.remove('zu', 'alt'); s.classList.add(x); }); });
-      pos = zw.erg.length; zeitGanz = false;
+      pos = zw.erg.length; zeitGanz = false; ganz = false;
       einbl?.remove();
     } else Z.zwischenstandLoeschen();
   }
@@ -2133,6 +2193,9 @@ function einstellungen() {
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.ablauf_titel')}</h3>
+      <div class="wahl" id="ablauf" style="margin-top:10px"><button data-w="vers" class="${E.ablauf === 'ganz' ? '' : 'an'}">${tx('einstellungen.ablauf_vers')}</button><button data-w="ganz" class="${E.ablauf === 'ganz' ? 'an' : ''}">${tx('einstellungen.ablauf_ganz')}</button></div>
+      ${optionsListe([tx('einstellungen.ablauf_text')])}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">${tx('einstellungen.erlaubt')}</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.sofortkorrektur')}</h3><p class="unter">${tx('einstellungen.hattest_du_in_einem_abschnitt_fehler')}</p>
@@ -2174,7 +2237,15 @@ function einstellungen() {
   };
   wahl('seitengroesse', w => { E.seitenGroesse = +w; themaAnwenden(); });
   wahl('textgroesse', w => { E.textGroesse = +w; themaAnwenden(); });
-  wahl('reihenfolge', w => { E.reihenfolge = w; app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
+  // Die neue Reihenfolge gilt sofort: der Plan von heute wird neu aufgebaut; wer heute schon Abschnitte abgegeben hat, wird einmal gewarnt
+  app.querySelector('#reihenfolge').onclick = async ev => {
+    const w = ev.target.closest('button')?.dataset.w; if (w == null || w === E.reihenfolge) return;
+    const zy = Z.heuteZyklus();
+    if (zy.fertig && !await dialog({ titel: tx('einstellungen.reihenfolge_dialog_titel'), html: `<p>${tx('einstellungen.reihenfolge_dialog_text', { n: zy.n })}</p>`, ja: tx('einstellungen.reihenfolge_dialog_ja'), gefahr: true })) return;
+    E.reihenfolge = w; app.querySelectorAll('#reihenfolge button').forEach(b => b.classList.toggle('an', b.dataset.w === w));
+    app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer();
+    Z.heuteNeuAufbauen(); Z.speichern(); toast(tx('einstellungen.reihenfolge_sofort'));
+  };
   wahl('zufall', w => { E.zufall = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });
   wahl('ausgabe', w => { if (w === E.ausgabe) return; if (E.modus === 'seite') Z.schnappschuss('vor dem Gliederungswechsel'); E.ausgabe = w; Z.speichern(); location.reload(); });
@@ -2191,6 +2262,7 @@ function einstellungen() {
   pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
+  wahl('ablauf', w => { E.ablauf = w; toast(tx('einstellungen.ablauf_gilt')); });
   app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast(tx('einstellungen.gilt_ab_sofort')); };
   app.querySelector('#tage-einzeln').onclick = ev => {
     const zu = app.querySelector('.tagesliste').classList.toggle('verdeckt');

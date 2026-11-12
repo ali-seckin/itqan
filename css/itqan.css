@@ -25,6 +25,7 @@ button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
+.w.zmark{outline:2px dashed var(--akzentT);outline-offset:1px;--wbg:rgba(217,154,78,.4)!important}
 button.karte{font:inherit;color:inherit;cursor:pointer;min-height:56px}
 .kurz-angebot{margin-top:22px;padding-top:6px;border-top:1px solid var(--rand)}
 .kurz-heute{text-decoration:none;color:inherit;border-color:var(--akzentF)}
