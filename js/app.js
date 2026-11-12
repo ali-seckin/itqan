@@ -592,7 +592,7 @@ function heute() {
   const anteil = pflicht.length ? erledigt / pflicht.length : 0;
   const U = 2 * Math.PI * 88;
   const aktiv = Z.ketteAktiv();
-  const quote = t.r + t.f + t.h ? Math.round(100 * (t.r + t.h * .5) / (t.r + t.f + t.h)) : null;
+  const quote = t.r + t.f + t.h ? Math.round(100 * t.r / (t.r + t.f + t.h)) : null;
   const kf = Z.khatmaFortschritt();
   const istFreitag = Z.wochentag(Z.heute()) === 4;
   // Ruhetag oder Pause: kein Wird, die Kette wartet
@@ -1106,6 +1106,13 @@ async function ueben(idText, quelle, fokusText) {
     ayat.forEach(vi => { zu.delete(vi); spans(vi).forEach(s => s.classList.remove('zu', 'naechste', 'erstes')); });
     zeichne(); sichtbar(spans(ayat[0])[0]);
   }
+  const ganzSchluessel = `itqan.ganz.${id}`;
+  const ganzMerken = () => {   // nur eingetragene Markierungen (mit Art) und gezögerte Āyāt; die Aufnahme bleibt im Arbeitsspeicher
+    if (!(ganz && abhoeren)) return;
+    const m = [...seitenEl.querySelectorAll('.w.fmark.typ')].map(s => [+s.dataset.v, +s.dataset.i, s.dataset.art]);
+    try { if (m.length || zg.size) localStorage.setItem(ganzSchluessel, JSON.stringify({ d: Z.heute(), m, z: [...zg] })); else localStorage.removeItem(ganzSchluessel); } catch (e) { /* ohne Speicher geht es auch */ }
+  };
+  const ganzLoeschen = () => { try { localStorage.removeItem(ganzSchluessel); } catch (e) { /* egal */ } };
   function ganzAufraeumen() {
     markenWeg();
   }
@@ -1118,7 +1125,7 @@ async function ueben(idText, quelle, fokusText) {
     H.innerHTML = aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
     const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
     app.querySelector('#g-neu').onclick = () => {
-      aufnahmeVerwerfen(); abhoeren = false; zg = new Set(); ganzAufraeumen();
+      aufnahmeVerwerfen(); abhoeren = false; zg = new Set(); ganzAufraeumen(); ganzLoeschen();
       ayat.forEach(vi => { zu.add(vi); spans(vi).forEach(s => s.classList.add('zu')); }); zeichne();
     };
     app.querySelector('#g-fertig').onclick = () => {
@@ -1126,7 +1133,7 @@ async function ueben(idText, quelle, fokusText) {
       const marken = [...seitenEl.querySelectorAll('.w.fmark')];
       Z.ganzErgebnis(ayat, new Set(marken.map(s => +s.dataset.v)), zg).forEach((x, i) => { erg[i] = x; });
       merken(marken);
-      ganzAufraeumen(); abhoeren = false; ganz = false; aufnahmeVerwerfen();
+      ganzAufraeumen(); ganzLoeschen(); abhoeren = false; ganz = false; aufnahmeVerwerfen();
       pos = ayat.length; rundeFertig();
     };
   }
@@ -1184,7 +1191,7 @@ async function ueben(idText, quelle, fokusText) {
   }
   A.onclick = ev => {
     const a = ev.target.dataset.a; if (!a) return;
-    const n = artSetzen(a); fArt = null;
+    const n = artSetzen(a); fArt = null; ganzMerken();
     H.innerHTML = !n ? tx('ueben.art_zuerst_wort') : a === 'zg' ? tx('ueben.ganz_gezoegert_text') : `<b>${Z.FEHLERARTEN.find(x => x[0] === a)[1]}:</b> ${Z.FEHLERARTEN_TEXT[a]}`;
   };
   const markeUmschalten = w => { if (w.classList.contains('typ')) { w.classList.remove('fmark', 'typ'); delete w.dataset.art; } else w.classList.toggle('fmark'); };
@@ -1193,7 +1200,7 @@ async function ueben(idText, quelle, fokusText) {
     const gedrueckt = () => { if (w.getAttribute('role') === 'button') w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false'); };
     if (abhoeren) {
       if (!w.classList.contains('in')) return;
-      markeUmschalten(w); gedrueckt(); return;
+      markeUmschalten(w); gedrueckt(); ganzMerken(); return;
     }
     if (ganz && w.classList.contains('zu') && !vorschau) return ganzAufdecken();
     if (markieren) { if (+w.dataset.v === liste[pos]) { markeUmschalten(w); gedrueckt(); } return; }
@@ -1256,7 +1263,7 @@ async function ueben(idText, quelle, fokusText) {
     app.innerHTML = `<div class="feier">${qandil()}
       <h2>${res.f ? tx('ueben.abschnitt_beendet') : res.h ? tx('ueben.gut_gemacht') : tx('ueben.fehlerfrei_ma_saa_llah')}</h2>
       <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)} · ${tx('ueben.stufe', { a: Z.STUFEN[res.stufe], b: res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : '' })}</span></p>
-      <div class="ernte"><div><b>${res.r + res.h}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div><div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>
+      <div class="ernte"><div><b>${res.r}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div><div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>
         ${E.hasanat === false ? '' : `<div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
       ${E.hasanat === false ? '' : `<p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
       <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
@@ -1282,6 +1289,15 @@ async function ueben(idText, quelle, fokusText) {
       einbl?.remove();
     } else Z.zwischenstandLoeschen();
   }
+  if (ganz) {   // Markierungen von vorhin wiederherstellen (heute, ohne Aufnahme)
+    let g = null; try { g = JSON.parse(localStorage.getItem(ganzSchluessel) || 'null'); } catch (e) { g = null; }
+    if (g && g.d === Z.heute()) {
+      ganzAufdecken();
+      for (const [v, i, a] of g.m || []) { const w = seitenEl.querySelector(`.w[data-v="${v}"][data-i="${i}"]`); if (w) { w.classList.add('fmark', 'typ'); w.dataset.art = a; } }
+      for (const vi of g.z || []) { zg.add(vi); spans(vi).forEach(s => s.classList.add('zmark')); }
+      toast(tx('ueben.ganz_wiederhergestellt'), 3200);
+    } else ganzLoeschen();
+  }
   zeichne();
   if (pos) sichtbar(spans(ayat[Math.min(pos, ayat.length - 1)])[0]);
   // nächste Seiten schon laden
@@ -1293,7 +1309,7 @@ function fertig() {
   navSetzen(null);
   const t = Z.tagesplan(), P = Z.P, bonusId = Z.bonusVorschlag();
   const ev = letzteEreignisse; letzteEreignisse = [];
-  const quote = t.r + t.f + t.h ? `${t.r + t.h}/${t.r + t.f + t.h}` : '·';
+  const quote = t.r + t.f + t.h ? `${t.r}/${t.r + t.f + t.h}` : '·';
   const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
     x.typ === 'kette' ? `<div class="band">${tx('fertig.tage_in_folge', { n: x.n, a: x.n === 66 ? tx('fertig.im_mittel_wird_eine_gewohnheit_nach_etwa') : x.n === 40 ? tx('fertig.vierzig_tage_bestaendigkeit') : tx('fertig.bestaendigkeit_ist_das_liebste_bei_allah') })}</div>`
     : x.typ === 'khatma' ? `<div class="band">${tx('fertig.hatma_vollendet_allahumma_rhamni_bi_l', { n: x.n })}</div>`
@@ -2283,10 +2299,10 @@ function einstellungen() {
   app.querySelector('#reihenfolge').onclick = async ev => {
     const w = ev.target.closest('button')?.dataset.w; if (w == null || w === E.reihenfolge) return;
     const zy = Z.heuteZyklus();
-    if (zy.fertig && !await dialog({ titel: tx('einstellungen.reihenfolge_dialog_titel'), html: `<p>${tx('einstellungen.reihenfolge_dialog_text', { n: zy.n })}</p>`, ja: tx('einstellungen.reihenfolge_dialog_ja'), gefahr: true })) return;
+    if (!zy.voll && zy.fertig && !await dialog({ titel: tx('einstellungen.reihenfolge_dialog_titel'), html: `<p>${tx('einstellungen.reihenfolge_dialog_text', { n: zy.n })}</p>`, ja: tx('einstellungen.reihenfolge_dialog_ja'), gefahr: true })) return;
     E.reihenfolge = w; app.querySelectorAll('#reihenfolge button').forEach(b => b.classList.toggle('an', b.dataset.w === w));
     app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer();
-    Z.heuteNeuAufbauen(); Z.speichern(); toast(tx('einstellungen.reihenfolge_sofort'));
+    Z.heuteNeuAufbauen(); Z.speichern(); toast(zy.voll ? tx('einstellungen.reihenfolge_ab_morgen') : tx('einstellungen.reihenfolge_sofort'));
   };
   wahl('zufall', w => { E.zufall = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   wahl('vorueben', w => { E.vorueben = w === '1'; });

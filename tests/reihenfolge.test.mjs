@@ -1,7 +1,7 @@
 // Itqān · Reihenfolge wechseln gilt sofort
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { Z, D, frisch, tagSetzenZurueck } from './umgebung.mjs';
+import { Z, D, frisch, tagSetzenZurueck, wirdErfuellen } from './umgebung.mjs';
 
 after(() => { Z.logGrenze(0); tagSetzenZurueck(); });
 
@@ -44,4 +44,21 @@ test('Abhaken: zählt für Plan und Zyklus, aber ohne Punkte, Hasanat und Stufen
   assert.equal(k.st, vorher.st); assert.equal(k.n, 1); assert.ok(Z.P.zyklus.erledigt.includes(a));
   assert.deepEqual(Z.heuteAbhakbar(), [b]);
   Z.abschnittAbhaken(b); assert.equal(Z.tagesplan().voll, true);
+});
+
+test('Wird schon erfüllt: eine neue Reihenfolge gilt erst ab morgen, der Tag bleibt erfüllt', () => {
+  frisch({ pensum: 2 });
+  wirdErfuellen(); assert.equal(Z.tagesplan().voll, true); assert.equal(Z.heuteZyklus().voll, true);
+  const vorher = [...Z.tagesplan().plan];
+  Z.P.einst.reihenfolge = 'rueckwaerts';
+  assert.equal(Z.heuteNeuAufbauen(), 0);
+  assert.deepEqual(Z.tagesplan().plan, vorher); assert.equal(Z.tagesplan().voll, true);
+});
+
+test('Abhaken gilt auch für Qaḍāʾ-, Festigen- und Fehler-Abschnitte im Plan', () => {
+  frisch({ pensum: 2 });
+  const t = Z.tagesplan(), [a, b] = t.plan; t.art[a] = 'fehler'; t.art[b] = 'qadaa';
+  assert.deepEqual(Z.heuteAbhakbar(), [a, b]);
+  assert.ok(Z.abschnittAbhaken(a)); assert.ok(Z.abschnittAbhaken(b));
+  assert.equal(Z.tagesplan().voll, true);
 });

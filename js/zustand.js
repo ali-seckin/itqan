@@ -503,10 +503,10 @@ function pensumAnwenden(e) {
 export function heuteZyklus() {
   const t = P.tage[heute()]; if (!t || t.ruhe) return { n: 0, fertig: 0 };
   const zy = t.plan.filter(id => t.art[id] === 'zyklus');
-  return { n: zy.length, fertig: zy.filter(id => t.fertig.includes(id)).length };
+  return { n: zy.length, fertig: zy.filter(id => t.fertig.includes(id)).length, voll: !!t.voll };
 }
 export function heuteNeuAufbauen() {
-  const d = heute(), t = P.tage[d]; if (!t || t.ruhe) return 0;
+  const d = heute(), t = P.tage[d]; if (!t || t.ruhe || t.voll) return 0;   // ist das Wird erfüllt, gilt die neue Reihenfolge erst ab morgen
   const zy = t.plan.filter(id => t.art[id] === 'zyklus'); if (!zy.length) return 0;
   const ers = naechsteImZyklus(zy.length, new Set(t.plan.filter(id => !zy.includes(id))), d);
   if (!ers.length) return 0;
@@ -698,13 +698,14 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
 }
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };
 // Nachträglich abhaken: außerhalb der App geübt (Gebet, unterwegs). Zählt für Tagesplan und Zyklus, ohne Punkte, Hasanat und Stufenänderung
+const ABHAKBAR = ['zyklus', 'qadaa', 'festigen', 'fehler'];   // alles, was zum Wird zählt; Bonus und freies Üben stehen nicht im Plan
 export function abschnittAbhaken(id) {
-  const datum = heute(), t = tagesplan(datum); if (t.fertig.includes(id) || t.art[id] !== 'zyklus') return null;
-  return eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: 'a'.repeat(D.A[id].ayat), q: 'zyklus', p: 0 });
+  const datum = heute(), t = tagesplan(datum); if (t.fertig.includes(id) || !ABHAKBAR.includes(t.art[id])) return null;
+  return eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: 'a'.repeat(D.A[id].ayat), q: t.art[id], p: 0 });
 }
 export function heuteAbhakbar() {
   const t = P.tage[heute()]; if (!t || t.ruhe) return [];
-  return t.plan.filter(id => t.art[id] === 'zyklus' && !t.fertig.includes(id));
+  return t.plan.filter(id => ABHAKBAR.includes(t.art[id]) && !t.fertig.includes(id));
 }   // z: gezögert, zählt halb, ohne Stufenverlust, Wiederkehr nach spätestens 3 Tagen
 function abschlussAnwenden(e0) {
   const datum = e0.d, id = e0.id, t = tagSicher(datum), e = D.A[id], k = { ...karte(id) };
