@@ -1,6 +1,7 @@
 // Itqān · Oberfläche
 import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
+import * as Lk from './lichtkarte.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
@@ -657,13 +658,8 @@ function heute() {
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${tx('heute.von_abschnitten', { fertig: kf.fertig, gesamt: kf.gesamt })}</span><span>${prozent(Math.floor(kf.anteil * 100))}</span></div>
     <div class="titel-klein"><a href="#karte" style="color:inherit">${tx('allg.lichtkarte')} · ${tx('heute.30_guz')}</a></div>
-    <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${Array.from({ length: 30 }, (_, i) => {
-      const seiten = Array.from({ length: (i < 29 ? juzStart(i + 2) : 605) - juzStart(i + 1) }, (_, k) => juzStart(i + 1) + k);
-      const w = seiten.map(Z.seitenStufe).filter(x => x != null);
-      const o = w.length ? 0.14 + 0.86 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6 : null;
-      // Farbe gemischt statt durchsichtig, damit die Zahl lesbar bleibt; ab 58,5 % wechselt im dunklen Bild die Schrift auf Schwarz
-      return `<span aria-hidden="true" class="${o == null ? 'aus' : o >= 0.585 ? 'voll' : ''}"${o != null ? ` style="background:color-mix(in srgb,var(--akzent) ${Math.round(o * 100)}%,var(--bg))"` : ''}>${i + 1}</span>`;
-    }).join('')}</a>`;
+    <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${Lk.juzMittel().map((x, i) =>
+      `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
@@ -1332,73 +1328,9 @@ function fertig() {
 }
 
 // ---------- Lichtkarte ----------
-const STUFEN_TEXT = [
-  tx('stufen_text.noch_nicht_wiederholt_oder_nach_fehlern'),
-  tx('stufen_text.einmal_ohne_fehler_gekommen_der'),
-  tx('stufen_text.zwei_stufen_aufgebaut_meist_zwei'),
-  tx('stufen_text.drei_stufen_mehrere_runden_fehlerfrei_du'),
-  tx('stufen_text.die_hoechste_stufe_mindestens_vier')
-];
-const STUFEN_REGEL = tx('stufen_regel.so_entstehen_die_stufen_jeder_durchgang');
 function lichtkarte() {
   navSetzen('karte');
-  const zeilen = [];
-  const zaehl = [0, 0, 0, 0, 0];
-  for (const e of D.A) if (Z.imBereich(e.id)) zaehl[Z.karte(e.id).st]++;
-  for (let j = 1; j <= 30; j++) {
-    const von = juzStart(j), bis = j < 30 ? juzStart(j + 1) - 1 : 604;
-    const zellen = [];
-    for (let p = von; p <= bis; p++) {
-      const s = Z.seitenStufe(p);
-      zellen.push(`<button data-p="${p}" class="${s == null ? 'aus' : ''}" title="${tx('lichtkarte.seite', { p })}" aria-label="${tx('lichtkarte.seite_2', { p, a: s == null ? tx('lichtkarte.nicht_gewaehlt') : Z.STUFEN[Math.round(s)] })}" style="${s != null ? `opacity:${(0.12 + 0.88 * s / 4.6).toFixed(2)}` : ''}"></button>`);
-    }
-    const oben = zellen.length > 22 ? Math.floor(zellen.length / 2) : 10;   // Ǧuzʾ 30 (23 Seiten): 11 und 12
-    zeilen.push(`<div class="licht-juz"><span>${j}</span><div class="lk-reihen"><div class="licht-seiten lk-reihe">${zellen.slice(0, oben).join('')}</div><div class="licht-seiten lk-reihe">${zellen.slice(oben).join('')}</div></div><span class="lk-anz" title="${tx('lichtkarte.seiten_in_guz', { j })}">${zellen.length}</span></div>`);
-  }
-  app.innerHTML = `<div class="marke">${tx('allg.lichtkarte')}<small>${tx('lichtkarte.jede_seite_leuchtet_so_hell_wie_sie')}</small></div>
-    ${stellenWahl()}
-    <div class="titel-klein" style="margin:18px 0 8px">${tx('lichtkarte.abschnitte_nach_stufe')}</div>
-    <div class="zahlen stufenwahl" style="grid-template-columns:repeat(5,1fr);margin-top:0">${Z.STUFEN.map((s, i) => `<button class="zahl" data-st="${i}"><b style="font-size:var(--s-text)">${zaehl[i]}</b><span>${i === 1 ? tx('lichtkarte.aufbau') : s}</span></button>`).join('')}</div>
-    <div class="hinweisbox verdeckt" id="stufeninfo"></div>
-    <div class="lk-erklaerung">${tx('lichtkarte.darunter_jede_zeile_ein_guz_jedes_feld')}</div>
-    <div class="licht-juz lk-kopf"><span>${tx('lichtkarte.guz')}</span><span class="mitte">${tx('lichtkarte.mushaf_seiten')}</span><span class="lk-anz">${tx('allg.seiten')}</span></div>
-    <div id="licht">${zeilen.join('')}</div>
-    <div class="legende"><span>${tx('lichtkarte.neu')}</span><span>${tx('lichtkarte.aufbau_2')}</span><span>${tx('lichtkarte.sicher')}</span><span>${tx('lichtkarte.mutqan')}</span></div>`;
-  // Tippen auf eine Seite: kleines Infokästchen unter dem Ǧuzʾ, erst der Knopf darin führt zur Seite
-  const licht = app.querySelector('#licht');
-  licht.onclick = ev => {
-    const b = ev.target.closest('[data-p]');
-    if (ev.target.closest('#seiteninfo') || !b) return;
-    const alt = licht.querySelector('#seiteninfo'), p = +b.dataset.p;
-    licht.querySelectorAll('.gewaehlt').forEach(x => x.classList.remove('gewaehlt'));
-    if (alt) { const gleich = +alt.dataset.p === p; alt.remove(); if (gleich) return; }
-    b.classList.add('gewaehlt');
-    const abschnitte = D.A.filter(e => e.seiten.includes(p));
-    const s = D.V[D.L[p - 1].find(z => z.w)?.w[0][1] ?? 0][0], st = Z.seitenStufe(p);
-    const box = document.createElement('div'); box.id = 'seiteninfo'; box.className = 'seiteninfo'; box.dataset.p = p;
-    box.innerHTML = `<div class="kopf"><b>${tx('lichtkarte.seite', { p })}</b><span>${sureName(s)} · ${tx('lichtkarte.guz_2', { juzVonSeite: juzVonSeite(p) })} · ${tx('lichtkarte.seite_3', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}</span></div>
-      ${st == null ? `<p class="unter">${tx('lichtkarte.diese_seite_gehoert_nicht_zu_deinem')}</p>` : ''}
-      ${abschnitte.map(e => `<div class="zeile"><span>${e.nr ? `${sureName(e.von[0])} <b>${e.nr}</b>` : abschnittName(e)}: ${esc(e.titel)}<small>${bereichText(e)}</small></span><span class="st">${Z.STUFEN[Z.karte(e.id).st]}</span></div>`).join('')}
-      <a class="knopf haupt klein" href="#mushaf/${p}" style="text-decoration:none;margin-top:4px">${tx('lichtkarte.zur_seite', { p })}</a>`;
-    b.closest('.licht-juz').after(box);
-  };
-  // Tippen irgendwo außerhalb des Kästchens schließt es (Scrollen löst keinen Klick aus)
-  const aussen = ev => {
-    if (!licht.isConnected) { document.removeEventListener('click', aussen); return; }
-    const box = licht.querySelector('#seiteninfo');
-    if (!box || box.contains(ev.target) || ev.target.closest('#licht [data-p]')) return;
-    box.remove(); licht.querySelectorAll('.gewaehlt').forEach(x => x.classList.remove('gewaehlt'));
-  };
-  document.addEventListener('click', aussen);
-  stellenWahlBinden();
-  const info = app.querySelector('#stufeninfo');
-  app.querySelector('.stufenwahl').onclick = ev => {
-    const b = ev.target.closest('[data-st]'); if (!b) return;
-    const an = !b.classList.contains('an');
-    app.querySelectorAll('.stufenwahl .zahl').forEach(x => x.classList.toggle('an', an && x === b));
-    info.classList.toggle('verdeckt', !an);
-    if (an) { const i = +b.dataset.st; info.innerHTML = `<b>${Z.STUFEN[i]}</b> · ${tx('lichtkarte.abschnitte', { a: zaehl[i], b: STUFEN_TEXT[i] })}<p class="unter" style="margin-top:8px">${STUFEN_REGEL}</p>`; }
-  };
+  Lk.zeichne(app, { stellenWahl, stellenWahlBinden, hochzaehlen });
 }
 
 // ---------- Muṣḥaf ----------

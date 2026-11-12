@@ -11,6 +11,9 @@ const imPool = vi => { const e = abschnittVonAya(vi); return !!e && Z.imBereich(
 const ersteAyaDerSeite = p => { for (const z of D.L[p - 1]) if (z?.w) return z.w[0][1]; return null; };
 export const seiteVonAya = vi => D.W?.get(vi + '.0')?.[0] || D.V[vi][3];
 
+// Für die Lichtkarte: die Übung „Seite“ oder „Ǧuzʾ-Anfang“ gezielt starten (null: nicht im gewählten Bereich)
+export function seitenAufgabe(p) { const vi = ersteAyaDerSeite(p); return vi != null && imPool(vi) ? ziel(vi, vi, false, 'seite', p) : null; }
+export function juzAufgabe(j) { const vi = juzStartVers(j); return vi >= 0 && imPool(vi) ? ziel(vi, vi, false, 'juz', j) : null; }
 function ziel(von, bis, mitKontext, art, n) {
   const e = abschnittVonAya(von);
   return `#ueben/${e.id}/abfrage/${von}_${bis}_${mitKontext ? 1 : 0}_${art}_${n}`;
