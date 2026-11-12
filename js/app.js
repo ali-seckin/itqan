@@ -2108,7 +2108,7 @@ function einstellungen() {
       <p class="unter" style="margin-top:10px" id="dauer">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3><p class="unter">${tx('einstellungen.rhythmus_text')}</p>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
+    <div class="abschnitt${E.rhythmus === 'langzeit' ? ' gedimmt' : ''}" id="schwach-block"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter schwach-hinweis${E.rhythmus === 'langzeit' ? '' : ' verdeckt'}">${tx('einstellungen.schwach_langzeit')}</p><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
@@ -2170,7 +2170,10 @@ function einstellungen() {
   wahl('hasanat', w => { E.hasanat = w === '1'; });
   wahl('zielquote', w => { E.zielQuote = +w; });
   app.querySelector('#herkunft').onchange = ev => { E.herkunft = ev.target.value; Z.speichern(); };
-  wahl('rhythmus', w => { E.rhythmus = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
+  wahl('rhythmus', w => {
+    E.rhythmus = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan'));
+    app.querySelector('#schwach-block').classList.toggle('gedimmt', w === 'langzeit'); app.querySelector('.schwach-hinweis').classList.toggle('verdeckt', w !== 'langzeit');
+  });
   wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });
