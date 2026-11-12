@@ -2106,10 +2106,10 @@ function einstellungen() {
       <label class="auswahl" style="margin-top:14px"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(E.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
       <p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
-    <div class="abschnitt"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
-      <label class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><select id="alle">${gleich() ? '' : `<option value="" selected>${tx('einstellungen.verschieden')}</option>`}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
+    <div class="abschnitt" id="pensum-block"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
+      <div class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><span class="schritt" data-s="alle"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${gleich() ? E.pensum[0] : tx('einstellungen.verschieden')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>
       <button type="button" class="knopf leise klein" id="tage-einzeln" aria-expanded="${gleich() ? 'false' : 'true'}" style="margin-top:10px">${gleich() ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus')}</button>
-      <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen([0, ...bis(E.pensum[i])], E.pensum[i], x => x ? x : tx('allg.ruhetag'))}</select></label>`).join('')}</div>
+      <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<div class="auswahl"><span>${w}</span><span class="schritt" data-s="${i}"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${E.pensum[i] || tx('allg.ruhetag')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>`).join('')}</div>
       <p class="unter" style="margin-top:10px" id="dauer">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div>
@@ -2185,22 +2185,33 @@ function einstellungen() {
   wahl('sofort', w => { E.sofort = w === '1'; });
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
   app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast(tx('einstellungen.gilt_ab_sofort')); };
-  const alle = app.querySelector('#alle'), tage = [...app.querySelectorAll('.tagesliste select')];
   app.querySelector('#tage-einzeln').onclick = ev => {
     const zu = app.querySelector('.tagesliste').classList.toggle('verdeckt');
     ev.target.setAttribute('aria-expanded', String(!zu)); ev.target.textContent = zu ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus');
   };
-  alle.onchange = () => {
-    const n = +alle.value; if (!n) return;
-    E.pensum = Array(7).fill(n); tage.forEach(x => x.value = String(n));
-    alle.querySelector('option[value=""]')?.remove(); Z.speichern(); dauer();
+  // Abschnitte pro Tag mit Plus und Minus: „Alle Tage“ setzt jeden Tag, bei verschiedenen Werten zählt der Durchschnitt; ein Tag darf auf 0 (Ruhetag), mindestens ein Tag bleibt
+  const pensumZeigen = () => {
+    const bl = app.querySelector('#pensum-block');
+    bl.querySelectorAll('.schritt').forEach(st => {
+      const alleTage = st.dataset.s === 'alle', w = alleTage ? (gleich() ? E.pensum[0] : null) : E.pensum[+st.dataset.s];
+      st.querySelector('b').textContent = alleTage ? (gleich() ? w : tx('einstellungen.verschieden')) : (w || tx('allg.ruhetag'));
+      const [minus, plus] = st.querySelectorAll('button'); minus.disabled = alleTage ? (w != null && w <= 1) : w <= 0; plus.disabled = w != null && w >= 30;
+    });
   };
-  tage.forEach(x => x.onchange = () => {
-    if (+x.value === 0 && E.pensum.filter((v, i) => v > 0 && i !== +x.dataset.i).length === 0) { x.value = String(E.pensum[+x.dataset.i]); toast(tx('einstellungen.mindestens_ein_tag_braucht_einen_wird')); return; }
-    E.pensum[+x.dataset.i] = +x.value; Z.speichern(); dauer();
-    if (gleich()) { alle.querySelector('option[value=""]')?.remove(); alle.value = String(E.pensum[0]); }
-    else { if (!alle.querySelector('option[value=""]')) alle.insertAdjacentHTML('afterbegin', `<option value="">${tx('einstellungen.verschieden')}</option>`); alle.value = ''; }
-  });
+  app.querySelector('#pensum-block').onclick = ev => {
+    const b = ev.target.closest('button[data-d]'); if (!b) return;
+    const st = b.closest('.schritt'), d = +b.dataset.d;
+    if (st.dataset.s === 'alle') {
+      const pos = E.pensum.filter(v => v > 0), basis = gleich() ? E.pensum[0] : Math.round(pos.reduce((a, c) => a + c, 0) / pos.length);
+      E.pensum = Array(7).fill(Math.min(30, Math.max(1, basis + d)));
+    } else {
+      const i = +st.dataset.s, n = Math.min(30, Math.max(0, E.pensum[i] + d));
+      if (n === 0 && E.pensum.filter((v, k) => v > 0 && k !== i).length === 0) { toast(tx('einstellungen.mindestens_ein_tag_braucht_einen_wird')); return; }
+      E.pensum[i] = n;
+    }
+    Z.speichern(); dauer(); pensumZeigen();
+  };
+  pensumZeigen();
   // Alles abwählen ist erlaubt (bequem zum Neuwählen); gespeichert wird erst, wenn etwas gewählt ist
   const frage = app.querySelector('#heute-frage');
   const frageZeigen = () => {   // steht auf dem Plan von heute noch Offenes außerhalb der neuen Auswahl, wird angeboten, es zu ersetzen

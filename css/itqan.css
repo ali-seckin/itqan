@@ -25,6 +25,10 @@ button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
+.schritt{display:inline-flex;align-items:center;gap:10px}
+.schritt button{width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:inherit;font-size:var(--s-titel)}
+.schritt button:disabled{opacity:.4}
+.schritt b{min-width:5.5ch;text-align:center;font-weight:600}
 .opt-liste{margin-top:12px;display:grid;gap:14px;line-height:1.45}
 .opt{border-inline-start:3px solid var(--akzentF);padding-inline-start:14px}
 .opt-name{display:block;font-weight:700;color:var(--akzentT);margin-bottom:2px}
