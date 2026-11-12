@@ -1777,7 +1777,7 @@ const seiteVon = vi => D.W.get(vi + '.0')?.[0] || D.V[vi][3];
 const abschnittVon = vi => D.A.find(e => vi >= e.v[0] && vi <= e.v[1]);
 // Āya in Uthmani-Schrift, markierte Wörter hervorgehoben oder verdeckt
 function ayaText(t, vi, { mark = new Set(), zu = new Set(), klasse = 'treffer-wort' } = {}) {
-  return `<span class="uthmani">${t.u[vi].map((w, i) => zu.has(i) ? `<span class="wort-zu" data-i="${i}">${esc(w)}</span>` : mark.has(i) ? `<mark class="${klasse}">${esc(w)}</mark>` : esc(w)).join(' ')} <span class="aya-nr">${D.V[vi][1].toLocaleString('ar-EG')}</span></span>`;
+  return `<span class="uthmani">${t.u[vi].map((w, i) => zu.has(i) ? `<span class="wort-zu" data-i="${i}" data-t="${esc(w)}"></span>` : mark.has(i) ? `<mark class="${klasse}">${esc(w)}</mark>` : esc(w)).join(' ')} <span class="aya-nr">${D.V[vi][1].toLocaleString('ar-EG')}</span></span>`;
 }
 async function sucheSeite(qText = '') {
   navSetzen('mushaf');

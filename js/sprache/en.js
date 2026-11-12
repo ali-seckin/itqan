@@ -1435,6 +1435,8 @@ export default {
     heute_1: 'On “Today” there is no plus and minus for single sections any more: the daily load changes only in the settings. If you want more, take the bonus section. The quick drills now have their own card under the day’s plan.',
     karten_titel: 'Uniform cards in the profile',
     karten_1: 'The card “Show the explanation again when practising” now has the same size as the others, and the description of the quick drills fits on one line.',
+    test_titel: 'Two fixes from testing',
+    test_1: 'Hidden words can no longer be selected and copied, so the text stays truly hidden. The bottom bar is built more steadily on the iPhone so that it no longer gets stuck in the middle of the screen while scrolling.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
     sprachwahl_titel: 'More room in the language choice',

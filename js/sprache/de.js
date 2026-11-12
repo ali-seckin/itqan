@@ -1431,6 +1431,8 @@ export default {
     heute_1: 'Auf „Heute“ gibt es kein Plus und Minus für einzelne Abschnitte mehr: Das Tagespensum ändert sich nur in den Einstellungen. Wer mehr möchte, nimmt den Bonusabschnitt. Die Kurzübungen stehen als eigene Karte unter dem Tagesplan.',
     karten_titel: 'Einheitliche Karten im Profil',
     karten_1: 'Die Karte „Erklärung beim Üben wieder zeigen“ hat jetzt dieselbe Größe wie die anderen, und die Beschreibung der Kurzübungen passt in eine Zeile.',
+    test_titel: 'Zwei Korrekturen aus dem Test',
+    test_1: 'Verdeckte Wörter lassen sich nicht mehr markieren und kopieren, der Text bleibt wirklich verborgen. Die untere Leiste ist auf dem iPhone ruhiger gebaut, damit sie beim Scrollen nicht mehr mitten im Bild hängen bleibt.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
     sprachwahl_titel: 'Sprachwahl mit mehr Platz',

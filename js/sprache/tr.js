@@ -1435,6 +1435,8 @@ export default {
     heute_1: '“Bugün” sayfasında tek tek bölümler için artı ve eksi artık yok: günlük pensum yalnızca ayarlardan değişir. Daha fazlasını isteyen bonus bölümü alır. Kısa alıştırmalar günlük planın altında kendi kartında duruyor.',
     karten_titel: 'Profilde tek tip kartlar',
     karten_1: '“Alıştırmada açıklamayı yeniden göster” kartı artık diğerleriyle aynı boyutta ve kısa alıştırmaların açıklaması tek satıra sığıyor.',
+    test_titel: 'Testten iki düzeltme',
+    test_1: 'Gizli kelimeler artık seçilip kopyalanamıyor, metin gerçekten gizli kalıyor. Alt çubuk iPhone’da daha sağlam kuruldu; kaydırırken ekranın ortasında takılıp kalmıyor.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
     sprachwahl_titel: 'Dil seçiminde daha fazla yer',
