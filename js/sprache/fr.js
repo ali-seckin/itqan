@@ -1408,6 +1408,8 @@ export default {
     langzeit_1: 'À côté de la khatma classique, il y a désormais le rythme « Long terme » : Itqān estime la solidité de chaque section et la remet devant toi aussi tard que ton objectif le permet. Les sections solides reviennent moins souvent, les fragiles plus souvent. Tu le choisis dans les réglages ou au démarrage. « Apprendre du nouveau » donne maintenant un conseil sur la taille des leçons.',
     herkunft_titel: 'Dans quel Mushaf as-tu appris ?',
     herkunft_1: 'Itqān demande désormais au démarrage et dans les réglages dans quel Mushaf tu as appris : Médine, indo-pakistanais, turc ou un autre. Ta réponse aide à décider quelles éditions viendront ensuite.',
+    langzeit_std_titel: 'Long terme par défaut',
+    langzeit_std_1: 'Les nouveaux profils démarrent dans le rythme « Long terme ». Qui préfère la khatma classique dans l’ordre la choisit au démarrage sous « Autres réglages » ou plus tard dans les réglages. Les profils existants ne changent pas.',
     abwaehlen_titel: 'Tout désélectionner sans message d’erreur',
     abwaehlen_1: 'Dans le choix de ce que tu révises, « Tout désélectionner » efface désormais tout d’un coup pour que tu puisses choisir de nouveau. Si rien n’est choisi à la fin, ton choix précédent est conservé et tu reçois une note.',
     sprachwahl_titel: 'Plus de place pour le choix de la langue',

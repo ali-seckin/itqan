@@ -1408,6 +1408,8 @@ export default {
     langzeit_1: 'Besides the classic Khatmah there is now the “Long-term” rhythm: Itqān estimates how secure each section is and shows it again as late as your goal allows. Secure sections come less often, shaky ones more often. Choose it in the settings or at the start. “Learn new” now has a hint on lesson size.',
     herkunft_titel: 'Which Mushaf did you learn from?',
     herkunft_1: 'Itqān now asks at the start and in the settings which Mushaf you learned from: Madinah, Indo-Pak, Turkish or another. Your answer helps decide which prints come next.',
+    langzeit_std_titel: 'Long-term as the default',
+    langzeit_std_1: 'New profiles start in the “Long-term” rhythm. Whoever prefers the classic Khatmah in order chooses it at the start under “More settings” or later in the settings. Existing profiles stay unchanged.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
     sprachwahl_titel: 'More room in the language choice',

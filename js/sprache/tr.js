@@ -1408,6 +1408,8 @@ export default {
     langzeit_1: 'Klasik hatimin yanında artık “Uzun vadeli” ritim var: Itqān her bölümün ne kadar sağlam olduğunu tahmin eder ve hedefinin izin verdiği kadar geç yeniden önüne koyar. Sağlam bölümler seyrek, sallananlar sık gelir. Ayarlardan ya da başlangıçta seçersin. “Yeni öğren”de ders büyüklüğü için bir ipucu var.',
     herkunft_titel: 'Hangi mushaftan ezberledin?',
     herkunft_1: 'Itqān artık başlangıçta ve ayarlarda hangi mushaftan ezberlediğini soruyor: Medine, Hint-Pakistan, Türk ya da başka biri. Cevabın hangi baskıların sırada olacağına karar vermeye yardım eder.',
+    langzeit_std_titel: 'Uzun vadeli varsayılan oldu',
+    langzeit_std_1: 'Yeni profiller “Uzun vadeli” ritimle başlar. Sırayla klasik hatmi tercih eden, bunu başlangıçta “Daha fazla ayar” altında ya da sonra ayarlardan seçer. Mevcut profiller değişmez.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
     sprachwahl_titel: 'Dil seçiminde daha fazla yer',

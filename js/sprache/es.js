@@ -1408,6 +1408,8 @@ export default {
     langzeit_1: 'Junto a la jatma clásica hay ahora el ritmo «A largo plazo»: Itqān estima qué tan firme está cada sección y la vuelve a mostrar tan tarde como lo permita tu meta. Las secciones firmes vuelven menos, las flojas más. Lo eliges en los ajustes o al empezar. «Aprender algo nuevo» incluye ahora un consejo sobre el tamaño de las lecciones.',
     herkunft_titel: '¿De qué Mushaf aprendiste?',
     herkunft_1: 'Itqān pregunta ahora al empezar y en los ajustes de qué Mushaf aprendiste: Medina, indopaquistaní, turco u otro. Tu respuesta ayuda a decidir qué ediciones llegarán después.',
+    langzeit_std_titel: 'A largo plazo por defecto',
+    langzeit_std_1: 'Los perfiles nuevos empiezan en el ritmo «A largo plazo». Quien prefiera la jatma clásica en orden la elige al empezar en «Más ajustes» o más tarde en los ajustes. Los perfiles existentes no cambian.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',
     abwaehlen_1: 'En la elección de lo que repasas, «Quitar todos» borra ahora todo de una vez para que puedas elegir de nuevo. Si al final no queda nada elegido, se mantiene tu elección anterior y recibes un aviso.',
     sprachwahl_titel: 'Más espacio en la elección del idioma',

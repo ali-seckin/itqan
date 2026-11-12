@@ -477,7 +477,7 @@ function einfuehrung() {
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort', hasanat: '1', rhythmus: 'khatma' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort', hasanat: '1', rhythmus: 'langzeit' };
   const tageText = () => {
     const ganz = s.modus === 'seite';
     const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
@@ -499,7 +499,7 @@ function start() {
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3><p class="unter">${tx('einstellungen.rhythmus_text')}</p>
-      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="an">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
+      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="an">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
     <div class="abschnitt"><label class="auswahl"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(s.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label><p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>

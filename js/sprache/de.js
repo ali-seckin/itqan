@@ -1404,6 +1404,8 @@ export default {
     langzeit_1: 'Neben der klassischen Ḫatma gibt es jetzt den Rhythmus „Langzeit“: Itqān schätzt für jeden Abschnitt, wie sicher er sitzt, und legt ihn so spät wieder vor, wie dein Zielwert erlaubt. Feste Abschnitte kommen seltener, wackelnde öfter. Du wählst ihn in den Einstellungen oder beim Start. Bei „Neu lernen“ gibt es einen Hinweis zur Lektionsgröße.',
     herkunft_titel: 'Aus welchem Muṣḥaf hast du gelernt?',
     herkunft_1: 'Itqān fragt jetzt beim Start und in den Einstellungen, aus welchem Muṣḥaf du gelernt hast: Madīna, indopakisch, türkisch oder ein anderer. Die Angabe hilft zu entscheiden, welche Drucke als Nächstes kommen.',
+    langzeit_std_titel: 'Langzeit als Voreinstellung',
+    langzeit_std_1: 'Neue Profile starten im Rhythmus „Langzeit“. Wer lieber die klassische Ḫatma der Reihe nach möchte, wählt sie beim Start unter „Weitere Einstellungen“ oder später in den Einstellungen. Bestehende Profile bleiben unverändert.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
     sprachwahl_titel: 'Sprachwahl mit mehr Platz',
