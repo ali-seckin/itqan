@@ -498,8 +498,9 @@ function start() {
     <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
-    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3><p class="unter">${tx('einstellungen.rhythmus_text')}</p>
-      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="an">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
+      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="an">${tx('einstellungen.rhythmus_langzeit')}</button></div>
+      ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
     <div class="abschnitt"><label class="auswahl"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(s.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label><p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
@@ -547,11 +548,15 @@ function abschnittMarke(e) {
 }
 
 // Wahl zwischen Anfänger, Fortgeschritten und ganzen Seiten; empfohlen bleiben die Sinnabschnitte
+// Erklärung mehrerer Wahlmöglichkeiten: jede für sich, mit hervorgehobenem Namen; ein Absatz ohne Namen bleibt ein schlichter Hinweis.
+// Jeder Text darf mehrere Möglichkeiten mit <br> trennen; der Name steht als <b>Name:</b> am Anfang.
+function optionsListe(texte) {
+  const teile = texte.flatMap(t => String(t).split(/<br\s*\/?>/));
+  return `<div class="opt-liste unter">${teile.map(t => { const m = t.match(/^\s*<b>(.*?)<\/b>\s*([\s\S]*)$/); return m ? `<div class="opt"><span class="opt-name">${m[1].replace(/\s*[:：]\s*$/, '')}</span>${m[2]}</div>` : `<p class="opt-notiz">${t}</p>`; }).join('')}</div>`;
+}
 function modusWahl(jetzt, mitHinweis = true) {
   return `<div class="wahl" id="modus" style="margin-top:4px">${[['anf', tx('moduswahl.anfaenger')], ['fort', tx('moduswahl.fortgeschritten')], ['seite', tx('moduswahl.ganze_seiten')]].map(([w, l]) => `<button data-w="${w}" class="${jetzt === w ? 'an' : ''}">${l}</button>`).join('')}</div>
-    <p class="unter" style="margin-top:8px">${tx('moduswahl.anfaenger_jeder_abschnitt_ist_hoechstens')}</p>
-    <p class="unter" style="margin-top:6px">${tx('moduswahl.ganze_seiten_text')}</p>
-    ${mitHinweis ? `<p class="unter" style="margin-top:6px">${tx('moduswahl.beim_wechsel_bleibt_dein_fortschritt')}</p>` : ''}`;
+    ${optionsListe([tx('moduswahl.anfaenger_jeder_abschnitt_ist_hoechstens'), tx('moduswahl.ganze_seiten_text'), ...(mitHinweis ? [tx('moduswahl.beim_wechsel_bleibt_dein_fortschritt')] : [])])}`;
 }
 
 // ---------- Heute ----------
@@ -2106,8 +2111,9 @@ function einstellungen() {
       <button type="button" class="knopf leise klein" id="tage-einzeln" aria-expanded="${gleich() ? 'false' : 'true'}" style="margin-top:10px">${gleich() ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus')}</button>
       <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<label class="auswahl"><span>${w}</span><select data-i="${i}">${optionen([0, ...bis(E.pensum[i])], E.pensum[i], x => x ? x : tx('allg.ruhetag'))}</select></label>`).join('')}</div>
       <p class="unter" style="margin-top:10px" id="dauer">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3><p class="unter">${tx('einstellungen.rhythmus_text')}</p>
-      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
+      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div>
+      ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
     <div class="abschnitt${E.rhythmus === 'langzeit' ? ' gedimmt' : ''}" id="schwach-block"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter schwach-hinweis${E.rhythmus === 'langzeit' ? '' : ' verdeckt'}">${tx('einstellungen.schwach_langzeit')}</p><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
