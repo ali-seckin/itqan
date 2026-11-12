@@ -500,6 +500,7 @@ function start() {
     <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3><p class="unter">${tx('einstellungen.rhythmus_text')}</p>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="an">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit">${tx('einstellungen.rhythmus_langzeit')}</button></div></div>
+    <div class="abschnitt"><label class="auswahl"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(s.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label><p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">${tx('start.bei_mehreren_abschnitten_am_tag')}</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">${tx('start.verstreute_stellen')}</button><button data-w="block">${tx('start.eine_stelle_am_stueck')}</button></div></div></div>
@@ -510,6 +511,7 @@ function start() {
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
   schnappschussBinden(app);
   const dauerZeigen = () => { app.querySelector('#dauer').innerHTML = tageText(); };
+  app.querySelector('#herkunft').onchange = ev => { s.herkunft = ev.target.value; };
   wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen, { leer: tx('auswahl.leer_start') });
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
@@ -524,7 +526,7 @@ function start() {
     if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
     const bereich = zuAbschnitten(s.sel);
     Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
-    Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0'; Z.P.einst.rhythmus = s.rhythmus;
+    Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0'; Z.P.einst.rhythmus = s.rhythmus; if (s.herkunft) Z.P.einst.herkunft = s.herkunft;
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
     Z.speichern();
@@ -2095,7 +2097,9 @@ function einstellungen() {
     ${sprachen.length > 1 ? `<div class="abschnitt"><h3>${tx('einstellungen.sprache')}</h3><div class="wahl" id="sprache">${sprachen.map(s => `<button data-w="${s.code}" lang="${s.code}" class="${s.code === gebiet('code') ? 'an' : ''}">${s.name}</button>`).join('')}</div></div>` : ''}
     <div class="abschnitt"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', tx('einstellungen.druck_1405')], ['v2', tx('einstellungen.druck_1421')]].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
-      <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p></div>
+      <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p>
+      <label class="auswahl" style="margin-top:14px"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(E.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+      <p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
       <label class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><select id="alle">${gleich() ? '' : `<option value="" selected>${tx('einstellungen.verschieden')}</option>`}${optionen(bis(Math.max(...E.pensum)), gleich() ? E.pensum[0] : null)}</select></label>
@@ -2165,6 +2169,7 @@ function einstellungen() {
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   wahl('hasanat', w => { E.hasanat = w === '1'; });
   wahl('zielquote', w => { E.zielQuote = +w; });
+  app.querySelector('#herkunft').onchange = ev => { E.herkunft = ev.target.value; Z.speichern(); };
   wahl('rhythmus', w => { E.rhythmus = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   pauseBinden();
