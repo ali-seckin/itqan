@@ -331,9 +331,9 @@ function kurzSeite(was) {
   const arten = [['seite', tx('kurz.seite'), tx('kurz.seite_t')], ['juz', tx('kurz.juz'), tx('kurz.juz_t')], ['uebergang', tx('kurz.uebergang'), tx('kurz.uebergang_t')], ['mitte', tx('kurz.mitte'), tx('kurz.mitte_t')], ['titel', tx('kurz.titel_aufgabe'), tx('kurz.titel_aufgabe_t')]];
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#heute'">${zurueckPfeil}${tx('titel.heute')}</button>
     <div class="marke">${tx('kurz.titel')}<small>${tx('kurz.untertitel')}</small></div>
-    <div class="kurz-liste">${arten.map(([k, l, t]) => `<button type="button" class="kurz-karte" data-k="${k}"><b>${l}</b><span>${t}</span></button>`).join('')}
-      <a class="kurz-karte" href="#kurz/zeile"><b>${tx('kurz.zeile')}</b><span>${tx('kurz.zeile_t')}</span></a>
-      <button type="button" class="kurz-karte" data-k="zwillinge"><b>${tx('kurz.zwillinge')}</b><span>${tx('kurz.zwillinge_t')}</span></button></div>
+    <div class="kurz-liste">${arten.map(([k, l, t]) => `<button type="button" class="kurz-karte" data-k="${k}"><b>${l}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE[k] })}</em></b><span>${t}</span></button>`).join('')}
+      <a class="kurz-karte" href="#kurz/zeile"><b>${tx('kurz.zeile')}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE.zeile })}</em></b><span>${tx('kurz.zeile_t')}</span></a>
+      <button type="button" class="kurz-karte" data-k="zwillinge"><b>${tx('kurz.zwillinge')}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE.zwillinge })}</em></b><span>${tx('kurz.zwillinge_t')}</span></button></div>
     <p class="leer verdeckt" id="kurz-leer" role="status">${tx('kurz.nichts')}</p>`;
   app.querySelector('.kurz-liste').onclick = async ev => {
     const b = ev.target.closest('[data-k]'); if (!b) return;
@@ -355,7 +355,8 @@ function zeileSeite() {
   w.onclick = ev => {
     const b = ev.target.closest('button'); if (!b || w.dataset.fertig) return; w.dataset.fertig = '1';
     const d = Math.abs(+b.dataset.z - a.zeile); b.classList.add('gewaehlt'); w.querySelector(`[data-z="${a.zeile}"]`).classList.add('richtig');
-    app.querySelector('#zeile-ergebnis').textContent = d === 0 ? tx('kurz.zeile_genau') : d === 1 ? tx('kurz.zeile_nah') : tx('kurz.zeile_fern', { n: d });
+    const kb = Z.kurzBuchen('zeile', d === 0 ? 1 : d === 1 ? 0.5 : 0);
+    app.querySelector('#zeile-ergebnis').textContent = (d === 0 ? tx('kurz.zeile_genau') : d === 1 ? tx('kurz.zeile_nah') : tx('kurz.zeile_fern', { n: d })) + (kb.punkte ? ` +${kb.punkte} ${tx('allg.itqan_punkte')}` : '') + (kb.gedeckelt ? ` ${tx('kurz.limit', { n: Z.KURZ_TAGESLIMIT })}` : '');
     app.querySelector('#zeile-weiter').classList.remove('verdeckt');
   };
   app.querySelector('#zeile-weiter').onclick = zeileSeite;
@@ -1227,10 +1228,12 @@ async function ueben(idText, quelle, fokusText) {
     mikroAus(); removeEventListener('keydown', tasten);
     document.querySelector('.steuerung')?.remove();
     const wieder = AF.naechste(ABF.art), gut = erg.every(x => x === 'ok');
+    const kb = Z.kurzBuchen(ABF.art, erg.includes('fehler') ? 0 : gut ? 1 : 0.5);
     app.innerHTML = `<div class="feier">${qandil()}<h2>${gut ? tx('ueben.richtig') : tx('ueben.noch_nicht_sicher')}</h2>
       <p>${tx('kurz.fertig')}</p>
+      ${kb.punkte ? `<p class="kurz-punkte"><b data-hoch="${kb.punkte}" data-vor="+">+${kb.punkte}</b> ${tx('allg.itqan_punkte')}</p>` : ''}${kb.gedeckelt ? `<p class="unter">${tx('kurz.limit', { n: Z.KURZ_TAGESLIMIT })}</p>` : ''}
       <div style="display:grid;gap:10px;margin-top:16px">${wieder ? `<a class="knopf haupt" href="${wieder}" style="text-decoration:none">${tx('kurz.nochmal')}</a>` : ''}<a class="knopf leise" href="#kurz" style="text-decoration:none">${tx('kurz.titel')}</a></div></div>`;
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); hochzaehlen(app);
   }
   function stelleAbschluss() {
     mikroAus(); removeEventListener('keydown', tasten);
@@ -2064,7 +2067,7 @@ async function vergleichSeite(key, modus) {
         : !offen ? `<button class="knopf haupt" id="vk-auf">${tx('vergleichseite.aufdecken')}</button>`
         : `<button class="knopf schlecht" id="vk-f">${tx('vergleichseite.verwechselt')}</button><button class="knopf gut" id="vk-r">${tx('vergleichseite.beide_richtig')}</button>`}</div>`;
     const auf = app.querySelector('#vk-auf'); if (auf) auf.onclick = () => { offen = true; zeichnen(); };
-    const bew = ok => { Z.unterscheidenMerken(key, ok); toast(ok ? tx('vergleichseite.gut_unterschieden') : tx('vergleichseite.gemerkt_vergleiche_die_markierten')); naechstes(); };
+    const bew = ok => { Z.unterscheidenMerken(key, ok); const kb = ok ? Z.kurzBuchen('zwillinge', 1) : { punkte: 0 }; toast((ok ? tx('vergleichseite.gut_unterschieden') : tx('vergleichseite.gemerkt_vergleiche_die_markierten')) + (kb.punkte ? ` +${kb.punkte}` : '')); naechstes(); };
     const r = app.querySelector('#vk-r'); if (r) r.onclick = () => bew(true);
     const f = app.querySelector('#vk-f'); if (f) f.onclick = () => bew(false);
   };

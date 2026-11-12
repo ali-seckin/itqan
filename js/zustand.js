@@ -162,6 +162,7 @@ function anwenden(e, extra) {
     case 'fl': delete P.fstellen[e.s]; return;
     case 'fg': return geuebtAnwenden(e);
     case 'mu': return unterscheidenAnwenden(e);
+    case 'ku': return kurzAnwenden(e);
     case 'pb': return pauseBeginnAnwenden(e);
     case 'pe': return pauseEndeAnwenden(e);
     case 'on': ornamentePruefen(Array.from({ length: 114 }, (_, i) => i + 1), e.d); return;
@@ -579,6 +580,21 @@ function ruecknahmeAnwenden(stand) {
     P.fstellen = stand.f; (P.statistik ??= {}).arten = stand.a;
     if (stand.vw) P.statistik.vw = stand.vw; else delete P.statistik.vw;
   } else P.fstellen = stand;
+}
+// Kurzübungen: Itqān-Punkte je richtig gelöster Aufgabe, nach Schwierigkeit 2 bis 5. Mit Hilfe zählt die Hälfte, am Tag gibt es höchstens KURZ_TAGESLIMIT Punkte.
+export const KURZ_PUNKTE = { zeile: 2, titel: 3, uebergang: 3, mitte: 4, juz: 4, seite: 5, zwillinge: 5 };
+export const KURZ_TAGESLIMIT = 50;
+// faktor: 1 richtig, 0.5 mit Hilfe oder knapp daneben, 0 nicht gelöst. Gibt die gebuchten Punkte zurück (gedeckelt: das Tageslimit hat gekürzt).
+export function kurzBuchen(art, faktor) {
+  const basis = KURZ_PUNKTE[art] || 0, soll = faktor >= 1 ? basis : faktor > 0 ? Math.max(1, Math.floor(basis / 2)) : 0;
+  if (!soll) return { punkte: 0, gedeckelt: false };
+  const d = heute(), t = tagesplan(d), schon = t.kp || 0, p = Math.max(0, Math.min(soll, KURZ_TAGESLIMIT - schon));
+  if (p) eintrag('ku', { d, a: art, p });
+  return { punkte: p, gedeckelt: p < soll };
+}
+function kurzAnwenden(e) {
+  const t = tagSicher(e.d); t.punkte = (t.punkte || 0) + e.p; t.kp = (t.kp || 0) + e.p;
+  P.summe.punkte += e.p; P.summe.kurz = (P.summe.kurz || 0) + 1;
 }
 // Mutašābihāt unterscheiden: je Paar (Schlüssel 'viA-viB') Anzahl, richtig, letztes Ergebnis, Tag
 export function unterscheidenMerken(key, ok) { return eintrag('mu', { d: heute(), k: key, ok: ok ? 1 : 0 }); }

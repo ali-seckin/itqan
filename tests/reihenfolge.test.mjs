@@ -62,3 +62,15 @@ test('Abhaken gilt auch für Qaḍāʾ-, Festigen- und Fehler-Abschnitte im Plan
   assert.ok(Z.abschnittAbhaken(a)); assert.ok(Z.abschnittAbhaken(b));
   assert.equal(Z.tagesplan().voll, true);
 });
+
+test('Kurzübungen bringen Itqān-Punkte nach Schwierigkeit, mit Hilfe die Hälfte, höchstens 50 am Tag', () => {
+  frisch({ pensum: 1 });
+  assert.deepEqual(Z.kurzBuchen('seite', 1), { punkte: 5, gedeckelt: false });
+  assert.equal(Z.kurzBuchen('zeile', 1).punkte, 2); assert.equal(Z.kurzBuchen('mitte', 0.5).punkte, 2);
+  assert.equal(Z.kurzBuchen('juz', 0).punkte, 0);
+  assert.equal(Z.tagesplan().punkte, 9); assert.equal(Z.tagesplan().kp, 9);
+  for (let i = 0; i < 9; i++) Z.kurzBuchen('seite', 1);                  // 45 + 9 = 54 > 50
+  const r = Z.kurzBuchen('seite', 1); assert.equal(r.punkte, 0); assert.equal(r.gedeckelt, true);
+  assert.equal(Z.tagesplan().kp, 50);
+  for (const p of Object.values(Z.KURZ_PUNKTE)) assert.ok(p >= 1 && p <= 5);
+});
