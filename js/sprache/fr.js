@@ -1433,6 +1433,8 @@ export default {
     profil_1: 'Dans le profil, les nombreuses entrées sont désormais rangées dans des tiroirs dépliables : progression en détail, s’exercer et consulter, sauvegarde, aide et guides, plus. Les réglages sont en haut. Sur la page du Mushaf, la vue d’une seule page indique maintenant aussi sous la page si elle se trouve à droite (R) ou à gauche (L).',
     heute_titel: 'Charge fixe, exercices courts visibles',
     heute_1: 'Sur « Aujourd’hui », il n’y a plus de plus ni de moins pour les sections isolées : la charge quotidienne ne change que dans les réglages. Qui veut plus prend la section bonus. Les exercices courts ont leur propre carte sous le plan du jour.',
+    karten_titel: 'Cartes uniformes dans le profil',
+    karten_1: 'La carte « Réafficher l’explication à l’exercice » a désormais la même taille que les autres, et la description des exercices courts tient sur une ligne.',
     abwaehlen_titel: 'Tout désélectionner sans message d’erreur',
     abwaehlen_1: 'Dans le choix de ce que tu révises, « Tout désélectionner » efface désormais tout d’un coup pour que tu puisses choisir de nouveau. Si rien n’est choisi à la fin, ton choix précédent est conservé et tu reçois une note.',
     sprachwahl_titel: 'Plus de place pour le choix de la langue',

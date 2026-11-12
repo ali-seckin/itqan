@@ -1433,6 +1433,8 @@ export default {
     profil_1: 'Profilde çok sayıdaki giriş artık açılır çekmecelerde toplandı: ayrıntılı ilerleme, çalışma ve arama, yedekleme, yardım ve rehberler, daha fazlası. Ayarlar en üstte. Mushaf sayfasında tek sayfa görünümünde de sayfanın altında artık sağda (R) mı solda (L) mı durduğu yazıyor.',
     heute_titel: 'Pensum sabit, kısa alıştırmalar görünür',
     heute_1: '“Bugün” sayfasında tek tek bölümler için artı ve eksi artık yok: günlük pensum yalnızca ayarlardan değişir. Daha fazlasını isteyen bonus bölümü alır. Kısa alıştırmalar günlük planın altında kendi kartında duruyor.',
+    karten_titel: 'Profilde tek tip kartlar',
+    karten_1: '“Alıştırmada açıklamayı yeniden göster” kartı artık diğerleriyle aynı boyutta ve kısa alıştırmaların açıklaması tek satıra sığıyor.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
     sprachwahl_titel: 'Dil seçiminde daha fazla yer',

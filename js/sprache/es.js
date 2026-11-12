@@ -1433,6 +1433,8 @@ export default {
     profil_1: 'En el perfil, las muchas entradas se ordenan ahora en cajones desplegables: progreso en detalle, practicar y consultar, copia de seguridad, ayuda y guías, y más. Los ajustes están arriba. En la página del Mushaf, la vista de una sola página indica ahora también bajo la página si está a la derecha (R) o a la izquierda (L).',
     heute_titel: 'Carga fija, ejercicios breves visibles',
     heute_1: 'En «Hoy» ya no hay más ni menos para secciones sueltas: la carga diaria solo cambia en los ajustes. Quien quiera más toma la sección extra. Los ejercicios breves tienen ahora su propia tarjeta bajo el plan del día.',
+    karten_titel: 'Tarjetas uniformes en el perfil',
+    karten_1: 'La tarjeta «Mostrar de nuevo la explicación al practicar» tiene ahora el mismo tamaño que las demás, y la descripción de los ejercicios breves cabe en una línea.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',
     abwaehlen_1: 'En la elección de lo que repasas, «Quitar todos» borra ahora todo de una vez para que puedas elegir de nuevo. Si al final no queda nada elegido, se mantiene tu elección anterior y recibes un aviso.',
     sprachwahl_titel: 'Más espacio en la elección del idioma',

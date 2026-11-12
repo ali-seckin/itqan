@@ -1433,6 +1433,8 @@ export default {
     profil_1: 'In the profile the many entries are now sorted into expandable drawers: progress in detail, practice and look-up, backup, help and guides, and more. The settings are at the top. On the Mushaf page, the single-page view now also shows under the page whether it lies on the right (R) or the left (L).',
     heute_titel: 'Fixed daily load, visible quick drills',
     heute_1: 'On “Today” there is no plus and minus for single sections any more: the daily load changes only in the settings. If you want more, take the bonus section. The quick drills now have their own card under the day’s plan.',
+    karten_titel: 'Uniform cards in the profile',
+    karten_1: 'The card “Show the explanation again when practising” now has the same size as the others, and the description of the quick drills fits on one line.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
     sprachwahl_titel: 'More room in the language choice',

@@ -1068,7 +1068,7 @@ export default {
   },
   kurz: {
     titel: 'Kurzübungen',
-    untertitel: 'Andere Wege ins Gedächtnis: von der Seite aus, am Übergang, aus der Mitte.',
+    untertitel: 'Gedächtnisübungen: von der Seite aus, am Übergang, aus der Mitte.',
     seite: 'Seitenanfang',
     seite_t: 'Wie beginnt diese Seite?',
     juz: 'Anfang eines Ǧuzʾ',
@@ -1429,6 +1429,8 @@ export default {
     profil_1: 'Im Profil sind die vielen Einträge jetzt in aufklappbaren Schubladen geordnet: Fortschritt im Detail, Üben und Nachschlagen, Sicherung, Hilfe und Anleitungen sowie Mehr. Die Einstellungen stehen oben. Auf der Muṣḥaf-Seite steht unter der Seite jetzt auch im Einzelseiten-Modus, ob sie rechts (R) oder links (L) liegt.',
     heute_titel: 'Pensum bleibt fest, Kurzübungen sichtbar',
     heute_1: 'Auf „Heute“ gibt es kein Plus und Minus für einzelne Abschnitte mehr: Das Tagespensum ändert sich nur in den Einstellungen. Wer mehr möchte, nimmt den Bonusabschnitt. Die Kurzübungen stehen als eigene Karte unter dem Tagesplan.',
+    karten_titel: 'Einheitliche Karten im Profil',
+    karten_1: 'Die Karte „Erklärung beim Üben wieder zeigen“ hat jetzt dieselbe Größe wie die anderen, und die Beschreibung der Kurzübungen passt in eine Zeile.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
     sprachwahl_titel: 'Sprachwahl mit mehr Platz',
