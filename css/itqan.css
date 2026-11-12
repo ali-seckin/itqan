@@ -316,7 +316,8 @@ html.tippt .nav{display:none}
 .w.klar{--wbg:rgba(90,140,200,.16)}
 /* Fehlerstellen */
 .w.fs::after{content:'';position:absolute;left:50%;bottom:-.1em;width:.17em;height:.17em;margin-left:-.085em;border-radius:50%;background:#c0563b}
-.w.fmark{outline:2px solid var(--schlecht);outline-offset:1px;--wbg:rgba(200,90,60,.35)!important}
+.w.fmark{outline:2px dashed var(--schlecht);outline-offset:1px;--wbg:rgba(200,90,60,.2)!important}
+.w.fmark.typ{outline-style:solid;--wbg:rgba(200,90,60,.5)!important}
 /* Abschnitte farbig im Muṣḥaf */
 .w.ton0{--wbg:rgba(217,154,78,.22)}.w.ton1{--wbg:rgba(111,160,120,.22)}.w.ton2{--wbg:rgba(90,140,200,.18)}.w.ton3{--wbg:rgba(190,100,130,.16)}
 .karte .farbe{width:9px;align-self:stretch;border-radius:6px;flex:none}

@@ -974,7 +974,7 @@ async function ueben(idText, quelle, fokusText) {
     if (ganz && phase === 'haupt') return ganzSprechen();
     if (markieren) {
       A.classList.remove('verdeckt');
-      A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
+      A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('');
       K.innerHTML = `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>`;
       H.innerHTML = `${tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2')}<br><button class="textlink mini" id="doch-richtig">${tx('ueben.doch_kein_fehler')}</button>`;
       app.querySelector('#weiter').onclick = markierenFertig;
@@ -1050,7 +1050,7 @@ async function ueben(idText, quelle, fokusText) {
   // Fehltipp „Fehler“: zurück zu Richtig/Fehler, ohne etwas zu speichern
   function fehlerZurueck() {
     const vi = liste[pos]; markieren = false; erg.length = pos; status.delete(vi);
-    seitenEl.querySelectorAll('.w.fmark').forEach(s => s.classList.remove('fmark'));
+    markenWeg();
     spans(vi).forEach(s => { s.classList.remove('fehler'); if (alt.has(vi)) s.classList.add('alt'); });
     zeichne();
   }
@@ -1107,26 +1107,25 @@ async function ueben(idText, quelle, fokusText) {
     zeichne(); sichtbar(spans(ayat[0])[0]);
   }
   function ganzAufraeumen() {
-    seitenEl.querySelectorAll('.w.fmark, .w.zmark').forEach(s => { s.classList.remove('fmark', 'zmark'); delete s.dataset.art; });
+    markenWeg();
   }
   function ganzPruefenZeichnen() {
     Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
-    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('') + `<button data-a="zg" class="${fArt === 'zg' ? 'an' : ''}">${tx('ueben.ganz_gezoegert')}</button>`;
+    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('') + `<button data-a="zg">${tx('ueben.ganz_gezoegert')}</button>`;
     K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>`;
-    H.innerHTML = fArt === 'zg' ? tx('ueben.ganz_gezoegert_text') : fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
+    H.innerHTML = aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
     const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
     app.querySelector('#g-neu').onclick = () => {
       aufnahmeVerwerfen(); abhoeren = false; zg = new Set(); ganzAufraeumen();
       ayat.forEach(vi => { zu.add(vi); spans(vi).forEach(s => s.classList.add('zu')); }); zeichne();
     };
     app.querySelector('#g-fertig').onclick = () => {
+      if (artFehlt()) return;
       const marken = [...seitenEl.querySelectorAll('.w.fmark')];
       Z.ganzErgebnis(ayat, new Set(marken.map(s => +s.dataset.v)), zg).forEach((x, i) => { erg[i] = x; });
-      const gruppen = new Map();   // jedes Wort mit seiner Fehlerart; ohne Wahl gilt die zuletzt gewählte
-      for (const s of marken) { const a = s.dataset.art || (fArt && fArt !== 'zg' ? fArt : null); gruppen.set(a, [...(gruppen.get(a) || []), `${s.dataset.v}.${s.dataset.i}`]); }
-      for (const [a, keys] of gruppen) Z.fehlerstellenMerken(keys, a);
+      merken(marken);
       ganzAufraeumen(); abhoeren = false; ganz = false; aufnahmeVerwerfen();
       pos = ayat.length; rundeFertig();
     };
@@ -1141,44 +1140,63 @@ async function ueben(idText, quelle, fokusText) {
     Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
-    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}" class="${fArt === w ? 'an' : ''}">${l}</button>`).join('');
+    A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('');
     K.innerHTML = `<button class="knopf leise" id="abh-ab">${tx('ueben.abbrechen')}</button><button class="knopf haupt" id="abh-fertig">${tx('ueben.fertig')}</button>`;
     H.innerHTML = tx('ueben.abhoeren_der_text_ist_offen_wer_zuhoert');
     app.querySelector('#abh-ab').onclick = () => {
-      abhoeren = false; seitenEl.querySelectorAll('.w.fmark').forEach(s => s.classList.remove('fmark'));
+      abhoeren = false; markenWeg();
       ayat.forEach(vi => { zu.add(vi); spans(vi).forEach(s => s.classList.add('zu')); }); zeichne();
     };
     app.querySelector('#abh-fertig').onclick = () => {
+      if (artFehlt()) return;
       const marken = [...seitenEl.querySelectorAll('.w.fmark')];
       Z.abhoerErgebnis(ayat, new Set(marken.map(s => +s.dataset.v))).forEach((x, i) => { erg[i] = x; });
-      if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
+      merken(marken);
       pos = ayat.length; abschluss();
     };
   }
   function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; hilfeFrei = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
   function markierenFertig() {
+    if (artFehlt()) return;
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
-    if (marken.length) Z.fehlerstellenMerken(marken.map(s => `${s.dataset.v}.${s.dataset.i}`), fArt);
-    marken.forEach(s => { s.classList.remove('fmark'); s.classList.add('fs'); });
+    merken(marken);
+    marken.forEach(s => { s.classList.remove('fmark', 'typ'); delete s.dataset.art; s.classList.add('fs'); });
     if (marken.length) toast(marken.length === 1 ? tx('ueben.stelle_gemerkt') : tx('ueben.stellen_gemerkt', { n: marken.length }), 1600);
     verlauf.push({ pos, fs: fsVorher }); zwischenSpeichern();
     naechsteAya();
   }
-  A.onclick = ev => {
-    const a = ev.target.dataset.a; if (!a) return; fArt = fArt === a ? null : a;
-    A.querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.a === fArt));
-    H.innerHTML = fArt === 'zg' ? tx('ueben.ganz_gezoegert_text') : fArt ? `<b>${Z.FEHLERARTEN.find(x => x[0] === fArt)[1]}:</b> ${Z.FEHLERARTEN_TEXT[fArt]}` : tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2');
+  // Fehler markieren: erst die Stelle (Wort antippen), dann die Fehlerart. Die Art gilt für die eben markierten Wörter; ohne Art geht es nicht weiter.
+  const ausstehend = () => [...seitenEl.querySelectorAll('.w.fmark:not(.typ)')];
+  const markenWeg = () => { zg = new Set(); seitenEl.querySelectorAll('.w.fmark, .w.zmark').forEach(s => { s.classList.remove('fmark', 'typ', 'zmark'); delete s.dataset.art; }); };
+  const artFehlt = () => { if (!ausstehend().length) return false; toast(tx('ueben.art_wahl_fehlt'), 2600); return true; };
+  const merken = marken => {
+    const gruppen = new Map();
+    for (const s of marken) { const a = s.dataset.art || null; gruppen.set(a, [...(gruppen.get(a) || []), `${s.dataset.v}.${s.dataset.i}`]); }
+    for (const [a, keys] of gruppen) Z.fehlerstellenMerken(keys, a);
   };
+  function artSetzen(a) {
+    const ws = ausstehend(); if (!ws.length) return 0;
+    if (a === 'zg') {   // Gezögert (Vers): der ganze Vers, das einzelne Wort wird wieder abgewählt; schon eingetragene Fehlerarten im Vers bleiben
+      for (const vi of new Set(ws.map(w => +w.dataset.v))) { if (zg.has(vi)) zg.delete(vi); else zg.add(vi); spans(vi).forEach(s => s.classList.toggle('zmark', zg.has(vi))); }
+      ws.forEach(w => { w.classList.remove('fmark'); delete w.dataset.art; w.setAttribute('aria-pressed', 'false'); });
+    } else ws.forEach(w => { w.dataset.art = a; w.classList.add('typ'); });
+    return ws.length;
+  }
+  A.onclick = ev => {
+    const a = ev.target.dataset.a; if (!a) return;
+    const n = artSetzen(a); fArt = null;
+    H.innerHTML = !n ? tx('ueben.art_zuerst_wort') : a === 'zg' ? tx('ueben.ganz_gezoegert_text') : `<b>${Z.FEHLERARTEN.find(x => x[0] === a)[1]}:</b> ${Z.FEHLERARTEN_TEXT[a]}`;
+  };
+  const markeUmschalten = w => { if (w.classList.contains('typ')) { w.classList.remove('fmark', 'typ'); delete w.dataset.art; } else w.classList.toggle('fmark'); };
   seitenEl.onclick = ev => {
     const w = ev.target.closest('.w'); if (!w) return;
     const gedrueckt = () => { if (w.getAttribute('role') === 'button') w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false'); };
     if (abhoeren) {
       if (!w.classList.contains('in')) return;
-      if (ganz && fArt === 'zg') { const vi = +w.dataset.v; if (zg.has(vi)) zg.delete(vi); else zg.add(vi); spans(vi).forEach(s => s.classList.toggle('zmark', zg.has(vi))); return; }
-      w.classList.toggle('fmark'); if (ganz) { if (w.classList.contains('fmark') && fArt) w.dataset.art = fArt; else delete w.dataset.art; } gedrueckt(); return;
+      markeUmschalten(w); gedrueckt(); return;
     }
     if (ganz && w.classList.contains('zu') && !vorschau) return ganzAufdecken();
-    if (markieren) { if (+w.dataset.v === liste[pos]) { w.classList.toggle('fmark'); gedrueckt(); } return; }
+    if (markieren) { if (+w.dataset.v === liste[pos]) { markeUmschalten(w); gedrueckt(); } return; }
     if (w.classList.contains('zu') && +w.dataset.v === liste[pos] && !offen && !vorschau) aufdecken();
   };
   const tasten = ev => {
