@@ -1182,6 +1182,7 @@ export default {
     alle_114_ornamente_sind_gesammelt: 'Alle 114 Ornamente sind gesammelt. Allāhumma bārik.',
   },
   vollbild: {
+    regler: 'Seite wählen: Regler ziehen',
     vollbild_schliessen: 'Vollbild schließen',
     naechste_seite: 'Nächste Seite',
     vorige_seite: 'Vorige Seite',
@@ -1506,6 +1507,8 @@ export default {
     licht2_1: 'Die Lichtkarte hat jetzt nur noch zwei Ansichten mit klaren Fragen: „Wie sicher?“ zeigt, wie fest eine Seite sitzt, „Was ist dran?“ zeigt, was deine Wiederholung gerade braucht. Die Beschreibung jeder Stufe ist jetzt eigenständig und sagt, ab wann die Hilfe zurücktritt. Außerdem sind das Seitenblatt und die Sūren-Balken repariert.',
     licht3_titel: 'Eine Lichtkarte statt zwei',
     licht3_1: 'Die Lichtkarte ist wieder eine einzige Karte: Die Helligkeit zeigt, wie sicher eine Seite sitzt. Ein pulsierender Punkt markiert, was jetzt dran ist, und die Kachel „jetzt dran“ zeigt nur diese Seiten.',
+    regler_titel: 'Vollbild: Seitenregler und Zoom',
+    regler_1: 'Im Vollbild gibt es unten einen Regler: Beim Ziehen zeigt eine kleine Vorschau, bei welcher Sūra, welchem Ǧuzʾ und welcher Seite du bist. Außerdem lässt sich die Seite jetzt mit zwei Fingern zoomen und mit einem Finger verschieben, ein Doppeltipp zoomt hinein und wieder heraus.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
     sprachwahl_titel: 'Sprachwahl mit mehr Platz',

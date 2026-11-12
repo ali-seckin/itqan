@@ -1186,6 +1186,7 @@ export default {
     alle_114_ornamente_sind_gesammelt: '114 tezhibin hepsi toplandı. Allahümme bârik.',
   },
   vollbild: {
+    regler: 'Sayfa seç: kaydırıcıyı sürükle',
     vollbild_schliessen: 'Tam ekranı kapat',
     naechste_seite: 'Sonraki sayfa',
     vorige_seite: 'Önceki sayfa',
@@ -1510,6 +1511,8 @@ export default {
     licht2_1: 'Işık Haritası artık net sorularla yalnızca iki görünüme sahip: “Ne kadar sağlam?” bir sayfanın ne kadar oturduğunu, “Sırada ne var?” tekrarının şu an neye ihtiyaç duyduğunu gösterir. Her seviyenin açıklaması artık ayrı ve yardımın ne zaman geri çekildiğini söylüyor. Ayrıca sayfa kâğıdı ve sure çubukları onarıldı.',
     licht3_titel: 'İki yerine tek Işık Haritası',
     licht3_1: 'Işık Haritası yeniden tek bir harita: Parlaklık, bir sayfanın ne kadar sağlam oturduğunu gösterir. Atan bir nokta şimdi sırası gelenleri işaretler, “şimdi sırada” kutucuğu yalnızca bu sayfaları gösterir.',
+    regler_titel: 'Tam ekran: sayfa kaydırıcısı ve yakınlaştırma',
+    regler_1: 'Tam ekranda altta bir kaydırıcı var: Sürüklerken küçük bir önizleme hangi sure, hangi cüz ve hangi sayfada olduğunu gösterir. Ayrıca sayfa artık iki parmakla yakınlaştırılabiliyor, tek parmakla kaydırılabiliyor; çift dokunuş yakınlaştırır ve uzaklaştırır.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
     sprachwahl_titel: 'Dil seçiminde daha fazla yer',

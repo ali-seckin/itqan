@@ -1186,6 +1186,7 @@ export default {
     alle_114_ornamente_sind_gesammelt: 'You’ve collected all 114 ornaments. Allahumma barik.',
   },
   vollbild: {
+    regler: 'Choose page: drag the slider',
     vollbild_schliessen: 'Close full screen',
     naechste_seite: 'Next page',
     vorige_seite: 'Previous page',
@@ -1510,6 +1511,8 @@ export default {
     licht2_1: 'The Light Map now has just two views with clear questions: “How sure?” shows how firmly a page is held, “What is due?” shows what your review needs right now. The description of each level is now its own and says when help steps back. The page sheet and the surah bars are fixed as well.',
     licht3_titel: 'One Light Map instead of two',
     licht3_1: 'The Light Map is a single map again: the brightness shows how securely a page is held. A pulsing dot marks what is due now, and the “due now” tile shows only those pages.',
+    regler_titel: 'Full screen: page slider and zoom',
+    regler_1: 'In full screen there is a slider at the bottom: while you drag it, a small preview shows which surah, which Juz and which page you are at. The page can also be zoomed with two fingers and moved with one finger, and a double tap zooms in and out.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
     sprachwahl_titel: 'More room in the language choice',

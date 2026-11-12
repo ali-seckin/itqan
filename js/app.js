@@ -1,5 +1,5 @@
 // Itqān · Oberfläche
-import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
+import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzVonVers, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
 import * as Lk from './lichtkarte.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
@@ -1458,23 +1458,26 @@ async function vollbild(start) {
   let p = start;
   const v = document.createElement('div'); v.className = 'vollbild';
   v.innerHTML = `<div class="vb-buehne"></div><button class="vb-zu" aria-label="${tx('vollbild.vollbild_schliessen')}">✕</button>
-    <button class="vb-pfeil links" aria-label="${tx('vollbild.naechste_seite')}">‹</button><button class="vb-pfeil rechts" aria-label="${tx('vollbild.vorige_seite')}">›</button>`;
+    <button class="vb-pfeil links" aria-label="${tx('vollbild.naechste_seite')}">‹</button><button class="vb-pfeil rechts" aria-label="${tx('vollbild.vorige_seite')}">›</button>
+    <div class="vb-regler" role="slider" tabindex="0" aria-label="${tx('vollbild.regler')}" aria-valuemin="1" aria-valuemax="604" aria-valuenow="${start}"><i class="vb-spur"></i><i class="vb-griff"></i></div><div class="vb-vorschau" hidden></div>`;
   document.body.appendChild(v); document.body.classList.add('im-vollbild');
   try { document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch(() => {}); } catch (e) {}   // nicht abwarten: iPhone kennt es nicht
   const buehne = v.querySelector('.vb-buehne');
   const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
   const farben = x => { if (D.modus === 'seite') return { lage: true }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
+  let zaehler = 0;
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;
+    const mein = ++zaehler; Z0.s = 1; Z0.x = 0; Z0.y = 0; v.classList.remove('gezoomt');
     const doppel = quer();
     // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
     const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
     const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
-    p = erste; await schriftenLaden(seiten);
+    p = erste; if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
     buehne.innerHTML = `<div class="vb-seiten${doppel ? ' doppel' : ''}">${seiten.map(x => seiteHTML(x, farben(x))).join('')}</div>`;
     const ss = [...buehne.querySelectorAll('.seite')];
-    const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 16;
+    const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 60;   // unten bleibt Platz für den Regler
     ss.forEach(s => s.style.width = breite + 'px');
     const h = Math.max(...ss.map(s => s.offsetHeight));
     if (h > hoehe) ss.forEach(s => s.style.width = Math.floor(breite * hoehe / h) + 'px');
@@ -1487,13 +1490,69 @@ async function vollbild(start) {
   const weiter = () => zeige(p + (quer() ? 2 : 1), 1), zurueck = () => zeige(p - (quer() ? 2 : 1), -1);
   v.querySelector('.vb-pfeil.links').onclick = weiter;
   v.querySelector('.vb-pfeil.rechts').onclick = zurueck;
-  let x0 = null, y0 = null;
-  v.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-  v.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  // Zoom: zwei Finger vergrößern, ein Finger schiebt die vergrößerte Seite, Doppeltipp zoomt hinein und heraus (am PC Strg und Mausrad, Doppelklick).
+  // Bei Maßstab 1 wischt ein Finger wie bisher die Seiten um.
+  const Z0 = { s: 1, x: 0, y: 0 };
+  const zoomSetzen = (s, x, y) => {
+    const el = buehne.firstElementChild; if (!el) return;
+    const r = el.getBoundingClientRect(), bw = r.width / Z0.s, bh = r.height / Z0.s;   // Grundgröße ohne Maßstab
+    s = Math.min(4, Math.max(1, s)); if (s < 1.02) { s = 1; x = 0; y = 0; }
+    const gx = (s - 1) * bw / 2, gy = (s - 1) * bh / 2;
+    Z0.s = s; Z0.x = Math.max(-gx, Math.min(gx, x)); Z0.y = Math.max(-gy, Math.min(gy, y));
+    el.style.transform = s === 1 ? '' : `translate(${Z0.x}px, ${Z0.y}px) scale(${s})`;
+    v.classList.toggle('gezoomt', s > 1);
+  };
+  const mitteVon = () => [innerWidth / 2, innerHeight / 2];
+  const zoomAuf = (ns, px, py) => { const c = mitteVon(), f = ns / Z0.s; zoomSetzen(ns, (px - c[0]) - f * (px - c[0] - Z0.x), (py - c[1]) - f * (py - c[1] - Z0.y)); };
+  const dopptipp = (px, py) => { if (Z0.s > 1) zoomSetzen(1, 0, 0); else zoomAuf(2.4, px, py); };
+  let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0;
+  const abstand = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const mitteZwei = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+  v.addEventListener('touchstart', e => {
+    if (e.target.closest('.vb-regler,.vb-zu,.vb-pfeil')) { x0 = null; return; }
+    if (e.touches.length === 2) { pinch = { d: abstand(e.touches), s: Z0.s, m: mitteZwei(e.touches), x: Z0.x, y: Z0.y }; x0 = null; pan = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pinch = null;
+    pan = Z0.s > 1 ? { x: x0, y: y0, zx: Z0.x, zy: Z0.y } : null;
+  }, { passive: true });
+  v.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (pinch && e.touches.length === 2) {
+      const ns = Math.min(4, Math.max(1, pinch.s * abstand(e.touches) / pinch.d)), m = mitteZwei(e.touches), c = mitteVon(), f = ns / pinch.s;
+      zoomSetzen(ns, (m[0] - c[0]) - f * (pinch.m[0] - c[0] - pinch.x), (m[1] - c[1]) - f * (pinch.m[1] - c[1] - pinch.y));
+    } else if (pan && e.touches.length === 1) zoomSetzen(Z0.s, pan.zx + e.touches[0].clientX - pan.x, pan.zy + e.touches[0].clientY - pan.y);
+  }, { passive: false });
   v.addEventListener('touchend', e => {
-    if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
+    if (pinch) { if (e.touches.length < 2) pinch = null; x0 = null; return; }
+    if (x0 == null) return;
+    const px = e.changedTouches[0].clientX, py = e.changedTouches[0].clientY, dx = px - x0, dy = py - y0; x0 = null; pan = null;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {   // Tipp: zwei kurz hintereinander zoomen
+      if (Date.now() - letzterTipp < 320) { letzterTipp = 0; dopptipp(px, py); } else letzterTipp = Date.now();
+      return;
+    }
+    if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
   });
+  v.addEventListener('wheel', e => {
+    if (!e.ctrlKey && Z0.s === 1) return;
+    e.preventDefault(); zoomAuf(Z0.s * Math.exp(-e.deltaY * (e.ctrlKey ? 0.02 : 0.004)), e.clientX, e.clientY);
+  }, { passive: false });
+  v.addEventListener('dblclick', e => { if (!e.target.closest('.vb-regler,.vb-zu,.vb-pfeil')) dopptipp(e.clientX, e.clientY); });
+  // Seitenregler: Beim Ziehen zeigt eine kleine Vorschau Sūra, Ǧuzʾ und Seite, die Seite folgt dem Finger. Im Muṣḥaf liegt Seite 1 rechts.
+  const regler = v.querySelector('.vb-regler'), griff = regler.querySelector('.vb-griff'), vorschau = v.querySelector('.vb-vorschau');
+  const ersteAya = x => { for (const z of D.L[x - 1]) if (z?.w) return z.w[0][1]; return 0; };
+  const seitenInfo = x => { const vi = ersteAya(x); return [`${D.V[vi][0]}. ${sureName(D.V[vi][0])}`, tx('allg.guz_nr', { j: juzVonVers(vi) }), tx('lichtkarte.seite', { p: x })]; };
+  let zieht = false, verz = null, ausblenden = null;
+  const reglerSetzen = x => { griff.style.setProperty('--f', (x - 1) / 603); const t = seitenInfo(x); regler.setAttribute('aria-valuenow', x); regler.setAttribute('aria-valuetext', t.join(', ')); return t; };
+  const seiteAusX = cx => { const r = regler.getBoundingClientRect(); return 1 + Math.round(Math.min(1, Math.max(0, (r.right - 18 - cx) / (r.width - 36))) * 603); };
+  const ziehen = ev => {
+    const x = seiteAusX(ev.clientX), t = reglerSetzen(x);
+    vorschau.innerHTML = t.map(z => `<div>${esc(z)}</div>`).join(''); vorschau.hidden = false;
+    const gr = griff.getBoundingClientRect(); vorschau.style.left = Math.max(8, Math.min(innerWidth - vorschau.offsetWidth - 8, gr.left + gr.width / 2 - vorschau.offsetWidth / 2)) + 'px';
+    clearTimeout(verz); verz = setTimeout(() => zeige(x), 90);
+  };
+  regler.addEventListener('pointerdown', ev => { zieht = true; clearTimeout(ausblenden); try { regler.setPointerCapture(ev.pointerId); } catch (e) { /* egal */ } ziehen(ev); ev.preventDefault(); });
+  regler.addEventListener('pointermove', ev => { if (zieht) ziehen(ev); });
+  regler.addEventListener('pointerup', ev => { if (!zieht) return; zieht = false; clearTimeout(verz); zeige(seiteAusX(ev.clientX)); ausblenden = setTimeout(() => { vorschau.hidden = true; }, 700); });
+  regler.addEventListener('pointercancel', () => { zieht = false; clearTimeout(verz); vorschau.hidden = true; });
   const tasten = e => { if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); else if (e.key === 'Escape') schliessen(); };
   addEventListener('keydown', tasten);
   // Drehen des Handys: neu aufbauen (einzeln hoch, Doppelseite quer)

@@ -1186,6 +1186,7 @@ export default {
     alle_114_ornamente_sind_gesammelt: 'Has conseguido los 114 ornamentos. Allahumma barik.',
   },
   vollbild: {
+    regler: 'Elegir página: arrastra el control',
     vollbild_schliessen: 'Salir de pantalla completa',
     naechste_seite: 'Página siguiente',
     vorige_seite: 'Página anterior',
@@ -1510,6 +1511,8 @@ export default {
     licht2_1: 'El mapa de luz ahora tiene solo dos vistas con preguntas claras: «¿Qué tan firme?» muestra lo asentada que está una página, «¿Qué toca?» muestra lo que necesita tu repaso ahora. La descripción de cada nivel es ahora propia y dice cuándo se retira la ayuda. Además se han arreglado la hoja de página y las barras de las suras.',
     licht3_titel: 'Un solo mapa de luz en lugar de dos',
     licht3_1: 'El mapa de luz vuelve a ser uno solo: el brillo muestra lo firme que está una página. Un punto que late marca lo que toca ahora, y la ficha «toca ahora» muestra solo esas páginas.',
+    regler_titel: 'Pantalla completa: control de página y zoom',
+    regler_1: 'En pantalla completa hay un control abajo: mientras lo arrastras, una pequeña vista previa muestra en qué sura, qué yuzʾ y qué página estás. Además, la página se puede ampliar con dos dedos y mover con uno, y un doble toque amplía y reduce.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',
     abwaehlen_1: 'En la elección de lo que repasas, «Quitar todos» borra ahora todo de una vez para que puedas elegir de nuevo. Si al final no queda nada elegido, se mantiene tu elección anterior y recibes un aviso.',
     sprachwahl_titel: 'Más espacio en la elección del idioma',
