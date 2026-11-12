@@ -253,7 +253,7 @@ export function gliederungUmstellen(alt, ziel = D.gliederung, sichern = true) {
     const fa = [...new Set(ks.flatMap(k => k.fa || []))].filter(v => v >= n.v[0] && v <= n.v[1]);
     const faes = ks.map(k => k.fae).filter(Boolean).sort();
     karten[nid] = { st: os.some(o => !altK[o]) ? 0 : Math.min(...ks.map(k => k.st)), n: Math.max(...ks.map(k => k.n)), fe: Math.max(...ks.map(k => k.fe || 0)),
-      zul: ks.map(k => k.zul).filter(Boolean).sort().pop() || null, fae: fa.length ? (faes[0] || null) : null, fs: 0, fa, lf: fa.length && ks.some(k => (k.lf ?? 1) > 0) ? 1 : 0 };
+      zul: ks.map(k => k.zul).filter(Boolean).sort().pop() || null, fae: fa.length ? (faes[0] || null) : null, fs: 0, fa, lf: fa.length && ks.some(k => (k.lf ?? 1) > 0) ? 1 : 0, ...(ks.every(x => x.S != null) ? { S: Math.min(...ks.map(x => x.S)) } : {}) };
   });
   P.karten = karten;
   const erl = new Set(P.zyklus.erledigt);
@@ -386,7 +386,7 @@ export function tagesplan(datum = heute(), trotzdem = false) {
     .map(([id]) => +id);
   for (const id of faellig.slice(0, Math.ceil((n + qadaa) / 2))) { plan.push(id); art[id] = 'fehler'; }
   // Festigen: schwache Abschnitte, deren letzte Wiederholung mindestens eine halbe Runde zurückliegt
-  const anteil = SCHWAECHEN[P.einst.schwaechen] ?? SCHWAECHEN.ausgewogen;
+  const anteil = P.einst.rhythmus === 'langzeit' ? 0 : SCHWAECHEN[P.einst.schwaechen] ?? SCHWAECHEN.ausgewogen;   // im Langzeit-Rhythmus übernimmt das Modell das Festigen
   let konto = P.zyklus.konto || 0;    // der Plan wird erst berechnet, dann als Eintrag angewendet
   if (anteil > 0) {
     konto += n * anteil;
@@ -426,7 +426,31 @@ function zufall(text) {
   for (let i = 0; i < text.length; i++) { h = Math.imul(h ^ text.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
   return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
 }
+// ---------- Rhythmus „Langzeit“: Behaltensmodell je Abschnitt ----------
+// Stabilität S in Tagen: nach S Tagen sind noch 90 % behalten. Abrufwahrscheinlichkeit R(t) = 1 / (1 + t / (9 S)), wie in FSRS.
+// Der nächste Termin liegt dort, wo R auf den Zielwert (Behaltensquote) fällt: t = 9 S (1 / Ziel - 1). Für Abschnitte ohne S gilt ein Anfangswert nach Stufe.
+const STUFE_S = [1, 3, 10, 30, 90];
+export const stabilitaet = k => k.S ?? STUFE_S[k.st || 0];
+export const abruf = (tage, S) => 1 / (1 + Math.max(0, tage) / (9 * S));
+// Abschnitte für den Plan: zuerst die fälligen (niedrigste Abrufwahrscheinlichkeit zuerst), dann noch nie geübte in der Reihenfolge des Bereichs,
+// reicht das nicht, die am wenigsten sicheren der übrigen
+function langzeitWahl(anzahl, ausser, datum) {
+  const ziel = (P.einst.zielQuote ?? 95) / 100, faellig = [], rest = [], neu = [], aus = [];
+  for (const id of reihe()) {
+    if (ausser.has(id)) continue;
+    const k = P.karten[id];
+    if (!k || !k.n) { neu.push(id); continue; }
+    const R = abruf(tageZwischen(k.zul, datum), stabilitaet(k));
+    (R < ziel ? faellig : rest).push([id, R]);
+  }
+  faellig.sort((a, b) => a[1] - b[1]); rest.sort((a, b) => a[1] - b[1]);
+  for (const [id] of faellig) if (aus.length < anzahl) aus.push(id);
+  for (const id of neu) if (aus.length < anzahl) aus.push(id);
+  for (const [id] of rest) if (aus.length < anzahl) aus.push(id);
+  return aus;
+}
 export function naechsteImZyklus(anzahl, ausser = new Set(), datum = heute()) {
+  if (P.einst.rhythmus === 'langzeit') return langzeitWahl(anzahl, ausser, datum);
   const erl = new Set(P.zyklus.erledigt), aus = [];
   if (P.einst.reihenfolge === 'zufall') {
     const r = reihe(), rnd = zufall(`${datum}|${P.erstellt}|${erl.size}|${[...ausser].join(',')}`);
@@ -669,6 +693,15 @@ function abschlussAnwenden(e0) {
   else {
     k.st = Math.min(4, k.st + 1);
     if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < FEHLER_ABSTAND.length ? plusTage(datum, FEHLER_ABSTAND[k.fs]) : null; if (!k.fae) k.fs = 0; }
+  }
+  // Behaltensmodell: Stabilität wächst bei Erfolg umso stärker, je mehr vergessen war (erwünschte Schwierigkeit); Fehler lassen sie fallen
+  if (!L) {
+    const S0 = stabilitaet(k), R = k.n ? abruf(k.zul ? tageZwischen(k.zul, datum) : 0, S0) : 1, anteilF = f / Math.max(1, ergebnisse.length);
+    k.S = !k.n ? (f ? 1 : (h || z) ? 2 : 4)
+      : f ? Math.max(1, S0 * (anteilF > 0.3 ? 0.25 : 0.4))
+      : (h || z) ? Math.max(1, S0 * 1.1)
+      : Math.min(365, S0 * (1.5 + 3 * (1 - R)));
+    k.S = Math.round(k.S * 100) / 100;
   }
   k.n++; k.fe += f; k.zul = datum; k.lf = f;   // lf: Fehler im letzten Durchgang
   if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
