@@ -832,6 +832,7 @@ export default {
     profil_erstellen: 'Profil erstellen',
   },
   lichtkarte: {
+    legende_fehler: 'Roter Punkt: Auf dieser Seite sind noch Fehlerstellen offen.',
     hinweis_stand: 'Je heller eine Seite leuchtet, desto sicherer sitzt sie. Auf jeder Seite zählt die schwächste Stelle. Ein pulsierender Punkt heißt: jetzt dran. Tippe auf eine Seite.',
     k_ungeprueft: 'ungeprüft',
     f_faellig: 'jetzt dran',

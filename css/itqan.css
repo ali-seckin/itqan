@@ -25,6 +25,8 @@ button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
 .verdeckt{display:none!important}
+.lk-legende{display:flex;align-items:center;gap:8px;font-size:var(--s-klein);color:var(--leise);margin:0 0 12px}
+.lk-fp{display:block;flex:none;width:9px;height:9px;border-radius:50%;background:var(--schlecht)}
 button.kette-pille{font:inherit;font-size:var(--s-unter);font-weight:600;color:inherit;cursor:pointer;min-height:44px}
 .kf-kopf{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 6px}
 .kf-kopf .lampe-k{height:34px}
@@ -107,8 +109,9 @@ body.doppelt .s-trenn::before{content:'-'}
 .lk-z[data-su]::after{content:'';position:absolute;left:-4px;top:14%;bottom:14%;width:2px;border-radius:1px;background:var(--text);opacity:.55}
 .lk-m{position:absolute;inset:0;pointer-events:none}
 .lk-e,.lk-d{display:none;position:absolute;box-sizing:border-box;border-radius:50%}
-.lk-z[data-e] .lk-e{display:block;width:6px;height:6px;left:calc(50% - 3px);top:5px;background:var(--schlecht)}   /* Fehler: mittig oben */
-.lk-karte .lk-z[data-d] .lk-d{display:block;width:8px;height:8px;left:calc(50% - 4px);bottom:5px;border:2px solid var(--akzentT);animation:lkPuls 1.8s ease-in-out infinite}   /* jetzt dran: mittig unten */
+.lk-z[data-e] .lk-e{display:block;width:6px;height:6px;left:calc(50% - 3px);bottom:7px;background:var(--schlecht)}   /* Fehler: mittig unten, im Ring, wenn es einen gibt */
+.lk-z[data-e][data-d] .lk-e{width:4px;height:4px;left:calc(50% - 2px);bottom:8px}
+.lk-karte .lk-z[data-d] .lk-d{display:block;width:10px;height:10px;left:calc(50% - 5px);bottom:5px;border:2px solid var(--akzentT);animation:lkPuls 1.8s ease-in-out infinite}   /* jetzt dran: mittig unten */
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]{animation:lkAuf 1.3s ease both;animation-delay:.6s}
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]:nth-child(3n){animation-delay:.9s}
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]:nth-child(3n+1){animation-delay:1.2s}

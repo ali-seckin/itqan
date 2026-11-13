@@ -836,6 +836,7 @@ export default {
     profil_erstellen: 'Create profile',
   },
   lichtkarte: {
+    legende_fehler: 'Red dot: there are still trouble spots on this page.',
     hinweis_stand: 'The brighter a page glows, the more securely you know it. On each page the weakest spot counts. A pulsing dot means: due now. Tap a page.',
     k_ungeprueft: 'unchecked',
     f_faellig: 'due now',

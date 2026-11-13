@@ -836,6 +836,7 @@ export default {
     profil_erstellen: 'Profil oluştur',
   },
   lichtkarte: {
+    legende_fehler: 'Kırmızı nokta: Bu sayfada hâlâ açık hata yerleri var.',
     hinweis_stand: 'Bir sayfa ne kadar parlaksa o kadar sağlam oturmuştur. Her sayfada en zayıf yer sayılır. Atan bir nokta “şimdi sırada” demektir. Bir sayfaya dokun.',
     k_ungeprueft: 'denetlenmedi',
     f_faellig: 'şimdi sırada',

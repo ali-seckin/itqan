@@ -836,6 +836,7 @@ export default {
     profil_erstellen: 'Créer le profil',
   },
   lichtkarte: {
+    legende_fehler: 'Point rouge : cette page a encore des points d’erreur ouverts.',
     hinweis_stand: 'Plus une page brille, mieux elle est acquise. Sur chaque page, le point le plus faible compte. Un point qui pulse signifie : dû maintenant. Touche une page.',
     k_ungeprueft: 'non vérifié',
     f_faellig: 'dû maintenant',

@@ -194,6 +194,7 @@ export function zeichne(app, K) {
       <div class="lk-hero-t"><p><b>${tx('lichtkarte.hero_prozent')}</b></p><p>${tx('lichtkarte.hero_licht', { a: licht, b: nBer })}</p><p>${tx('lichtkarte.hero_woche', { n: wochen })}</p>${blass ? `<p>${tx('lichtkarte.hero_blass', { n: blass })}</p>` : ''}</div></div>
     <p class="lk-hinweis" role="status"></p>
     <div class="lk-kacheln" role="group"></div>
+    <p class="lk-legende"><i class="lk-fp" aria-hidden="true"></i>${tx('lichtkarte.legende_fehler')}</p>
     <div class="lk-info verdeckt" role="status"></div>
     <div class="lk-gruppe" role="tablist"><button type="button" role="tab" data-g="guz">${tx('lichtkarte.ansicht_guz')}</button><button type="button" role="tab" data-g="sure">${tx('lichtkarte.ansicht_sure')}</button></div>
     <div class="lk-karte lk-neu" id="licht" data-ansicht="stand"></div>

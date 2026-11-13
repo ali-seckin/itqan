@@ -836,6 +836,7 @@ export default {
     profil_erstellen: 'Crear perfil',
   },
   lichtkarte: {
+    legende_fehler: 'Punto rojo: esta página aún tiene puntos de error abiertos.',
     hinweis_stand: 'Cuanto más brilla una página, más firme la tienes. En cada página cuenta el punto más débil. Un punto que late significa: toca ahora. Toca una página.',
     k_ungeprueft: 'sin comprobar',
     f_faellig: 'toca ahora',
