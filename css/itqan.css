@@ -110,7 +110,9 @@ body.doppelt .s-trenn::before{content:'-'}
 .lk-m{position:absolute;inset:0;pointer-events:none}
 .lk-e,.lk-d{display:none;position:absolute;box-sizing:border-box;border-radius:50%}
 .lk-z[data-e] .lk-e{display:block;width:6px;height:6px;left:calc(50% - 3px);bottom:7px;background:var(--schlecht)}   /* Fehler: mittig unten, im Ring, wenn es einen gibt */
-.lk-z[data-e][data-d] .lk-e{width:4px;height:4px;left:calc(50% - 2px);bottom:8px}
+.lk-z[data-e][data-d] .lk-e{display:none}   /* mit Ring: der Fehlerpunkt steckt als Füllung im Ring, so bleibt er auf jedem Bildschirm genau mittig */
+.lk-z[data-e][data-d] .lk-d{display:grid!important;place-items:center}
+.lk-z[data-e][data-d] .lk-d::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--schlecht)}
 .lk-karte .lk-z[data-d] .lk-d{display:block;width:10px;height:10px;left:calc(50% - 5px);bottom:5px;border:2px solid var(--akzentT);animation:lkPuls 1.8s ease-in-out infinite}   /* jetzt dran: mittig unten */
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]{animation:lkAuf 1.3s ease both;animation-delay:.6s}
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]:nth-child(3n){animation-delay:.9s}
