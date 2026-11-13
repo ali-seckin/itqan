@@ -302,6 +302,19 @@ async function vorratSpeichern() {
 }
 
 // ---------- Kurzübungen ----------
+// ---------- Kette: Fenster mit Länge, Bonus und den nächsten Stufen ----------
+function ketteFenster() {
+  const n = Z.kettenTage(), kb = Z.kettenBonus(n), beste = Math.max(Z.P.kette.beste || 0, n);
+  const stufen = Z.KETTEN_BONUS.map(([t, b]) => `<li class="${n >= t ? 'hat' : kb.naechst === t ? 'dran' : ''}"><span>${tx('heute.kette_stufe_tage', { n: t })}</span><b>+${b} %</b><em>${n >= t ? '✓' : kb.naechst === t ? tx('heute.kette_noch', { n: t - n }) : ''}</em></li>`).join('');
+  dialog({ titel: tx('heute.kette_fenster_titel'), ja: tx('lichtkarte.zu'), nein: '', html: `<div class="kf-kopf">${lampeKlein}<b>${n}</b><span>${tx('heute.tage_kette')}</span></div>
+    <p class="kf-bonus">${kb.p ? tx('heute.kette_jetzt', { p: kb.p }) : tx('heute.kettenbonus_keiner')}</p>
+    <ul class="kf-stufen">${stufen}</ul>
+    <p class="unter" style="margin-top:10px">${tx('heute.kette_hinweis')} ${tx('heute.kette_beste', { n: beste })}</p>` });
+}
+// Letzte Muṣḥaf-Seite: bleibt auch nach dem Schließen der App erhalten
+const seiteMerken = p => { try { localStorage.setItem('itqan.mushaf.seite', String(p)); } catch (e) { /* ohne Speicher geht es auch */ } };
+const gemerkteSeite = () => { try { return Math.min(604, Math.max(1, +localStorage.getItem('itqan.mushaf.seite') || 1)); } catch (e) { return 1; } };
+
 // ---------- Nachträglich abhaken: außerhalb der App geübt (Gebet, unterwegs) ----------
 function abhakenSeite() {
   navSetzen('heute');
@@ -637,7 +650,7 @@ function heute() {
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? tx('lernen.alle_lektionen') : tx('lernen.erste_lektion')}</a></div>` : '';
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${datumText()}</small></div>
-      <a class="pille kette-pille" href="#profil" style="text-decoration:none;color:inherit" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</a></div>
+      <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
@@ -671,6 +684,7 @@ function heute() {
     <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${Lk.juzMittel().map((x, i) =>
       `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
+  app.querySelector('#kette-info').onclick = ketteFenster;
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };
@@ -1412,7 +1426,8 @@ function seitenOptionen(p) {
 const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 async function mushaf(pText, aText) {
   navSetzen('mushaf');
-  const p = Math.min(604, Math.max(1, +pText || 1)), dop = doppelseitig();
+  const p = Math.min(604, Math.max(1, +pText || gemerkteSeite())), dop = doppelseitig();
+  seiteMerken(p);
   const seiten = dop ? paarVon(p) : [p];
   document.body.classList.toggle('doppelt', dop);
   const naechste = Math.min(604, seiten[seiten.length - 1] + 1), vorige = Math.max(1, seiten[0] - 1);
@@ -1502,7 +1517,7 @@ async function vollbild(start) {
     // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
     const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
     const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
-    p = erste; if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
+    p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
     buehne.innerHTML = `<div class="vb-seiten${doppel ? ' doppel' : ''}">${seiten.map(x => seiteHTML(x, farben(x))).join('')}</div>`;
     const ss = [...buehne.querySelectorAll('.seite')];
     const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 60;   // unten bleibt Platz für den Regler
