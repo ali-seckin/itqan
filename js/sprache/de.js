@@ -1509,6 +1509,8 @@ export default {
     licht3_1: 'Die Lichtkarte ist wieder eine einzige Karte: Die Helligkeit zeigt, wie sicher eine Seite sitzt. Ein pulsierender Punkt markiert, was jetzt dran ist, und die Kachel „jetzt dran“ zeigt nur diese Seiten.',
     regler_titel: 'Vollbild: Seitenregler und Zoom',
     regler_1: 'Im Vollbild gibt es unten einen Regler: Beim Ziehen zeigt eine kleine Vorschau, bei welcher Sūra, welchem Ǧuzʾ und welcher Seite du bist. Außerdem lässt sich die Seite jetzt mit zwei Fingern zoomen und mit einem Finger verschieben, ein Doppeltipp zoomt hinein und wieder heraus.',
+    quer_titel: 'Handy quer: Doppelseite',
+    quer_1: 'Wenn du das Handy drehst, zeigt Itqān beim Üben und im Muṣḥaf die Doppelseite wie im Buch. Beim Drehen mitten in der Übung bleibt dein Stand erhalten. Im Querformat ist die Leiste unten schmaler und waagerecht, damit mehr vom Text zu sehen ist.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',
     abwaehlen_1: 'In der Auswahl dessen, was du wiederholst, kannst du mit „Alle abwählen“ alles auf einmal abwählen und dann neu wählen. Nur wenn am Ende nichts gewählt ist, bleibt deine bisherige Auswahl bestehen und du bekommst einen Hinweis.',
     sprachwahl_titel: 'Sprachwahl mit mehr Platz',

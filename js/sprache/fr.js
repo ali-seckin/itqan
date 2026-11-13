@@ -1513,6 +1513,8 @@ export default {
     licht3_1: 'La carte de lumière est de nouveau une seule carte : la brillance montre à quel point une page est acquise. Un point qui pulse marque ce qui est dû maintenant, et la tuile « dû maintenant » ne montre que ces pages.',
     regler_titel: 'Plein écran : curseur de page et zoom',
     regler_1: 'En plein écran, un curseur se trouve en bas : pendant que tu le fais glisser, un petit aperçu montre dans quelle sourate, quel juz et quelle page tu te trouves. La page se zoome aussi à deux doigts et se déplace à un doigt, et un double toucher zoome et dézoome.',
+    quer_titel: 'Téléphone à l’horizontale : double page',
+    quer_1: 'Quand tu tournes ton téléphone, Itqān affiche la double page comme dans le livre, à l’exercice comme dans le Muṣḥaf. Si tu tournes en plein exercice, ta progression est conservée. En paysage, la barre du bas est plus fine et horizontale pour montrer plus de texte.',
     abwaehlen_titel: 'Tout désélectionner sans message d’erreur',
     abwaehlen_1: 'Dans le choix de ce que tu révises, « Tout désélectionner » efface désormais tout d’un coup pour que tu puisses choisir de nouveau. Si rien n’est choisi à la fin, ton choix précédent est conservé et tu reçois une note.',
     sprachwahl_titel: 'Plus de place pour le choix de la langue',

@@ -1513,6 +1513,8 @@ export default {
     licht3_1: 'Işık Haritası yeniden tek bir harita: Parlaklık, bir sayfanın ne kadar sağlam oturduğunu gösterir. Atan bir nokta şimdi sırası gelenleri işaretler, “şimdi sırada” kutucuğu yalnızca bu sayfaları gösterir.',
     regler_titel: 'Tam ekran: sayfa kaydırıcısı ve yakınlaştırma',
     regler_1: 'Tam ekranda altta bir kaydırıcı var: Sürüklerken küçük bir önizleme hangi sure, hangi cüz ve hangi sayfada olduğunu gösterir. Ayrıca sayfa artık iki parmakla yakınlaştırılabiliyor, tek parmakla kaydırılabiliyor; çift dokunuş yakınlaştırır ve uzaklaştırır.',
+    quer_titel: 'Telefon yatay: çift sayfa',
+    quer_1: 'Telefonu çevirdiğinde Itqān alıştırmada ve Muṣḥaf’ta çift sayfayı kitaptaki gibi gösterir. Alıştırmanın ortasında çevirsen de durumun korunur. Yatay konumda alttaki çubuk daha ince ve yatay olur, böylece metnin daha fazlası görünür.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
     abwaehlen_1: 'Tekrar edeceklerini seçerken “Seçimi kaldır” artık hepsini tek seferde kaldırır, sonra yeniden seçebilirsin. Sonunda hiçbir şey seçili değilse önceki seçimin geçerli kalır ve bir not görürsün.',
     sprachwahl_titel: 'Dil seçiminde daha fazla yer',

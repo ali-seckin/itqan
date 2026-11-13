@@ -1513,6 +1513,8 @@ export default {
     licht3_1: 'The Light Map is a single map again: the brightness shows how securely a page is held. A pulsing dot marks what is due now, and the “due now” tile shows only those pages.',
     regler_titel: 'Full screen: page slider and zoom',
     regler_1: 'In full screen there is a slider at the bottom: while you drag it, a small preview shows which surah, which Juz and which page you are at. The page can also be zoomed with two fingers and moved with one finger, and a double tap zooms in and out.',
+    quer_titel: 'Phone sideways: double page',
+    quer_1: 'When you turn your phone, Itqān shows the double page like in the book, both while practising and in the Muṣḥaf. Turning in the middle of a drill keeps your progress. In landscape the bar at the bottom is slimmer and horizontal so more of the text is visible.',
     abwaehlen_titel: 'Deselect all without an error',
     abwaehlen_1: 'In the choice of what you revise, “Deselect all” now clears everything at once so you can choose again. Only if nothing is chosen at the end does your previous choice stay, and you get a note.',
     sprachwahl_titel: 'More room in the language choice',

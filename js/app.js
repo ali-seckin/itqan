@@ -682,7 +682,8 @@ function qadaaTag() {
 // ---------- Doppelseite auf PC und Tablet ----------
 // Überall, wo der Muṣḥaf erscheint, zeigen PC und Tablet die aufgeschlagene Doppelseite (ungerade Seite rechts, gerade links).
 // Als Handy gilt ein Gerät, dessen kürzere Bildschirmseite unter 600 px liegt; es bleibt einseitig.
-const doppelseitig = () => Math.min(screen.width, screen.height) >= 600 && innerWidth >= 700;
+// Doppelseite wie im Buch: auf Tablet und PC breit genug, am Handy im Querformat
+const doppelseitig = () => (Math.min(screen.width, screen.height) >= 600 && innerWidth >= 700) || (innerWidth > innerHeight && innerWidth >= 600);
 const paarVon = p => (p % 2 ? [p, p + 1] : [p - 1, p]).filter(x => x >= 1 && x <= 604);
 // Seiten zu ganzen Doppelseiten ergänzen und paarweise gruppieren
 function doppelseiten(seiten) {
@@ -751,7 +752,7 @@ async function ueben(idText, quelle, fokusText) {
   const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler' || (art === 'stelle' && (!ABF || ABF.ctx)) || L?.ph === 1);   // im Ḍabṭ: Einsatz aus der Āya davor
   const kWoerter = kontext ? ayaWoerter(vorVi) : [];
   const kSeiten = [...new Set(kWoerter.map(x => x[5]))];
-  const dop = doppelseitig(), gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]), alleSeiten = gezeigt.flat();
+  let dop = doppelseitig(), gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]), alleSeiten = gezeigt.flat();
   const kBox = kontext && kSeiten.some(p => !alleSeiten.includes(p));
   document.body.classList.toggle('doppelt', dop);
   await Promise.all([schriftenLaden(alleSeiten), ...kWoerter.map(x => schrift(x[4]))]);
@@ -814,7 +815,7 @@ async function ueben(idText, quelle, fokusText) {
       <div class="info">${ABF ? `<b>${abfrageTitel()}</b>${['uebergang', 'mitte'].includes(ABF.art) ? ` · ${e.von[0]}:${e.von[1]}` : ''}` : art === 'stelle' ? `<b>${tx('ueben.fehlerstelle')}</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)} · ${tx('ueben.ayat', { ayat: e.ayat })} · ${tx('allg.zeilen', { zeilen: e.zeilen })}`} · ${tx('ueben.s')} ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="${tx('ueben.seite_seite', { p, a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('ueben.r') : tx('ueben.l')}</button>`).join(' ')}</div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>${tx('ueben.davor')} · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([, vi, , i]) => wortHTML(vi, i)).join('')}</div></div>` : ''}
-    <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div style="height:190px"></div>
+    <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div class="ab-platz"></div>
     <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span></div></div></div>
     ${art === 'stelle' ? '' : `<div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? tx('ueben.von', { sureName: sureName(e.von[0]), nr: e.nr, von_n: e.von_n }) : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
@@ -830,6 +831,24 @@ async function ueben(idText, quelle, fokusText) {
   seitenEl.classList.toggle('doppel', dop);
   seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
   zeilenEinpassen(seitenEl);
+  // Handy drehen: Doppelseite im Querformat, einzelne Seiten im Hochformat. Die Seiten werden neu gesetzt, der Stand der Übung bleibt.
+  async function seitenNeu() {
+    const d = doppelseitig(); if (d === dop || !seitenEl.isConnected || rec?.state === 'recording') return;
+    dop = d; gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]); alleSeiten = gezeigt.flat();
+    const marken = [...seitenEl.querySelectorAll('.w.fmark')].map(s => [s.dataset.v, s.dataset.i, s.classList.contains('typ'), s.dataset.art]);
+    await schriftenLaden(alleSeiten);
+    document.body.classList.toggle('doppelt', dop); seitenEl.classList.toggle('doppel', dop);
+    seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
+    zeilenEinpassen(seitenEl);
+    for (const [vi, x] of status) spans(vi).forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
+    for (const [wv, wi, typ, art2] of marken) { const w = seitenEl.querySelector(`.w[data-v="${wv}"][data-i="${wi}"]`); if (w) { w.classList.add('fmark'); if (typ) { w.classList.add('typ'); w.dataset.art = art2; } } }
+    for (const vi of zg) spans(vi).forEach(s => s.classList.add('zmark'));
+    ti = 0; hilfe = false; teile = [];   // ein halb aufgedeckter Teil beginnt von vorn
+    zeichne();
+  }
+  let drehWarte = null;
+  const drehen = () => { if (!seitenEl.isConnected) { removeEventListener('resize', drehen); return; } clearTimeout(drehWarte); drehWarte = setTimeout(seitenNeu, 160); };
+  addEventListener('resize', drehen);
   app.querySelector('#zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#heute');
   const lage = app.querySelector('#lageinfo');
   app.querySelector('.ueb-kopf .info').onclick = ev => {

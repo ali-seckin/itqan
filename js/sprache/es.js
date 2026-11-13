@@ -1513,6 +1513,8 @@ export default {
     licht3_1: 'El mapa de luz vuelve a ser uno solo: el brillo muestra lo firme que está una página. Un punto que late marca lo que toca ahora, y la ficha «toca ahora» muestra solo esas páginas.',
     regler_titel: 'Pantalla completa: control de página y zoom',
     regler_1: 'En pantalla completa hay un control abajo: mientras lo arrastras, una pequeña vista previa muestra en qué sura, qué yuzʾ y qué página estás. Además, la página se puede ampliar con dos dedos y mover con uno, y un doble toque amplía y reduce.',
+    quer_titel: 'Móvil en horizontal: doble página',
+    quer_1: 'Cuando giras el móvil, Itqān muestra la doble página como en el libro, tanto al practicar como en el Muṣḥaf. Si giras en mitad de un ejercicio, tu avance se mantiene. En horizontal la barra inferior es más delgada y horizontal para que se vea más texto.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',
     abwaehlen_1: 'En la elección de lo que repasas, «Quitar todos» borra ahora todo de una vez para que puedas elegir de nuevo. Si al final no queda nada elegido, se mantiene tu elección anterior y recibes un aviso.',
     sprachwahl_titel: 'Más espacio en la elección del idioma',
