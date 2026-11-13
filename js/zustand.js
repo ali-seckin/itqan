@@ -6,7 +6,7 @@ const SCHLUESSEL = 'itqan-profil-v1';
 export const STUFEN = [tx('allg.neu'), tx('zustand.im_aufbau'), tx('allg.gefestigt'), tx('allg.sicher'), tx('allg.mutqan')];
 export const KETTEN_MEILEN = [7, 40, 66, 100, 200, 365, 604];
 // Kettenbonus auf die Punkte jedes Abschnitts: [Tage in Folge, Prozent]. Überlieferte Zahlen der Reife, die vierzig als höchste (Sūra 7:142, 46:15); bricht die Kette ab, beginnt der Bonus von vorn.
-export const KETTEN_BONUS = [[3, 3], [7, 10], [12, 15], [21, 25], [30, 35], [40, 50]];
+export const KETTEN_BONUS = [[3, 3], [7, 10], [12, 15], [19, 25], [30, 35], [40, 50]];
 export function kettenBonus(n) {
   let p = 0; for (const [t, b] of KETTEN_BONUS) if (n >= t) p = b;
   const nae = KETTEN_BONUS.find(([t]) => t > n);

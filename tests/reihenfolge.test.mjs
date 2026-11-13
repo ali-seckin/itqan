@@ -76,7 +76,7 @@ test('Kurzübungen bringen Itqān-Punkte nach Schwierigkeit, mit Hilfe die Hälf
 });
 
 test('Kettenbonus: 3 Tage 3 %, 7 Tage 10 %, 40 Tage 50 % als Höchstwert, Kette weg heißt Bonus weg', () => {
-  assert.deepEqual([0, 2, 3, 6, 7, 11, 12, 20, 21, 29, 30, 39, 40, 365].map(n => Z.kettenBonus(n).p), [0, 0, 3, 3, 10, 10, 15, 15, 25, 25, 35, 35, 50, 50]);
+  assert.deepEqual([0, 2, 3, 6, 7, 11, 12, 18, 19, 29, 30, 39, 40, 365].map(n => Z.kettenBonus(n).p), [0, 0, 3, 3, 10, 10, 15, 15, 25, 25, 35, 35, 50, 50]);
   assert.equal(Z.kettenBonus(40).naechst, null); assert.equal(Z.kettenBonus(7).naechst, 12);
   const punkte = n => {
     frisch({ pensum: 1 });
