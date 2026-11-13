@@ -5,6 +5,14 @@ import { tx, gebiet } from './sprache.js';
 const SCHLUESSEL = 'itqan-profil-v1';
 export const STUFEN = [tx('allg.neu'), tx('zustand.im_aufbau'), tx('allg.gefestigt'), tx('allg.sicher'), tx('allg.mutqan')];
 export const KETTEN_MEILEN = [7, 40, 66, 100, 200, 365, 604];
+// Kettenbonus auf die Punkte jedes Abschnitts: [Tage in Folge, Prozent]. Überlieferte Zahlen der Reife, die vierzig als höchste (Sūra 7:142, 46:15); bricht die Kette ab, beginnt der Bonus von vorn.
+export const KETTEN_BONUS = [[3, 3], [7, 10], [12, 15], [21, 25], [30, 35], [40, 50]];
+export function kettenBonus(n) {
+  let p = 0; for (const [t, b] of KETTEN_BONUS) if (n >= t) p = b;
+  const nae = KETTEN_BONUS.find(([t]) => t > n);
+  return { p, naechst: nae ? nae[0] : null };
+}
+export const kettenTage = () => ketteAktiv() ? P.kette.n : 0;
 const FEHLER_ABSTAND = [1, 3, 7];      // Tage bis zur nächsten Fehlerwiederholung
 export let P = null;
 
@@ -705,7 +713,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   if (z) teile.push([tx('zustand.gezoegert', { z }), 5 * z]);
   if (!f && !h && !z) { const b = Math.round(punkte * 0.25); punkte += b; teile.push([tx('zustand.fehlerfrei'), b]); }
   if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push([tx('zustand.bonusabschnitt_50'), b]); }
-  const kp = Math.min(20, Math.floor(P.kette.n / 7) * 2);
+  const kp = kettenBonus(kettenTage()).p;
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   // hw: seit 1.17 zählt eine Āya mit Hilfe für Stufe und Wiederholung wie ein Fehler (ältere Einträge ohne hw bleiben bei der alten Regel)
@@ -774,6 +782,7 @@ function abschlussAnwenden(e0) {
   const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
   if (art !== 'lern' && !t.voll && ((!t.ohne && pflicht.every(x => t.fertig.includes(x))) || e0.w)) {
     t.voll = true;
+    const vorBonus = kettenBonus(ketteAktiv(datum) ? P.kette.n : 0).p;
     const z = P.kette.zuletzt, w1 = vorigerWirdTag(datum);
     if (z === datum) { /* schon gezählt */ }
     else if (z && z >= w1) P.kette.n++;
@@ -781,6 +790,7 @@ function abschlussAnwenden(e0) {
     else P.kette.n = 1;
     P.kette.zuletzt = datum; P.kette.beste = Math.max(P.kette.beste, P.kette.n);
     ereignisse.push({ typ: 'wird' });
+    { const nb = kettenBonus(P.kette.n).p; if (nb > vorBonus) ereignisse.push({ typ: 'kbonus', n: P.kette.n, p: nb }); }
     for (const m of KETTEN_MEILEN) if (P.kette.n >= m && !P.meilen.includes('kette-' + m)) { P.meilen.push('kette-' + m); P.meilenD['kette-' + m] = datum; ereignisse.push({ typ: 'kette', n: m }); }
   }
   // Ornamente: ganze Sūra gefestigt / mutqan (alle Sūren, die der Abschnitt berührt, auch in Sammelkarten)

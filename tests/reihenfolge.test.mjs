@@ -74,3 +74,17 @@ test('Kurzübungen bringen Itqān-Punkte nach Schwierigkeit, mit Hilfe die Hälf
   assert.equal(Z.tagesplan().kp, 50);
   for (const p of Object.values(Z.KURZ_PUNKTE)) assert.ok(p >= 1 && p <= 5);
 });
+
+test('Kettenbonus: 3 Tage 3 %, 7 Tage 10 %, 40 Tage 50 % als Höchstwert, Kette weg heißt Bonus weg', () => {
+  assert.deepEqual([0, 2, 3, 6, 7, 11, 12, 20, 21, 29, 30, 39, 40, 365].map(n => Z.kettenBonus(n).p), [0, 0, 3, 3, 10, 10, 15, 15, 25, 25, 35, 35, 50, 50]);
+  assert.equal(Z.kettenBonus(40).naechst, null); assert.equal(Z.kettenBonus(7).naechst, 12);
+  const punkte = n => {
+    frisch({ pensum: 1 });
+    Z.P.kette = { n, zuletzt: n ? Z.heute() : null, beste: n };
+    const id = Z.tagesplan().plan[0];
+    return Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok')).punkte;
+  };
+  const basis = punkte(0), p7 = punkte(7), p40 = punkte(40);
+  assert.equal(p7, basis + Math.round(basis * 0.10)); assert.equal(p40, basis + Math.round(basis * 0.50));
+  assert.ok(p40 <= Math.round(basis * 1.5));
+});

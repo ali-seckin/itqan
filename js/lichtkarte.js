@@ -168,7 +168,7 @@ export function zeichne(app, K) {
   const share = nBer ? gef / nBer : 0, C = 2 * Math.PI * 46;
   const zellen = s => {
     if (s.aus) return `<button type="button" class="lk-z aus" data-p="${s.p}" aria-label="${tx('lichtkarte.seite_2', { p: s.p, a: tx('lichtkarte.nicht_gewaehlt') })}"></button>`;
-    return `<button type="button" class="lk-z" data-p="${s.p}"${s.su ? ' data-su="1"' : ''}${s.w ? ' data-w="1"' : ''}><i class="lk-e"></i><i class="lk-d"></i></button>`;
+    return `<button type="button" class="lk-z" data-p="${s.p}"${s.su ? ' data-su="1"' : ''}${s.w ? ' data-w="1"' : ''}><span class="lk-m"><i class="lk-d"></i><i class="lk-e"></i></span></button>`;
   };
   const juzZeilen = Array.from({ length: 30 }, (_, i) => {
     const j = i + 1, von = juzStart(j), bis = j < 30 ? juzStart(j + 1) - 1 : 604, ps = [];

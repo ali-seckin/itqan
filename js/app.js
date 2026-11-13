@@ -347,10 +347,18 @@ function zeileSeite() {
   const a = AF.zeilenAufgabe();
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#kurz'">${zurueckPfeil}${tx('kurz.titel')}</button>
     <div class="marke">${tx('kurz.zeile')}<small>${a ? tx('kurz.zeile_frage', { p: a.p, name: esc(sureName(a.s)), aya: a.a }) : ''}</small></div>
-    ${a ? `<div class="zeilenwahl" role="group">${Array.from({ length: a.zeilenZahl }, (_, i) => `<button type="button" data-z="${i + 1}" aria-label="${tx('kurz.zeile_nr', { n: i + 1 })}"><span>${i + 1}</span></button>`).join('')}</div>
+    ${a ? `<div class="kontext verdeckt" id="zeile-aya"></div>
+      <div class="zeilenwahl" role="group">${Array.from({ length: a.zeilenZahl }, (_, i) => `<button type="button" data-z="${i + 1}" aria-label="${tx('kurz.zeile_nr', { n: i + 1 })}"><span>${i + 1}</span></button>`).join('')}</div>
       <p class="unter" id="zeile-ergebnis" role="status" style="margin-top:10px"></p>
       <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein verdeckt" id="zeile-weiter">${tx('kurz.nochmal')}</button></div>` : `<p class="leer">${tx('kurz.nichts')}</p>`}`;
   if (!a) return;
+  // Die Āya selbst steht oben (die ersten Wörter genügen): niemand weiß aus dem Kopf, welche Āya „al-Faǧr 20“ ist
+  const ws = ayaWoerter(a.vi).slice(0, 14), lang = ayaWoerter(a.vi).length > 14;
+  Promise.all(ws.map(x => schrift(x[4]))).then(() => {
+    const box = app.querySelector('#zeile-aya'); if (!box) return;
+    box.innerHTML = `<span>${esc(sureName(a.s))} ${a.a}</span><div class="kz">${ws.map(([, vi, , i]) => wortHTML(vi, i)).join('')}${lang ? ' …' : ''}</div>`;
+    box.classList.remove('verdeckt');
+  });
   const w = app.querySelector('.zeilenwahl');
   w.onclick = ev => {
     const b = ev.target.closest('button'); if (!b || w.dataset.fertig) return; w.dataset.fertig = '1';
@@ -645,6 +653,7 @@ function heute() {
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
       ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
+    ${(() => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })()}
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
     ${Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
@@ -1328,7 +1337,7 @@ function fertig() {
   const t = Z.tagesplan(), P = Z.P, bonusId = Z.bonusVorschlag();
   const ev = letzteEreignisse; letzteEreignisse = [];
   const quote = t.r + t.f + t.h ? `${t.r}/${t.r + t.f + t.h}` : '·';
-  const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
+  const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kbonus').map(x => `<div class="band">${tx('fertig.kettenbonus', { p: x.p, n: x.n })}</div>`).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
     x.typ === 'kette' ? `<div class="band">${tx('fertig.tage_in_folge', { n: x.n, a: x.n === 66 ? tx('fertig.im_mittel_wird_eine_gewohnheit_nach_etwa') : x.n === 40 ? tx('fertig.vierzig_tage_bestaendigkeit') : tx('fertig.bestaendigkeit_ist_das_liebste_bei_allah') })}</div>`
     : x.typ === 'khatma' ? `<div class="band">${tx('fertig.hatma_vollendet_allahumma_rhamni_bi_l', { n: x.n })}</div>`
     : ornBand(x)).join('');
