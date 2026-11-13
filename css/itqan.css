@@ -113,7 +113,7 @@ body.doppelt .s-trenn::before{content:'-'}
 .lk-z[data-e][data-d] .lk-e{display:none}   /* mit Ring: der Fehlerpunkt steckt als Füllung im Ring, so bleibt er auf jedem Bildschirm genau mittig */
 .lk-karte .lk-z[data-d] .lk-d{width:12px;height:12px;left:calc(50% - 6px);bottom:4px;border:0;border-radius:0;background:radial-gradient(circle closest-side,transparent 0 45%,var(--akzentT) 50% 85%,transparent 92%)}   /* Ring als Farbverlauf: die Kreise haben immer denselben Mittelpunkt, auch bei halben Pixeln */
 .lk-karte .lk-z[data-e][data-d] .lk-d{background:radial-gradient(circle closest-side,var(--schlecht) 0 33%,transparent 40% 48%,var(--akzentT) 53% 85%,transparent 92%)}
-.lk-karte .lk-z[data-d] .lk-d{display:block;width:10px;height:10px;left:calc(50% - 5px);bottom:5px;border:2px solid var(--akzentT);animation:lkPuls 1.8s ease-in-out infinite}   /* jetzt dran: mittig unten */
+.lk-karte .lk-z[data-d] .lk-d{display:block;animation:lkPuls 1.8s ease-in-out infinite}   /* jetzt dran: mittig unten */
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]{animation:lkAuf 1.3s ease both;animation-delay:.6s}
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]:nth-child(3n){animation-delay:.9s}
 .lk-karte.lk-neu[data-ansicht=stand] .lk-z[data-w]:nth-child(3n+1){animation-delay:1.2s}
