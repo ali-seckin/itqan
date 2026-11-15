@@ -6,14 +6,14 @@ import { Z, D, frisch, naechsterTag, tagSetzenZurueck } from './umgebung.mjs';
 after(() => { Z.logGrenze(0); tagSetzenZurueck(); });
 const ok = id => Array.from({ length: D.A[id].ayat }, () => 'ok');
 
-test('Stabilität: erster Erfolg 4 Tage, später wächst sie, ein Fehler lässt sie fallen', () => {
+test('Stabilität: erster Erfolg setzt den Anfangswert, später wächst sie, ein Fehler lässt sie fallen', () => {
   frisch({ pensum: 1 });
   const id = Z.tagesplan().plan[0];
   Z.abschnittAbschliessen(id, ok(id));
-  assert.equal(Z.karte(id).S, 4);
-  naechsterTag(4);                                  // genau nach 4 Tagen: R = 0,9
+  const S0 = Z.TAKT.S0; assert.equal(Z.karte(id).S, S0);
+  naechsterTag(S0);                                 // genau nach S Tagen: R = 0,9
   Z.abschnittAbschliessen(id, ok(id), 'frei');
-  const S2 = Z.karte(id).S; assert.ok(S2 > 4 * 1.5);
+  const S2 = Z.karte(id).S; assert.ok(S2 > S0 * 1.5);
   naechsterTag(3);
   const e = D.A[id], r = ok(id); r[0] = 'fehler';
   Z.abschnittAbschliessen(id, r, 'frei');

@@ -14,7 +14,6 @@ test('Lichtkarte: frisches Profil, alle Seiten ungeprüft, nach einem Durchgang 
   Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
   m = modell(); const p = D.A[id].seiten[0];
   assert.equal(m.seiten[p].k, 1);            // geprüft, im Aufbau
-  assert.equal(m.seiten[p].f, 4);            // frisch geübt
   assert.ok(m.seiten[p].w);                  // diese Woche geübt
   assert.equal(katVon({ n: 0, st: 0 }), 0); assert.equal(katVon({ n: 2, st: 0 }), 1); assert.equal(katVon({ n: 5, st: 4 }), 4);
 });
@@ -28,12 +27,10 @@ test('Lichtkarte: eine Seite zeigt ihren schwächsten Abschnitt, die beste Stell
   assert.equal(s.k, 0); assert.equal(s.b, 4);
 });
 
-test('Lichtkarte: Frische sinkt mit der Zeit, fällig wird sichtbar', () => {
+test('Lichtkarte: „diese Woche geübt“ gilt nur sieben Tage', () => {
   frisch({ pensum: 1 });
   const id = Z.tagesplan().plan[0], p = D.A[id].seiten[0];
   Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
-  const f0 = modell().seiten[p].f; assert.ok(f0 >= 3 && !modell().seiten[p].fa);
   naechsterTag(40);
-  const m = modell().seiten[p]; assert.ok(m.f <= 2 && m.fa);
-  assert.equal(juzMittel().length, 30);
+  assert.equal(juzMittel().length, 30); assert.equal(modell().seiten[p].w, false);   // nach 40 Tagen nicht mehr „diese Woche“
 });

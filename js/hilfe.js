@@ -23,6 +23,7 @@ export const FRAGEN = [
   { th: 'abhaken', f: tx('hilfe.ab_f'), a: tx('hilfe.ab_a') },
   { th: 'reihenfolge', f: tx('hilfe.rf_f'), a: tx('hilfe.rf_a') },
   { th: 'kettenbonus', f: tx('hilfe.kb_f'), a: tx('hilfe.kb_a') },
+  { th: 'tagesplan', f: tx('hilfe.tm_f'), a: tx('hilfe.tm_a') },
   { th: 'stufen', f: tx('hilfe.was_bedeuten_die_stufen_und_wann_ist_ein'),
     a: tx('hilfe.jeder_abschnitt_hat_eine_von_fuenf') },
   { th: 'punkte', f: tx('hilfe.wie_werden_die_itqan_punkte_berechnet'),

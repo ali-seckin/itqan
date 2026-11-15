@@ -51,5 +51,5 @@ test('Behaltensquote: nur Āyāt beim ersten Versuch ohne Fehler, Hilfe und Zög
   Z.abschnittAbschliessen(id, Array.from({ length: n }, (_, i) => i < 2 ? 'zoegern' : 'ok'));
   const b = Z.behaltensquote(30);
   assert.ok(Math.abs(b.quote - 100 * (n - 2) / n) < 1e-9 || b.quote === null);
-  assert.equal(b.ziel, 95);
+  assert.equal(b.ziel, 90);
 });

@@ -25,29 +25,15 @@ function index() {
 }
 // 0 ungeprüft, 1 im Aufbau, 2 gefestigt, 3 sicher, 4 mutqan
 export const katVon = k => !k.n ? 0 : k.st <= 1 ? 1 : k.st;
-// Frische aus der geschätzten Abrufwahrscheinlichkeit: 1 fällig, 2 bald fällig, 3 stabil, 4 frisch
-const frischVon = (R, ziel) => R < ziel ? 1 : R < ziel + (1 - ziel) * 0.4 ? 2 : R < ziel + (1 - ziel) * 0.8 ? 3 : 4;
-const faelligIn = (k, ziel, d) => {   // Tage bis zur Fälligkeit (<= 0: jetzt)
-  if (k.fae && k.fae <= d) return 0;
-  return Math.ceil(9 * Z.stabilitaet(k) * (1 / ziel - 1) - Z.tageZwischen(k.zul || d, d));
-};
-
 export function modell() {
-  const idx = index(), d = Z.heute(), ziel = (Z.P.einst.zielQuote ?? 95) / 100;
-  const t = Z.P.tage[d], plan = new Set(t && !t.ruhe ? t.plan : []), fertig = new Set(t?.fertig || []);
+  const idx = index(), d = Z.heute();
   const fSeiten = new Set();
   for (const k of Object.keys(Z.P.fstellen || {})) fSeiten.add(D.W?.get(k)?.[0] ?? seiteVon(+k.split('.')[0]));
-  const ab = {};   // je Abschnitt: k Stand, f Frische, h Tag, w diese Woche geübt, fa fällig
+  const ab = {};   // je Abschnitt: k Stand, w diese Woche geübt
   for (const e of D.A) {
     const k = Z.karte(e.id), kk = katVon(k);
-    let f = 0, fa = false, w = false;
-    if (k.n) {
-      const R = Z.abruf(Z.tageZwischen(k.zul || d, d), Z.stabilitaet(k));
-      fa = R < ziel || !!(k.fae && k.fae <= d);
-      f = fa || (plan.has(e.id) && !fertig.has(e.id)) ? 1 : frischVon(R, ziel);   // 1: jetzt dran (fällig oder auf dem Plan von heute)
-      w = !!k.zul && Z.tageZwischen(k.zul, d) <= 6;
-    }
-    ab[e.id] = { k: kk, f, w, fa };
+    const w = !!k.n && !!k.zul && Z.tageZwischen(k.zul, d) <= 6;
+    ab[e.id] = { k: kk, w };
   }
   const seiten = new Array(605).fill(null);
   for (let p = 1; p <= 604; p++) {
@@ -55,11 +41,11 @@ export function modell() {
     if (!ids.length) { seiten[p] = { p, aus: true }; continue; }
     const a = ids.map(id => ab[id]);
     seiten[p] = {
-      p, ids, k: Math.min(...a.map(x => x.k)), b: Math.max(...a.map(x => x.k)), f: Math.min(...a.map(x => x.f)),
-      fa: a.some(x => x.fa), w: a.some(x => x.w), fehler: fSeiten.has(p), su: idx.start[p] || null
+      p, ids, k: Math.min(...a.map(x => x.k)), b: Math.max(...a.map(x => x.k)),
+      w: a.some(x => x.w), fehler: fSeiten.has(p), su: idx.start[p] || null
     };
   }
-  return { seiten, ab, ziel, d };
+  return { seiten, ab, d };
 }
 // Mittlerer Stand je Ǧuzʾ für die kleine Karte auf „Heute“ (null: nichts gewählt)
 export function juzMittel() {
@@ -115,7 +101,6 @@ function abschnittsZeile(e, m) {
   const teile = [katName(a.k)];
   if (k.n) {
     teile.push(tx('lichtkarte.zuletzt', { n: Z.tageZwischen(k.zul || m.d, m.d) }));
-    const r = faelligIn(k, m.ziel, m.d); teile.push(r <= 0 ? tx('lichtkarte.faellig_jetzt') : tx('lichtkarte.faellig_in', { n: r }));
   } else teile.push(tx('lichtkarte.nie'));
   return `<div class="lk-ab"><i class="lk-punkt" data-k="${a.k}"></i><div class="t"><b>${name}:</b><span class="lk-titel">${esc(e.titel)}</span><small>${bereichText(e)}</small><small>${teile.join(' · ')}</small></div>
     <a class="knopf leise klein" href="#ueben/${e.id}/frei" style="text-decoration:none">${tx('lichtkarte.frei_ueben')}</a></div>`;
@@ -164,11 +149,11 @@ export function zeichne(app, K) {
   const pct = x => Math.round(100 * x) + '%';
   const imBer = m.seiten.filter(s => s && !s.aus), nBer = imBer.length;
   const gef = imBer.filter(s => s.k >= 2).length, licht = imBer.filter(s => s.k >= 1).length;
-  const wochen = imBer.filter(s => s.w).length, blass = imBer.filter(s => s.fa || (s.f >= 1 && s.f <= 2)).length;
+  const wochen = imBer.filter(s => s.w).length;
   const share = nBer ? gef / nBer : 0, C = 2 * Math.PI * 46;
   const zellen = s => {
     if (s.aus) return `<button type="button" class="lk-z aus" data-p="${s.p}" aria-label="${tx('lichtkarte.seite_2', { p: s.p, a: tx('lichtkarte.nicht_gewaehlt') })}"></button>`;
-    return `<button type="button" class="lk-z" data-p="${s.p}"${s.su ? ' data-su="1"' : ''}${s.w ? ' data-w="1"' : ''}><span class="lk-m"><i class="lk-d"></i><i class="lk-e"></i></span></button>`;
+    return `<button type="button" class="lk-z" data-p="${s.p}"${s.su ? ' data-su="1"' : ''}><span class="lk-m"><i class="lk-e"></i></span></button>`;
   };
   const juzZeilen = Array.from({ length: 30 }, (_, i) => {
     const j = i + 1, von = juzStart(j), bis = j < 30 ? juzStart(j + 1) - 1 : 604, ps = [];
@@ -191,13 +176,14 @@ export function zeichne(app, K) {
     <div class="lk-hero"><div class="lk-ring"><svg viewBox="0 0 110 110" aria-hidden="true"><defs><linearGradient id="lkv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
         <circle cx="55" cy="55" r="46" fill="none" stroke="var(--rand)" stroke-width="8"/><circle class="lk-fort" cx="55" cy="55" r="46" fill="none" stroke="url(#lkv)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 55 55)"/></svg>
         <div class="lk-mitte"><b data-hoch="${Math.round(share * 100)}">${Math.round(share * 100)}</b><span>%</span></div></div>
-      <div class="lk-hero-t"><p><b>${tx('lichtkarte.hero_prozent')}</b></p><p>${tx('lichtkarte.hero_licht', { a: licht, b: nBer })}</p><p>${tx('lichtkarte.hero_woche', { n: wochen })}</p>${blass ? `<p>${tx('lichtkarte.hero_blass', { n: blass })}</p>` : ''}</div></div>
+      <div class="lk-hero-t"><p><b>${tx('lichtkarte.hero_prozent')}</b></p><p>${tx('lichtkarte.hero_licht', { a: licht, b: nBer })}</p><p>${tx('lichtkarte.hero_woche', { n: wochen })}</p></div></div>
     <p class="lk-hinweis" role="status"></p>
     <div class="lk-kacheln" role="group"></div>
+    <p class="lk-banner verdeckt" role="status"></p>
     <p class="lk-legende"><i class="lk-fp" aria-hidden="true"></i>${tx('lichtkarte.legende_fehler')}</p>
     <div class="lk-info verdeckt" role="status"></div>
     <div class="lk-gruppe" role="tablist"><button type="button" role="tab" data-g="guz">${tx('lichtkarte.ansicht_guz')}</button><button type="button" role="tab" data-g="sure">${tx('lichtkarte.ansicht_sure')}</button></div>
-    <div class="lk-karte lk-neu" id="licht" data-ansicht="stand"></div>
+    <div class="lk-karte" id="licht" data-ansicht="stand"></div>
     <details class="lk-spring"><summary>${tx('lichtkarte.springen')}</summary>${K.stellenWahl()}</details>`;
 
   const wurzel = app.querySelector('#licht'), hinweis = app.querySelector('.lk-hinweis'), kacheln = app.querySelector('.lk-kacheln'), info = app.querySelector('.lk-info');
@@ -209,15 +195,12 @@ export function zeichne(app, K) {
       const s = m.seiten[+z.dataset.p], v = A.wert(s);
       z.dataset.k = v;
       if (merk.ansicht === 'stand' && s.b > s.k) z.dataset.b = s.b; else delete z.dataset.b;
-      if (s.f === 1) z.dataset.d = '1'; else delete z.dataset.d;   // jetzt dran: fällig oder heute auf dem Plan
       if (s.fehler) z.dataset.e = '1'; else delete z.dataset.e;
       z.setAttribute('aria-label', tx('lichtkarte.seite_2', { p: s.p, a: A.kats().find(x => x[0] === v)?.[1] ?? katName(v) }));
     }
     hinweis.textContent = A.hinweis();
     const zaehl = {}; for (const s of m.seiten) if (s && !s.aus) { const v = A.wert(s); zaehl[v] = (zaehl[v] || 0) + 1; }
-    const nDran = m.seiten.filter(x => x && !x.aus && x.f === 1).length;
-    kacheln.innerHTML = A.kats().map(([k, name]) => `<button type="button" class="lk-kachel${fokus === k ? ' an' : ''}" data-k="${k}" aria-pressed="${fokus === k}"><i data-k="${k}"></i><b>${zaehl[k] || 0}</b><span>${name}</span></button>`).join('')
-      + `<button type="button" class="lk-kachel lk-dran${fokus === 'd' ? ' an' : ''}" data-k="d" aria-pressed="${fokus === 'd'}"><i class="lk-puls"></i><b>${nDran}</b><span>${tx('lichtkarte.f_faellig')}</span></button>`;
+    kacheln.innerHTML = A.kats().map(([k, name]) => `<button type="button" class="lk-kachel${fokus === k ? ' an' : ''}" data-k="${k}" aria-pressed="${fokus === k}"><i data-k="${k}"></i><b>${zaehl[k] || 0}</b><span>${name}</span></button>`).join('');
     app.querySelectorAll('.lk-gruppe button').forEach(b => { const an = b.dataset.g === merk.gruppe; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
     for (const b of wurzel.querySelectorAll('.lk-sure')) {
       const ids = sureAb[+b.dataset.s], bal = b.querySelectorAll('.lk-balken i'); kompakt(ids.map(id => A.wert(m.ab[id]))).forEach((v, i) => { if (bal[i]) bal[i].dataset.k = v; });
@@ -226,12 +209,12 @@ export function zeichne(app, K) {
   };
   const dimmen = () => {
     const A = ANSICHTEN[merk.ansicht];
-    for (const z of wurzel.querySelectorAll('.lk-z')) z.classList.toggle('lk-dim', fokus != null && (fokus === 'd' ? z.dataset.d !== '1' : z.dataset.k !== String(fokus)));
-    for (const b of wurzel.querySelectorAll('.lk-sure')) { const ids = sureAb[+b.dataset.s]; b.classList.toggle('lk-dim', fokus != null && !ids.some(id => fokus === 'd' ? m.ab[id].f === 1 : A.wert(m.ab[id]) === fokus)); }
+    for (const z of wurzel.querySelectorAll('.lk-z')) z.classList.toggle('lk-dim', fokus != null && z.dataset.k !== String(fokus));
+    for (const b of wurzel.querySelectorAll('.lk-sure')) { const ids = sureAb[+b.dataset.s]; b.classList.toggle('lk-dim', fokus != null && !ids.some(id => A.wert(m.ab[id]) === fokus)); }
     kacheln.querySelectorAll('.lk-kachel').forEach(b => { const an = String(fokus) === b.dataset.k; b.classList.toggle('an', an); b.setAttribute('aria-pressed', an); });
     const zeigen = fokus != null;
     info.classList.toggle('verdeckt', !zeigen);
-    if (zeigen) info.innerHTML = fokus === 'd' ? `<b>${tx('lichtkarte.f_faellig')}</b><p>${tx('lichtkarte.info_dran')}</p>` : `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>`;
+    if (zeigen) info.innerHTML = `<b>${katName(fokus)}</b><p>${INFO_STAND()[fokus]}</p>`;
   };
   const baueKarte = () => {
     wurzel.innerHTML = merk.gruppe === 'guz' ? juzZeilen : `<div class="lk-sureliste">${sureZeilen()}</div>`;
@@ -239,8 +222,33 @@ export function zeichne(app, K) {
   };
   baueKarte();
 
-  app.querySelector('.lk-gruppe').onclick = ev => { const b = ev.target.closest('button[data-g]'); if (!b || b.dataset.g === merk.gruppe) return; merk.gruppe = b.dataset.g; wurzel.classList.remove('lk-neu'); baueKarte(); };
-  kacheln.onclick = ev => { const b = ev.target.closest('.lk-kachel'); if (!b) return; const k = b.dataset.k === 'd' ? 'd' : +b.dataset.k; fokus = fokus === k ? null : k; dimmen(); };
+  // Freischaltung: Seiten, die seit dem letzten Besuch der Lichtkarte heller geworden sind, leuchten jetzt vor deinen Augen auf
+  function freischalten() {
+    const schluessel = `itqan.lk.stand.${Z.P.erstellt}`, jetzt = {}, neu = [];
+    for (const s of m.seiten) if (s && !s.aus) jetzt[s.p] = s.k * 10 + s.b;
+    let alt = null; try { alt = JSON.parse(localStorage.getItem(schluessel) || 'null'); } catch (e) { alt = null; }
+    try { localStorage.setItem(schluessel, JSON.stringify(jetzt)); } catch (e) { /* ohne Speicher geht es auch */ }
+    if (!alt || merk.gruppe !== 'guz') return;
+    for (const p of Object.keys(jetzt)) if (alt[p] != null && jetzt[p] > alt[p]) neu.push(+p);
+    if (!neu.length) return;
+    const zellen = neu.map(p => wurzel.querySelector(`.lk-z[data-p="${p}"]`)).filter(Boolean);
+    if (!zellen.length) return;
+    const vorher = zellen.map(z => [z, z.dataset.k, z.dataset.b]);
+    zellen.forEach((z, i) => { const o = alt[z.dataset.p]; z.dataset.k = Math.floor(o / 10); if (o % 10 > Math.floor(o / 10)) z.dataset.b = o % 10; else delete z.dataset.b; });
+    const banner = app.querySelector('.lk-banner'); banner.textContent = tx('lichtkarte.frei_banner', { n: neu.length });
+    setTimeout(() => {
+      if (!wurzel.isConnected) return;
+      banner.classList.remove('verdeckt');
+      zellen[0].scrollIntoView({ block: 'center', behavior: K.ruhig?.() ? 'auto' : 'smooth' });
+      vorher.forEach(([z, k, b], i) => setTimeout(() => {
+        if (!z.isConnected) return;
+        z.dataset.k = k; if (b != null) z.dataset.b = b; else delete z.dataset.b;
+        z.classList.add('lk-frei');
+      }, 650 + Math.min(i, 24) * 230));
+    }, 700);
+  }
+  app.querySelector('.lk-gruppe').onclick = ev => { const b = ev.target.closest('button[data-g]'); if (!b || b.dataset.g === merk.gruppe) return; merk.gruppe = b.dataset.g; baueKarte(); };
+  kacheln.onclick = ev => { const b = ev.target.closest('.lk-kachel'); if (!b) return; const k = +b.dataset.k; fokus = fokus === k ? null : k; dimmen(); };
   wurzel.onclick = ev => {
     const z = ev.target.closest('.lk-z[data-p]'), j = ev.target.closest('.lk-jbtn'), s = ev.target.closest('.lk-sure[data-s]');
     if (z) { m = modell(); seitenBlatt(+z.dataset.p, m); } else if (j) { m = modell(); juzBlatt(+j.dataset.j, m); } else if (s) { m = modell(); sureBlatt(+s.dataset.s, m); }
@@ -249,5 +257,5 @@ export function zeichne(app, K) {
   // Ring füllt sich, Zahlen zählen hoch, nach dem ersten Aufbau endet das Aufleuchten
   requestAnimationFrame(() => setTimeout(() => app.querySelector('.lk-fort')?.setAttribute('stroke-dashoffset', C * (1 - share)), 80));
   K.hochzaehlen(app);
-  setTimeout(() => wurzel.isConnected && wurzel.classList.remove('lk-neu'), 2600);
+  freischalten();
 }

@@ -527,7 +527,7 @@ function start() {
   const tageText = () => {
     const ganz = s.modus === 'seite';
     const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
-    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${istAlles(s.sel) ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}`;
+    return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${istAlles(s.sel) ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}<br>${(em => tx('start.empfehlung', { min: em.minimal, gold: em.ideal }))(Z.pensumEmpfehlung(ids))}`;
   };
   app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
@@ -2239,6 +2239,11 @@ function pauseBinden() {
   if (ende) ende.onclick = () => { Z.pauseBeenden(); toast(tx('pausebinden.die_pause_ist_beendet')); einstellungen(); };
 }
 const optionen = (werte, wahl, text = x => x) => werte.map(x => `<option value="${x}"${x === wahl ? ' selected' : ''}>${text(x)}</option>`).join('');
+// Hinweis unter den Abschnitten pro Tag: Dauer eines Durchlaufs und Empfehlung für das gewählte Gebiet
+function pensumInfo() {
+  const em = Z.pensumEmpfehlung(), proTag = Z.P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
+  return `${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}<br>${tx('einstellungen.empfehlung_1', { n: em.N, min: em.minimal, gold: em.ideal })} ${tx('einstellungen.empfehlung_2', { t: em.tage(proTag) })}`;
+}
 function einstellungen() {
   navSetzen('profil');
   const P = Z.P, E = P.einst;
@@ -2267,7 +2272,7 @@ function einstellungen() {
       <div class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><span class="schritt" data-s="alle"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${gleich() ? E.pensum[0] : tx('einstellungen.verschieden')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>
       <button type="button" class="knopf leise klein" id="tage-einzeln" aria-expanded="${gleich() ? 'false' : 'true'}" style="margin-top:10px">${gleich() ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus')}</button>
       <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<div class="auswahl"><span>${w}</span><span class="schritt" data-s="${i}"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${E.pensum[i] || tx('allg.ruhetag')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>`).join('')}</div>
-      <p class="unter" style="margin-top:10px" id="dauer">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
+      <p class="unter" style="margin-top:10px" id="dauer">${pensumInfo()}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
@@ -2282,7 +2287,7 @@ function einstellungen() {
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
-      <div class="wahl" id="zielquote" style="margin-top:10px">${[90, 95, 98].map(w => `<button data-w="${w}" class="${(E.zielQuote ?? 95) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div></div>
+      <div class="wahl" id="zielquote" style="margin-top:10px">${[90, 95, 98].map(w => `<button data-w="${w}" class="${(E.zielQuote ?? 90) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div></div>
     <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
       <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
@@ -2319,7 +2324,7 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.neu_beginnen')}</h3><p class="unter">${tx('einstellungen.loescht_dein_profil_auf_diesem_geraet')}</p><button class="knopf schlecht" id="reset" style="margin-top:10px">${tx('einstellungen.profil_loeschen')}</button></div>
     </details>`;
-  const dauer = () => app.querySelector('#dauer').innerHTML = tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) });
+  const dauer = () => app.querySelector('#dauer').innerHTML = pensumInfo();
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast(tx('einstellungen.gespeichert')); };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });

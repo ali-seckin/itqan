@@ -1,7 +1,7 @@
 // Itqān · Reihenfolge wechseln gilt sofort
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { Z, D, frisch, tagSetzenZurueck, wirdErfuellen } from './umgebung.mjs';
+import { Z, D, frisch, tagSetzenZurueck, wirdErfuellen, naechsterTag } from './umgebung.mjs';
 
 after(() => { Z.logGrenze(0); tagSetzenZurueck(); });
 
@@ -87,4 +87,39 @@ test('Kettenbonus: 3 Tage 3 %, 7 Tage 10 %, 40 Tage 50 % als Höchstwert, Kette 
   const basis = punkte(0), p7 = punkte(7), p40 = punkte(40);
   assert.equal(p7, basis + Math.round(basis * 0.10)); assert.equal(p40, basis + Math.round(basis * 0.50));
   assert.ok(p40 <= Math.round(basis * 1.5));
+});
+
+test('Tagesmischung: auch mit einem Abschnitt am Tag kommt trotz ständiger Fehler Neues dran (beide Rhythmen)', () => {
+  for (const rhythmus of ['langzeit', 'khatma']) {
+    frisch({ pensum: 1 }); Z.P.einst.rhythmus = rhythmus;
+    const gesehen = new Set(); let fehlerTage = 0;
+    for (let tag = 0; tag < 14; tag++) {
+      const t = Z.tagesplan();
+      for (const id of t.plan.filter(x => !t.fertig.includes(x))) {
+        if (t.art[id] === 'fehler') fehlerTage++;
+        gesehen.add(id);
+        Z.abschnittAbschliessen(id, ['fehler', ...Array(D.A[id].ayat - 1).fill('ok')]);
+      }
+      naechsterTag();
+    }
+    assert.ok(gesehen.size >= 4, `${rhythmus}: nur ${gesehen.size} verschiedene Abschnitte in 14 Tagen`);
+    assert.ok(fehlerTage >= 3, `${rhythmus}: Fehlerwiederholungen kamen nicht dran`);
+  }
+});
+
+test('Tagesmischung: mit 3 Abschnitten gehören mindestens ein Neuer und höchstens zwei Fehlerwiederholungen auf den Plan', () => {
+  frisch({ pensum: 3 }); Z.P.einst.rhythmus = 'langzeit';
+  for (let tag = 0; tag < 6; tag++) {
+    const t = Z.tagesplan();
+    assert.equal(t.plan.length, 3);
+    assert.ok(t.plan.filter(id => t.art[id] === 'fehler').length <= 2);
+    for (const id of t.plan) Z.abschnittAbschliessen(id, ['fehler', ...Array(D.A[id].ayat - 1).fill('ok')]);
+    naechsterTag();
+  }
+});
+
+test('Empfehlung: mindestens N/190, ideal N/95 Abschnitte am Tag, mehr Tage bei weniger Pensum', () => {
+  const e = Z.pensumEmpfehlung(739);
+  assert.equal(e.minimal, 4); assert.equal(e.ideal, 8); assert.ok(e.tage(1) > e.tage(3) && e.tage(3) > e.tage(8));
+  assert.equal(Z.pensumEmpfehlung(60).ideal, 1);
 });
