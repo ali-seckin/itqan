@@ -737,12 +737,6 @@ async function wachHalten(an) {
   } catch (e) { /* nicht erlaubt oder Akku sparen */ }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && wachWunsch && !wachSperre) wachHalten(true); });
-// Browser-Zoom am PC: Die Seitengröße richtet sich nach der Fensterhöhe bei 100 %, nicht nach der geschrumpften Höhe, damit die Seiten beim Zoomen Schritt für Schritt mitwachsen
-function zoomMessen() {
-  const z = innerWidth > 0 ? outerWidth / innerWidth : 1, ok = z >= 0.4 && z <= 5 && !matchMedia('(pointer: coarse)').matches;
-  document.documentElement.style.setProperty('--h100', ok ? Math.round(innerHeight * z) + 'px' : '100dvh');
-}
-zoomMessen(); addEventListener('resize', zoomMessen);
 let warDoppelt = null;
 addEventListener('resize', () => {
   const d = doppelseitig(); if (warDoppelt === null) { warDoppelt = d; return; }

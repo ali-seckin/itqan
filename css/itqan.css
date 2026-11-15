@@ -727,7 +727,7 @@ select option,select optgroup{background-color:var(--liste);color:var(--text)}
 .feier.mit-fehlern .qandil{animation-duration:6s}
 
 /* Doppelseite auf PC und Tablet: ungerade Seite rechts, gerade links, Bundsteg in der Mitte */
-body.doppelt #app{max-width:1500px;--sb:min(calc((min(100vw, 1500px) - 60px) / 2), calc((var(--h100, 100dvh) - 150px) * .7))}
+body.doppelt #app{max-width:1500px;--sb:min(calc((min(100vw, 1500px) - 60px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
 body.doppelt[data-ansicht=mushaf] #app>:not(#seite){max-width:760px;margin-left:auto!important;margin-right:auto!important}
 body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lageinfo,body.doppelt[data-ansicht=ueben] .kontext{max-width:900px;margin-left:auto;margin-right:auto}
 .paar{display:flex;flex-direction:row-reverse;justify-content:center;align-items:stretch;gap:3px}
@@ -1115,9 +1115,10 @@ h2.titel-klein{font-weight:400;line-height:inherit}
 /* Ergebnis nach dem Üben: am Computer höchstens so breit wie die Doppelseite */
 body.doppelt .feier{max-width:calc(2 * var(--sb) + 20px);margin-left:auto;margin-right:auto}
 /* Handy quer: Doppelseite in lesbarer Größe, die Leiste mit den Knöpfen schmal und waagerecht */
+/* Seitengröße: Höhe des Fensters, aber nie unter 500 px. Beim Browser-Zoom schrumpft die Fensterhöhe, die Untergrenze bleibt, also wachsen die Seiten schrittweise mit. */
 /* Breite Fenster (PC, Tablet) und Handy quer: die Leiste liegt waagerecht und wächst beim Zoomen in die Breite, nicht in die Höhe */
 @media (orientation:landscape) and (max-height:520px), (min-width:700px){
-  html body.doppelt #app{--sb:min(calc((100vw - 64px) / 2), calc((var(--h100, 100dvh) - 150px) * .7))}
+  html body.doppelt #app{--sb:min(calc((100vw - 64px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
   .ab-platz{height:96px}
   .steuerung{padding:6px calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 14px)}
   .steuerung .innen{max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"arten arten" "fort knoepfe" "hinweis knoepfe";column-gap:16px;row-gap:2px;align-items:center}
