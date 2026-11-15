@@ -1535,6 +1535,8 @@ export default {
     merk_1: 'Le Muṣḥaf s’ouvre sur la dernière page où tu étais, même après avoir fermé l’app. Un toucher sur la lampe de série en haut de « Aujourd’hui » ouvre maintenant une fenêtre avec ta série, ton bonus et les prochains niveaux, au lieu d’aller au profil.',
     takt_titel: 'Plan du jour réajusté',
     takt_1: 'Le plan du jour réserve désormais une part fixe des places au nouveau, même si tu n’as réglé que 1 ou 2 sections par jour, et dans le rythme à long terme une section ne revient qu’une fois le lendemain après une erreur, puis le modèle prend le relais. L’objectif de rétention est de 90 % pour les nouveaux profils. Dans les réglages, tu vois maintenant la quantité quotidienne recommandée pour ton domaine. La carte de lumière n’affiche plus « dû maintenant » ; à la place, les pages que tu as améliorées s’illuminent sous tes yeux à ta prochaine visite.',
+    wach_titel: 'L’écran reste allumé, zoom sur PC',
+    wach_1: 'À l’exercice, l’écran reste désormais allumé pour que les enregistrements ne s’interrompent pas, dans la mesure où ton appareil le permet. Quand une fenêtre est ouverte, comme celle de la série, l’arrière-plan ne défile plus avec elle. Sur PC, les pages grandissent maintenant pas à pas avec le zoom, et la barre du bas s’élargit au lieu de grandir en hauteur.',
     quer_titel: 'Téléphone à l’horizontale : double page',
     quer_1: 'Quand tu tournes ton téléphone, Itqān affiche la double page comme dans le livre, à l’exercice comme dans le Muṣḥaf. Si tu tournes en plein exercice, ta progression est conservée. En paysage, la barre du bas est plus fine et horizontale pour montrer plus de texte.',
     abwaehlen_titel: 'Tout désélectionner sans message d’erreur',

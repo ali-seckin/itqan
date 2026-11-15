@@ -1535,6 +1535,8 @@ export default {
     merk_1: 'El Muṣḥaf se abre en la última página en la que estabas, incluso después de cerrar la app. Un toque en la lámpara de racha, arriba en «Hoy», abre ahora una ventana con tu racha, tu bonus y los siguientes niveles, en lugar de ir al perfil.',
     takt_titel: 'Plan del día reajustado',
     takt_1: 'El plan del día reserva ahora una parte fija de los lugares para lo nuevo, incluso si solo has fijado 1 o 2 secciones al día, y en el ritmo a largo plazo una sección vuelve una sola vez al día siguiente tras un error, después el modelo toma el relevo. El objetivo de retención es del 90 % para perfiles nuevos. En los ajustes ves ahora la cantidad diaria recomendada para tu ámbito. El mapa de luz ya no muestra «toca ahora»; en su lugar, las páginas que has mejorado se iluminan ante tus ojos en tu próxima visita.',
+    wach_titel: 'La pantalla sigue encendida, zoom en PC',
+    wach_1: 'Al practicar, la pantalla se mantiene ahora encendida para que las grabaciones no se corten, en la medida en que tu dispositivo lo permita. Con una ventana abierta, como la de la racha, el fondo ya no se desplaza. En PC, las páginas crecen ahora paso a paso con el zoom y la barra inferior se ensancha en lugar de crecer en altura.',
     quer_titel: 'Móvil en horizontal: doble página',
     quer_1: 'Cuando giras el móvil, Itqān muestra la doble página como en el libro, tanto al practicar como en el Muṣḥaf. Si giras en mitad de un ejercicio, tu avance se mantiene. En horizontal la barra inferior es más delgada y horizontal para que se vea más texto.',
     abwaehlen_titel: 'Quitar todos sin mensaje de error',

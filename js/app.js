@@ -2,6 +2,7 @@
 import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzVonVers, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
 import * as Lk from './lichtkarte.js';
+import { hintergrundSperren } from './sperre.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
@@ -115,7 +116,8 @@ function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbr
     d.innerHTML = `<div class="dialog-karte" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3><div class="dialog-text">${html}</div>
       <div class="reihe">${nein ? `<button class="knopf leise klein" data-a="0">${esc(nein)}</button>` : ''}<button class="knopf ${gefahr ? 'schlecht' : 'haupt'} klein" data-a="1">${esc(ja)}</button></div></div>`;
     const vorher = document.activeElement;   // nach dem Schließen kehrt der Fokus dorthin zurück
-    const zu = wert => { d.classList.add('weg'); setTimeout(() => d.remove(), 200); removeEventListener('keydown', taste, true); if (vorher?.isConnected) vorher.focus({ preventScroll: true }); fertig(wert); };
+    hintergrundSperren(true);
+    const zu = wert => { hintergrundSperren(false); d.classList.add('weg'); setTimeout(() => d.remove(), 200); removeEventListener('keydown', taste, true); if (vorher?.isConnected) vorher.focus({ preventScroll: true }); fertig(wert); };
     const taste = ev => {
       if (ev.key === 'Escape') { ev.stopPropagation(); zu(false); return; }
       if (ev.key !== 'Tab') return;
@@ -725,6 +727,22 @@ function seiteHolen(roller, el) {
   if (dx) roller.scrollBy({ left: dx, behavior: 'auto' });
 }
 const paarHTML = (seiten, opt) => `<div class="paar">${seiten.map(x => seiteHTML(x, typeof opt === 'function' ? opt(x) : opt)).join('')}</div>`;
+// Bildschirm wachhalten (Wake Lock), solange geübt wird. Nicht jedes Gerät erlaubt es, dann bleibt alles beim Alten.
+let wachSperre = null, wachWunsch = false;
+async function wachHalten(an) {
+  wachWunsch = an;
+  try {
+    if (an) { if (!wachSperre && navigator.wakeLock) { wachSperre = await navigator.wakeLock.request('screen'); wachSperre.addEventListener('release', () => { wachSperre = null; }); } }
+    else if (wachSperre) { const s = wachSperre; wachSperre = null; await s.release(); }
+  } catch (e) { /* nicht erlaubt oder Akku sparen */ }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && wachWunsch && !wachSperre) wachHalten(true); });
+// Browser-Zoom am PC: Die Seitengröße richtet sich nach der Fensterhöhe bei 100 %, nicht nach der geschrumpften Höhe, damit die Seiten beim Zoomen Schritt für Schritt mitwachsen
+function zoomMessen() {
+  const z = innerWidth > 0 ? outerWidth / innerWidth : 1, ok = z >= 0.4 && z <= 5 && !matchMedia('(pointer: coarse)').matches;
+  document.documentElement.style.setProperty('--h100', ok ? Math.round(innerHeight * z) + 'px' : '100dvh');
+}
+zoomMessen(); addEventListener('resize', zoomMessen);
 let warDoppelt = null;
 addEventListener('resize', () => {
   const d = doppelseitig(); if (warDoppelt === null) { warDoppelt = d; return; }
@@ -833,6 +851,8 @@ async function ueben(idText, quelle, fokusText) {
   function imHintergrund() { if (!document.hidden) return; if (rec?.state === 'recording') aufnahmeStopp(); else mikroFrei(); }
   document.addEventListener('visibilitychange', imHintergrund);
   addEventListener('hashchange', mikroAus, { once: true });
+  wachHalten(true);   // Bildschirm bleibt beim Üben an, sonst bricht eine Aufnahme ab, wenn sich das Gerät sperrt
+  addEventListener('hashchange', () => { if (!location.hash.startsWith('#ueben')) wachHalten(false); }, { once: true });
   const zusatz = art === 'bonus' ? ` · ${tx('allg.bonus')}` : art === 'fehler' ? ` · ${tx('allg.wiederholung_nach_fehler')}` : art === 'festigen' ? ` · ${tx('allg.festigen')}` : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="${tx('allg.zurueck')}">${zurueckPfeil}</button>
       <div class="info">${ABF ? `<b>${abfrageTitel()}</b>${['uebergang', 'mitte'].includes(ABF.art) ? ` · ${e.von[0]}:${e.von[1]}` : ''}` : art === 'stelle' ? `<b>${tx('ueben.fehlerstelle')}</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)}${e.nr ? ` · <span class="ab-nr" role="img" aria-label="${tx('allg.abschnitt')} ${e.nr}">${e.nr}</span>` : ''} · ${tx('ueben.ayat', { ayat: e.ayat })} · ${tx('allg.zeilen', { zeilen: e.zeilen })}`} · ${tx('ueben.s')} ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="${tx('ueben.seite_seite', { p, a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('ueben.r') : tx('ueben.l')}</button>`).join('<i class="s-trenn"></i>')}</div></div>

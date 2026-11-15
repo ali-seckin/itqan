@@ -5,6 +5,7 @@ import { tx } from './sprache.js';
 import { D, sureName, abschnittName, bereichText, esc, juzStart, juzVonVers } from './daten.js';
 import * as Z from './zustand.js';
 import * as AF from './abfragen.js';
+import { hintergrundSperren } from './sperre.js';
 
 // Die klassischen Namen der Aǧzāʾ nach ihren ersten Worten
 const JUZ_NAMEN = ['Alif Lām Mīm', 'Sayaqūl', 'Tilka r-Rusul', 'Lan tanālū', 'Wa l-muḥṣanāt', 'Lā yuḥibbu llāh', 'Wa iḏā samiʿū', 'Wa law annanā', 'Qāla l-malaʾ', 'Wa ʿlamū',
@@ -82,13 +83,14 @@ function blatt({ titel, unter, koerper, aktionen }) {
     <div class="lk-koerper">${koerper}</div>
     <div class="lk-aktionen">${aktionen}</div></section>`;
   const vorher = document.activeElement;
+  hintergrundSperren(true);
   const zu = () => {
-    removeEventListener('keydown', taste, true); wurzel.classList.remove('auf');
+    hintergrundSperren(false); removeEventListener('keydown', taste, true); wurzel.classList.remove('auf');
     setTimeout(() => wurzel.remove(), 280); if (vorher?.isConnected) vorher.focus({ preventScroll: true });
   };
   const taste = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); zu(); } };
   wurzel.querySelector('.lk-schleier').onclick = zu; wurzel.querySelector('.lk-zu').onclick = zu;
-  wurzel.addEventListener('click', ev => { if (ev.target.closest('a[href]')) { removeEventListener('keydown', taste, true); wurzel.remove(); } });
+  wurzel.addEventListener('click', ev => { if (ev.target.closest('a[href]')) { hintergrundSperren(false); removeEventListener('keydown', taste, true); wurzel.remove(); } });
   addEventListener('keydown', taste, true);
   document.body.appendChild(wurzel);
   requestAnimationFrame(() => { wurzel.classList.add('auf'); wurzel.querySelector('.lk-zu').focus({ preventScroll: true }); });

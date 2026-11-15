@@ -1535,6 +1535,8 @@ export default {
     merk_1: 'The Muṣḥaf opens on the page you were last on, even after closing the app. A tap on the streak lamp at the top of “Today” now opens a window with your streak, your bonus and the next levels instead of switching to the profile.',
     takt_titel: 'Daily plan retuned',
     takt_1: 'The daily plan now secures a fixed share of places for new material, even if you set just 1 or 2 sections a day, and in the long-term rhythm a section comes back only once on the next day after a mistake, after which the model takes over. The retention target is 90% for new profiles. In the settings you now see the recommended daily amount for your area. The Light Map no longer shows “due now”; instead, pages you have upgraded light up in front of your eyes on your next visit.',
+    wach_titel: 'Screen stays on, zoom on PC',
+    wach_1: 'While practising the screen now stays on so recordings do not break off, as far as your device allows. With a window open, such as the streak window, the background no longer scrolls along. On a PC the pages now grow step by step when you zoom, and the bar at the bottom grows wider instead of taller.',
     quer_titel: 'Phone sideways: double page',
     quer_1: 'When you turn your phone, Itqān shows the double page like in the book, both while practising and in the Muṣḥaf. Turning in the middle of a drill keeps your progress. In landscape the bar at the bottom is slimmer and horizontal so more of the text is visible.',
     abwaehlen_titel: 'Deselect all without an error',

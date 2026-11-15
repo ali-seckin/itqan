@@ -1531,6 +1531,8 @@ export default {
     merk_1: 'Der Muṣḥaf öffnet sich wieder auf der Seite, auf der du zuletzt warst, auch nach dem Schließen der App. Ein Tipp auf die Ketten-Lampe oben in „Heute“ öffnet jetzt ein Fenster mit deiner Kette, deinem Bonus und den nächsten Stufen, statt zum Profil zu wechseln.',
     takt_titel: 'Tagesplan neu abgestimmt',
     takt_1: 'Der Tagesplan sichert jetzt einen festen Teil der Plätze für Neues, auch wenn du nur 1 oder 2 Abschnitte am Tag eingestellt hast, und im Langzeit-Rhythmus kommt ein Abschnitt nach einem Fehler nur noch einmal am nächsten Tag zurück, danach übernimmt das Modell. Der Zielwert der Behaltensquote steht für neue Profile auf 90 %. In den Einstellungen siehst du jetzt die empfohlene Tagesmenge für dein Gebiet. Die Lichtkarte hat kein „jetzt dran“ mehr, dafür leuchten Seiten, die du aufgewertet hast, beim nächsten Besuch vor deinen Augen auf.',
+    wach_titel: 'Bildschirm bleibt an, Zoom am PC',
+    wach_1: 'Beim Üben bleibt der Bildschirm jetzt an, damit Aufnahmen nicht abbrechen, soweit dein Gerät das erlaubt. Bei offenen Fenstern, etwa dem Ketten-Fenster, scrollt der Hintergrund nicht mehr mit. Am PC wachsen die Seiten beim Zoomen jetzt Schritt für Schritt mit, und die Leiste unten wächst in die Breite statt in die Höhe.',
     quer_titel: 'Handy quer: Doppelseite',
     quer_1: 'Wenn du das Handy drehst, zeigt Itqān beim Üben und im Muṣḥaf die Doppelseite wie im Buch. Beim Drehen mitten in der Übung bleibt dein Stand erhalten. Im Querformat ist die Leiste unten schmaler und waagerecht, damit mehr vom Text zu sehen ist.',
     abwaehlen_titel: 'Alle abwählen ohne Fehlermeldung',

@@ -1535,6 +1535,8 @@ export default {
     merk_1: 'Muṣḥaf, uygulamayı kapattıktan sonra bile en son bulunduğun sayfada açılır. “Bugün” sayfasının üstündeki seri lambasına dokunmak artık profile geçmek yerine serini, bonusunu ve sonraki seviyeleri gösteren bir pencere açıyor.',
     takt_titel: 'Günlük plan yeniden ayarlandı',
     takt_1: 'Günlük plan artık günde yalnızca 1 ya da 2 bölüm ayarlasan bile yerlerin sabit bir kısmını yeniye ayırıyor; uzun vadeli ritimde bir hatadan sonra bölüm yalnızca ertesi gün bir kez geri geliyor, sonra model devralıyor. Tutma oranı hedefi yeni profillerde %90. Ayarlarda artık alanın için önerilen günlük miktarı görüyorsun. Işık Haritası’nda “şimdi sırada” kalmadı; bunun yerine yükselttiğin sayfalar bir sonraki ziyaretinde gözünün önünde parlıyor.',
+    wach_titel: 'Ekran açık kalıyor, PC’de yakınlaştırma',
+    wach_1: 'Alıştırma sırasında ekran artık açık kalıyor, böylece cihazın izin verdiği ölçüde kayıtlar kesilmiyor. Seri penceresi gibi bir pencere açıkken arka plan artık kaymıyor. PC’de sayfalar yakınlaştırırken adım adım büyüyor ve alttaki çubuk yükseklik yerine genişlik olarak büyüyor.',
     quer_titel: 'Telefon yatay: çift sayfa',
     quer_1: 'Telefonu çevirdiğinde Itqān alıştırmada ve Muṣḥaf’ta çift sayfayı kitaptaki gibi gösterir. Alıştırmanın ortasında çevirsen de durumun korunur. Yatay konumda alttaki çubuk daha ince ve yatay olur, böylece metnin daha fazlası görünür.',
     abwaehlen_titel: 'Seçimi hatasız kaldırmak',
