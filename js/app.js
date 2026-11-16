@@ -6,6 +6,7 @@ import { hintergrundSperren } from './sperre.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
+import * as Ab from './abgleich.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
 import * as NL from './aehnlich.js';
@@ -273,7 +274,8 @@ function rueckmeldung() {
 // ---------- Schnappschüsse (Einstellungen und Start) ----------
 // Der Grund steht als festes Kennzeichen im Speicher, angezeigt wird der Text der Sprache
 const GRUND_TEXT = { 'täglich': tx('grund_text.taeglich'), 'vor dem Gliederungswechsel': tx('grund_text.vor_dem_wechsel_der_abschnittslaenge'),
-  'vor dem Laden einer Sicherung': tx('grund_text.vor_dem_laden_einer_sicherung'), 'vor dem Löschen': tx('grund_text.vor_dem_loeschen'), 'vor dem Zurückholen': tx('grund_text.vor_dem_zurueckholen') };
+  'vor dem Laden einer Sicherung': tx('grund_text.vor_dem_laden_einer_sicherung'), 'vor dem Löschen': tx('grund_text.vor_dem_loeschen'), 'vor dem Zurückholen': tx('grund_text.vor_dem_zurueckholen'),
+  'vor dem Konto': tx('grund_text.vor_dem_konto'), 'vor dem Abgleich': tx('grund_text.vor_dem_abgleich') };
 function schnappschussListe() {
   const l = Z.schnappschuesse();
   if (!l.length) return `<p class="leer">${tx('schnappschussliste.noch_keine_schnappschuesse')}</p>`;
@@ -389,9 +391,9 @@ function zeileSeite() {
   window.scrollTo(0, 0);
 }
 // ---------- Router ----------
-const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, konto: kontoSeite, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+const TITEL = { abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), konto: tx('konto.titel'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
   lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
@@ -429,7 +431,7 @@ async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
-  if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
+  if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl' && name !== 'konto') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
@@ -562,7 +564,7 @@ function start() {
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
     <a class="textlink" href="#einfuehrung">${tx('start.einfuehrung_noch_einmal_ansehen')}</a></div>
     <div class="abschnitt start-laden"><h3>${tx('start.schon_ein_profil')}</h3><p class="unter">${tx('start.wenn_du_itqan_auf_einem_anderen_geraet')}</p>
-      <div class="reihe" style="margin-top:10px"><button class="knopf leise klein" id="start-laden">${tx('start.gesichertes_profil_laden')}</button>${Z.schnappschuesse().length ? `<button class="knopf leise klein" id="start-schnapp">${tx('start.schnappschuss_zurueckholen')}</button>` : ''}</div>
+      <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="start-konto">${tx('konto.mit_konto')}</button><button class="knopf leise klein" id="start-laden">${tx('start.gesichertes_profil_laden')}</button>${Z.schnappschuesse().length ? `<button class="knopf leise klein" id="start-schnapp">${tx('start.schnappschuss_zurueckholen')}</button>` : ''}</div>
       <div id="start-schnapp-liste" class="verdeckt" style="margin-top:12px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>${tx('start.wie_heisst_du')}</h3><div class="feld"><input type="text" id="name" placeholder="${tx('start.dein_name_fuer_deine_profildatei')}" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>${tx('start.was_wiederholst_du')}</h3><p class="unter">${tx('start.waehle_die_agza_die_du_auswendig_kannst')}</p>
@@ -584,6 +586,7 @@ function start() {
     </details>
     <button class="knopf haupt" id="los" style="margin-top:18px">${tx('start.bismillah_beginnen')}</button>`;
   app.querySelector('#start-laden').onclick = profilLaden;
+  app.querySelector('#start-konto').onclick = () => { location.hash = '#konto'; };
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
   schnappschussBinden(app);
   const dauerZeigen = () => { app.querySelector('#dauer').innerHTML = tageText(); };
@@ -1704,7 +1707,7 @@ function profil() {
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lernen"><div class="t"><b>${tx('lernen.neu_lernen')}</b><span>${tx('lernen.profil_text')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#aehnlich"><div class="t"><b>${tx('allg.aehnliche_stellen')}</b><span>${tx('profil.mutasabihat_nachschlagen_vergleichen_und')}</span></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.sicherung')}</b><small>${tx('profil.gruppe_sicherung_t')}</small></span></summary>
       <div class="profil-inhalt">
-    <p class="unter">${tx('profil.es_gibt_keinen_server_deine_fortschritte', { a: istTouch() ? tx('profil.am_besten_in_dateien_icloud_drive_oder') : ` ${tx('profil.als_datei')}`, letzteSicherung: datumKurz(P.einst.letzteSicherung) })}</p>
+    ${kontoKarte()}${Ab.status().verbunden ? `<p class="unter">${tx('konto.profil_hinweis')}</p>` : ''}<p class="unter"${Ab.status().verbunden ? ' hidden' : ''}>${tx('profil.es_gibt_keinen_server_deine_fortschritte', { a: istTouch() ? tx('profil.am_besten_in_dateien_icloud_drive_oder') : ` ${tx('profil.als_datei')}`, letzteSicherung: datumKurz(P.einst.letzteSicherung) })}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">${tx('profil.profil_sichern')}</button><button class="knopf leise klein" id="laden">${tx('profil.profil_laden')}</button></div>
       </div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_hilfe')}</b><small>${tx('profil.gruppe_hilfe_t')}</small></span></summary>
@@ -1715,6 +1718,100 @@ function profil() {
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   app.querySelector('#laden').onclick = profilLaden;
+}
+
+// ---------- Konto und Abgleich ----------
+const zeitText = t => t ? new Date(t).toLocaleString(gebiet('datum'), { dateStyle: 'medium', timeStyle: 'short' }) : tx('konto.noch_nie');
+function kontoKarte() {
+  const st = Ab.status();
+  return `<div class="unterseiten" style="margin:10px 0"><a class="karte" href="#konto"><div class="t"><b>${tx('konto.karte_titel')}</b><span>${st.angemeldet ? tx('konto.karte_verbunden', { email: esc(st.email) }) : tx('konto.karte_text')}</span></div><span class="pfeil">›</span></a></div>`;
+}
+// Stiller Abgleich im Hintergrund: beim Start, bei Rückkehr in die App und wenn wieder Netz da ist.
+// Fremde Einträge werden nur in ruhigen Ansichten eingebaut, nie mitten im Üben.
+let abgleichZeit = 0;
+async function abgleichStill() {
+  if (!Z.P || !Ab.status().angemeldet || Date.now() - abgleichZeit < 20000) return;
+  abgleichZeit = Date.now();
+  const ruhig = ['heute', 'karte', 'mushaf', 'profil', 'konto', 'einstellungen'].includes((location.hash.slice(1) || 'heute').split('/')[0]);
+  const r = await Ab.abgleichen({ neuAufbauen: ruhig });
+  if (r.neuLaden) { location.reload(); return; }
+  if (r.aufgebaut && ruhig) { themaAnwenden(); zeige(); }
+}
+function kontoSeite() {
+  navSetzen(Z.P ? 'profil' : null);
+  let email = '';
+  const kopf = `<button class="zurueck" onclick="location.hash='${Z.P ? '#profil' : '#start'}'">${zurueckPfeil}${Z.P ? tx('allg.profil') : tx('allg.zurueck')}</button>
+    <div class="marke">${tx('konto.titel')}<small>${tx('konto.untertitel')}</small></div>`;
+  const meldung = (t, fehler) => { const m = app.querySelector('#k-meldung'); if (m) { m.textContent = t || ''; m.classList.toggle('warnung', !!fehler); } };
+  const fehlerText = e => e instanceof Ab.NetzFehler ? tx('konto.fehler_netz') : tx('konto.fehler_allg', { text: String(e?.message || e) });
+  const lauf = async (knopf, f) => { knopf.disabled = true; try { await f(); } finally { knopf.disabled = false; } };
+  const enter = (feld, knopf) => { feld.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); knopf.click(); } }; };
+
+  async function abgleichen(wahl) {
+    const hatteProfil = !!Z.P;
+    const r = await Ab.abgleichen({ wahl });
+    if (r.art === 'konflikt') return konflikt(r);
+    if (r.neuLaden || (!hatteProfil && Z.P)) { location.hash = '#heute'; location.reload(); return; }
+    const fehl = { kein_profil: tx('konto.kein_profil'), abgemeldet: tx('konto.abgemeldet'), offline: tx('konto.fehler_netz') }[r.art];
+    if (fehl) { toast(fehl); return zeichne(); }
+    if (r.art === 'fehler') { toast(tx('konto.fehler_allg', { text: r.text })); return zeichne(); }
+    toast({ umzug: tx('konto.umzug_ok'), uebernommen: tx('konto.uebernommen_ok'), ersetzt: tx('konto.ersetzt_ok') }[r.art] || tx('konto.abgeglichen_ok'));
+    themaAnwenden(); zeichne();
+  }
+  // Zwei Stände, die sich nicht mischen lassen: erst der vom Konto, dann (mit zweiter Bestätigung) der von diesem Gerät
+  async function konflikt(r) {
+    const feld = u => `<div class="ueberblick"><div><span>${tx('profilladen.name')}</span><b>${esc(u.name || tx('profilladen.ohne_namen'))}</b></div><div><span>${tx('profilladen.zuletzt_geuebt')}</span><b>${datumKurz(u.letzterTag)}</b></div><div><span>${tx('profilladen.abschnitte_geuebt')}</span><b>${zahl(u.abschnitte)}</b></div></div>`;
+    const nimmKonto = await dialog({ titel: tx('konto.konflikt_titel'), ja: tx('konto.konflikt_nimm_konto'), nein: tx('konto.konflikt_nimm_geraet'),
+      html: `<p class="unter">${tx('konto.konflikt_text')}</p><p><b>${tx('konto.konflikt_konto')}</b></p>${feld(r.server)}<p><b>${tx('konto.konflikt_geraet')}</b></p>${feld(r.lokal)}<p class="unter">${tx('konto.konflikt_konto_hinweis')}</p>` });
+    if (nimmKonto) return abgleichen('server');
+    if (await dialog({ titel: tx('konto.ersetzen_titel'), html: `<p class="unter">${tx('konto.ersetzen_text')}</p>`, ja: tx('konto.ersetzen_ja'), gefahr: true })) return abgleichen('lokal');
+    zeichne();
+  }
+  function zeichne(schritt) {
+    const st = Ab.status();
+    schritt ??= st.angemeldet ? 'drin' : 'email';
+    if (schritt === 'drin') {
+      app.innerHTML = kopf + `<div class="abschnitt"><p><b>${tx('konto.angemeldet_als', { email: esc(st.email) })}</b></p>
+        ${st.verbunden ? `<p class="unter">${st.offen ? tx('konto.status_offen', { n: st.offen }) : tx('konto.status_ok')} · ${tx('konto.zuletzt', { zeit: zeitText(st.letzter) })}</p>` : ''}
+        <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="k-jetzt">${tx('konto.jetzt')}</button><button class="knopf leise klein" id="k-export">${tx('konto.exportieren')}</button></div>
+        <div class="reihe" style="margin-top:12px"><button class="knopf leise klein" id="k-aus">${tx('konto.abmelden')}</button><button class="knopf leise klein" id="k-loeschen">${tx('konto.loeschen')}</button></div>
+        <p class="unter" id="k-meldung" role="status" style="margin-top:10px"></p></div>`;
+      app.querySelector('#k-jetzt').onclick = ev => lauf(ev.currentTarget, () => abgleichen());
+      app.querySelector('#k-export').onclick = ev => lauf(ev.currentTarget, async () => {
+        try { herunterladen(`Itqan-Konto-${Z.heute()}.json`, await Ab.datenExport(), 'application/json'); toast(tx('konto.exportiert')); } catch (e) { meldung(fehlerText(e), true); }
+      });
+      app.querySelector('#k-aus').onclick = async () => { if (await dialog({ titel: tx('konto.abmelden_titel'), html: `<p class="unter">${tx('konto.abmelden_text')}</p>`, ja: tx('konto.abmelden') })) { await Ab.abmelden(); toast(tx('konto.abgemeldet_ok')); zeichne(); } };
+      app.querySelector('#k-loeschen').onclick = async () => {
+        if (!await dialog({ titel: tx('konto.loeschen_titel'), html: `<p class="unter">${tx('konto.loeschen_text')}</p>`, ja: tx('konto.loeschen_ja'), gefahr: true })) return;
+        try { await Ab.kontoLoeschen(); toast(tx('konto.geloescht_ok')); zeichne(); } catch (e) { meldung(fehlerText(e), true); }
+      };
+    } else if (schritt === 'code') {
+      app.innerHTML = kopf + `<div class="abschnitt"><p class="unter">${tx('konto.code_gesendet', { email: esc(email) })}</p>
+        <div class="feld" style="margin-top:12px"><input type="text" id="k-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="${tx('konto.code')}" aria-label="${tx('konto.code')}"></div>
+        <div class="reihe" style="margin-top:12px"><button class="knopf haupt" id="k-pruefen">${tx('konto.anmelden')}</button><button class="knopf leise klein" id="k-zurueck">${tx('konto.andere_adresse')}</button></div>
+        <p class="unter" id="k-meldung" role="alert" style="margin-top:10px"></p></div>`;
+      const feld = app.querySelector('#k-code'), knopf = app.querySelector('#k-pruefen'); feld.focus(); enter(feld, knopf);
+      app.querySelector('#k-zurueck').onclick = () => zeichne('email');
+      knopf.onclick = () => lauf(knopf, async () => {
+        const c = feld.value.replace(/\D/g, ''); if (c.length < 6) return meldung(tx('konto.fehler_code'), true);
+        try { await Ab.codePruefen(email, c); } catch (e) { return meldung(e instanceof Ab.ServerFehler ? tx('konto.fehler_code') : fehlerText(e), true); }
+        await abgleichen();
+      });
+    } else {
+      app.innerHTML = kopf + `<div class="abschnitt"><p class="unter">${tx('konto.intro')}</p>
+        <div class="feld" style="margin-top:12px"><input type="email" id="k-mail" autocomplete="email" inputmode="email" placeholder="${tx('konto.email')}" aria-label="${tx('konto.email')}" value="${esc(email)}"></div>
+        <div class="reihe" style="margin-top:12px"><button class="knopf haupt" id="k-senden">${tx('konto.code_senden')}</button></div>
+        <p class="unter" id="k-meldung" role="alert" style="margin-top:10px"></p>
+        <p class="unter" style="font-size:.85em">${tx('konto.datenschutz')}</p></div>`;
+      const feld = app.querySelector('#k-mail'), knopf = app.querySelector('#k-senden'); enter(feld, knopf);
+      knopf.onclick = () => lauf(knopf, async () => {
+        email = feld.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return meldung(tx('konto.fehler_mail'), true);
+        try { await Ab.codeSenden(email); } catch (e) { return meldung(fehlerText(e), true); }
+        zeichne('code');
+      });
+    }
+  }
+  zeichne();
 }
 
 // ---------- Hilfe und Glossar ----------
@@ -2562,6 +2659,8 @@ async function starten() {
   catch (e) { app.innerHTML = `<div class="lade">${tx('app.die_daten_konnten_nicht_geladen_werden')}</div>`; return; }
   Z.tagesSchnappschuss();
   await zeige();
+  Ab.starten(); abgleichStill();
+  addEventListener('online', abgleichStill); document.addEventListener('visibilitychange', () => { if (!document.hidden) abgleichStill(); });
   setTimeout(neuigkeitenPruefen, 600);
   setTimeout(vorratSpeichern, 4000);
   // wieder Netz: Seiten in einfacher Schrift bekommen ihre Muṣḥaf-Schrift, der Vorrat wird nachgeholt

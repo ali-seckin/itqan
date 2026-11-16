@@ -395,7 +395,7 @@ html.tippt .nav{display:none}
 /* Formulare */
 .feld{margin:14px 0}
 .feld label{display:block;font-size:var(--s-text);margin-bottom:6px}
-.feld input[type=text],.feld input[type=time],.feld select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2)}
+.feld input[type=text],.feld input[type=email],.feld input[type=time],.feld select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--rand);background:var(--karte2)}
 .wahl{display:flex;gap:6px;background:var(--karte);border:1px solid var(--rand);padding:4px;border-radius:999px}
 .wahl button{flex:1;border:0;background:none;padding:8px 6px;border-radius:999px;font-size:var(--s-text)}
 .wahl button.an{background:var(--akzentF);color:var(--aufAkzent)}

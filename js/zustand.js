@@ -109,7 +109,9 @@ function geraetNachziehen() {
 // fg Fehlerstelle geübt, mu Mutašābih unterschieden, pb Pause beginnt, pe Pause endet, on Ornamente nachgetragen,
 // rk Rücknahme, ei Einstellung.
 const GERAET = 'itqan-geraet', LOG_GRENZE = 300;
-let geraet = null, fremd = 0, schatten = null, grenze = LOG_GRENZE;
+let geraet = null, fremd = 0, schatten = null, grenze = LOG_GRENZE, eintragHaken = null;
+// Der Abgleich mit dem Konto (js/abgleich.js) hängt sich hier an: er bekommt jeden neuen Eintrag dieses Geräts.
+export function eintragHakenSetzen(f) { eintragHaken = f; }
 export function logGrenze(n) { grenze = n > 0 ? n : LOG_GRENZE; }
 function geraetLesen() {
   if (geraet) return geraet;
@@ -132,6 +134,7 @@ function marke() {
 function logAnhaengen(e) {
   (P.log ??= []).push(e);
   if (P.log.length > grenze) P.log.splice(0, P.log.length - grenze);
+  if (eintragHaken) try { eintragHaken(e); } catch (x) { console.warn('Abgleich', x); }
 }
 // Neuer Sockel: neues Profil, geladene Sicherung, zurückgeholter Schnappschuss, Wechsel der Gliederung.
 // Die höhere Generation gewinnt, ihre Einträge beginnen von vorn.
@@ -141,6 +144,8 @@ function sockelWechsel(stand) {
   P.sockel = { n: (P.sockel?.n || 0) + 1, z: z > 0 && z < g.z ? z : g.z, g: g.g }; P.log = [];
   schattenNeu(); geraetSichern();
 }
+// Eigener neuer Sockel aus dem jetzigen Stand (Umzug auf ein Konto). mindestens: die Generation muss höher sein als diese.
+export function sockelNeu(mindestens = 0) { if (!P) return; P.sockel.n = Math.max(P.sockel.n || 0, mindestens); sockelWechsel(); speichern(); }
 export const sockelNeuer = (a, b) => (a.n - b.n || a.z - b.z || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0)) > 0;
 // Einstellungen (Name und einst.*) schreibt die Oberfläche direkt. Ein Schattenbild erkennt die Änderungen
 // und legt je geändertem Wert einen Eintrag an. Beim Zusammenführen gilt der spätere Wert.
