@@ -167,7 +167,7 @@ export function seiteHTML(p, opt = {}) {
       if (ers) return `<span class="${k}" data-v="${vi}" data-i="${i}" data-fp="${fp}"${ah}>${ersatz(vi, i, ty)}</span>`;
       // das letzte Zeichen einer Āya ist ihre Rosette mit der Nummer; data-g erlaubt die schwarze Zahl über der farbigen Rosette
       const ende = !D.W.has(vi + '.' + (i + 1));   // Rosette der Āya: Ring golden, nur die Zahl schwarz (Ausschnitt je Nummer aus ziffern.js)
-      const sty = [fp !== p ? `font-family:qp${fp}` : '', ende ? `--zc:${zifferClip(D.V[vi][1])}` : ''].filter(Boolean).join(';');
+      const sty = [fp !== p ? `font-family:qp${fp}` : '', ende ? `--zc:${zifferClip(vi)}` : ''].filter(Boolean).join(';');
       return `<span class="${k}${ende ? ' ende' : ''}" data-v="${vi}" data-i="${i}"${ende ? ` data-g="${c}"` : ''}${ah}${sty ? ` style="${sty}"` : ''}>${glyphen(c, ty)}</span>`;
     }).join('');
     return `<div class="mz${p < 3 ? ' mitte' : ''}${zers ? ' ers' : ''}" style="font-family:qp${p}">${w}</div>`;
