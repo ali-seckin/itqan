@@ -33,6 +33,7 @@ function themaAnwenden() {
     const h = document.documentElement, sm = Z.P.einst.seitenGroesse || 100, tm = Z.P.einst.textGroesse || 100;
     h.style.setProperty('--sm', sm / 100); h.style.setProperty('--tm', tm / 100);
     if (sm > 100) h.dataset.gross = '1'; else delete h.dataset.gross;
+    const sk = Z.P.einst.stopp || '1'; if (sk === 'aus') delete h.dataset.stopp; else h.dataset.stopp = sk;   // Farbe der Stoppzeichen
   }
 }
 dunkelMQ.addEventListener('change', themaAnwenden);
@@ -298,7 +299,7 @@ async function vorratSpeichern() {
   try {
     const da = await gespeicherteSeiten(); if (!da) return;
     const t = Z.tagesplan(), cache = await caches.open(SEITEN_CACHE);
-    const fehlt = [...new Set(t.plan.filter(x => !t.fertig.includes(x)).flatMap(x => D.A[x].seiten).flatMap(schriftSeiten))].filter(x => !da.has(x));
+    const fehlt = [...new Set(t.plan.filter(x => !t.fertig.includes(x)).flatMap(x => D.A[x]?.seiten || []).flatMap(schriftSeiten))].filter(x => !da.has(x));
     for (let i = 0; i < fehlt.length; i += 3) await Promise.all(fehlt.slice(i, i + 3).map(x => cache.add(seitenUrl(x)).catch(() => {})));
   } catch (e) {}
 }
@@ -603,7 +604,7 @@ function start() {
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
     Z.speichern();
-    if (s.modus !== D.modus) { location.hash = '#heute'; location.reload(); return; }
+    if (s.modus !== D.modus) { history.replaceState(null, '', '#heute'); location.reload(); return; }   // ohne hashchange: sonst baut Heute den Plan noch in der alten Gliederung
     if (bereich) { Z.P.einst.bereich = bereich; Z.speichern(); }
     navigator.storage?.persist?.();
     location.hash = '#heute';
@@ -1380,7 +1381,7 @@ async function ueben(idText, quelle, fokusText) {
   zeichne();
   if (pos) sichtbar(spans(ayat[Math.min(pos, ayat.length - 1)])[0]);
   // nächste Seiten schon laden
-  const t3 = Z.tagesplan(); t3.plan.filter(x => !t3.fertig.includes(x) && x !== id).slice(0, 2).forEach(x => schriftenLaden(D.A[x].seiten));
+  const t3 = Z.tagesplan(); t3.plan.filter(x => !t3.fertig.includes(x) && x !== id).slice(0, 2).forEach(x => D.A[x] && schriftenLaden(D.A[x].seiten));
 }
 
 // ---------- Wird vollbracht ----------
@@ -2330,6 +2331,8 @@ function einstellungen() {
       <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
       <div class="wahl" id="textgroesse" role="group" aria-label="${tx('einstellungen.schriftgroesse')}" style="margin-top:10px">${[[100, tx('einstellungen.normal')], [112, tx('einstellungen.gross')], [125, tx('einstellungen.sehr_gross')]].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+      <p class="unter" style="margin-top:14px">${tx('einstellungen.stoppzeichen_text')}</p>
+      <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['1', tx('einstellungen.stopp_1'), ['#8f5410', '#1f6b6e']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']]].map(([w, l, f]) => `<button data-w="${w}" class="${(E.stopp || '1') === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
       <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
@@ -2375,6 +2378,7 @@ function einstellungen() {
   };
   wahl('seitengroesse', w => { E.seitenGroesse = +w; themaAnwenden(); });
   wahl('textgroesse', w => { E.textGroesse = +w; themaAnwenden(); });
+  wahl('stoppfarbe', w => { E.stopp = w; themaAnwenden(); });
   // Die neue Reihenfolge gilt sofort: der Plan von heute wird neu aufgebaut; wer heute schon Abschnitte abgegeben hat, wird einmal gewarnt
   app.querySelector('#reihenfolge').onclick = async ev => {
     const w = ev.target.closest('button')?.dataset.w; if (w == null || w === E.reihenfolge) return;
@@ -2544,6 +2548,7 @@ async function starten() {
   try {
     await ladeDaten(Z.P?.einst.ausgabe || 'v2', Z.P?.einst.modus || 'fort');
     if (await Z.gliederungAbgleichen()) toast(tx('app.abschnitte_umgestellt_dein_fortschritt'));
+    Z.plaeneBereinigen();
     if (Z.P?.einst.bereichJuz) { const j = new Set(Z.P.einst.bereichJuz); Z.P.einst.bereich = D.A.filter(e => j.has(e.juz)).map(e => e.id); delete Z.P.einst.bereichJuz; Z.speichern(); }
     if (Z.P) {   // Auswahl (Āya-Bereiche) ist maßgeblich; ältere Profile bekommen sie aus ihren Abschnitten
       const E = Z.P.einst, vor = JSON.stringify([E.bereich, E.auswahl]);

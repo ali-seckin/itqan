@@ -278,12 +278,31 @@ export function gliederungUmstellen(alt, ziel = D.gliederung, sichern = true) {
     const plan = [...new Set(t.plan.flatMap(o => R[o] || []))], fertig = new Set(t.fertig), art = {};
     for (const nid of plan) { const o = M[nid].find(x => t.plan.includes(x)); art[nid] = t.art[o] || 'zyklus'; }
     t.fertig = plan.filter(nid => M[nid].every(o => !t.plan.includes(o) || fertig.has(o)));
-    t.plan = plan; t.art = art;
+    t.plan = plan; t.art = art; t.gl = ziel;
   }
   // Lektionen ziehen mit: bei mehreren alten Abschnitten gilt der schwächste Stand
   const altL = P.lern || {}; P.lern = {};
   neu.forEach((n, nid) => { const ls = M[nid].map(o => altL[o]).filter(Boolean); if (ls.length) P.lern[nid] = kopie(ls.reduce((a, b) => b.ph < a.ph ? b : a)); });
   P.gliederung = ziel; if (sichern && !fremd) { sockelWechsel(); speichern(); }
+}
+// Pläne, die in einer anderen Gliederung gebaut wurden als der geladenen (etwa direkt nach dem Anlegen eines Profils im
+// Modus „Ganze Seiten“, bevor die App neu geladen hat), verweisen auf falsche oder fehlende Einheiten. Ein unberührter Tag
+// wird neu geplant, ein angefangener behält nur, was es gibt.
+export function plaeneBereinigen() {
+  if (!P) return 0;
+  let n = 0;
+  for (const [d, t] of Object.entries(P.tage)) {
+    if (!t.plan?.length) continue;
+    const fremd = (t.gl && t.gl !== D.gliederung) || t.plan.some(id => !D.A[id]);
+    if (!fremd) continue;
+    n++;
+    if (!t.fertig?.length && !t.punkte) { delete P.tage[d]; continue; }
+    t.plan = t.plan.filter(id => D.A[id]); t.fertig = (t.fertig || []).filter(id => D.A[id]);
+    for (const id of Object.keys(t.art || {})) if (!D.A[id]) delete t.art[id];
+    t.gl = D.gliederung;
+  }
+  if (n) speichern();
+  return n;
 }
 export async function gliederungAbgleichen() {
   if (!P || P.gliederung === D.gliederung) return false;
@@ -429,7 +448,7 @@ export function tagesplan(datum = heute(), trotzdem = false) {
   const neuGenutzt = langzeit ? naechste.filter(id => !P.karten[id]?.n).length : naechste.length;
   const kn = Math.round(Math.max(0, Math.min(1.5, kn0 - neuGenutzt)) * 1000) / 1000;
   naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
-  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, ...(cb ? { cb } : {}), ...(frei ? { freiwillig: true } : {}) }, kn, ...(anteil > 0 ? { k: konto } : {}) });
+  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, gl: D.gliederung, ...(cb ? { cb } : {}), ...(frei ? { freiwillig: true } : {}) }, kn, ...(anteil > 0 ? { k: konto } : {}) });
   return P.tage[datum];
 }
 // Tagesplan anwenden. Gibt es für den Tag schon einen Plan (zweites Gerät), bleibt der erste;
@@ -445,7 +464,7 @@ function planAnwenden(e) {
 }
 // Tag für einen Abschluss, zu dem es keinen Plan gibt (Einträge aus einer älteren Generation)
 function tagSicher(d) {
-  return P.tage[d] ??= { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ohne: 1 };
+  return P.tage[d] ??= { plan: [], art: {}, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa: 0, ohne: 1, gl: D.gliederung };
 }
 // an einem Ruhetag oder in der Pause trotzdem üben
 export function trotzdemUeben() { return tagesplan(heute(), true); }
