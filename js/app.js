@@ -23,6 +23,8 @@ let letzteEreignisse = [];
 
 // ---------- Erscheinungsbild ----------
 const dunkelMQ = matchMedia('(prefers-color-scheme: dark)');
+// Farbe der Stoppzeichen: Standard und die frühere Auswahl „1“ sind jetzt „Gold und Türkis“ (Schlüssel 6)
+const stoppWahl = () => { const s = Z.P?.einst.stopp; return !s || s === '1' ? '6' : s; };
 function themaAnwenden() {
   let wahl = Z.P?.einst.thema; if (!wahl) { try { wahl = localStorage.getItem('itqan-thema') || 'auto'; } catch (e) { wahl = 'auto'; } }
   const modus = wahl === 'auto' ? (dunkelMQ.matches ? 'dunkel' : 'hell') : wahl;
@@ -33,7 +35,7 @@ function themaAnwenden() {
     const h = document.documentElement, sm = Z.P.einst.seitenGroesse || 100, tm = Z.P.einst.textGroesse || 100;
     h.style.setProperty('--sm', sm / 100); h.style.setProperty('--tm', tm / 100);
     if (sm > 100) h.dataset.gross = '1'; else delete h.dataset.gross;
-    const sk = Z.P.einst.stopp || '1'; if (sk === 'aus') delete h.dataset.stopp; else h.dataset.stopp = sk;   // Farbe der Stoppzeichen
+    const sk = stoppWahl(); if (sk === 'aus') delete h.dataset.stopp; else h.dataset.stopp = sk;   // Farbe der Stoppzeichen
   }
 }
 dunkelMQ.addEventListener('change', themaAnwenden);
@@ -2332,7 +2334,7 @@ function einstellungen() {
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
       <div class="wahl" id="textgroesse" role="group" aria-label="${tx('einstellungen.schriftgroesse')}" style="margin-top:10px">${[[100, tx('einstellungen.normal')], [112, tx('einstellungen.gross')], [125, tx('einstellungen.sehr_gross')]].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.stoppzeichen_text')}</p>
-      <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['1', tx('einstellungen.stopp_1'), ['#8f5410', '#1f6b6e']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']]].map(([w, l, f]) => `<button data-w="${w}" class="${(E.stopp || '1') === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
+      <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']]].map(([w, l, f]) => `<button data-w="${w}" class="${stoppWahl() === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
       <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
