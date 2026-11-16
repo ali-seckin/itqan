@@ -546,6 +546,7 @@ export default {
     schoen: 'خوب',
   },
   rueckmeldung: {
+    letzter_fehler: 'آخری خرابی: {fehler}',
     ganze_seiten: 'پورے صفحات',
     itqan: 'اتقان {VERSION}',
     touch: '، ٹچ',
@@ -1454,6 +1455,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'حصوں کی ترتیب بدل دی گئی، آپ کی پیش رفت ساتھ منتقل ہو گئی ہے۔',
     die_daten_konnten_nicht_geladen_werden: 'ڈیٹا لوڈ نہیں ہو سکا۔ براہِ کرم انٹرنیٹ کے ساتھ دوبارہ کھولیں۔',
+    fehler_titel: 'یہ صفحہ ابھی نہیں کھل سکتا',
+    fehler_text: 'کچھ گڑبڑ ہو گئی۔ آپ کا ڈیٹا محفوظ ہے۔ «دوبارہ لوڈ کریں» دبائیں۔ اگر اس سے مسئلہ حل نہ ہو تو «خرابی بتائیں» دبائیں تاکہ ہم وجہ دیکھ سکیں۔',
+    fehler_neu_laden: 'دوبارہ لوڈ کریں',
+    fehler_melden: 'خرابی بتائیں',
   },
   ornamente: {
     eine_bluete: 'ایک پھول',
@@ -1472,6 +1477,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'آج کا صفحہ اب کبھی خالی نہیں رہتا',
+    robust_1: 'اگر «آج» کے صفحے کا کوئی حصہ نہ چلے تو باقی پھر بھی نظر آتا ہے۔ اور اگر کوئی صفحہ بالکل نہ کھلے تو اتقان خالی سکرین کے بجائے «دوبارہ لوڈ کریں» اور «خرابی بتائیں» کے ساتھ پیغام دکھاتا ہے۔',
     rechtslinks_titel: 'دائیں اور بائیں، ہر زبان میں',
     rechtslinks_1: 'چھپے ہوئے مصحف میں صفحے کی جگہ بتانے والا نشان اب پورا لکھا ہوتا ہے: «دائیں» اور «بائیں»۔',
     datenquelle_titel: 'ڈیٹا کا نیا ماخذ',

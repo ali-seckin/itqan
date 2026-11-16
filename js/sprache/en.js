@@ -544,6 +544,7 @@ export default {
     schoen: 'Great',
   },
   rueckmeldung: {
+    letzter_fehler: 'Last error: {fehler}',
     ganze_seiten: 'Whole pages',
     itqan: 'Itqān {VERSION}',
     touch: ', touch',
@@ -1452,6 +1453,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'Sections rearranged. Your progress has been carried over.',
     die_daten_konnten_nicht_geladen_werden: 'Couldn’t load the data. Please open the app again while you’re online.',
+    fehler_titel: 'This view can’t be opened right now',
+    fehler_text: 'Something went wrong. Your data is safe. Tap “Reload”. If that doesn’t help, tap “Report error” so we can see what is going on.',
+    fehler_neu_laden: 'Reload',
+    fehler_melden: 'Report error',
   },
   ornamente: {
     eine_bluete: 'A blossom',
@@ -1470,6 +1475,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'Today never stays blank',
+    robust_1: 'If one part of the Today view fails, the rest still shows. And if a view can’t open at all, Itqān shows a message with “Reload” and “Report error” instead of a blank screen.',
     rechtslinks_titel: 'Right and left in every language',
     rechtslinks_1: 'The marker showing whether a page lies on the right or left in the printed Mushaf now uses the everyday short form of each language, for example Sağ/Sol in Turkish or يمين/يسار in Arabic.',
     datenquelle_titel: 'A new data source',

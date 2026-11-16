@@ -544,6 +544,7 @@ export default {
     schoen: 'Super',
   },
   rueckmeldung: {
+    letzter_fehler: 'Dernière erreur : {fehler}',
     ganze_seiten: 'Pages entières',
     itqan: 'Itqān {VERSION}',
     touch: ', tactile',
@@ -1452,6 +1453,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'Sections réorganisées : ta progression a été conservée.',
     die_daten_konnten_nicht_geladen_werden: 'Les données n’ont pas pu être chargées. Rouvre l’application avec une connexion internet.',
+    fehler_titel: 'Cette vue ne peut pas s’ouvrir pour le moment',
+    fehler_text: 'Quelque chose s’est mal passé. Tes données sont en sécurité. Touche « Recharger ». Si cela ne suffit pas, touche « Signaler l’erreur » pour que nous voyions ce qui se passe.',
+    fehler_neu_laden: 'Recharger',
+    fehler_melden: 'Signaler l’erreur',
   },
   ornamente: {
     eine_bluete: 'Une fleur',
@@ -1470,6 +1475,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'Aujourd’hui ne reste jamais vide',
+    robust_1: 'Si une partie de la vue « Aujourd’hui » échoue, le reste s’affiche quand même. Et si une vue ne s’ouvre pas du tout, Itqān affiche un message avec « Recharger » et « Signaler l’erreur » au lieu d’un écran vide.',
     rechtslinks_titel: 'Droite et gauche dans chaque langue',
     rechtslinks_1: 'L’indication qui montre si une page se trouve à droite ou à gauche dans le Mushaf imprimé suit désormais l’abréviation courante de chaque langue. En français, cela reste D et G.',
     datenquelle_titel: 'Une nouvelle source de données',

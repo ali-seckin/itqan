@@ -540,6 +540,7 @@ export default {
     schoen: 'Schön',
   },
   rueckmeldung: {
+    letzter_fehler: 'Letzter Fehler: {fehler}',
     ganze_seiten: 'Ganze Seiten',
     itqan: 'Itqān {VERSION}',
     touch: ', Touch',
@@ -1448,6 +1449,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'Abschnitte umgestellt, dein Fortschritt ist übernommen.',
     die_daten_konnten_nicht_geladen_werden: 'Die Daten konnten nicht geladen werden. Bitte mit Internet erneut öffnen.',
+    fehler_titel: 'Diese Ansicht lässt sich gerade nicht öffnen',
+    fehler_text: 'Etwas ist schiefgegangen. Deine Daten sind sicher. Tippe auf „Neu laden“. Hilft das nicht, tippe auf „Fehler melden“, dann sehe ich, woran es liegt.',
+    fehler_neu_laden: 'Neu laden',
+    fehler_melden: 'Fehler melden',
   },
   ornamente: {
     eine_bluete: 'Eine Blüte',
@@ -1466,6 +1471,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'Heute bleibt nie leer',
+    robust_1: 'Fällt ein Teil der Ansicht „Heute“ aus, erscheint der Rest trotzdem. Und wenn eine Ansicht gar nicht aufgeht, zeigt Itqān eine Meldung mit „Neu laden“ und „Fehler melden“ statt eines leeren Bildschirms.',
     rechtslinks_titel: 'Rechts und links in jeder Sprache',
     rechtslinks_1: 'Die Angabe, ob eine Seite im gedruckten Muṣḥaf rechts oder links liegt, steht jetzt so, wie man es in jeder Sprache im Alltag abkürzt, etwa Sağ/Sol auf Türkisch oder يمين/يسار auf Arabisch.',
     datenquelle_titel: 'Neue Datenquelle',

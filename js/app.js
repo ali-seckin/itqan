@@ -242,7 +242,7 @@ function rueckmeldung() {
   const info = [tx('rueckmeldung.itqan', { VERSION }), tx('rueckmeldung.geraet', { geraet: geraet(), a: istTouch() ? tx('rueckmeldung.touch') : '', b: istInstalliert() ? tx('rueckmeldung.installiert') : tx('rueckmeldung.im_browser') }),
     tx('rueckmeldung.bildschirm_fenster', { width: screen.width, height: screen.height, innerWidth, innerHeight }), tx('rueckmeldung.browser', { userAgent: navigator.userAgent }),
     P ? tx('rueckmeldung.druck_abschnitte_geuebt', { a: P.einst.ausgabe === 'v1' ? '1405' : '1421', b: P.einst.modus === 'anf' ? tx('rueckmeldung.anfaenger') : P.einst.modus === 'seite' ? tx('rueckmeldung.ganze_seiten') : tx('rueckmeldung.fortgeschritten'), abschnitte: P.summe.abschnitte }) : tx('rueckmeldung.noch_kein_profil'),
-    vorherigeAnsicht ? tx('rueckmeldung.zuletzt_geoeffnet', { vorherigeAnsicht }) : ''].filter(Boolean);
+    vorherigeAnsicht ? tx('rueckmeldung.zuletzt_geoeffnet', { vorherigeAnsicht }) : '', letzterFehler() ? tx('rueckmeldung.letzter_fehler', { fehler: letzterFehler() }) : ''].filter(Boolean);
   let art = tx('allg.fehler');
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('rueckmeldung.rueckmeldung')}<small>${tx('rueckmeldung.was_ist_dir_aufgefallen_jede')}</small></div>
@@ -398,6 +398,30 @@ new MutationObserver(() => {
   for (const g of app.querySelectorAll('.abschnitt .wahl:not([role]), .abschnitt .juzwahl:not([role])')) { const h = g.closest('.abschnitt').querySelector('h3'); if (h) { g.setAttribute('role', 'group'); g.setAttribute('aria-label', h.textContent); } }
 }).observe(app, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 let scrollBehalten = null;   // beim Blättern im Muṣḥaf bleibt die Scrollhöhe
+// Fehler festhalten: eine Ansicht bleibt nie stumm leer, und die Rückmeldung nennt den letzten Fehler
+const FEHLER_KEY = 'itqan-letzter-fehler';
+function fehlerMerken(e, wo) {
+  const z = `${new Date().toISOString().slice(0, 19)} ${wo}: ${e?.name}: ${e?.message} | ${String(e?.stack || '').split('\n').slice(0, 4).join(' / ')}`.slice(0, 700);
+  try { localStorage.setItem(FEHLER_KEY, z); } catch (x) {}
+  console.error(wo, e);
+  return z;
+}
+const letzterFehler = () => { try { return localStorage.getItem(FEHLER_KEY) || ''; } catch (e) { return ''; } };
+// Teil einer Ansicht, dessen Ausfall nicht die ganze Ansicht kosten darf
+const sicher = (wo, f, ersatz = '') => { try { return f(); } catch (e) { fehlerMerken(e, wo); return ersatz; } };
+function fehlerAnsicht(e, name) {
+  const z = fehlerMerken(e, name);
+  navSetzen(['heute', 'karte', 'mushaf', 'profil'].includes(name) ? name : 'heute');
+  app.innerHTML = `<div class="abschnitt"><h3>${tx('app.fehler_titel')}</h3><p class="unter">${tx('app.fehler_text')}</p>
+    <p class="unter" style="word-break:break-word;user-select:text;-webkit-user-select:text;font-size:.8em">${esc(z)}</p>
+    <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="fe-neu">${tx('app.fehler_neu_laden')}</button><button class="knopf leise klein" id="fe-melden">${tx('app.fehler_melden')}</button></div></div>`;
+  // Neu laden räumt auch den Zwischenspeicher der App ab (nicht die Daten des Profils), falls alte Programmdateien hängen
+  app.querySelector('#fe-neu').onclick = async () => {
+    try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch (x) {}
+    location.reload();
+  };
+  app.querySelector('#fe-melden').onclick = () => { location.hash = '#rueckmeldung'; };
+}
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
@@ -410,7 +434,7 @@ async function zeige() {
   document.body.classList.remove('doppelt');
   const y = scrollBehalten; scrollBehalten = null;
   if (y == null) window.scrollTo(0, 0);
-  await f(...arg);
+  try { await f(...arg); } catch (e) { fehlerAnsicht(e, name); }
   if (y != null) window.scrollTo(0, y);
   const ansicht = ROUTEN[name] ? name : 'heute';
   document.title = ansicht === 'heute' ? tx('allg.itqan') : `${TITEL[ansicht]} · ${tx('allg.itqan')}`;
@@ -626,7 +650,7 @@ function heute() {
       : `<b>${tx('heute.heute_ist_ruhetag')}</b><p>${tx('heute.dein_wird_ruht_heute', { a: P.kette.n ? tx('heute.deine_kette_laeuft_am_naechsten_wird_tag') : '' })}</p>`}
     <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="trotzdem">${tx('heute.trotzdem_ueben')}</button>${ps ? `<button class="knopf leise klein" id="pause-ende">${tx('heute.pause_beenden')}</button>` : ''}</div></div>` : '';
   let unter = t.ruhe ? (ps ? tx('heute.du_machst_gerade_eine_pause') : tx('heute.heute_ist_dein_ruhetag')) : t.voll ? tx('heute.dein_wird_fuer_heute_ist_vollbracht') : tx('heute.dein_wird_fuer_heute_noch_abschnitte', { a: pflicht.length - erledigt });
-  const karten = t.plan.map((id, i) => {
+  const karten = t.plan.filter(id => D.A[id]).map((id, i) => {
     const e = D.A[id], fertig = t.fertig.includes(id), jetzt = !fertig && id === offen[0];
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
@@ -644,14 +668,14 @@ function heute() {
   let spaeter = null; try { spaeter = localStorage.getItem('itqan-sicherung-spaeter'); } catch (e) {}
   const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
-  const installKarte = UEBERGANG.installieren && !istInstalliert() && istTouch() && !installWeg;
+  const installKarte = UEBERGANG.installieren && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
   const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
-  const lekt = Z.lektionen();
-  const lernHTML = lekt.length || Z.lernVorschlag() != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
+  const lekt = sicher('lektionen', () => Z.lektionen().filter(l => D.A[l.id]), []);
+  const lernHTML = lekt.length || sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? tx('lernen.alle_lektionen') : tx('lernen.erste_lektion')}</a></div>` : '';
   app.innerHTML = `
-    <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${datumText()}</small></div>
+    <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
@@ -668,22 +692,22 @@ function heute() {
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
       ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
-    ${(() => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })()}
+    ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
     ${Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
     <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
       <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
-    ${istFreitag ? `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
+    ${istFreitag ? sicher('freitag', () => `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
       ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)), ziel: prozent(bq.ziel) })}</p>`; })()}
-      <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]), titel: esc(D.A[Z.schwaechste(1)[0].id].titel) }) : '' })}</p></div>` : ''}
+      <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]), titel: esc(D.A[Z.schwaechste(1)[0].id].titel) }) : '' })}</p></div>`) : ''}
     <div class="titel-klein">${tx('heute.hatma', { a: P.zyklus.khatma + 1 })}</div>
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${tx('heute.von_abschnitten', { fertig: kf.fertig, gesamt: kf.gesamt })}</span><span>${prozent(Math.floor(kf.anteil * 100))}</span></div>
     <div class="titel-klein"><a href="#karte" style="color:inherit">${tx('allg.lichtkarte')} · ${tx('heute.30_guz')}</a></div>
-    <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${Lk.juzMittel().map((x, i) =>
+    <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${sicher('juzmittel', () => Lk.juzMittel(), Array(30).fill(null)).map((x, i) =>
       `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#kette-info').onclick = ketteFenster;
@@ -2515,7 +2539,7 @@ async function lehrer() {
 }
 
 // ---------- Start der App ----------
-(async () => {
+async function starten() {
   Z.laden(); themaAnwenden();
   try {
     await ladeDaten(Z.P?.einst.ausgabe || 'v2', Z.P?.einst.modus || 'fort');
@@ -2543,4 +2567,6 @@ async function lehrer() {
   // Tageswechsel, wenn die App über Nacht offen bleibt
   let tag = Z.heute();
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Z.heute() !== tag) { tag = Z.heute(); if ((location.hash || '#heute') === '#heute') zeige(); } });
-})();
+}
+// Scheitert schon der Start, bleibt der Bildschirm nicht bei „wird geladen“, sondern zeigt den Fehler
+starten().catch(e => fehlerAnsicht(e, 'start'));

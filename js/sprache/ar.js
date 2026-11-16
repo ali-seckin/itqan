@@ -546,6 +546,7 @@ export default {
     schoen: 'جميل',
   },
   rueckmeldung: {
+    letzter_fehler: 'آخر خطأ: {fehler}',
     ganze_seiten: 'صفحات كاملة',
     itqan: 'إتقان {VERSION}',
     touch: '، شاشة لمس',
@@ -1454,6 +1455,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'أُعيد ترتيب المقاطع، ونُقل إليها تقدّمك.',
     die_daten_konnten_nicht_geladen_werden: 'تعذّر تحميل البيانات. أعد فتح التطبيق وأنت متصل بالإنترنت.',
+    fehler_titel: 'تعذّر فتح هذه الشاشة الآن',
+    fehler_text: 'حدث خطأ ما، وبياناتك في أمان. اضغط «إعادة التحميل». وإن لم يُجدِ ذلك فاضغط «الإبلاغ عن خطأ» لنرى السبب.',
+    fehler_neu_laden: 'إعادة التحميل',
+    fehler_melden: 'الإبلاغ عن خطأ',
   },
   ornamente: {
     eine_bluete: 'زهرة',
@@ -1472,6 +1477,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'شاشة «اليوم» لا تبقى فارغة',
+    robust_1: 'إذا تعطّل جزء من شاشة «اليوم» يظهر الباقي رغم ذلك. وإذا تعذّر فتح شاشة بالكامل، يعرض إتقان رسالة فيها «إعادة التحميل» و«الإبلاغ عن خطأ» بدلًا من شاشة فارغة.',
     rechtslinks_titel: 'اليمين واليسار بلغة كل مستخدم',
     rechtslinks_1: 'العلامة التي تبيّن موضع الصفحة في المصحف المطبوع صارت تُكتب كاملة: «يمين» و«يسار».',
     datenquelle_titel: 'مصدر جديد للبيانات',

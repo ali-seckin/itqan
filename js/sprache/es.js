@@ -544,6 +544,7 @@ export default {
     schoen: 'Genial',
   },
   rueckmeldung: {
+    letzter_fehler: 'Último error: {fehler}',
     ganze_seiten: 'Páginas enteras',
     itqan: 'Itqān {VERSION}',
     touch: ', táctil',
@@ -1452,6 +1453,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'Secciones reorganizadas; tu progreso se ha conservado.',
     die_daten_konnten_nicht_geladen_werden: 'No se pudieron cargar los datos. Vuelve a abrir la app con conexión a internet.',
+    fehler_titel: 'Esta vista no se puede abrir ahora',
+    fehler_text: 'Algo ha salido mal. Tus datos están a salvo. Toca «Recargar». Si no ayuda, toca «Informar del error» para que veamos qué ocurre.',
+    fehler_neu_laden: 'Recargar',
+    fehler_melden: 'Informar del error',
   },
   ornamente: {
     eine_bluete: 'Una flor',
@@ -1470,6 +1475,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'Hoy nunca queda en blanco',
+    robust_1: 'Si falla una parte de la vista «Hoy», el resto se muestra igualmente. Y si una vista no se abre en absoluto, Itqān muestra un mensaje con «Recargar» e «Informar del error» en lugar de una pantalla en blanco.',
     rechtslinks_titel: 'Derecha e izquierda en cada idioma',
     rechtslinks_1: 'La marca que indica si una página queda a la derecha o a la izquierda en el Mushaf impreso usa ahora la abreviatura habitual: «Dcha.» e «Izq.».',
     datenquelle_titel: 'Una nueva fuente de datos',

@@ -544,6 +544,7 @@ export default {
     schoen: 'Güzel',
   },
   rueckmeldung: {
+    letzter_fehler: 'Son hata: {fehler}',
     ganze_seiten: 'Tam sayfalar',
     itqan: 'Itqān {VERSION}',
     touch: ', dokunmatik',
@@ -1452,6 +1453,10 @@ export default {
   app: {
     abschnitte_umgestellt_dein_fortschritt: 'Bölümler yeniden düzenlendi, ilerlemen aktarıldı.',
     die_daten_konnten_nicht_geladen_werden: 'Veriler yüklenemedi. Lütfen internete bağlıyken yeniden aç.',
+    fehler_titel: 'Bu görünüm şu an açılamıyor',
+    fehler_text: 'Bir şeyler ters gitti. Verilerin güvende. “Yeniden yükle”ye dokun. Yardımcı olmazsa “Hatayı bildir”e dokun, ne olduğunu görelim.',
+    fehler_neu_laden: 'Yeniden yükle',
+    fehler_melden: 'Hatayı bildir',
   },
   ornamente: {
     eine_bluete: 'Bir çiçek',
@@ -1470,6 +1475,8 @@ export default {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
   version: {
+    robust_titel: 'Bugün artık boş kalmıyor',
+    robust_1: '“Bugün” görünümünün bir parçası çalışmazsa geri kalanı yine de görünür. Bir görünüm hiç açılmazsa Itqān, boş ekran yerine “Yeniden yükle” ve “Hatayı bildir” düğmeli bir mesaj gösterir.',
     rechtslinks_titel: 'Her dilde sağ ve sol',
     rechtslinks_1: 'Sayfanın basılı Mushaf’ta sağda mı solda mı durduğunu gösteren işaret artık açıkça “Sağ” ve “Sol” yazıyor.',
     datenquelle_titel: 'Yeni veri kaynağı',
