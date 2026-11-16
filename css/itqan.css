@@ -1135,8 +1135,7 @@ body.doppelt .feier{max-width:calc(2 * var(--sb) + 20px);margin-left:auto;margin
 }
 /* Die Seite bleibt auch im dunklen Modus hell, deshalb gelten die Farben für beide Modi. Stoppzeichen: die Rosette am Āya-Ende und die Pausezeichen bekommen Farbe, die Zahl bleibt in Textfarbe (Einstellung, Standard an) */
 html[data-stopp] .w.ende{position:relative;color:var(--sk-ende);text-shadow:0 0 .3em var(--sk-glow)}
-html[data-stopp] .w.ende::after{content:attr(data-g);position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--seitetext);text-shadow:none;clip-path:inset(38% 12% 13% 12%)}
-html[data-stopp] .w.ende.e3::after{clip-path:inset(45% 11% 12% 11%)}
+html[data-stopp] .w.ende::after{content:attr(data-g);position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--seitetext);text-shadow:none;clip-path:inset(calc(62% - .20em) calc(50% - .32em) calc(38% - .33em) calc(50% - .32em) round .15em)}   /* festes Oval in em um die Ziffern, unabhängig von der Breite des Zeichens */
 html[data-stopp] .seite .wq{color:var(--sk-stopp);text-shadow:0 0 .6px var(--sk-stopp)}
 html[data-stopp] .w.zu{text-shadow:none!important}
 html[data-stopp] .w.zu.ende::after{display:none}
