@@ -165,8 +165,8 @@ export function seiteHTML(p, opt = {}) {
       if (grenzen && i === 0 && anfaenge.has(vi) && vi > 0) k += ' ab';
       if (ers) return `<span class="${k}" data-v="${vi}" data-i="${i}" data-fp="${fp}"${ah}>${ersatz(vi, i, ty)}</span>`;
       // das letzte Zeichen einer Āya ist ihre Rosette mit der Nummer; data-g erlaubt die schwarze Zahl über der farbigen Rosette
-      const ende = !D.W.has(vi + '.' + (i + 1));
-      return `<span class="${k}${ende ? ' ende' : ''}" data-v="${vi}" data-i="${i}"${ende ? ` data-g="${c}"` : ''}${ah}${fp !== p ? ` style="font-family:qp${fp}"` : ''}>${glyphen(c, ty)}</span>`;
+      const ende = !D.W.has(vi + '.' + (i + 1));   // e3: dreistellige Nummer, ihre Ziffern brauchen einen höheren Ausschnitt
+      return `<span class="${k}${ende ? (D.V[vi][1] >= 100 ? ' ende e3' : ' ende') : ''}" data-v="${vi}" data-i="${i}"${ende ? ` data-g="${c}"` : ''}${ah}${fp !== p ? ` style="font-family:qp${fp}"` : ''}>${glyphen(c, ty)}</span>`;
     }).join('');
     return `<div class="mz${p < 3 ? ' mitte' : ''}${zers ? ' ers' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');
