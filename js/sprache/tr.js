@@ -551,6 +551,11 @@ export default {
     neu_in_itqan: 'Itqān {VERSION} ile gelen yenilikler',
     schoen: 'Güzel',
   },
+  umzug: {
+    titel: 'Itqān taşınıyor',
+    text: 'Önümüzdeki günlerde Itqān yeni bir adrese geçiyor: <b>app.itqan-app.app</b>. İlerlemen de gelsin diye önce bir hesapla giriş yap. Sonra yeni adresi aç ve ana ekranına yeniden ekle. Eski simge artık yenilik almayacak.',
+    bereit: 'Giriş yaptın, ilerlemen birlikte gelir.',
+  },
   konto: {
     titel: 'Hesap ve eşitleme',
     untertitel: 'İlerlemen tüm cihazlarında',
@@ -1541,6 +1546,8 @@ export default {
   version: {
     konto_titel: 'Hesap ve eşitleme',
     konto_1: 'Artık isteğe bağlı olarak e-postayla gelen bir kodla giriş yapabilirsin. İlerlemen Frankfurt’taki bir sunucuda durur ve tüm cihazlarında olur. Hesap olmadan her şey eskisi gibi kalır.',
+    support_titel: 'E-posta ile geri bildirim',
+    support_1: 'Geri bildirimin artık support@itqan-app.app adresine gidiyor. Ayrıca yedeklerde küçük iyileştirmeler ve yaklaşan yeni adrese taşınma hakkında bir not var.',
     stopp_titel: 'Durak işaretleri renkli',
     stopp_1: 'Her ayetin sonundaki işaret artık altın, durak işaretleri turkuaz. Göz aynı yerleri hemen tanır. Numara koyu kalır. Rengi Ayarlar, Okunabilirlik bölümünden değiştirebilir veya kapatabilirsin.',
     robust_titel: 'Bugün artık boş kalmıyor',

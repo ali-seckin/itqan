@@ -227,7 +227,7 @@ export function umziehen(eintraege, profilNeu) {
 // Bis zu zwei tägliche und drei vor wichtigen Schritten (Gliederungswechsel, Laden einer Sicherung, Löschen).
 // Sie schützen vor eigenen Fehlgriffen, nicht vor dem Löschen der App: dafür ist „Profil sichern“ da.
 const SCHNAPP = 'itqan-schnappschuesse';
-export function schnappschuesse() { try { return JSON.parse(speicher.lesen(SCHNAPP) || '[]'); } catch (e) { return []; } }
+export function schnappschuesse() { try { const l = JSON.parse(speicher.lesen(SCHNAPP) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
 export function schnappschuss(grund) {
   if (!P) return false;
   const neu = { zeit: uhr().toISOString(), tag: heute(), grund, name: P.name, abschnitte: P.summe.abschnitte, daten: JSON.stringify({ ...P, log: [] }) };

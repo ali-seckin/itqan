@@ -551,6 +551,11 @@ export default {
     neu_in_itqan: 'Nouveau dans Itqān {VERSION}',
     schoen: 'Super',
   },
+  umzug: {
+    titel: 'Itqān déménage',
+    text: 'Dans les prochains jours, Itqān aura une nouvelle adresse : <b>app.itqan-app.app</b>. Pour que ta progression te suive, connecte-toi d’abord avec un compte. Ouvre ensuite la nouvelle adresse et ajoute-la de nouveau à ton écran d’accueil. L’ancienne icône ne recevra plus de nouveautés.',
+    bereit: 'Tu es connecté, ta progression te suit.',
+  },
   konto: {
     titel: 'Compte et synchronisation',
     untertitel: 'Ta progression sur tous tes appareils',
@@ -1541,6 +1546,8 @@ export default {
   version: {
     konto_titel: 'Compte et synchronisation',
     konto_1: 'Tu peux maintenant te connecter, si tu le souhaites, avec un code reçu par e-mail. Ta progression est alors sur un serveur à Francfort et disponible sur tous tes appareils. Sans compte, tout reste comme avant.',
+    support_titel: 'Retours par e-mail',
+    support_1: 'Ton retour arrive désormais à support@itqan-app.app. Il y a aussi de petites améliorations des sauvegardes et une information sur le prochain changement d’adresse.',
     stopp_titel: 'Signes de pause en couleur',
     stopp_1: 'La marque à la fin de chaque verset est maintenant dorée et les signes de pause turquoise, pour que l’œil retrouve ces repères. Le numéro reste sombre. Dans Réglages, Lisibilité, tu peux changer la couleur ou la désactiver.',
     robust_titel: 'Aujourd’hui ne reste jamais vide',

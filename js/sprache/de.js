@@ -547,6 +547,11 @@ export default {
     neu_in_itqan: 'Neu in Itqān {VERSION}',
     schoen: 'Schön',
   },
+  umzug: {
+    titel: 'Itqān zieht um',
+    text: 'In den nächsten Tagen bekommt Itqān eine neue Adresse: <b>app.itqan-app.app</b>. Damit dein Stand mitkommt, melde dich vorher mit einem Konto an. Öffne danach die neue Adresse und lege sie neu auf deinen Home-Bildschirm. Das alte Symbol bekommt keine Neuerungen mehr.',
+    bereit: 'Du bist angemeldet, dein Stand kommt mit.',
+  },
   konto: {
     titel: 'Konto und Abgleich',
     untertitel: 'Dein Stand auf allen Geräten',
@@ -1537,6 +1542,8 @@ export default {
   version: {
     konto_titel: 'Konto und Abgleich',
     konto_1: 'Du kannst dich jetzt freiwillig mit einem Code per E-Mail anmelden. Dein Stand liegt dann auf einem Server in Frankfurt und ist auf allen deinen Geräten da. Ohne Konto bleibt alles wie bisher.',
+    support_titel: 'Rückmeldung per E-Mail',
+    support_1: 'Deine Rückmeldung geht jetzt an support@itqan-app.app. Dazu kommen kleine Verbesserungen bei den Sicherungen und ein Hinweis auf den bevorstehenden Umzug an eine neue Adresse.',
     stopp_titel: 'Stoppzeichen in Farbe',
     stopp_1: 'Die Versmarke am Ende jeder Āya ist jetzt golden, die Pausezeichen sind türkis. So erkennt das Auge die Stellen sofort wieder. Die Zahl bleibt dunkel. Unter Einstellungen, Lesbarkeit lässt sich die Farbe ändern oder ausschalten.',
     robust_titel: 'Heute bleibt nie leer',

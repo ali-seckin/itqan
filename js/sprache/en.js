@@ -551,6 +551,11 @@ export default {
     neu_in_itqan: 'New in Itqān {VERSION}',
     schoen: 'Great',
   },
+  umzug: {
+    titel: 'Itqān is moving',
+    text: 'In the next few days Itqān gets a new address: <b>app.itqan-app.app</b>. So that your progress comes along, sign in with an account first. Then open the new address and add it to your home screen again. The old icon will no longer receive updates.',
+    bereit: 'You are signed in, your progress comes along.',
+  },
   konto: {
     titel: 'Account and sync',
     untertitel: 'Your progress on all your devices',
@@ -1541,6 +1546,8 @@ export default {
   version: {
     konto_titel: 'Account and sync',
     konto_1: 'You can now sign in optionally with a code sent by email. Your progress then lives on a server in Frankfurt and is on all your devices. Without an account, everything stays as before.',
+    support_titel: 'Feedback by email',
+    support_1: 'Your feedback now goes to support@itqan-app.app. Also small improvements to backups and a notice about the upcoming move to a new address.',
     stopp_titel: 'Pause marks in colour',
     stopp_1: 'The verse marker at the end of each ayah is now gold and the pause signs are teal, so the eye finds the same spots again. The number stays dark. You can change the colour or switch it off under Settings, Readability.',
     robust_titel: 'Today never stays blank',

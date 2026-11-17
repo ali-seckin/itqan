@@ -551,6 +551,11 @@ export default {
     neu_in_itqan: 'Novedades de Itqān {VERSION}',
     schoen: 'Genial',
   },
+  umzug: {
+    titel: 'Itqān se muda',
+    text: 'En los próximos días Itqān tendrá una nueva dirección: <b>app.itqan-app.app</b>. Para que tu progreso te acompañe, inicia sesión antes con una cuenta. Después abre la nueva dirección y vuelve a añadirla a tu pantalla de inicio. El icono antiguo ya no recibirá novedades.',
+    bereit: 'Has iniciado sesión, tu progreso te acompaña.',
+  },
   konto: {
     titel: 'Cuenta y sincronización',
     untertitel: 'Tu progreso en todos tus dispositivos',
@@ -1541,6 +1546,8 @@ export default {
   version: {
     konto_titel: 'Cuenta y sincronización',
     konto_1: 'Ahora puedes iniciar sesión, si quieres, con un código enviado por correo. Tu progreso queda en un servidor en Fráncfort y está en todos tus dispositivos. Sin cuenta, todo sigue como antes.',
+    support_titel: 'Comentarios por correo',
+    support_1: 'Tus comentarios llegan ahora a support@itqan-app.app. Además, pequeñas mejoras en las copias y un aviso sobre el próximo cambio de dirección.',
     stopp_titel: 'Signos de pausa en color',
     stopp_1: 'La marca al final de cada aleya es ahora dorada y los signos de pausa turquesa, para que el ojo reconozca esos puntos. El número sigue oscuro. En Ajustes, Legibilidad puedes cambiar el color o desactivarlo.',
     robust_titel: 'Hoy nunca queda en blanco',
