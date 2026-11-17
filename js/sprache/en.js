@@ -1087,6 +1087,11 @@ export default {
     keine_itqan_profildatei: 'Not an Itqān profile file',
   },
   heute: {
+    e_geschafft: 'Everything is done for today.',
+    e_offen: 'Still {n} {n, plural, one {section} other {sections}} for today.',
+    e_jetzt: 'Review now',
+    e_stand: '{a} of {b} done',
+    e_weitere: 'Then {n} more {n, plural, one {section} other {sections}}',
     kette_fenster_titel: 'Your streak',
     kette_stufe_tage: '{n} days',
     kette_noch: '{n, plural, one {1 day} other {{n} days}} to go',
@@ -1162,6 +1167,7 @@ export default {
     pause_beginnen: 'Start break',
   },
   fertig: {
+    e_text: 'That is it for today. You have done everything. See you tomorrow!',
     kettenbonus: 'Streak bonus: from now on +{p}% points, {n} days in a row.',
     tage_kette: 'day streak',
     hasanat_heute: 'Hasanat today',

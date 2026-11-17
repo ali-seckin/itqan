@@ -1089,6 +1089,11 @@ export default {
     keine_itqan_profildatei: 'ليس ملف إتقان',
   },
   heute: {
+    e_geschafft: 'اكتمل كل شيء لهذا اليوم.',
+    e_offen: 'بقي لهذا اليوم {n} {n, plural, one {مقطع} two {مقطعين} few {مقاطع} many {مقطعًا} other {مقطع}}.',
+    e_jetzt: 'راجع الآن',
+    e_stand: 'أُنجز {a} من {b}',
+    e_weitere: 'ثم {n} {n, plural, one {مقطع آخر} two {مقطعين آخرين} few {مقاطع أخرى} many {مقطعًا آخر} other {مقطع آخر}}',
     kette_fenster_titel: 'سلسلتك',
     kette_stufe_tage: '{n, plural, one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يومًا} other {{n} يومًا}}',
     kette_noch: 'متبقٍّ {n, plural, one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يومًا} other {{n} يومًا}}',
@@ -1164,6 +1169,7 @@ export default {
     pause_beginnen: 'ابدأ الاستراحة',
   },
   fertig: {
+    e_text: 'هذا كل شيء لليوم. أنجزتَ كل شيء. إلى الغد!',
     kettenbonus: 'مكافأة السلسلة: من الآن +{p}% من النقاط، {n} يومًا متتاليًا.',
     tage_kette: 'أيام السلسلة',
     hasanat_heute: 'حسنات اليوم',

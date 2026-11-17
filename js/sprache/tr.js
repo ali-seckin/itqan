@@ -1087,6 +1087,11 @@ export default {
     keine_itqan_profildatei: 'Itqān profil dosyası değil',
   },
   heute: {
+    e_geschafft: 'Bugün için her şey tamam.',
+    e_offen: 'Bugün için {n} {n, plural, one {bölüm} other {bölüm}} kaldı.',
+    e_jetzt: 'Şimdi tekrar et',
+    e_stand: '{b} bölümden {a} tanesi tamam',
+    e_weitere: 'Sonra {n} {n, plural, one {bölüm} other {bölüm}} daha',
     kette_fenster_titel: 'Serin',
     kette_stufe_tage: '{n} gün',
     kette_noch: '{n, plural, other {{n} gün kaldı}}',
@@ -1162,6 +1167,7 @@ export default {
     pause_beginnen: 'Ara ver',
   },
   fertig: {
+    e_text: 'Bugünlük bu kadar. Hepsini tamamladın. Yarın görüşürüz!',
     kettenbonus: 'Seri bonusu: şimdiden sonra %{p} puan, üst üste {n} gün.',
     tage_kette: 'günlük seri',
     hasanat_heute: 'bugünkü sevap',

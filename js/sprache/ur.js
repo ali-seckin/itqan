@@ -1089,6 +1089,11 @@ export default {
     keine_itqan_profildatei: 'یہ اتقان پروفائل فائل نہیں ہے',
   },
   heute: {
+    e_geschafft: 'آج کے لیے سب کچھ مکمل ہے۔',
+    e_offen: 'آج کے لیے ابھی {n} {n, plural, one {حصہ باقی ہے} other {حصے باقی ہیں}}۔',
+    e_jetzt: 'ابھی دہرائیں',
+    e_stand: '{b} میں سے {a} مکمل',
+    e_weitere: 'اس کے بعد {n} {n, plural, one {اور حصہ} other {اور حصے}}',
     kette_fenster_titel: 'آپ کا تسلسل',
     kette_stufe_tage: '{n} دن',
     kette_noch: '{n, plural, other {{n} دن باقی}}',
@@ -1164,6 +1169,7 @@ export default {
     pause_beginnen: 'وقفہ شروع کریں',
   },
   fertig: {
+    e_text: 'آج کے لیے بس اتنا ہی۔ آپ نے سب کچھ مکمل کر لیا۔ کل ملتے ہیں!',
     kettenbonus: 'تسلسل کا بونس: اب سے +{p}% پوائنٹس، لگاتار {n} دن۔',
     tage_kette: 'دن کا تسلسل',
     hasanat_heute: 'آج کی نیکیاں',

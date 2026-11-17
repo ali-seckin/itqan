@@ -692,9 +692,13 @@ function heute() {
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
     const marke = angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${P.einst.rhythmus === 'langzeit' && Z.karte(id).n > 0 ? tx('heute.faellig') : tx('heute.runde')}</span>` : '');
-    return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+    return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}${!fertig && offen.indexOf(id) < 3 ? '' : ' nur-voll'}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
   }).join('');
+  // Einfache Ansicht: ein Hauptknopf, ein kurzer Satz, höchstens drei offene Abschnitte
+  const offenPflicht = pflicht.filter(id => !t.fertig.includes(id));
+  const unterEinfach = t.ruhe ? unter : t.voll ? tx('heute.e_geschafft') : tx('heute.e_offen', { n: pflicht.length - erledigt });
+  const hauptKnopf = !t.ruhe && offenPflicht.length && D.A[offenPflicht[0]] ? `<a class="knopf haupt gross nur-einfach" href="#ueben/${offenPflicht[0]}" style="text-decoration:none">${tx('heute.e_jetzt')}</a>` : '';
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
   const wSum = woche.reduce((s, x) => ({ r: s.r + x.r, f: s.f + x.f, h: s.h + x.h, p: s.p + x.punkte, v: s.v + (x.voll ? 1 : 0) }), { r: 0, f: 0, h: 0, p: 0, v: 0 });
@@ -710,12 +714,12 @@ function heute() {
   const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
   const lekt = sicher('lektionen', () => Z.lektionen().filter(l => D.A[l.id]), []);
-  const lernHTML = lekt.length || sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
+  const lernHTML = lekt.length || (!Z.istEinfach() && sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null) ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? tx('lernen.alle_lektionen') : tx('lernen.erste_lektion')}</a></div>` : '';
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
-    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
+    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter nur-voll">${unter}</p><p class="unter nur-einfach">${unterEinfach}</p>${hauptKnopf}${comebackHTML}
     ${umzugKarte ? `<div class="hinweisbox umzug-hinweis"><b>${tx('umzug.titel')}</b><br>${tx('umzug.text')}
       <div class="reihe" style="margin-top:10px">${Ab.status().angemeldet ? `<span class="unter">${tx('umzug.bereit')}</span>` : `<a class="knopf haupt klein" href="#konto" style="text-decoration:none">${tx('konto.karte_titel')}</a><button class="knopf leise klein" id="umzug-sichern">${tx('heute.jetzt_sichern')}</button>`}</div></div>` : ''}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
@@ -723,18 +727,19 @@ function heute() {
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">${tx('heute.so_gehts')}</a><button class="knopf leise klein" id="install-weg">${tx('heute.nicht_mehr_zeigen')}</button></div></div>` : ''}
     ${t.qadaa && !t.voll ? `<div class="hinweisbox">${tx('heute.qada_ist_dein_wird_ausgefallen_holst_du', { qadaaTag: qadaaTag(), n: P.kette.n })}</div>` : ''}
-    ${t.ruhe ? ruheHTML : `<div class="ring"><svg width="210" height="210" viewBox="0 0 210 210" aria-hidden="true">
+    ${t.ruhe ? ruheHTML : `<div class="ring nur-voll"><svg width="210" height="210" viewBox="0 0 210 210" aria-hidden="true">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="10"/>
       <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/>
       <circle cx="105" cy="105" r="74" fill="none" stroke="var(--rand)" stroke-width="1" stroke-dasharray="2 6"/></svg>
       <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">${tx('allg.abschnitte')}</span></div></div>
+    <div class="e-stand nur-einfach"><div class="balken"><div style="width:${Math.round(anteil * 100)}%"></div></div><div class="klein-zeile"><span>${tx('heute.e_stand', { a: erledigt, b: pflicht.length })}</span></div></div>
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
       ${Z.P.einst.hasanat === false ? '' : `<div class="zahl nur-voll"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
       <div class="zahl nur-voll"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
     ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus nur-voll">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
     ${t.voll && bonusId != null ? `<div class="angebot nur-voll"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
-    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
+    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}${offen.length > 3 ? `<p class="unter nur-einfach" style="text-align:center">${tx('heute.e_weitere', { n: offen.length - 3 })}</p>` : ''}
     ${Z.heuteAbhakbar().length ? `<div class="klein-zeile nur-voll" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
     <div class="kurz-angebot nur-voll"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
       <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
@@ -1431,21 +1436,22 @@ function fertig() {
   const t = Z.tagesplan(), P = Z.P, bonusId = Z.bonusVorschlag();
   const ev = letzteEreignisse; letzteEreignisse = [];
   const quote = t.r + t.f + t.h ? `${t.r}/${t.r + t.f + t.h}` : '·';
-  const extra = ev.filter(x => x.typ === 'rang').map(x => rangBand(x.r)).join('') + ev.filter(x => x.typ === 'kbonus').map(x => `<div class="band">${tx('fertig.kettenbonus', { p: x.p, n: x.n })}</div>`).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
+  const extra = ev.filter(x => x.typ === 'rang').map(x => `<div class="nur-voll">${rangBand(x.r)}</div>`).join('') + ev.filter(x => x.typ === 'kbonus').map(x => `<div class="band nur-voll">${tx('fertig.kettenbonus', { p: x.p, n: x.n })}</div>`).join('') + ev.filter(x => x.typ === 'kette' || x.typ === 'khatma' || x.typ === 'ornament').map(x =>
     x.typ === 'kette' ? `<div class="band">${tx('fertig.tage_in_folge', { n: x.n, a: x.n === 66 ? tx('fertig.im_mittel_wird_eine_gewohnheit_nach_etwa') : x.n === 40 ? tx('fertig.vierzig_tage_bestaendigkeit') : tx('fertig.bestaendigkeit_ist_das_liebste_bei_allah') })}</div>`
     : x.typ === 'khatma' ? `<div class="band">${tx('fertig.hatma_vollendet_allahumma_rhamni_bi_l', { n: x.n })}</div>`
-    : ornBand(x)).join('');
+    : `<div class="nur-voll">${ornBand(x)}</div>`).join('');
   app.innerHTML = `<div class="feier">${qandil()}
     <div class="ar">اللَّهُمَّ بَارِكْ</div><h2>${tx('fertig.allahumma_barik')}</h2>
-    <p>${tx('fertig.dein_wird_fuer_heute_ist_vollbracht_die', { n: P.kette.n })}</p>
-    <div class="ernte"><div><b>${quote}</b><span>${tx('fertig.ayat_gekonnt')}</span></div><div><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>${tx('fertig.itqan_punkte_heute')}</span></div>
-      ${P.einst.hasanat === false ? '' : `<div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div>`}<div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette')}</span></div></div>
-    ${P.einst.hasanat === false ? '' : `<p class="niyya">${tx('fertig.hasanat_nach_dem_hadit_jeder_buchstabe')}</p>`}
+    <p class="nur-voll">${tx('fertig.dein_wird_fuer_heute_ist_vollbracht_die', { n: P.kette.n })}</p><p class="nur-einfach">${tx('fertig.e_text')}</p>
+    <div class="ernte"><div><b>${quote}</b><span>${tx('fertig.ayat_gekonnt')}</span></div><div class="nur-voll"><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>${tx('fertig.itqan_punkte_heute')}</span></div>
+      ${P.einst.hasanat === false ? '' : `<div class="nur-voll"><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div>`}<div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette')}</span></div></div>
+    ${P.einst.hasanat === false ? '' : `<p class="niyya nur-voll">${tx('fertig.hasanat_nach_dem_hadit_jeder_buchstabe')}</p>`}
     ${extra}
-    ${bonusId != null ? `<div class="angebot"><b>${tx('fertig.noch_kraft_fuer_mehr')}</b><p>${tx('fertig.ein_bonusabschnitt_bringt_dir_heute_50', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('fertig.bonusabschnitt_beginnen')}</button></div>` : ''}
-    <button class="textlink" id="genug" style="margin-top:12px">${tx('fertig.fuer_heute_genug')}</button></div>`;
+    ${bonusId != null ? `<div class="angebot nur-voll"><b>${tx('fertig.noch_kraft_fuer_mehr')}</b><p>${tx('fertig.ein_bonusabschnitt_bringt_dir_heute_50', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('fertig.bonusabschnitt_beginnen')}</button></div>` : ''}
+    <button class="textlink nur-voll" id="genug" style="margin-top:12px">${tx('fertig.fuer_heute_genug')}</button>
+    <button type="button" class="knopf haupt gross nur-einfach" id="genug2">${tx('ueben.fertig')}</button></div>`;
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
-  app.querySelector('#genug').onclick = () => location.hash = '#heute';
+  app.querySelector('#genug').onclick = app.querySelector('#genug2').onclick = () => location.hash = '#heute';
   hochzaehlen(app);
   // fehlerfrei: volle Funken, mit Hilfe etwas weniger, mit Fehlern nur ein schwacher Schimmer
   funkeln(t.f ? 1 : t.h ? 2 : 3);

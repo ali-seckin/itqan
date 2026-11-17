@@ -1083,6 +1083,11 @@ export default {
     keine_itqan_profildatei: 'Keine Itqān-Profildatei',
   },
   heute: {
+    e_geschafft: 'Für heute ist alles geschafft.',
+    e_offen: 'Noch {n} {n, plural, one {Abschnitt} other {Abschnitte}} für heute.',
+    e_jetzt: 'Jetzt wiederholen',
+    e_stand: '{a} von {b} geschafft',
+    e_weitere: 'Danach {n} {n, plural, one {weiterer Abschnitt} other {weitere Abschnitte}}',
     kette_fenster_titel: 'Deine Kette',
     kette_stufe_tage: '{n} Tage',
     kette_noch: 'noch {n, plural, one {1 Tag} other {{n} Tage}}',
@@ -1158,6 +1163,7 @@ export default {
     pause_beginnen: 'Pause beginnen',
   },
   fertig: {
+    e_text: 'Das war es für heute. Du hast alles geschafft. Bis morgen!',
     kettenbonus: 'Kettenbonus: ab jetzt +{p} % Punkte, {n} Tage in Folge.',
     tage_kette: 'Tage Kette',
     hasanat_heute: 'Ḥasanāt heute',

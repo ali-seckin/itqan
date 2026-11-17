@@ -1087,6 +1087,11 @@ export default {
     keine_itqan_profildatei: 'No es un archivo de perfil de Itqān',
   },
   heute: {
+    e_geschafft: 'Todo hecho por hoy.',
+    e_offen: 'Aún {n} {n, plural, one {sección} other {secciones}} para hoy.',
+    e_jetzt: 'Repasar ahora',
+    e_stand: '{a} de {b} hechas',
+    e_weitere: 'Luego {n} {n, plural, one {sección más} other {secciones más}}',
     kette_fenster_titel: 'Tu racha',
     kette_stufe_tage: '{n} días',
     kette_noch: 'faltan {n, plural, one {1 día} other {{n} días}}',
@@ -1162,6 +1167,7 @@ export default {
     pause_beginnen: 'Empezar la pausa',
   },
   fertig: {
+    e_text: 'Eso es todo por hoy. Lo has hecho todo. ¡Hasta mañana!',
     kettenbonus: 'Bonus de racha: desde ahora +{p} % de puntos, {n} días seguidos.',
     tage_kette: 'días de racha',
     hasanat_heute: 'hasanat hoy',

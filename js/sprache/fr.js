@@ -1087,6 +1087,11 @@ export default {
     keine_itqan_profildatei: 'Ce n’est pas un fichier de profil Itqān',
   },
   heute: {
+    e_geschafft: 'Tout est fait pour aujourd’hui.',
+    e_offen: 'Encore {n} {n, plural, one {section} other {sections}} pour aujourd’hui.',
+    e_jetzt: 'Réviser maintenant',
+    e_stand: '{a} sur {b} terminées',
+    e_weitere: 'Puis {n} {n, plural, one {autre section} other {autres sections}}',
     kette_fenster_titel: 'Ta série',
     kette_stufe_tage: '{n} jours',
     kette_noch: 'encore {n, plural, one {1 jour} other {{n} jours}}',
@@ -1162,6 +1167,7 @@ export default {
     pause_beginnen: 'Commencer la pause',
   },
   fertig: {
+    e_text: 'C’est tout pour aujourd’hui. Tu as tout fait. À demain !',
     kettenbonus: 'Bonus de série : désormais +{p} % de points, {n} jours d’affilée.',
     tage_kette: 'jours de série',
     hasanat_heute: 'hasanât aujourd’hui',

@@ -1154,3 +1154,6 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 /* Einfache Ansicht: nur-voll erscheint nur in „Alle Optionen“, nur-einfach nur in „Einfach“ */
 body.einfach .nur-voll{display:none!important}
 body:not(.einfach) .nur-einfach{display:none!important}
+/* Einfache Ansicht: Hauptknopf und Stand des Tages */
+.knopf.gross{display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;min-height:60px;font-size:1.2rem;margin:16px 0 8px}
+.e-stand{margin:14px 0 6px}
