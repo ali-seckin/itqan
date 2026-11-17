@@ -161,6 +161,10 @@ export default {
     fertig: 'Ticked off: {n}',
   },
   ueben: {
+    e_markieren: 'Tap the word where you made a mistake. Then tap Continue.',
+    e_hilfe: 'Show a word',
+    e_nicht_ganz: 'Not quite',
+    e_stimmt: 'Was it right?',
     abbrechen: 'Cancel',
     fertig: 'Done',
     seiten_werden_geladen: 'Loading pages …',

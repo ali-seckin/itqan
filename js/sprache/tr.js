@@ -161,6 +161,10 @@ export default {
     fertig: 'İşaretlenen: {n}',
   },
   ueben: {
+    e_markieren: 'Hata yaptığın kelimeye dokun. Sonra Devam’a dokun.',
+    e_hilfe: 'Bir kelime göster',
+    e_nicht_ganz: 'Tam değil',
+    e_stimmt: 'Doğru muydu?',
     abbrechen: 'Vazgeç',
     fertig: 'Bitti',
     seiten_werden_geladen: 'Sayfalar yükleniyor …',

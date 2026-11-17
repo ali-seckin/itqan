@@ -161,6 +161,10 @@ export default {
     fertig: 'Marcadas: {n}',
   },
   ueben: {
+    e_markieren: 'Toca la palabra en la que te equivocaste. Después toca Continuar.',
+    e_hilfe: 'Mostrar una palabra',
+    e_nicht_ganz: 'No del todo',
+    e_stimmt: '¿Estaba bien?',
     abbrechen: 'Cancelar',
     fertig: 'Listo',
     seiten_werden_geladen: 'Cargando páginas …',

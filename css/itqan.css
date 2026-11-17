@@ -1157,3 +1157,5 @@ body:not(.einfach) .nur-einfach{display:none!important}
 /* Einfache Ansicht: Hauptknopf und Stand des Tages */
 .knopf.gross{display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;min-height:60px;font-size:1.2rem;margin:16px 0 8px}
 .e-stand{margin:14px 0 6px}
+/* Einfache Ansicht: große Knöpfe beim Üben */
+body.einfach .steuerung .knopf{min-height:56px!important;font-size:1.1rem!important}

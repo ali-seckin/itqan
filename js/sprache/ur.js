@@ -163,6 +163,10 @@ export default {
     fertig: 'نشان زد: {n}',
   },
   ueben: {
+    e_markieren: 'جس لفظ میں غلطی ہوئی اسے چھوئیں۔ پھر آگے کو چھوئیں۔',
+    e_hilfe: 'ایک لفظ دکھائیں',
+    e_nicht_ganz: 'پوری طرح نہیں',
+    e_stimmt: 'کیا درست تھا؟',
     abbrechen: 'منسوخ کریں',
     fertig: 'مکمل',
     seiten_werden_geladen: 'صفحات لوڈ ہو رہے ہیں …',

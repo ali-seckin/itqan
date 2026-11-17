@@ -157,6 +157,10 @@ export default {
     fertig: 'Abgehakt: {n}',
   },
   ueben: {
+    e_markieren: 'Tippe auf das Wort, bei dem du dich vertan hast. Danach tippst du auf Weiter.',
+    e_hilfe: 'Ein Wort zeigen',
+    e_nicht_ganz: 'Nicht ganz',
+    e_stimmt: 'Hat es gestimmt?',
     abbrechen: 'Abbrechen',
     fertig: 'Fertig',
     seiten_werden_geladen: 'Seiten werden geladen …',

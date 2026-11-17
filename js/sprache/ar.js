@@ -163,6 +163,10 @@ export default {
     fertig: 'عُلِّم: {n}',
   },
   ueben: {
+    e_markieren: 'المس الكلمة التي أخطأت فيها، ثم المس متابعة.',
+    e_hilfe: 'أظهر كلمة',
+    e_nicht_ganz: 'ليس تمامًا',
+    e_stimmt: 'هل كانت صحيحة؟',
     abbrechen: 'إلغاء',
     fertig: 'تمّ',
     seiten_werden_geladen: 'جارٍ تحميل الصفحات …',

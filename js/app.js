@@ -869,7 +869,7 @@ async function ueben(idText, quelle, fokusText) {
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false, hilfeFrei = false;
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
-  let ganz = E.ablauf === 'ganz' && art !== 'stelle' && !ABF && !L, zg = new Set();   // Ablauf „ganzer Abschnitt am Stück“ (Einstellungen)
+  let ganz = E.ablauf === 'ganz' && !Z.istEinfach() && art !== 'stelle' && !ABF && !L, zg = new Set();   // Ablauf „ganzer Abschnitt am Stück“ (Einstellungen)
   // Übungszeit für die Auswertung: zählt nur, solange die Seite sichtbar ist; fortgesetzte Übungen werden nicht gemessen
   let zeitAktiv = 0, zeitSeit = document.hidden ? null : Date.now(), zeitGanz = true;
   const zeitTick = () => { if (document.hidden) { if (zeitSeit) zeitAktiv += Date.now() - zeitSeit; zeitSeit = null; } else if (!zeitSeit) zeitSeit = Date.now(); };
@@ -924,7 +924,7 @@ async function ueben(idText, quelle, fokusText) {
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo" style="margin:0 4px 10px"></div>
     ${kBox ? `<div class="kontext"><span>${tx('ueben.davor')} · ${D.V[vorVi][0]}:${D.V[vorVi][1]}</span><div class="kz">${kWoerter.map(([, vi, , i]) => wortHTML(vi, i)).join('')}</div></div>` : ''}
     <div class="seiten roller" id="seiten"></div><div class="nur-leser" id="ansage" aria-live="polite" lang="ar" dir="rtl"></div><div class="ab-platz"></div>
-    <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt" id="arten"></div><div class="reihe" id="knoepfe"></div>
+    <div class="steuerung"><div class="innen"><div class="fort-zeile"><div class="punkte" id="punkte"></div><span class="zaehler" id="zaehler"></span></div><div class="arten verdeckt nur-voll" id="arten"></div><div class="reihe" id="knoepfe"></div>
     <div class="zeile2"><span class="unter" id="hinweis"></span></div></div></div>
     ${art === 'stelle' ? '' : `<div class="einblendung" id="einbl"><div><div class="ueber">${e.nr ? tx('ueben.von', { sureName: sureName(e.von[0]), nr: e.nr, von_n: e.von_n }) : abschnittName(e)}${zusatz}</div><h2>${esc(e.titel)}</h2>
       <div class="ar">${sureArabisch(e.von[0])}</div>${doppelseiteSkizze(e)}</div></div>`}`;
@@ -1100,7 +1100,7 @@ async function ueben(idText, quelle, fokusText) {
       A.classList.remove('verdeckt');
       A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('');
       K.innerHTML = `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>`;
-      H.innerHTML = `${tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2')}<br><button class="textlink mini" id="doch-richtig">${tx('ueben.doch_kein_fehler')}</button>`;
+      H.innerHTML = `${Z.istEinfach() ? tx('ueben.e_markieren') : tx('ueben.tippe_auf_das_wort_bei_dem_du_dich_2')}<br><button class="textlink mini" id="doch-richtig">${tx('ueben.doch_kein_fehler')}</button>`;
       app.querySelector('#weiter').onclick = markierenFertig;
       app.querySelector('#doch-richtig').onclick = fehlerZurueck;
       return;
@@ -1111,17 +1111,17 @@ async function ueben(idText, quelle, fokusText) {
       const grenze = ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
       grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
       const nimmt = rec?.state === 'recording';
-      K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>`;
+      K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund nur-voll ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? `<button class="knopf leise nur-voll" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
       const hilfeVersteckt = !L && k.st >= 3 && !hilfeFrei && !hilfe && !ti;   // ab „sicher“ erst nach „Hilfe?“ (Hilfen zurücknehmen, wenn das Können wächst)
       if (E.hilfe && L?.ph !== 1 && hilfeVersteckt) links.push(`<button class="textlink mini leiser" id="hilfe-frage">${tx('ueben.hilfe_frage')}</button>`);
-      else if (E.hilfe && L?.ph !== 1) links.push(`<button class="textlink mini" id="hilfe">${hilfe ? tx('ueben.noch_ein_wort') : ti ? tx('ueben.naechstes_wort') : tx('ueben.erstes_wort')}</button>`);
-      if ((L ? L.ph === 0 : E.vorueben && k.st <= 1) && start) links.push(`<button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>`);
+      else if (E.hilfe && L?.ph !== 1) links.push(`<button class="textlink mini" id="hilfe">${Z.istEinfach() ? tx('ueben.e_hilfe') : hilfe ? tx('ueben.noch_ein_wort') : ti ? tx('ueben.naechstes_wort') : tx('ueben.erstes_wort')}</button>`);
+      if ((L ? L.ph === 0 : E.vorueben && k.st <= 1) && start) links.push(`<button class="textlink mini nur-voll" id="ansehen">${tx('ueben.erst_ansehen')}</button>`);
       if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push(`<button class="textlink mini" id="neu-bewerten">${tx('ueben.vorige_aya_neu_bewerten')}</button>`);
-      if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
+      if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser nur-voll" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
       const satz = L?.ph === 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? tx('ueben.sofortkorrektur_diese_aya_noch_einmal') : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
-      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz + (start ? ` ${tx('ueben.laut_hinweis')}` : '')) + (links.length ? '<br>' + links.join('') : '');
+      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz + (start && !Z.istEinfach() ? ` ${tx('ueben.laut_hinweis')}` : '')) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
       // Hilfe Wort für Wort: jedes Tippen deckt das nächste verdeckte Wort auf, die Āya zählt dann als „mit Hilfe“
@@ -1137,8 +1137,8 @@ async function ueben(idText, quelle, fokusText) {
       const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
       sichtbar(teile[ti]?.[0]);
     } else {
-      K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
-      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : tx('ueben.warst_du_sicher_und_fehlerfrei');
+      K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${Z.istEinfach() ? tx('ueben.e_nicht_ganz') : tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise nur-voll" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
+      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : Z.istEinfach() ? tx('ueben.e_stimmt') : tx('ueben.warst_du_sicher_und_fehlerfrei');
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
         if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
         spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
@@ -1207,7 +1207,7 @@ async function ueben(idText, quelle, fokusText) {
   // ---------- Ablauf „ganzer Abschnitt am Stück“: erst alles sprechen (und aufnehmen), dann aufdecken, anhören, Fehler und Zögerstellen markieren ----------
   const ganzAufnahmeTaste = () => {
     const nimmt = rec?.state === 'recording';
-    return AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : '';
+    return AUFNAHME ? `<button class="knopf leise rund nur-voll ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : '';
   };
   const ganzHoeren = hb => {
     if (spieler && !spieler.paused) { spieler.pause(); hb.textContent = '▶'; return; }
@@ -1219,7 +1219,7 @@ async function ueben(idText, quelle, fokusText) {
     app.querySelector('#punkte').innerHTML = '';
     const nimmt = rec?.state === 'recording', ansehen = E.vorueben && k.st <= 1 && !hilfe;
     K.innerHTML = `${ganzAufnahmeTaste()}<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>`;
-    H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : `${tx('ueben.ganz_hinweis')} ${tx('ueben.laut_hinweis')}`) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
+    H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : `${tx('ueben.ganz_hinweis')} ${tx('ueben.laut_hinweis')}`) + (ansehen && !nimmt ? `<br><button class="textlink mini nur-voll" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
     const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
     app.querySelector('#g-auf').onclick = ganzAufdecken;
     const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
@@ -1299,7 +1299,7 @@ async function ueben(idText, quelle, fokusText) {
   // Fehler markieren: erst die Stelle (Wort antippen), dann die Fehlerart. Die Art gilt für die eben markierten Wörter; ohne Art geht es nicht weiter.
   const ausstehend = () => [...seitenEl.querySelectorAll('.w.fmark:not(.typ)')];
   const markenWeg = () => { zg = new Set(); seitenEl.querySelectorAll('.w.fmark, .w.zmark').forEach(s => { s.classList.remove('fmark', 'typ', 'zmark'); delete s.dataset.art; }); };
-  const artFehlt = () => { if (!ausstehend().length) return false; toast(tx('ueben.art_wahl_fehlt'), 2600); return true; };
+  const artFehlt = () => { if (Z.istEinfach() || !ausstehend().length) return false; toast(tx('ueben.art_wahl_fehlt'), 2600); return true; };
   const merken = marken => {
     const gruppen = new Map();
     for (const s of marken) { const a = s.dataset.art || null; gruppen.set(a, [...(gruppen.get(a) || []), `${s.dataset.v}.${s.dataset.i}`]); }
@@ -1388,13 +1388,13 @@ async function ueben(idText, quelle, fokusText) {
     document.querySelector('.steuerung').remove();
     app.innerHTML = `<div class="feier">${qandil()}
       <h2>${res.f ? tx('ueben.abschnitt_beendet') : res.h ? tx('ueben.gut_gemacht') : tx('ueben.fehlerfrei_ma_saa_llah')}</h2>
-      <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)} · ${tx('ueben.stufe', { a: Z.STUFEN[res.stufe], b: res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : '' })}</span></p>
-      <div class="ernte"><div><b>${res.r}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div><div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>
-        ${E.hasanat === false ? '' : `<div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
-      ${E.hasanat === false ? '' : `<p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
-      <div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
+      <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)}<span class="nur-voll"> · ${tx('ueben.stufe', { a: Z.STUFEN[res.stufe], b: res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : '' })}</span></span></p>
+      <div class="ernte"><div><b>${res.r}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div><div class="nur-voll"><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>
+        ${E.hasanat === false ? '' : `<div class="nur-voll" style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
+      ${E.hasanat === false ? '' : `<p class="niyya nur-voll">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
+      <div class="aufschl nur-voll">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
       ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
-      ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}${orn}
+      ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}<div class="nur-voll">${orn}</div>
       <div style="display:grid;gap:10px;margin-top:16px" id="abschl-knoepfe">
       ${res.lern ? `<button class="knopf haupt" id="uebersicht">${tx('lernen.zu_den_lektionen')}</button>` : wirdJetzt ? `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>` : naechster != null && art !== 'frei' ? `<button class="knopf haupt" id="naechster">${tx('ueben.naechster_abschnitt')}</button><button class="knopf leise" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>` : `<button class="knopf haupt" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>`}
       </div></div>`;
@@ -1403,7 +1403,7 @@ async function ueben(idText, quelle, fokusText) {
     const u = app.querySelector('#uebersicht'); if (u) u.onclick = () => location.hash = res.lern ? '#lernen' : '#heute';
     window.scrollTo(0, 0); hochzaehlen(app);
     // Zwillings-Übung (Mutašābihāt): nach einem sicheren Abschnitt, wenn es eine ähnliche Stelle gibt
-    if (!res.lern && res.stufe >= 2) AF.zwillingZu(e.v[0], e.v[1]).then(z => { const kn = app.querySelector('#abschl-knoepfe'); if (z && kn) kn.insertAdjacentHTML('beforeend', `<a class="knopf leise" href="#vergleich/${z.key}/ueben" style="text-decoration:none">${tx('ueben.zwillinge_knopf', { a: NL.stelleKurz(z.a), b: NL.stelleKurz(z.b) })}</a>`); });
+    if (!res.lern && res.stufe >= 2) AF.zwillingZu(e.v[0], e.v[1]).then(z => { const kn = app.querySelector('#abschl-knoepfe'); if (z && kn) kn.insertAdjacentHTML('beforeend', `<a class="knopf leise nur-voll" href="#vergleich/${z.key}/ueben" style="text-decoration:none">${tx('ueben.zwillinge_knopf', { a: NL.stelleKurz(z.a), b: NL.stelleKurz(z.b) })}</a>`); });
   }
   // angefangene Übung von heute fortsetzen?
   const zw = art !== 'stelle' ? Z.zwischenstandLaden(id, quelle) : null;

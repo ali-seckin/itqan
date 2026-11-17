@@ -161,6 +161,10 @@ export default {
     fertig: 'Coché : {n}',
   },
   ueben: {
+    e_markieren: 'Touche le mot où tu t’es trompé. Touche ensuite Continuer.',
+    e_hilfe: 'Montrer un mot',
+    e_nicht_ganz: 'Pas tout à fait',
+    e_stimmt: 'C’était juste ?',
     abbrechen: 'Annuler',
     fertig: 'Terminé',
     seiten_werden_geladen: 'Chargement des pages …',
