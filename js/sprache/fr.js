@@ -1195,6 +1195,7 @@ export default {
     am: 'Le {a}',
   },
   mushaf: {
+    springen: 'Aller à',
     r: 'D',
     l: 'G',
     seite: 'Page {p}',
@@ -1581,6 +1582,8 @@ export default {
     support_1: 'Ton retour arrive désormais à support@itqan-app.app. Il y a aussi de petites améliorations des sauvegardes et une information sur le prochain changement d’adresse.',
     vorbereitung_titel: 'Préparation',
     vorbereitung_1: 'Travaux techniques pour un affichage plus simple. Rien ne change pour toi pour l’instant.',
+    muhaf_titel: 'Mushaf avec plus de place',
+    muhaf_1: 'Dans le Mushaf, la page est maintenant en haut et plus grande. Le choix de la page et le saut vers la sourate, la section et l’âya s’ouvrent sous « Aller à ».',
     stopp_titel: 'Signes de pause en couleur',
     stopp_1: 'La marque à la fin de chaque verset est maintenant dorée et les signes de pause turquoise, pour que l’œil retrouve ces repères. Le numéro reste sombre. Dans Réglages, Lisibilité, tu peux changer la couleur ou la désactiver.',
     robust_titel: 'Aujourd’hui ne reste jamais vide',

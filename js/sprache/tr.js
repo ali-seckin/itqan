@@ -1195,6 +1195,7 @@ export default {
     am: '{a} günü',
   },
   mushaf: {
+    springen: 'Git',
     r: 'Sağ',
     l: 'Sol',
     seite: 'Sayfa {p}',
@@ -1581,6 +1582,8 @@ export default {
     support_1: 'Geri bildirimin artık support@itqan-app.app adresine gidiyor. Ayrıca yedeklerde küçük iyileştirmeler ve yaklaşan yeni adrese taşınma hakkında bir not var.',
     vorbereitung_titel: 'Hazırlık',
     vorbereitung_1: 'Daha sade bir görünüm için teknik hazırlıklar. Şimdilik senin için bir şey değişmiyor.',
+    muhaf_titel: 'Mushaf’ta daha fazla alan',
+    muhaf_1: 'Mushaf’ta sayfa artık üstte ve daha büyük duruyor. Sayfa seçimi ile sure, bölüm ve ayete atlama “Git” altında açılıyor.',
     stopp_titel: 'Durak işaretleri renkli',
     stopp_1: 'Her ayetin sonundaki işaret artık altın, durak işaretleri turkuaz. Göz aynı yerleri hemen tanır. Numara koyu kalır. Rengi Ayarlar, Okunabilirlik bölümünden değiştirebilir veya kapatabilirsin.',
     robust_titel: 'Bugün artık boş kalmıyor',

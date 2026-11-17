@@ -1195,6 +1195,7 @@ export default {
     am: 'El {a}',
   },
   mushaf: {
+    springen: 'Ir a',
     r: 'Dcha.',
     l: 'Izq.',
     seite: 'Página {p}',
@@ -1581,6 +1582,8 @@ export default {
     support_1: 'Tus comentarios llegan ahora a support@itqan-app.app. Además, pequeñas mejoras en las copias y un aviso sobre el próximo cambio de dirección.',
     vorbereitung_titel: 'Preparación',
     vorbereitung_1: 'Preparativos técnicos para una vista más sencilla. Por ahora no cambia nada para ti.',
+    muhaf_titel: 'Mushaf con más espacio',
+    muhaf_1: 'En el Mushaf la página ahora está arriba y más grande. La elección de página y el salto a sura, sección y aleya se abren en «Ir a».',
     stopp_titel: 'Signos de pausa en color',
     stopp_1: 'La marca al final de cada aleya es ahora dorada y los signos de pausa turquesa, para que el ojo reconozca esos puntos. El número sigue oscuro. En Ajustes, Legibilidad puedes cambiar el color o desactivarlo.',
     robust_titel: 'Hoy nunca queda en blanco',

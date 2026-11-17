@@ -1528,10 +1528,10 @@ async function mushaf(pText, aText) {
   const ganz = D.modus === 'seite';
   const opt = ganz ? { fst: Z.fehlerstellenSet(), lage: !dop } : { lage: !dop, ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
   app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${seiten.length > 1 ? `${tx('allg.seiten')} ${seiten.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p })} · ${sureName(s)} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(p) })}</small></div>
-      <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button><select id="nr" class="seitenwahl" aria-label="${tx('mushaf.seite_3')}">${seitenOptionen(p)}</select></div></div>
+      <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button></div></div>
     <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
-    ${stellenWahl(s, true)}
-    <div class="reihe blaettern" style="margin:12px 0 14px"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
+    <div class="reihe blaettern mushaf-leiste"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button type="button" class="knopf leise klein" id="sprung-auf" aria-expanded="false" aria-controls="sprung-panel">${tx('mushaf.springen')} ▾</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
+    <div class="sprung-panel verdeckt" id="sprung-panel"><label class="auswahl"><span>${tx('mushaf.seite_3')}</span><select id="nr" class="seitenwahl">${seitenOptionen(p)}</select></label>${stellenWahl(s, true)}</div>
     <div id="seite" class="${dop ? 'doppel' : ''}"><div class="roller">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}</div><button class="vollbild-knopf" id="vollbild" aria-label="${tx('mushaf.seite_im_vollbild_zeigen')}">${vollbildIcon}</button></div>
     <div class="titel-klein">${tx('mushaf.abschnitte_auf', { a: seiten.length > 1 ? tx('mushaf.diesen_seiten') : tx('mushaf.dieser_seite') })}</div>
     ${abschnitte.map((e, i) => {
@@ -1546,6 +1546,7 @@ async function mushaf(pText, aText) {
   app.querySelector('#zur').onclick = () => blaettern(vorige);
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
+  app.querySelector('#sprung-auf').onclick = ev => { const zu = app.querySelector('#sprung-panel').classList.toggle('verdeckt'); ev.currentTarget.setAttribute('aria-expanded', String(!zu)); };
   app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
   // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige
   let sx = null, sy = null;

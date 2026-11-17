@@ -1195,6 +1195,7 @@ export default {
     am: 'On {a}',
   },
   mushaf: {
+    springen: 'Jump to',
     r: 'R',
     l: 'L',
     seite: 'Page {p}',
@@ -1581,6 +1582,8 @@ export default {
     support_1: 'Your feedback now goes to support@itqan-app.app. Also small improvements to backups and a notice about the upcoming move to a new address.',
     vorbereitung_titel: 'Preparation',
     vorbereitung_1: 'Technical groundwork for a simpler view. Nothing changes for you yet.',
+    muhaf_titel: 'Mushaf with more room',
+    muhaf_1: 'In the Mushaf the page now sits at the top and larger. Page choice and the jump to Surah, section and Ayah open under “Jump to”.',
     stopp_titel: 'Pause marks in colour',
     stopp_1: 'The verse marker at the end of each ayah is now gold and the pause signs are teal, so the eye finds the same spots again. The number stays dark. You can change the colour or switch it off under Settings, Readability.',
     robust_titel: 'Today never stays blank',

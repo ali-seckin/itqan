@@ -1191,6 +1191,7 @@ export default {
     am: 'Am {a}',
   },
   mushaf: {
+    springen: 'Springen',
     r: 'R',
     l: 'L',
     seite: 'Seite {p}',
@@ -1577,6 +1578,8 @@ export default {
     support_1: 'Deine Rückmeldung geht jetzt an support@itqan-app.app. Dazu kommen kleine Verbesserungen bei den Sicherungen und ein Hinweis auf den bevorstehenden Umzug an eine neue Adresse.',
     vorbereitung_titel: 'Vorbereitung',
     vorbereitung_1: 'Technische Vorbereitungen für eine einfachere Ansicht. Für dich ändert sich noch nichts.',
+    muhaf_titel: 'Muṣḥaf mit mehr Platz',
+    muhaf_1: 'Im Muṣḥaf steht die Seite jetzt oben und groß. Seitenwahl und Sprung zu Sūra, Abschnitt und Āya klappen unter „Springen“ auf.',
     stopp_titel: 'Stoppzeichen in Farbe',
     stopp_1: 'Die Versmarke am Ende jeder Āya ist jetzt golden, die Pausezeichen sind türkis. So erkennt das Auge die Stellen sofort wieder. Die Zahl bleibt dunkel. Unter Einstellungen, Lesbarkeit lässt sich die Farbe ändern oder ausschalten.',
     robust_titel: 'Heute bleibt nie leer',

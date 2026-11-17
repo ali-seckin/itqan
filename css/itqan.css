@@ -1159,3 +1159,11 @@ body:not(.einfach) .nur-einfach{display:none!important}
 .e-stand{margin:14px 0 6px}
 /* Einfache Ansicht: große Knöpfe beim Üben */
 body.einfach .steuerung .knopf{min-height:56px!important;font-size:1.1rem!important}
+/* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Springen klappt darunter auf */
+[data-ansicht=mushaf] .marke{font-size:1.5rem}
+[data-ansicht=mushaf] .marke small{margin-top:5px}
+.reihe.mushaf-leiste{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0 10px}
+.mushaf-leiste .knopf{min-height:44px;padding-left:8px;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sprung-panel{margin:0 0 12px}
+.sprung-panel .stellenwahl{margin-top:10px}
+.sprung-panel .auswahl select{flex:1;max-width:60%}
