@@ -1551,6 +1551,8 @@ export default {
     menue_1: 'There are now five tabs at the bottom, with the Mushaf in the middle. Settings, help and further pages are under “More”. In the Mushaf the page now sits at the top and larger; page choice and the jump to Surah, section and Ayah open under “Go to”.',
     heute_titel: 'Today with a new title',
     heute_1: 'On Today, Itqān now appears as a wordmark with its symbol. The notice about the move can be hidden with an X.',
+    ueberschriften_titel: 'New headings',
+    ueberschriften_1: 'The menu pages now share the heading style of Today, with the symbol of their tab. Ornaments and milestones are a button of their own in the profile, right above the detailed progress.',
     stopp_titel: 'Pause marks in colour',
     stopp_1: 'The verse marker at the end of each ayah is now gold and the pause signs are teal, so the eye finds the same spots again. The number stays dark. You can change the colour or switch it off under Settings, Readability.',
     robust_titel: 'Today never stays blank',

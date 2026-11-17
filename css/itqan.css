@@ -1162,7 +1162,7 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .einst-zahn{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--akzent);color:var(--bg);flex:none;margin-right:2px}
 .einst-zahn svg{width:28px;height:28px}
 /* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Gehe zu klappt darunter auf */
-[data-ansicht=mushaf] .marke{font-size:1.5rem}
+[data-ansicht=mushaf] .marke{font-size:1.7rem}
 [data-ansicht=mushaf] .marke small{margin-top:5px}
 .reihe.mushaf-leiste{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0 10px}
 .mushaf-leiste .knopf{min-height:44px;padding-left:8px;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1180,3 +1180,13 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .umzug-hinweis{position:relative;padding-right:46px}
 .hinweis-x{position:absolute;top:4px;right:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--leise);font-size:1.7rem;line-height:1;cursor:pointer}
 .hinweis-x:hover{color:var(--akzentT)}
+/* Überschriften der Menüseiten: wie der App-Titel, mit dem Zeichen ihres Reiters */
+.marke{font-size:clamp(1.9rem,8.5vw,2.4rem);letter-spacing:.015em;text-shadow:0 0 18px var(--glow)}
+[data-ansicht=mushaf] .marke{font-size:1.7rem}
+.marke.mit-zeichen{display:flex;align-items:center;gap:12px}
+.marke-zeichen{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;border:1px solid var(--akzent);background:var(--karte);color:var(--akzent);text-shadow:none}
+[data-modus=dunkel] .marke-zeichen{color:var(--akzent2)}
+.marke-zeichen svg{width:26px;height:26px}
+.marke-text{min-width:0}
+/* Die Bildlaufleiste verschiebt am PC nichts mehr, auch wenn eine Seite kurz ist */
+html{scrollbar-gutter:stable}

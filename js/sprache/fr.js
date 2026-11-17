@@ -1551,6 +1551,8 @@ export default {
     menue_1: 'Il y a maintenant cinq onglets en bas, avec le Mushaf au milieu. Les réglages, l’aide et d’autres pages se trouvent sous « Plus ». Dans le Mushaf, la page est maintenant en haut et plus grande ; le choix de la page et le saut vers la sourate, la section et l’âya s’ouvrent sous « Aller à ».',
     heute_titel: 'Aujourd’hui avec un nouveau titre',
     heute_1: 'Sur Aujourd’hui, Itqān apparaît maintenant comme un logotype avec son symbole. L’avis sur le déménagement peut être masqué avec une croix.',
+    ueberschriften_titel: 'Nouveaux titres',
+    ueberschriften_1: 'Les pages du menu ont maintenant le même titre qu’Aujourd’hui, avec le symbole de leur onglet. Les ornements et les étapes forment un bouton à part dans le profil, juste au-dessus de la progression détaillée.',
     stopp_titel: 'Signes de pause en couleur',
     stopp_1: 'La marque à la fin de chaque verset est maintenant dorée et les signes de pause turquoise, pour que l’œil retrouve ces repères. Le numéro reste sombre. Dans Réglages, Lisibilité, tu peux changer la couleur ou la désactiver.',
     robust_titel: 'Aujourd’hui ne reste jamais vide',

@@ -1547,6 +1547,8 @@ export default {
     menue_1: 'Unten gibt es jetzt fünf Reiter, der Muṣḥaf liegt in der Mitte. Einstellungen, Hilfe und weitere Seiten findest du unter „Mehr“. Im Muṣḥaf steht die Seite jetzt oben und größer; Seitenwahl und Sprung zu Sūra, Abschnitt und Āya klappen unter „Gehe zu“ auf.',
     heute_titel: 'Heute mit neuem Titel',
     heute_1: 'Auf Heute steht jetzt Itqān als Wortmarke mit dem Zeichen. Der Hinweis zum Umzug lässt sich mit einem X ausblenden.',
+    ueberschriften_titel: 'Neue Überschriften',
+    ueberschriften_1: 'Die Menüseiten haben jetzt dieselbe Überschrift wie Heute, mit dem Zeichen ihres Reiters. Ornamente und Meilensteine stehen im Profil als eigener Knopf direkt über „Fortschritt im Detail“.',
     stopp_titel: 'Stoppzeichen in Farbe',
     stopp_1: 'Die Versmarke am Ende jeder Āya ist jetzt golden, die Pausezeichen sind türkis. So erkennt das Auge die Stellen sofort wieder. Die Zahl bleibt dunkel. Unter Einstellungen, Lesbarkeit lässt sich die Farbe ändern oder ausschalten.',
     robust_titel: 'Heute bleibt nie leer',

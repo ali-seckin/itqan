@@ -1551,6 +1551,8 @@ export default {
     menue_1: 'Altta artık beş sekme var, ortada Mushaf yer alıyor. Ayarlar, yardım ve diğer sayfalar “Daha fazlası” altında. Mushaf’ta sayfa artık üstte ve daha büyük; sayfa seçimi ile sure, bölüm ve ayete atlama “Git” altında açılıyor.',
     heute_titel: 'Bugün için yeni başlık',
     heute_1: 'Bugün sayfasında Itqān artık simgesiyle birlikte bir logo yazısı olarak görünüyor. Taşınma bildirimi bir X ile gizlenebilir.',
+    ueberschriften_titel: 'Yeni başlıklar',
+    ueberschriften_1: 'Menü sayfaları artık Bugün ile aynı başlık stiline ve sekmelerinin simgesine sahip. Süsler ve kilometre taşları profilde ayrı bir düğme olarak, ayrıntılı ilerlemenin hemen üstünde yer alıyor.',
     stopp_titel: 'Durak işaretleri renkli',
     stopp_1: 'Her ayetin sonundaki işaret artık altın, durak işaretleri turkuaz. Göz aynı yerleri hemen tanır. Numara koyu kalır. Rengi Ayarlar, Okunabilirlik bölümünden değiştirebilir veya kapatabilirsin.',
     robust_titel: 'Bugün artık boş kalmıyor',

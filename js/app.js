@@ -427,6 +427,13 @@ function fehlerAnsicht(e, name) {
   };
   app.querySelector('#fe-melden').onclick = () => { location.hash = '#rueckmeldung'; };
 }
+// Menüseiten: das Zeichen des Reiters steht vor der Überschrift (wie das Itqān-Zeichen auf Heute)
+function menueZeichen(name) {
+  const m = app.querySelector(':scope > .marke'), sv = nav.querySelector(`a[data-r="${name}"] svg`);
+  if (!m || !sv || m.classList.contains('mit-zeichen')) return;
+  m.classList.add('mit-zeichen');
+  m.innerHTML = `<span class="marke-zeichen" aria-hidden="true">${sv.outerHTML}</span><div class="marke-text">${m.innerHTML}</div>`;
+}
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
@@ -1424,6 +1431,7 @@ function fertig() {
 function lichtkarte() {
   navSetzen('karte');
   Lk.zeichne(app, { stellenWahl, stellenWahlBinden, hochzaehlen });
+  menueZeichen('karte');
 }
 
 // ---------- Muṣḥaf ----------
@@ -1705,8 +1713,9 @@ function profil() {
     <div class="titel-klein">${tx('profil.itqan_punkte_der_letzten_30_tage')}</div>
     <div class="diagramm" role="img" aria-label="${tx('profil.itqan_punkte_der_letzten_30_tage_2', { a: zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0)), b: zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0))), n: tage.filter(x => x.t?.punkte).length })}">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div>
+    <div class="unterseiten" style="margin:18px 0 12px"><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fehlerstellen"><div class="t"><b>${tx('allg.fehlerstellen')}</b><span>${tx('profil.markierte_stellen_zum_gezielten_ueben', { n: Object.keys(P.fstellen || {}).length })}</span></div><span class="pfeil">›</span></a><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div></div></details>
+      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fehlerstellen"><div class="t"><b>${tx('allg.fehlerstellen')}</b><span>${tx('profil.markierte_stellen_zum_gezielten_ueben', { n: Object.keys(P.fstellen || {}).length })}</span></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.sicherung')}</b><small>${tx('profil.gruppe_sicherung_t')}</small></span></summary>
       <div class="profil-inhalt">
     ${kontoKarte()}${Ab.status().verbunden ? `<p class="unter">${tx('konto.profil_hinweis')}</p>` : ''}<p class="unter"${Ab.status().verbunden ? ' hidden' : ''}>${tx('profil.es_gibt_keinen_server_deine_fortschritte', { a: istTouch() ? tx('profil.am_besten_in_dateien_icloud_drive_oder') : ` ${tx('profil.als_datei')}`, letzteSicherung: datumKurz(P.einst.letzteSicherung) })}</p>
@@ -1714,6 +1723,7 @@ function profil() {
       </div></details>`;
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   app.querySelector('#laden').onclick = profilLaden;
+  menueZeichen('profil');
 }
 
 // ---------- Mehr: Einstellungen, Üben und Nachschlagen, Hilfe ----------
@@ -1729,6 +1739,7 @@ function mehr() {
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
+  menueZeichen('mehr');
 }
 
 // ---------- Konto und Abgleich ----------

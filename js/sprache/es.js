@@ -1551,6 +1551,8 @@ export default {
     menue_1: 'Ahora hay cinco pestañas abajo, con el Mushaf en el centro. Los ajustes, la ayuda y otras páginas están en «Más». En el Mushaf la página ahora está arriba y más grande; la elección de página y el salto a sura, sección y aleya se abren en «Ir a».',
     heute_titel: 'Hoy con un nuevo título',
     heute_1: 'En Hoy, Itqān aparece ahora como un logotipo con su símbolo. El aviso de la mudanza se puede ocultar con una X.',
+    ueberschriften_titel: 'Nuevos títulos',
+    ueberschriften_1: 'Las páginas del menú tienen ahora el mismo título que Hoy, con el símbolo de su pestaña. Los ornamentos y los hitos son un botón propio en el perfil, justo encima del progreso detallado.',
     stopp_titel: 'Signos de pausa en color',
     stopp_1: 'La marca al final de cada aleya es ahora dorada y los signos de pausa turquesa, para que el ojo reconozca esos puntos. El número sigue oscuro. En Ajustes, Legibilidad puedes cambiar el color o desactivarlo.',
     robust_titel: 'Hoy nunca queda en blanco',
