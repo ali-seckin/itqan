@@ -1151,15 +1151,17 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .stopp-wahl button{display:inline-flex;min-height:44px;min-width:64px;padding:8px 12px;flex:1 1 auto;justify-content:center;align-items:center;gap:7px}
 .stopp-wahl i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
 .stopp-wahl i+i{margin-left:-9px}
-/* Einfache Ansicht: nur-voll erscheint nur in „Alle Optionen“, nur-einfach nur in „Einfach“ */
-body.einfach .nur-voll{display:none!important}
-body:not(.einfach) .nur-einfach{display:none!important}
-/* Einfache Ansicht: Hauptknopf und Stand des Tages */
-.knopf.gross{display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;min-height:60px;font-size:1.2rem;margin:16px 0 8px}
-.e-stand{margin:14px 0 6px}
-/* Einfache Ansicht: große Knöpfe beim Üben */
-body.einfach .steuerung .knopf{min-height:56px!important;font-size:1.1rem!important}
-/* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Springen klappt darunter auf */
+/* Menüleiste mit fünf Reitern: der Muṣḥaf liegt in der Mitte und ist hervorgehoben */
+.nav a{min-width:56px;padding:4px 6px}
+.nav a[data-r=mushaf]{color:var(--akzentT)}
+.nav a[data-r=mushaf] svg{box-sizing:content-box;width:26px;height:26px;padding:10px;margin-top:-26px;border-radius:50%;background:var(--akzent);color:var(--bg);border:3px solid var(--bg);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.nav a[data-r=mushaf].an svg{background:var(--akzent2)}
+/* Mehr: die Einstellungen als große, farbige Karte */
+.einst-karte{margin:16px 0 14px;padding:18px 16px;border:1px solid var(--akzent);background:linear-gradient(135deg,color-mix(in srgb,var(--akzent) 24%,var(--karte)),var(--karte))}
+.einst-karte .t b{color:var(--akzentT);font-size:1.18rem}
+.einst-zahn{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--akzent);color:var(--bg);flex:none;margin-right:2px}
+.einst-zahn svg{width:28px;height:28px}
+/* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Gehe zu klappt darunter auf */
 [data-ansicht=mushaf] .marke{font-size:1.5rem}
 [data-ansicht=mushaf] .marke small{margin-top:5px}
 .reihe.mushaf-leiste{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0 10px}

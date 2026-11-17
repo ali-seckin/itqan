@@ -1,14 +1,9 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.73';
+export const VERSION = '1.74';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = 'support@itqan-app.app';
-
-// Einfache Ansicht (Plan: konzept/einfachmodus). ANSICHT_NEU = Ansicht für neu angelegte Profile; erst auf 'einfach' stellen, wenn Einführung, Heute und Üben der Einfachen Ansicht fertig sind.
-// ANSICHT_FREI = Umschalter im Profil für alle sichtbar. Bis dahin zeigt ihn nur, wer die App einmal mit ?ansicht=an öffnet.
-export const ANSICHT_NEU = 'voll';
-export const ANSICHT_FREI = false;
 
 // Übergangsfunktionen bis zum Start mit eigenem Server und App-Store. Dann beide Schalter auf false:
 // sicherungErinnern = Erinnerung ans Sichern auf der Seite Heute, installieren = Karte, Anleitung und Verweis zum Installieren.
@@ -16,26 +11,8 @@ export const ANSICHT_FREI = false;
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
-  { v: '1.73', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
-  ] },
-  { v: '1.72', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
-  ] },
-  { v: '1.71', datum: '2026-11-17', titel: tx('version.muhaf_titel'), punkte: [
-    tx('version.muhaf_1')
-  ] },
-  { v: '1.70', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
-  ] },
-  { v: '1.69', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
-  ] },
-  { v: '1.68', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
-  ] },
-  { v: '1.67', datum: '2026-11-17', titel: tx('version.vorbereitung_titel'), punkte: [
-    tx('version.vorbereitung_1')
+  { v: '1.74', datum: '2026-11-17', titel: tx('version.menue_titel'), punkte: [
+    tx('version.menue_1')
   ] },
   { v: '1.66', datum: '2026-11-17', titel: tx('version.support_titel'), punkte: [
     tx('version.support_1')
