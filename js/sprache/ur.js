@@ -569,6 +569,7 @@ export default {
     schoen: 'خوب',
   },
   ansicht: {
+    freigeschaltet: 'منظر کا انتخاب کھول دیا گیا ہے۔',
     titel: 'منظر',
     einfach: 'آسان',
     voll: 'تمام اختیارات',

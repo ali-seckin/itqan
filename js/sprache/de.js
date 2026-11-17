@@ -563,6 +563,7 @@ export default {
     schoen: 'Schön',
   },
   ansicht: {
+    freigeschaltet: 'Die Wahl der Ansicht ist freigeschaltet.',
     titel: 'Ansicht',
     einfach: 'Einfach',
     voll: 'Alle Optionen',

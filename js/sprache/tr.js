@@ -567,6 +567,7 @@ export default {
     schoen: 'Güzel',
   },
   ansicht: {
+    freigeschaltet: 'Görünüm seçimi açıldı.',
     titel: 'Görünüm',
     einfach: 'Sade',
     voll: 'Tüm seçenekler',

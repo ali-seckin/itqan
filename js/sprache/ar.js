@@ -569,6 +569,7 @@ export default {
     schoen: 'جميل',
   },
   ansicht: {
+    freigeschaltet: 'تم تفعيل اختيار طريقة العرض.',
     titel: 'طريقة العرض',
     einfach: 'مبسّط',
     voll: 'كل الخيارات',

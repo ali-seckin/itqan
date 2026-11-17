@@ -1782,6 +1782,8 @@ function profil() {
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte nur-voll" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
+  // Siebenmal schnell auf die Versionszeile tippen schaltet den Umschalter für die Ansicht frei (für die installierte App, in der keine Adresse getippt werden kann)
+  { let n = 0, t0 = 0; const vz = app.querySelector('.version-zeile'); if (vz) vz.addEventListener('click', ev => { if (ev.target.closest('a')) return; const jetzt = Date.now(); n = jetzt - t0 < 2500 ? n + 1 : 1; t0 = jetzt; if (n >= 7) { n = 0; try { localStorage.setItem('itqan-ansicht-test', '1'); } catch (e) {} toast(tx('ansicht.freigeschaltet')); zeige(); } }); }
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   app.querySelector('#laden').onclick = profilLaden;
 }

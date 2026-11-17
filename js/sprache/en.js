@@ -567,6 +567,7 @@ export default {
     schoen: 'Great',
   },
   ansicht: {
+    freigeschaltet: 'The view switch is unlocked.',
     titel: 'View',
     einfach: 'Simple',
     voll: 'All options',

@@ -567,6 +567,7 @@ export default {
     schoen: 'Super',
   },
   ansicht: {
+    freigeschaltet: 'Le choix de l’affichage est débloqué.',
     titel: 'Affichage',
     einfach: 'Simple',
     voll: 'Toutes les options',

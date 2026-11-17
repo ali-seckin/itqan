@@ -567,6 +567,7 @@ export default {
     schoen: 'Genial',
   },
   ansicht: {
+    freigeschaltet: 'La elección de vista está desbloqueada.',
     titel: 'Vista',
     einfach: 'Sencilla',
     voll: 'Todas las opciones',
