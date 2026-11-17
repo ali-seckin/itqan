@@ -711,7 +711,7 @@ function heute() {
   const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
   const installKarte = UEBERGANG.installieren && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
-  const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
+  const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${Z.istEinfach() ? tx('heute.e_comeback') : tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
   const lekt = sicher('lektionen', () => Z.lektionen().filter(l => D.A[l.id]), []);
   const lernHTML = lekt.length || (!Z.istEinfach() && sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null) ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
@@ -726,7 +726,7 @@ function heute() {
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">${tx('heute.so_gehts')}</a><button class="knopf leise klein" id="install-weg">${tx('heute.nicht_mehr_zeigen')}</button></div></div>` : ''}
-    ${t.qadaa && !t.voll ? `<div class="hinweisbox">${tx('heute.qada_ist_dein_wird_ausgefallen_holst_du', { qadaaTag: qadaaTag(), n: P.kette.n })}</div>` : ''}
+    ${t.qadaa && !t.voll ? `<div class="hinweisbox">${Z.istEinfach() ? tx('heute.e_nachholen', { qadaaTag: qadaaTag(), n: P.kette.n }) : tx('heute.qada_ist_dein_wird_ausgefallen_holst_du', { qadaaTag: qadaaTag(), n: P.kette.n })}</div>` : ''}
     ${t.ruhe ? ruheHTML : `<div class="ring nur-voll"><svg width="210" height="210" viewBox="0 0 210 210" aria-hidden="true">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="10"/>
@@ -1020,6 +1020,28 @@ async function ueben(idText, quelle, fokusText) {
       { titel: tx('ueben.deine_fehlerstellen'), text: tx('ueben.alle_markierten_woerter_sammelt_itqan') }
     ]
   };
+  // Einfache Ansicht: kürzere Führung ohne Verweise auf Aufnahme, Zeichen, Gezögert und Fehlerarten
+  const TOUR_E = {
+    'ueben-1': () => [
+      { titel: tx('ueben.deine_erste_uebung'), text: tx('ueben.e_tour1_text') },
+      { ziel: imAbschnitt, titel: tx('ueben.dein_abschnitt'), text: tx('ueben.die_ayat_deines_abschnitts_sind_verdeckt') },
+      { ziel: () => [...seitenEl.querySelectorAll('.w.naechste')].slice(0, 12), titel: tx('ueben.diese_aya_ist_dran'), text: tx('ueben.e_tour_dran') },
+      { ziel: () => app.querySelector('.fort-zeile'), titel: tx('ueben.dein_fortschritt'), text: tx('ueben.jeder_punkt_ist_eine_aya_des_abschnitts') },
+      { ziel: () => app.querySelector('#auf'), titel: tx('ueben.aufdecken'), text: tx('ueben.deckt_die_ganze_aya_auf_du_kannst_auch') },
+      { ziel: () => app.querySelector('#hilfe'), titel: tx('ueben.e_hilfe'), text: tx('ueben.e_tour_hilfe') },
+      { titel: tx('ueben.jetzt_du'), text: tx('ueben.rezitiere_die_erste_aya_aus_dem'), los: tx('ueben.los_gehts') }
+    ],
+    'ueben-2': () => [
+      { ziel: jetzt, titel: tx('ueben.vergleichen'), text: tx('ueben.jetzt_siehst_du_die_aya_vergleiche_wort') },
+      { ziel: () => app.querySelector('#r'), titel: tx('ueben.richtig'), text: tx('ueben.e_tour_richtig') },
+      { ziel: () => app.querySelector('#f'), titel: tx('ueben.e_nicht_ganz'), text: tx('ueben.e_tour_nicht'), los: tx('ueben.verstanden') }
+    ],
+    'ueben-3': () => [
+      { ziel: jetzt, titel: tx('ueben.die_stelle_markieren'), text: tx('ueben.tippe_auf_das_wort_bei_dem_du_dich') },
+      { ziel: () => app.querySelector('#weiter'), titel: tx('allg.weiter'), text: tx('ueben.speichert_die_markierten_woerter_und') },
+      { titel: tx('ueben.deine_fehlerstellen'), text: tx('ueben.e_tour_stellen') }
+    ]
+  };
   let tourAktiv = false;
   function tourPruefen() {
     if (tourAktiv || vorschau || abhoeren || ganz || phase !== 'haupt' || pos >= liste.length) return;
@@ -1030,7 +1052,7 @@ async function ueben(idText, quelle, fokusText) {
       if (!seitenEl.isConnected) { tourAktiv = false; return; }
       if (document.querySelector('#einbl')) return setTimeout(los, 250);   // erst wenn die Einblendung weg ist
       tourMerken(name);
-      fuehrung(TOUR[name]()).then(() => { tourAktiv = false; });
+      fuehrung((Z.istEinfach() ? TOUR_E : TOUR)[name]()).then(() => { tourAktiv = false; });
     };
     setTimeout(los, name === 'ueben-1' ? 300 : 450);   // kurz warten, bis Knöpfe und Abspielknopf stehen
   }
@@ -1120,7 +1142,7 @@ async function ueben(idText, quelle, fokusText) {
       if ((L ? L.ph === 0 : E.vorueben && k.st <= 1) && start) links.push(`<button class="textlink mini nur-voll" id="ansehen">${tx('ueben.erst_ansehen')}</button>`);
       if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push(`<button class="textlink mini" id="neu-bewerten">${tx('ueben.vorige_aya_neu_bewerten')}</button>`);
       if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser nur-voll" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
-      const satz = L?.ph === 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? tx('ueben.sofortkorrektur_diese_aya_noch_einmal') : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
+      const satz = L?.ph === 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? (Z.istEinfach() ? tx('ueben.e_korrektur') : tx('ueben.sofortkorrektur_diese_aya_noch_einmal')) : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
       H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz + (start && !Z.istEinfach() ? ` ${tx('ueben.laut_hinweis')}` : '')) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
@@ -1138,7 +1160,7 @@ async function ueben(idText, quelle, fokusText) {
       sichtbar(teile[ti]?.[0]);
     } else {
       K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${Z.istEinfach() ? tx('ueben.e_nicht_ganz') : tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise nur-voll" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
-      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : Z.istEinfach() ? tx('ueben.e_stimmt') : tx('ueben.warst_du_sicher_und_fehlerfrei');
+      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? (Z.istEinfach() ? tx('ueben.e_mit_hilfe') : tx('ueben.mit_hilfe_zaehlt_als_halb_sicher')) : Z.istEinfach() ? tx('ueben.e_stimmt') : tx('ueben.warst_du_sicher_und_fehlerfrei');
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
         if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
         spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
@@ -1393,7 +1415,7 @@ async function ueben(idText, quelle, fokusText) {
         ${E.hasanat === false ? '' : `<div class="nur-voll" style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
       ${E.hasanat === false ? '' : `<p class="niyya nur-voll">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
       <div class="aufschl nur-voll">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>
-      ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
+      ${(res.f || res.h) && !res.lern ? `<div class="hinweisbox">${korr.length ? `${Z.istEinfach() ? tx('ueben.e_wiederholt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length }) : tx('ueben.sofortkorrektur_von_ayat_sitzen_jetzt', { n: korr.filter(x => x !== 'fehler').length, n2: korr.length })} ` : ''}${Z.istEinfach() ? tx('ueben.e_morgen', { n: res.f + res.h }) : tx('ueben.morgen_wieder_dran', { n: res.f + res.h })}</div>` : ''}
       ${res.lern ? `<div class="band">${lernMeldung(res.lern)}</div>` : ''}<div class="nur-voll">${orn}</div>
       <div style="display:grid;gap:10px;margin-top:16px" id="abschl-knoepfe">
       ${res.lern ? `<button class="knopf haupt" id="uebersicht">${tx('lernen.zu_den_lektionen')}</button>` : wirdJetzt ? `<button class="knopf haupt" id="weiter">${tx('allg.weiter')}</button>` : naechster != null && art !== 'frei' ? `<button class="knopf haupt" id="naechster">${tx('ueben.naechster_abschnitt')}</button><button class="knopf leise" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>` : `<button class="knopf haupt" id="uebersicht">${tx('ueben.zur_uebersicht')}</button>`}
