@@ -74,10 +74,12 @@ export function speichern() {
   einstAbgleichen();
   try { speicher.schreiben(SCHLUESSEL, JSON.stringify(P)); } catch (e) { console.warn('Speichern fehlgeschlagen', e); }
 }
-export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort' } = {}) {
+// Einfache Ansicht: gilt je Profil und wird wie jede Einstellung mit dem Konto abgeglichen. Ohne Angabe (alte Profile) gilt „Alle Optionen“.
+export const istEinfach = () => !!P && P.einst?.ansicht === 'einfach';
+export function neuesProfil({ name = '', pensum = 3, reihenfolge = 'vorwaerts', bereich = null, thema = 'auto', modus = 'fort', ansicht = 'voll' } = {}) {
   P = {
     format: 'itqan', version: 1, erstellt: uhr().toISOString(), name,
-    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus, seitenGroesse: 100, textGroesse: 100 }, gliederung: gliederungVon(modus, 'v2')?.name || 'fort-2',
+    einst: { pensum: Array(7).fill(pensum), reihenfolge, bereich, thema, erinnerung: '05:30', hilfe: true, zufall: 'einzeln', vorueben: true, ausgabe: 'v2', modus, seitenGroesse: 100, textGroesse: 100, ansicht }, gliederung: gliederungVon(modus, 'v2')?.name || 'fort-2',
     karten: {}, zyklus: { erledigt: [], khatma: 0, beginn: heute() },
     tage: {}, kette: { n: 0, beste: 0, zuletzt: null }, summe: { punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, abschnitte: 0 },
     meilen: [], meilenD: {}, fstellen: {}, pausen: [], statistik: { arten: {} }, mutash: {}

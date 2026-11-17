@@ -5,7 +5,7 @@ import * as Lk from './lichtkarte.js';
 import { hintergrundSperren } from './sperre.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
-import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
+import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG, ANSICHT_NEU, ANSICHT_FREI } from './version.js';
 import * as Ab from './abgleich.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
@@ -427,12 +427,31 @@ function fehlerAnsicht(e, name) {
   };
   app.querySelector('#fe-melden').onclick = () => { location.hash = '#rueckmeldung'; };
 }
+// Einfache Ansicht: erlaubte Ansichten, Umschalter und Sichtbarkeit des Umschalters
+const EINFACH_ROUTEN = new Set(['sprachwahl', 'heute', 'ueben', 'fertig', 'karte', 'mushaf', 'profil', 'konto', 'einstellungen', 'start', 'einfuehrung', 'neu', 'rueckmeldung', 'hilfe', 'installieren', 'lernen']);
+function ansichtSichtbar() {
+  if (ANSICHT_FREI || Z.istEinfach()) return true;
+  try {
+    if (/[?&]ansicht=an\b/.test(location.search)) localStorage.setItem('itqan-ansicht-test', '1');
+    return localStorage.getItem('itqan-ansicht-test') === '1';
+  } catch (e) { return false; }
+}
+function ansichtWechseln(w) {
+  if (!Z.P || (Z.P.einst.ansicht || 'voll') === w) return;
+  Z.P.einst.ansicht = w; Z.speichern();
+  document.body.classList.toggle('einfach', w === 'einfach');
+  toast(w === 'einfach' ? tx('ansicht.gewechselt_einfach') : tx('ansicht.gewechselt_voll'));
+  zeige();
+}
+app.addEventListener('click', ev => { const b = ev.target.closest?.('[data-ansicht]'); if (b) ansichtWechseln(b.dataset.ansicht); });
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
   if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl' && name !== 'konto') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
+  document.body.classList.toggle('einfach', Z.istEinfach());
+  if (Z.istEinfach() && !EINFACH_ROUTEN.has(name)) { location.replace('#heute'); return; }   // diese Ansicht gibt es nur in „Alle Optionen“
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
@@ -604,7 +623,7 @@ function start() {
   app.querySelector('#los').onclick = () => {
     if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
     const bereich = zuAbschnitten(s.sel);
-    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
+    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus, ansicht: ANSICHT_NEU });
     Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0'; Z.P.einst.rhythmus = s.rhythmus; if (s.herkunft) Z.P.einst.herkunft = s.herkunft;
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
@@ -699,25 +718,26 @@ function heute() {
       <circle cx="105" cy="105" r="74" fill="none" stroke="var(--rand)" stroke-width="1" stroke-dasharray="2 6"/></svg>
       <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">${tx('allg.abschnitte')}</span></div></div>
     <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
-      ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
-      <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
-    ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
-    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
+      ${Z.P.einst.hasanat === false ? '' : `<div class="zahl nur-voll"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
+      <div class="zahl nur-voll"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
+    ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus nur-voll">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
+    ${t.voll && bonusId != null ? `<div class="angebot nur-voll"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
-    ${Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
-    <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
+    ${Z.heuteAbhakbar().length ? `<div class="klein-zeile nur-voll" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
+    <div class="kurz-angebot nur-voll"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
       <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
-    ${istFreitag ? sicher('freitag', () => `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
+    ${istFreitag && !Z.istEinfach() ? sicher('freitag', () => `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
       ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)), ziel: prozent(bq.ziel) })}</p>`; })()}
       <p class="unter" style="margin-top:6px">${tx('heute.eine_neue_woche_ist_ein_guter_neuanfang', { a: Z.schwaechste(1)[0] ? tx('heute.schwaechster_abschnitt_gerade', { abschnittName: abschnittName(D.A[Z.schwaechste(1)[0].id]), titel: esc(D.A[Z.schwaechste(1)[0].id].titel) }) : '' })}</p></div>`) : ''}
-    <div class="titel-klein">${tx('heute.hatma', { a: P.zyklus.khatma + 1 })}</div>
+    <div class="nur-voll"><div class="titel-klein">${tx('heute.hatma', { a: P.zyklus.khatma + 1 })}</div>
     <div class="balken"><div style="width:${(kf.anteil * 100).toFixed(1)}%"></div></div>
     <div class="klein-zeile"><span>${tx('heute.von_abschnitten', { fertig: kf.fertig, gesamt: kf.gesamt })}</span><span>${prozent(Math.floor(kf.anteil * 100))}</span></div>
     <div class="titel-klein"><a href="#karte" style="color:inherit">${tx('allg.lichtkarte')} · ${tx('heute.30_guz')}</a></div>
     <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${sicher('juzmittel', () => Lk.juzMittel(), Array(30).fill(null)).map((x, i) =>
-      `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a>`;
+      `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a></div>
+    <div class="klein-zeile nur-einfach" style="justify-content:center;margin-top:18px"><button type="button" class="textlink" data-ansicht="voll">${tx('ansicht.alle_zeigen')}</button></div>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#kette-info').onclick = ketteFenster;
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
@@ -1698,16 +1718,17 @@ function profil() {
   const zuletzt = gesammelt.map(sn => ({ sn, o: Z.ornamentStand(sn) })).sort((a, b) => (b.o.datum || '').localeCompare(a.o.datum || '')).slice(0, 3);
   const vergoldet = gesammelt.filter(sn => P.meilen.includes('sure-mutqan-' + sn)).length;
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
-    ${rangKarte()}
+    <div class="nur-voll">${rangKarte()}
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div class="zahl"><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div class="zahl"><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div>
     <div class="titel-klein">${tx('profil.itqan_punkte_der_letzten_30_tage')}</div>
     <div class="diagramm" role="img" aria-label="${tx('profil.itqan_punkte_der_letzten_30_tage_2', { a: zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0)), b: zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0))), n: tage.filter(x => x.t?.punkte).length })}">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
-    <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div>
+    <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div></div>
+    ${ansichtSichtbar() ? `<div class="abschnitt" style="margin-top:18px"><h3>${tx('ansicht.titel')}</h3><div class="wahl" id="ansicht" role="group" aria-label="${tx('ansicht.titel')}"><button type="button" data-ansicht="einfach" aria-pressed="${Z.istEinfach()}" class="${Z.istEinfach() ? 'an' : ''}">${tx('ansicht.einfach')}</button><button type="button" data-ansicht="voll" aria-pressed="${!Z.istEinfach()}" class="${!Z.istEinfach() ? 'an' : ''}">${tx('ansicht.voll')}</button></div><p class="unter">${tx('ansicht.hinweis')}</p></div>` : ''}
     <a class="knopf leise" href="#einstellungen" style="text-decoration:none;display:block;margin:18px 0 6px">${tx('allg.einstellungen')}</a>
-    <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
+    <details class="profil-gruppe nur-voll"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fehlerstellen"><div class="t"><b>${tx('allg.fehlerstellen')}</b><span>${tx('profil.markierte_stellen_zum_gezielten_ueben', { n: Object.keys(P.fstellen || {}).length })}</span></div><span class="pfeil">›</span></a><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div></div></details>
-    <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_ueben')}</b><small>${tx('profil.gruppe_ueben_t')}</small></span></summary>
+    <details class="profil-gruppe nur-voll"><summary><span><b>${tx('profil.gruppe_ueben')}</b><small>${tx('profil.gruppe_ueben_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lernen"><div class="t"><b>${tx('lernen.neu_lernen')}</b><span>${tx('lernen.profil_text')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#aehnlich"><div class="t"><b>${tx('allg.aehnliche_stellen')}</b><span>${tx('profil.mutasabihat_nachschlagen_vergleichen_und')}</span></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.sicherung')}</b><small>${tx('profil.gruppe_sicherung_t')}</small></span></summary>
       <div class="profil-inhalt">
@@ -1717,7 +1738,7 @@ function profil() {
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_hilfe')}</b><small>${tx('profil.gruppe_hilfe_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#hilfe"><div class="t"><b>${tx('profil.hilfe_und_glossar')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#einfuehrung"><div class="t"><b>${tx('profil.einfuehrung_ansehen')}</b></div><span class="pfeil">›</span></a><button type="button" class="karte" id="tour-neu"><div class="t"><b>${tx('profil.erklaerung_beim_ueben_wieder_zeigen')}</b></div><span class="pfeil">›</span></button><a class="karte" href="#rueckmeldung"><div class="t"><b>${tx('profil.rueckmeldung_senden')}</b></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_mehr')}</b><small>${tx('profil.gruppe_mehr_t')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
+      <div class="profil-inhalt"><div class="unterseiten"><a class="karte nur-voll" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
@@ -2400,35 +2421,36 @@ function einstellungen() {
   const ANKER = { fajr: tx('einstellungen.anker_fajr'), zuhr: tx('einstellungen.anker_zuhr'), asr: tx('einstellungen.anker_asr'), maghrib: tx('einstellungen.anker_maghrib'), isha: tx('einstellungen.anker_isha'), schlaf: tx('einstellungen.anker_schlaf') };
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('allg.einstellungen')}</div>
+    <div class="hinweisbox nur-einfach">${tx('ansicht.mehr')} <button type="button" class="textlink" data-ansicht="voll">${tx('ansicht.alle_zeigen')}</button></div>
     <div class="abschnitt"><h3>${tx('einstellungen.name')}</h3><div class="feld"><input type="text" id="name" aria-label="${tx('einstellungen.name')}" autocomplete="given-name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erscheinungsbild')}</h3><div class="wahl" id="thema">${[['hell', tx('einstellungen.hell')], ['dunkel', tx('einstellungen.dunkel')], ['auto', tx('einstellungen.wie_geraet')]].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
     ${sprachen.length > 1 ? `<div class="abschnitt"><h3>${tx('einstellungen.sprache')}</h3><div class="wahl" id="sprache">${sprachen.map(s => `<button data-w="${s.code}" lang="${s.code}" class="${s.code === gebiet('code') ? 'an' : ''}">${s.name}</button>`).join('')}</div></div>` : ''}
-    <div class="abschnitt"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', tx('einstellungen.druck_1405')], ['v2', tx('einstellungen.druck_1421')]].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p>
       <label class="auswahl" style="margin-top:14px"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(E.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
       <p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div><div class="hinweisbox verdeckt" id="heute-frage" role="status"></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
-    <div class="abschnitt" id="pensum-block"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div><div class="hinweisbox verdeckt" id="heute-frage" role="status"></div></div>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
+    <div class="abschnitt nur-voll" id="pensum-block"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
       <div class="auswahl stark"><span>${tx('einstellungen.alle_tage')}</span><span class="schritt" data-s="alle"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${gleich() ? E.pensum[0] : tx('einstellungen.verschieden')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>
       <button type="button" class="knopf leise klein" id="tage-einzeln" aria-expanded="${gleich() ? 'false' : 'true'}" style="margin-top:10px">${gleich() ? tx('einstellungen.tage_einzeln') : tx('einstellungen.tage_einzeln_aus')}</button>
       <div class="tagesliste${gleich() ? ' verdeckt' : ''}" style="margin-top:10px">${TAGE.map((w, i) => `<div class="auswahl"><span>${w}</span><span class="schritt" data-s="${i}"><button type="button" data-d="-1" aria-label="${tx('start.weniger')}">−</button><b aria-live="polite">${E.pensum[i] || tx('allg.ruhetag')}</b><button type="button" data-d="1" aria-label="${tx('start.mehr')}">+</button></span></div>`).join('')}</div>
       <p class="unter" style="margin-top:10px" id="dauer">${pensumInfo()}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge">${[['vorwaerts', `${tx('einstellungen.vorwaerts')}<small>${tx('einstellungen.bsp_vorwaerts')}</small>`], ['rueckwaerts', `${tx('einstellungen.rueckwaerts')}<small>${tx('einstellungen.bsp_rueckwaerts')}</small>`], ['zufall', tx('einstellungen.zufaellig')]].map(([w, l]) => `<button data-w="${w}" class="${E.reihenfolge === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <div id="zufallwahl" class="${E.reihenfolge === 'zufall' ? '' : 'verdeckt'}" style="margin-top:12px"><p class="unter">${tx('einstellungen.bei_mehreren_abschnitten_am_tag')}</p>
         <div class="wahl" id="zufall" style="margin-top:8px">${[['einzeln', tx('einstellungen.verstreute_stellen')], ['block', tx('einstellungen.eine_stelle_am_stueck')]].map(([w, l]) => `<button data-w="${w}" class="${E.zufall === w ? 'an' : ''}">${l}</button>`).join('')}</div>
         <p class="unter" style="margin-top:8px">${tx('einstellungen.jede_hatma_bleibt_vollstaendig_zufaellig')}</p></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.ablauf_titel')}</h3>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.ablauf_titel')}</h3>
       <div class="wahl" id="ablauf" style="margin-top:10px"><button data-w="vers" class="${E.ablauf === 'ganz' ? '' : 'an'}">${tx('einstellungen.ablauf_vers')}</button><button data-w="ganz" class="${E.ablauf === 'ganz' ? 'an' : ''}">${tx('einstellungen.ablauf_ganz')}</button></div>
       ${optionsListe([tx('einstellungen.ablauf_text')])}</div>
-    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.rhythmus')}</h3>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div>
       ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
-    <div class="abschnitt${E.rhythmus === 'langzeit' ? ' gedimmt' : ''}" id="schwach-block"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter schwach-hinweis${E.rhythmus === 'langzeit' ? '' : ' verdeckt'}">${tx('einstellungen.schwach_langzeit')}</p><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
+    <div class="abschnitt nur-voll${E.rhythmus === 'langzeit' ? ' gedimmt' : ''}" id="schwach-block"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter schwach-hinweis${E.rhythmus === 'langzeit' ? '' : ' verdeckt'}">${tx('einstellungen.schwach_langzeit')}</p><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
       <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
       <div class="wahl" id="zielquote" style="margin-top:10px">${[90, 95, 98].map(w => `<button data-w="${w}" class="${(E.zielQuote ?? 90) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div></div>
     <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
       <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
@@ -2437,36 +2459,36 @@ function einstellungen() {
       <p class="unter" style="margin-top:14px">${tx('einstellungen.stoppzeichen_text')}</p>
       <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']]].map(([w, l, f]) => `<button data-w="${w}" class="${stoppWahl() === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
       <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
-    <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
-    <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
+    <details class="einst-gruppe nur-voll"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.hilfe_beim_aufdecken')}</h3><p class="unter">${tx('einstellungen.erstes_wort_zeigt_den_anfang_der_aya')}</p>
       <div class="wahl" id="hilfe" style="margin-top:10px"><button data-w="1" class="${E.hilfe ? 'an' : ''}">${tx('einstellungen.erlaubt')}</button><button data-w="0" class="${E.hilfe ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.sofortkorrektur')}</h3><p class="unter">${tx('einstellungen.hattest_du_in_einem_abschnitt_fehler')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.sofortkorrektur')}</h3><p class="unter">${tx('einstellungen.hattest_du_in_einem_abschnitt_fehler')}</p>
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.abhoeren_durch_eine_zweite_person')}</h3><p class="unter">${tx('einstellungen.zu_beginn_eines_abschnitts_steht_klein')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.abhoeren_durch_eine_zweite_person')}</h3><p class="unter">${tx('einstellungen.zu_beginn_eines_abschnitts_steht_klein')}</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="${E.hasanat !== false ? 'an' : ''}">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0" class="${E.hasanat !== false ? '' : 'an'}">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     </details>
-    <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_zeit')}</summary>
-    <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
-    <div class="abschnitt"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
+    <details class="einst-gruppe nur-voll"><summary>${tx('einstellungen.gruppe_zeit')}</summary>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
       <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.tageswechsel')}</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? tx('einstellungen.um_uhr', { x }) : tx('einstellungen.mitternacht'))}</select></label></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
       <div class="zeitwahl"><select id="std" aria-label="${tx('einstellungen.stunde')}">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="${tx('einstellungen.minute')}">${optionen(minuten, mm, zwei)}</select><span>${tx('einstellungen.uhr')}</span></div>
       <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.anker')}</span><select id="anker">${['', 'fajr', 'zuhr', 'asr', 'maghrib', 'isha', 'schlaf'].map(k => `<option value="${k}"${(E.anker || '') === k ? ' selected' : ''}>${k ? ANKER[k] : tx('einstellungen.anker_ohne')}</option>`).join('')}</select></label>
       <p class="unter" style="margin-top:6px">${tx('einstellungen.anker_text')}</p>
       <button class="knopf leise" id="ics" style="margin-top:10px">${tx('einstellungen.in_den_kalender_eintragen')}</button></div>
     </details>
-    <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_wiederherstellung')}</summary>
-    <div class="abschnitt"><h3>${tx('einstellungen.offline')}</h3><p class="unter">${tx('einstellungen.laedt_alle_604_seiten_des_drucks_damit', { a: D.ausgabe === 'v1' ? tx('einstellungen.1405_etwa_48_mb') : tx('einstellungen.1421_etwa_95_mb') })}</p>
+    <details class="einst-gruppe nur-voll"><summary>${tx('einstellungen.gruppe_wiederherstellung')}</summary>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.offline')}</h3><p class="unter">${tx('einstellungen.laedt_alle_604_seiten_des_drucks_damit', { a: D.ausgabe === 'v1' ? tx('einstellungen.1405_etwa_48_mb') : tx('einstellungen.1421_etwa_95_mb') })}</p>
       <p class="offline-stand" id="offline-stand">${tx('einstellungen.gespeicherte_seiten_werden_gezaehlt')}</p><div class="balken verdeckt" id="offline-balken"><div style="width:0%"></div></div>
       <button class="knopf leise" id="offline" style="margin-top:10px">${tx('einstellungen.alle_seiten_speichern')}</button></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.schnappschuesse')}</h3><p class="unter">${tx('einstellungen.itqan_legt_einmal_am_tag_und_vor')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.schnappschuesse')}</h3><p class="unter">${tx('einstellungen.itqan_legt_einmal_am_tag_und_vor')}</p>
       <div style="margin-top:10px">${schnappschussListe()}</div></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.neu_beginnen')}</h3><p class="unter">${tx('einstellungen.loescht_dein_profil_auf_diesem_geraet')}</p><button class="knopf schlecht" id="reset" style="margin-top:10px">${tx('einstellungen.profil_loeschen')}</button></div>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p></div>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.neu_beginnen')}</h3><p class="unter">${tx('einstellungen.loescht_dein_profil_auf_diesem_geraet')}</p><button class="knopf schlecht" id="reset" style="margin-top:10px">${tx('einstellungen.profil_loeschen')}</button></div>
     </details>`;
   const dauer = () => app.querySelector('#dauer').innerHTML = pensumInfo();
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast(tx('einstellungen.gespeichert')); };
