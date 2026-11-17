@@ -61,8 +61,8 @@ export function wahlZeichnen(host, s, onChange, opts = {}) {
     <div class="juzwahl">${juzReihe}</div>
     <p class="unter a-summe" role="status" style="margin-top:10px"></p>
     <p class="unter a-leer verdeckt" role="alert" style="margin-top:4px"></p>
-    <button type="button" class="knopf leise klein a-genauer" aria-expanded="false" style="margin-top:6px">${tx('auswahl.genauer')}</button>
-    <div class="a-detail verdeckt"><p class="unter" style="margin:10px 0">${tx('auswahl.hinweis')}</p></div></div>`;
+    <button type="button" class="knopf leise klein a-genauer nur-voll" aria-expanded="false" style="margin-top:6px">${tx('auswahl.genauer')}</button>
+    <div class="a-detail verdeckt nur-voll"><p class="unter" style="margin:10px 0">${tx('auswahl.hinweis')}</p></div></div>`;
   const detail = host.querySelector('.a-detail'), summe = host.querySelector('.a-summe');
   let gebaut = false;
   const bauen = () => {

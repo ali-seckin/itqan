@@ -312,6 +312,7 @@ export default {
     dein_jetziger_stand_auf_diesem_geraet: 'This replaces your current progress on this device. Itqān takes a snapshot first, so you can restore it in Settings.',
   },
   einstellungen: {
+    menge_eigen: 'Custom value: {n}',
     stoppzeichen_titel: 'Colour of the pause marks',
     stoppzeichen_text: 'Colour of the pause marks: the verse marker at the end of each ayah and the pause signs get a colour. It helps the eye remember the page. The number stays dark.',
     stopp_aus: 'Off',
@@ -890,6 +891,11 @@ export default {
     naechstes_paar: 'Next pair',
   },
   einfuehrung: {
+    e1_text: 'Itqān helps you review what you have memorised until it holds: a small piece every day, in a fixed order and without pressure.<br><br><b>Itqān</b> means mastering something so firmly that it holds.',
+    e2_titel: 'How a practice works',
+    e2_text: 'The Ayahs (verses) are hidden. You recite an Ayah from memory, reveal it and say honestly whether it was right. This is the only way Itqān can show you where you really stand.',
+    e3_titel: 'A little every day',
+    e3_text: 'On the <b>Today</b> page you see what is due that day. Better a little every day than a lot now and then. What does not stick comes back after a few days.',
     assalamu_alaikum: 'Assalamu ’alaykum',
     itqan_begleitet_dich_bei_der_muragaa_des: 'Itqān is your companion for the Muraja’ah (structured revision) of the whole Qur’an. It’s made for Huffaz (all who carry the Qur’an by heart), for anyone memorising right now, and for their teachers.<br><br><b>Itqān</b> means mastering something so firmly that it holds.',
     sinnabschnitte_statt_seiten: 'Sections by meaning, not by page',
@@ -961,6 +967,11 @@ export default {
     von: '{a} of {n}',
   },
   start: {
+    menge_wenig: 'A little',
+    menge_mittel: 'Medium',
+    menge_viel: 'A lot',
+    menge_zahl: '{n} {n, plural, one {section} other {sections}}',
+    menge_hinweis: 'You can change this at any time in the settings.',
     empfehlung: 'Recommended: at least {min}, ideally {gold} per day.',
     seiten_zahl: '{ids} {ids, plural, one {page} other {pages}}',
     wie_viele_seiten_am_tag: 'How many pages a day?',

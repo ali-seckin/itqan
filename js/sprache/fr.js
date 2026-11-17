@@ -312,6 +312,7 @@ export default {
     dein_jetziger_stand_auf_diesem_geraet: 'Ta progression actuelle sur cet appareil sera remplacée. Itqān prend d’abord un instantané, que tu pourras restaurer dans les réglages.',
   },
   einstellungen: {
+    menge_eigen: 'Valeur personnalisée : {n}',
     stoppzeichen_titel: 'Couleur des signes de pause',
     stoppzeichen_text: 'Couleur des signes de pause : la marque à la fin de chaque verset et les signes de pause prennent une couleur. Cela aide l’œil à mémoriser la page. Le numéro reste sombre.',
     stopp_aus: 'Aucune',
@@ -890,6 +891,11 @@ export default {
     naechstes_paar: 'Paire suivante',
   },
   einfuehrung: {
+    e1_text: 'Itqān t’aide à réviser ce que tu as mémorisé jusqu’à ce que cela tienne : un petit morceau chaque jour, dans un ordre fixe et sans pression.<br><br><b>Itqān</b> signifie maîtriser quelque chose si bien que cela tient.',
+    e2_titel: 'Comment se déroule un exercice',
+    e2_text: 'Les âyât (versets) sont masqués. Tu récites une âya de mémoire, tu la dévoiles et tu dis honnêtement si c’était juste. C’est la seule façon pour Itqān de te montrer où tu en es vraiment.',
+    e3_titel: 'Un peu chaque jour',
+    e3_text: 'Sur la page <b>Aujourd’hui</b>, tu vois ce qui est à faire ce jour-là. Mieux vaut un peu chaque jour que beaucoup de temps en temps. Ce qui ne tient pas revient après quelques jours.',
     assalamu_alaikum: 'As-salâmu ‘alaykum',
     itqan_begleitet_dich_bei_der_muragaa_des: 'Itqān t’accompagne dans la murâja‘a (la révision ordonnée) de tout le Coran. Il s’adresse aux huffâz (ceux qui préservent le Coran par cœur), à tous ceux qui sont en train de l’apprendre par cœur, ainsi qu’à leurs enseignants.<br><br><b>Itqān</b> signifie : maîtriser une chose si parfaitement qu’elle demeure.',
     sinnabschnitte_statt_seiten: 'Des sections de sens plutôt que des pages',
@@ -961,6 +967,11 @@ export default {
     von: '{a} sur {n}',
   },
   start: {
+    menge_wenig: 'Peu',
+    menge_mittel: 'Moyen',
+    menge_viel: 'Beaucoup',
+    menge_zahl: '{n} {n, plural, one {section} other {sections}}',
+    menge_hinweis: 'Tu peux le modifier à tout moment dans les réglages.',
     empfehlung: 'Recommandé : au moins {min}, idéalement {gold} par jour.',
     seiten_zahl: '{ids} {ids, plural, one {page} other {pages}}',
     wie_viele_seiten_am_tag: 'Combien de pages par jour ?',

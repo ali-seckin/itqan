@@ -312,6 +312,7 @@ export default {
     dein_jetziger_stand_auf_diesem_geraet: 'Bu cihazdaki şimdiki durumunun yerini bu profil alır. Itqān öncesinde bir anlık kopya alır; onu Ayarlar’dan geri getirebilirsin.',
   },
   einstellungen: {
+    menge_eigen: 'Özel değer: {n}',
     stoppzeichen_titel: 'Durak işaretlerinin rengi',
     stoppzeichen_text: 'Durak işaretlerinin rengi: Her ayetin sonundaki işaret ve durak işaretleri renk alır. Göz sayfayı daha kolay ezberler. Numara koyu kalır.',
     stopp_aus: 'Kapalı',
@@ -890,6 +891,11 @@ export default {
     naechstes_paar: 'Sonraki çift',
   },
   einfuehrung: {
+    e1_text: 'Itqān, ezberlediklerini kalıcı olana kadar tekrar etmene yardım eder: her gün küçük bir parça, düzenli bir sırayla ve baskı olmadan.<br><br><b>Itqān</b>, bir şeyi kalıcı olacak kadar sağlam bilmek demektir.',
+    e2_titel: 'Bir alıştırma nasıl işler',
+    e2_text: 'Ayetler kapalıdır. Bir ayeti ezberden okur, açar ve doğru olup olmadığını dürüstçe söylersin. Itqān sana ancak böyle gerçekte nerede durduğunu gösterebilir.',
+    e3_titel: 'Her gün biraz',
+    e3_text: '<b>Bugün</b> sayfasında o gün neyin sırada olduğunu görürsün. Çok ama seyrek yerine az ama her gün daha iyidir. Oturmayan şey birkaç gün sonra geri gelir.',
     assalamu_alaikum: 'Esselâmu aleyküm',
     itqan_begleitet_dich_bei_der_muragaa_des: 'Itqān, Kur’an’ın tamamının murâcaasında (düzenli tekrarında) sana yol arkadaşı olur. Hafızlar (Kur’an’ı ezberinde muhafaza edenler), ezberi devam edenler ve onların hocaları için hazırlandı.<br><br><b>Itqān</b>, bir şeyi kalıcı olacak kadar sağlam bilmek demektir.',
     sinnabschnitte_statt_seiten: 'Sayfalar yerine anlam bölümleri',
@@ -961,6 +967,11 @@ export default {
     von: '{a} / {n}',
   },
   start: {
+    menge_wenig: 'Az',
+    menge_mittel: 'Orta',
+    menge_viel: 'Çok',
+    menge_zahl: '{n} {n, plural, one {bölüm} other {bölüm}}',
+    menge_hinweis: 'Bunu istediğin zaman ayarlardan değiştirebilirsin.',
     empfehlung: 'Önerilen: günde en az {min}, ideal {gold}.',
     seiten_zahl: '{ids} {ids, plural, one {sayfa} other {sayfa}}',
     wie_viele_seiten_am_tag: 'Günde kaç sayfa?',

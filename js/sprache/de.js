@@ -308,6 +308,7 @@ export default {
     dein_jetziger_stand_auf_diesem_geraet: 'Dein jetziger Stand auf diesem Gerät wird ersetzt. Vorher legt Itqān einen Schnappschuss an, den du in den Einstellungen zurückholen kannst.',
   },
   einstellungen: {
+    menge_eigen: 'Eigener Wert: {n}',
     stoppzeichen_titel: 'Farbe der Stoppzeichen',
     stoppzeichen_text: 'Farbe der Stoppzeichen: Die Versmarke am Ende jeder Āya und die Pausezeichen bekommen Farbe. Das hilft dem Auge beim Einprägen. Die Zahl bleibt dunkel.',
     stopp_aus: 'Aus',
@@ -886,6 +887,11 @@ export default {
     naechstes_paar: 'Nächstes Paar',
   },
   einfuehrung: {
+    e1_text: 'Itqān hilft dir, das Auswendiggelernte zu wiederholen, bis es hält: jeden Tag ein kleines Stück, in fester Ordnung und ohne Druck.<br><br><b>Itqān</b> heißt: etwas so sicher beherrschen, dass es hält.',
+    e2_titel: 'So läuft eine Übung',
+    e2_text: 'Die Āyāt (Verse) sind verdeckt. Du sprichst eine Āya aus dem Gedächtnis, deckst sie auf und sagst ehrlich, ob es gestimmt hat. Nur so zeigt dir Itqān, wo du wirklich stehst.',
+    e3_titel: 'Jeden Tag ein wenig',
+    e3_text: 'Auf der Seite <b>Heute</b> siehst du, was an dem Tag dran ist. Lieber wenig und jeden Tag als viel und selten. Was nicht sitzt, kommt nach ein paar Tagen wieder.',
     assalamu_alaikum: 'Assalāmu ʿalaikum',
     itqan_begleitet_dich_bei_der_muragaa_des: 'Itqān begleitet dich bei der Murāǧaʿa (der geordneten Wiederholung) des ganzen Qurʾān. Es ist für Ḥuffāẓ (alle, die den Qurʾān auswendig bewahren), für alle, die gerade auswendig lernen, und für ihre Lehrer.<br><br><b>Itqān</b> heißt: etwas so sicher beherrschen, dass es hält.',
     sinnabschnitte_statt_seiten: 'Sinnabschnitte statt Seiten',
@@ -957,6 +963,11 @@ export default {
     von: '{a} von {n}',
   },
   start: {
+    menge_wenig: 'Wenig',
+    menge_mittel: 'Mittel',
+    menge_viel: 'Viel',
+    menge_zahl: '{n} {n, plural, one {Abschnitt} other {Abschnitte}}',
+    menge_hinweis: 'Du kannst das jederzeit in den Einstellungen ändern.',
     empfehlung: 'Empfohlen: mindestens {min}, ideal {gold} pro Tag.',
     seiten_zahl: '{ids} {ids, plural, one {Seite} other {Seiten}}',
     wie_viele_seiten_am_tag: 'Wie viele Seiten am Tag?',

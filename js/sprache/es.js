@@ -312,6 +312,7 @@ export default {
     dein_jetziger_stand_auf_diesem_geraet: 'Lo que tienes ahora en este dispositivo se sustituirá. Antes, Itqān crea una instantánea que podrás recuperar en los ajustes.',
   },
   einstellungen: {
+    menge_eigen: 'Valor propio: {n}',
     stoppzeichen_titel: 'Color de los signos de pausa',
     stoppzeichen_text: 'Color de los signos de pausa: la marca al final de cada aleya y los signos de pausa reciben color. Ayuda al ojo a memorizar la página. El número sigue oscuro.',
     stopp_aus: 'Sin color',
@@ -890,6 +891,11 @@ export default {
     naechstes_paar: 'Siguiente par',
   },
   einfuehrung: {
+    e1_text: 'Itqān te ayuda a repasar lo que has memorizado hasta que se afiance: un pequeño trozo cada día, en un orden fijo y sin presión.<br><br><b>Itqān</b> significa dominar algo tan bien que se mantiene.',
+    e2_titel: 'Cómo es un ejercicio',
+    e2_text: 'Las aleyas (versículos) están tapadas. Recitas una aleya de memoria, la descubres y dices con sinceridad si estaba bien. Solo así Itqān puede mostrarte dónde estás de verdad.',
+    e3_titel: 'Un poco cada día',
+    e3_text: 'En la página <b>Hoy</b> ves lo que toca ese día. Mejor poco cada día que mucho de vez en cuando. Lo que no se afianza vuelve a aparecer al cabo de unos días.',
     assalamu_alaikum: 'As-salamu ‘alaykum',
     itqan_begleitet_dich_bei_der_muragaa_des: 'Itqān te acompaña en la muraya‘a (el repaso ordenado) de todo el Corán. Es para los huffaz (quienes guardan el Corán en la memoria), para quienes lo están memorizando y para sus profesores.<br><br><b>Itqān</b> significa dominar algo con tal firmeza que perdure.',
     sinnabschnitte_statt_seiten: 'Secciones de sentido en lugar de páginas',
@@ -961,6 +967,11 @@ export default {
     von: '{a} de {n}',
   },
   start: {
+    menge_wenig: 'Poco',
+    menge_mittel: 'Medio',
+    menge_viel: 'Mucho',
+    menge_zahl: '{n} {n, plural, one {sección} other {secciones}}',
+    menge_hinweis: 'Puedes cambiarlo en cualquier momento en los ajustes.',
     empfehlung: 'Recomendado: al menos {min}, idealmente {gold} al día.',
     seiten_zahl: '{ids} {ids, plural, one {página} other {páginas}}',
     wie_viele_seiten_am_tag: '¿Cuántas páginas al día?',

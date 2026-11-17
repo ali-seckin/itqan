@@ -436,21 +436,25 @@ function ansichtSichtbar() {
     return localStorage.getItem('itqan-ansicht-test') === '1';
   } catch (e) { return false; }
 }
+// Einstieg (Einführung, Start): Einfache Ansicht, wenn ANSICHT_NEU es so will oder der Umschalter freigeschaltet ist; mit Profil gilt dessen Ansicht
+const einstiegEinfach = () => Z.P ? Z.istEinfach() : (ANSICHT_NEU === 'einfach' || ansichtSichtbar());
 function ansichtWechseln(w) {
-  if (!Z.P || (Z.P.einst.ansicht || 'voll') === w) return;
+  if (!Z.P || (w !== 'einfach' && w !== 'voll') || (Z.P.einst.ansicht || 'voll') === w) return;
   Z.P.einst.ansicht = w; Z.speichern();
   document.body.classList.toggle('einfach', w === 'einfach');
   toast(w === 'einfach' ? tx('ansicht.gewechselt_einfach') : tx('ansicht.gewechselt_voll'));
   zeige();
 }
-app.addEventListener('click', ev => { const b = ev.target.closest?.('[data-ansicht]'); if (b) ansichtWechseln(b.dataset.ansicht); });
+app.addEventListener('click', ev => { const b = ev.target.closest?.('[data-ansicht-wahl]'); if (b && app.contains(b)) ansichtWechseln(b.dataset.ansichtWahl); });
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
   if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl' && name !== 'konto') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
-  document.body.classList.toggle('einfach', Z.istEinfach());
+  // Version 1.67 konnte durch einen Fehler einen falschen Wert speichern (den Namen einer Ansicht): zurück auf „Alle Optionen“
+  if (Z.P?.einst.ansicht && Z.P.einst.ansicht !== 'einfach' && Z.P.einst.ansicht !== 'voll') { Z.P.einst.ansicht = 'voll'; Z.speichern(); }
+  document.body.classList.toggle('einfach', Z.P ? Z.istEinfach() : (name === 'start' || name === 'einfuehrung') && einstiegEinfach());
   if (Z.istEinfach() && !EINFACH_ROUTEN.has(name)) { location.replace('#heute'); return; }   // diese Ansicht gibt es nur in „Alle Optionen“
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
@@ -499,7 +503,7 @@ function sprachwahl() {
 function einfuehrung() {
   navSetzen(null);
   const linien = (n, klasse = '') => Array.from({ length: n }, (_, i) => `<i class="${klasse}" style="--i:${i}"></i>`).join('');
-  const SCHRITTE = [
+  const ALLE_SCHRITTE = [
     { bild: `<div class="tb-laterne">${qandil()}</div><div class="tb-ar">إِتْقَان</div>`,
       titel: tx('einfuehrung.assalamu_alaikum'),
       text: tx('einfuehrung.itqan_begleitet_dich_bei_der_muragaa_des') },
@@ -526,6 +530,12 @@ function einfuehrung() {
         <li>${tx('einfuehrung.abschnitte_am_tag_lieber_wenig_und_jeden')}</li>
         <li>${tx('einfuehrung.sichern_solange_die_app_in_der_testphase')}</li></ul>` }
   ];
+  // Einfache Ansicht: drei Bildschirme statt sieben (Willkommen, So läuft eine Übung, Jeden Tag ein wenig)
+  const SCHRITTE = einstiegEinfach() ? [
+    { bild: ALLE_SCHRITTE[0].bild, titel: ALLE_SCHRITTE[0].titel, text: tx('einfuehrung.e1_text') },
+    { bild: ALLE_SCHRITTE[2].bild, titel: tx('einfuehrung.e2_titel'), text: tx('einfuehrung.e2_text') },
+    { bild: ALLE_SCHRITTE[5].bild, titel: tx('einfuehrung.e3_titel'), text: tx('einfuehrung.e3_text') }
+  ] : ALLE_SCHRITTE;
   let i = 0;
   app.innerHTML = `<div class="tutorial">
     <button class="textlink tut-weg" id="tut-weg">${tx('einfuehrung.ueberspringen')}</button>
@@ -550,7 +560,7 @@ function einfuehrung() {
   function hoeheFestlegen() {
     const mess = document.createElement('div'); mess.className = 'tut-mess';
     mess.style.width = buehne.clientWidth + 'px';
-    mess.innerHTML = SCHRITTE.slice(0, -1).map(s => `<div class="tut-schritt"><div class="tut-bild">${s.bild}</div><h2>${s.titel}</h2><div class="tut-text">${s.text}</div></div>`).join('');
+    mess.innerHTML = SCHRITTE.slice(0, einstiegEinfach() ? undefined : -1).map(s => `<div class="tut-schritt"><div class="tut-bild">${s.bild}</div><h2>${s.titel}</h2><div class="tut-text">${s.text}</div></div>`).join('');
     document.body.appendChild(mess);
     buehne.style.minHeight = Math.ceil(Math.max(...[...mess.children].map(x => x.offsetHeight))) + 'px';
     mess.remove();
@@ -588,12 +598,13 @@ function start() {
     <div class="abschnitt"><h3>${tx('start.wie_heisst_du')}</h3><div class="feld"><input type="text" id="name" placeholder="${tx('start.dein_name_fuer_deine_profildatei')}" autocomplete="given-name"></div></div>
     <div class="abschnitt"><h3>${tx('start.was_wiederholst_du')}</h3><p class="unter">${tx('start.waehle_die_agza_die_du_auswendig_kannst')}</p>
       <div id="auswahl"></div></div>
-    <div class="abschnitt"><h3 id="pensum-titel">${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p>
-      <div class="zaehler"><button id="minus" aria-label="${tx('start.weniger')}">−</button><b id="pensum">3</b><button id="plus" aria-label="${tx('start.mehr')}">+</button></div>
+    <div class="abschnitt"><h3 id="pensum-titel">${tx('start.wie_viele_abschnitte_am_tag')}</h3><p class="unter nur-voll">${tx('start.pro_wochentag_kannst_du_es_spaeter')}</p><p class="unter nur-einfach">${tx('start.menge_hinweis')}</p>
+      <div class="wahl reihenfolge-wahl nur-einfach" id="menge" role="group" aria-label="${tx('start.wie_viele_abschnitte_am_tag')}"><button type="button" data-p="1">${tx('start.menge_wenig')}<small>${tx('start.menge_zahl', { n: 1 })}</small></button><button type="button" data-p="3" class="an">${tx('start.menge_mittel')}<small>${tx('start.menge_zahl', { n: 3 })}</small></button><button type="button" data-p="5">${tx('start.menge_viel')}<small>${tx('start.menge_zahl', { n: 5 })}</small></button></div>
+      <div class="zaehler nur-voll"><button id="minus" aria-label="${tx('start.weniger')}">−</button><b id="pensum">3</b><button id="plus" aria-label="${tx('start.mehr')}">+</button></div>
       <p class="unter" style="text-align:center" id="dauer"></p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
+    <div class="abschnitt nur-voll"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
-    <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
+    <details class="start-mehr nur-voll"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
     <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
       <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="an">${tx('einstellungen.rhythmus_langzeit')}</button></div>
       ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
@@ -613,6 +624,7 @@ function start() {
   wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen, { leer: tx('auswahl.leer_start') });
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
+  app.querySelector('#menge').onclick = ev => { const b = ev.target.closest('button[data-p]'); if (!b) return; s.pensum = +b.dataset.p; app.querySelectorAll('#menge button').forEach(x => x.classList.toggle('an', x === b)); dauerZeigen(); };
   for (const id of ['reihenfolge', 'zufall', 'thema', 'modus', 'hasanat', 'rhythmus']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.closest('button')?.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
@@ -623,7 +635,7 @@ function start() {
   app.querySelector('#los').onclick = () => {
     if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
     const bereich = zuAbschnitten(s.sel);
-    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus, ansicht: ANSICHT_NEU });
+    Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus, ansicht: einstiegEinfach() ? 'einfach' : ANSICHT_NEU });
     Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0'; Z.P.einst.rhythmus = s.rhythmus; if (s.herkunft) Z.P.einst.herkunft = s.herkunft;
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
@@ -737,7 +749,7 @@ function heute() {
     <div class="titel-klein"><a href="#karte" style="color:inherit">${tx('allg.lichtkarte')} · ${tx('heute.30_guz')}</a></div>
     <a class="licht-mini" href="#karte" aria-label="${tx('heute.lichtkarte_oeffnen_30_guz_je_heller')}">${sicher('juzmittel', () => Lk.juzMittel(), Array(30).fill(null)).map((x, i) =>
       `<span aria-hidden="true" class="${x == null ? 'aus' : x >= 2.5 ? 'voll' : ''}"${x != null ? ` data-k="${Math.round(x)}"` : ''}>${i + 1}</span>`).join('')}</a></div>
-    <div class="klein-zeile nur-einfach" style="justify-content:center;margin-top:18px"><button type="button" class="textlink" data-ansicht="voll">${tx('ansicht.alle_zeigen')}</button></div>`;
+    <div class="klein-zeile nur-einfach" style="justify-content:center;margin-top:18px"><button type="button" class="textlink" data-ansicht-wahl="voll">${tx('ansicht.alle_zeigen')}</button></div>`;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#kette-info').onclick = ketteFenster;
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
@@ -1724,7 +1736,7 @@ function profil() {
     <div class="titel-klein">${tx('profil.itqan_punkte_der_letzten_30_tage')}</div>
     <div class="diagramm" role="img" aria-label="${tx('profil.itqan_punkte_der_letzten_30_tage_2', { a: zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0)), b: zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0))), n: tage.filter(x => x.t?.punkte).length })}">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
     <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div></div>
-    ${ansichtSichtbar() ? `<div class="abschnitt" style="margin-top:18px"><h3>${tx('ansicht.titel')}</h3><div class="wahl" id="ansicht" role="group" aria-label="${tx('ansicht.titel')}"><button type="button" data-ansicht="einfach" aria-pressed="${Z.istEinfach()}" class="${Z.istEinfach() ? 'an' : ''}">${tx('ansicht.einfach')}</button><button type="button" data-ansicht="voll" aria-pressed="${!Z.istEinfach()}" class="${!Z.istEinfach() ? 'an' : ''}">${tx('ansicht.voll')}</button></div><p class="unter">${tx('ansicht.hinweis')}</p></div>` : ''}
+    ${ansichtSichtbar() ? `<div class="abschnitt" style="margin-top:18px"><h3>${tx('ansicht.titel')}</h3><div class="wahl" id="ansicht" role="group" aria-label="${tx('ansicht.titel')}"><button type="button" data-ansicht-wahl="einfach" aria-pressed="${Z.istEinfach()}" class="${Z.istEinfach() ? 'an' : ''}">${tx('ansicht.einfach')}</button><button type="button" data-ansicht-wahl="voll" aria-pressed="${!Z.istEinfach()}" class="${!Z.istEinfach() ? 'an' : ''}">${tx('ansicht.voll')}</button></div><p class="unter">${tx('ansicht.hinweis')}</p></div>` : ''}
     <a class="knopf leise" href="#einstellungen" style="text-decoration:none;display:block;margin:18px 0 6px">${tx('allg.einstellungen')}</a>
     <details class="profil-gruppe nur-voll"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fehlerstellen"><div class="t"><b>${tx('allg.fehlerstellen')}</b><span>${tx('profil.markierte_stellen_zum_gezielten_ueben', { n: Object.keys(P.fstellen || {}).length })}</span></div><span class="pfeil">›</span></a><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div></div></details>
@@ -2418,13 +2430,15 @@ function einstellungen() {
   const [hh, mm] = (E.erinnerung || '05:30').split(':').map(Number);
   const minuten = [...new Set([...Array.from({ length: 12 }, (_, i) => i * 5), mm])].sort((a, b) => a - b);
   const zwei = x => String(x).padStart(2, '0');
+  const posTage = E.pensum.filter(v => v > 0), mengeWert = gleich() ? E.pensum[0] : Math.round(posTage.reduce((x, y) => x + y, 0) / Math.max(1, posTage.length)), mengeEigen = !(gleich() && [1, 3, 5].includes(E.pensum[0]));
   const ANKER = { fajr: tx('einstellungen.anker_fajr'), zuhr: tx('einstellungen.anker_zuhr'), asr: tx('einstellungen.anker_asr'), maghrib: tx('einstellungen.anker_maghrib'), isha: tx('einstellungen.anker_isha'), schlaf: tx('einstellungen.anker_schlaf') };
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('allg.einstellungen')}</div>
-    <div class="hinweisbox nur-einfach">${tx('ansicht.mehr')} <button type="button" class="textlink" data-ansicht="voll">${tx('ansicht.alle_zeigen')}</button></div>
+    <div class="hinweisbox nur-einfach">${tx('ansicht.mehr')} <button type="button" class="textlink" data-ansicht-wahl="voll">${tx('ansicht.alle_zeigen')}</button></div>
     <div class="abschnitt"><h3>${tx('einstellungen.name')}</h3><div class="feld"><input type="text" id="name" aria-label="${tx('einstellungen.name')}" autocomplete="given-name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erscheinungsbild')}</h3><div class="wahl" id="thema">${[['hell', tx('einstellungen.hell')], ['dunkel', tx('einstellungen.dunkel')], ['auto', tx('einstellungen.wie_geraet')]].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
     ${sprachen.length > 1 ? `<div class="abschnitt"><h3>${tx('einstellungen.sprache')}</h3><div class="wahl" id="sprache">${sprachen.map(s => `<button data-w="${s.code}" lang="${s.code}" class="${s.code === gebiet('code') ? 'an' : ''}">${s.name}</button>`).join('')}</div></div>` : ''}
+    <div class="abschnitt nur-einfach" id="menge-block"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><div class="wahl reihenfolge-wahl" id="menge" role="group" aria-label="${tx('einstellungen.abschnitte_pro_tag')}"><button type="button" data-p="1" class="${!mengeEigen && mengeWert === 1 ? 'an' : ''}">${tx('start.menge_wenig')}<small>${tx('start.menge_zahl', { n: 1 })}</small></button><button type="button" data-p="3" class="${!mengeEigen && mengeWert === 3 ? 'an' : ''}">${tx('start.menge_mittel')}<small>${tx('start.menge_zahl', { n: 3 })}</small></button><button type="button" data-p="5" class="${!mengeEigen && mengeWert === 5 ? 'an' : ''}">${tx('start.menge_viel')}<small>${tx('start.menge_zahl', { n: 5 })}</small></button>${mengeEigen ? `<button type="button" class="an" disabled>${tx('einstellungen.menge_eigen', { n: mengeWert })}</button>` : ''}</div><p class="unter" id="menge-info">${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}</p></div>
     <div class="abschnitt nur-voll"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', tx('einstellungen.druck_1405')], ['v2', tx('einstellungen.druck_1421')]].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p>
@@ -2492,6 +2506,12 @@ function einstellungen() {
     </details>`;
   const dauer = () => app.querySelector('#dauer').innerHTML = pensumInfo();
   app.querySelector('#name').onchange = ev => { P.name = ev.target.value.trim(); Z.speichern(); toast(tx('einstellungen.gespeichert')); };
+  app.querySelector('#menge').onclick = ev => {
+    const b = ev.target.closest('button[data-p]'); if (!b) return;
+    E.pensum = Array(7).fill(+b.dataset.p); Z.speichern();
+    app.querySelectorAll('#menge button').forEach(x => x.classList.toggle('an', x === b)); app.querySelector('#menge button:disabled')?.remove();
+    app.querySelector('#menge-info').innerHTML = tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) }); toast(tx('einstellungen.gespeichert'));
+  };
   const wahl = (id, fn) => app.querySelector('#' + id).onclick = ev => { const w = ev.target.dataset.w; if (w == null) return; app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w)); fn(w); Z.speichern(); };
   wahl('thema', w => { E.thema = w; themaAnwenden(); });
   // Die Sprache gilt für das Gerät und wird beim Start geladen, deshalb lädt die App nach der Wahl neu
