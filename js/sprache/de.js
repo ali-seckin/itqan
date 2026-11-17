@@ -549,7 +549,7 @@ export default {
   },
   umzug: {
     titel: 'Itqān zieht um',
-    text: 'In den nächsten Tagen bekommt Itqān eine neue Adresse: <b>app.itqan-app.app</b>. Damit dein Stand mitkommt, melde dich vorher mit einem Konto an. Öffne danach die neue Adresse und lege sie neu auf deinen Home-Bildschirm. Das alte Symbol bekommt keine Neuerungen mehr.',
+    text: 'Itqān bekommt bald eine neue Adresse. Wir sagen dir rechtzeitig Bescheid. Melde dich am besten schon jetzt mit einem Konto an, dann kommt dein Stand ohne Aufwand mit.',
     bereit: 'Du bist angemeldet, dein Stand kommt mit.',
   },
   konto: {
@@ -1545,6 +1545,8 @@ export default {
     support_1: 'Deine Rückmeldung geht jetzt an support@itqan-app.app. Dazu kommen kleine Verbesserungen bei den Sicherungen und ein Hinweis auf den bevorstehenden Umzug an eine neue Adresse.',
     menue_titel: 'Neue Menüleiste',
     menue_1: 'Unten gibt es jetzt fünf Reiter, der Muṣḥaf liegt in der Mitte. Einstellungen, Hilfe und weitere Seiten findest du unter „Mehr“. Im Muṣḥaf steht die Seite jetzt oben und größer; Seitenwahl und Sprung zu Sūra, Abschnitt und Āya klappen unter „Gehe zu“ auf.',
+    heute_titel: 'Heute mit neuem Titel',
+    heute_1: 'Auf Heute steht jetzt Itqān als Wortmarke mit dem Zeichen. Der Hinweis zum Umzug lässt sich mit einem X ausblenden.',
     stopp_titel: 'Stoppzeichen in Farbe',
     stopp_1: 'Die Versmarke am Ende jeder Āya ist jetzt golden, die Pausezeichen sind türkis. So erkennt das Auge die Stellen sofort wieder. Die Zahl bleibt dunkel. Unter Einstellungen, Lesbarkeit lässt sich die Farbe ändern oder ausschalten.',
     robust_titel: 'Heute bleibt nie leer',

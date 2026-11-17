@@ -1169,3 +1169,14 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .sprung-panel{margin:0 0 12px}
 .sprung-panel .stellenwahl{margin-top:10px}
 .sprung-panel .auswahl select{flex:1;max-width:60%}
+/* Heute: der App-Titel als Wortmarke mit dem Itqān-Zeichen */
+.app-kopf{align-items:center}
+.app-titel{display:flex;align-items:center;gap:12px;min-width:0}
+.app-zeichen{flex:none;display:block;height:58px;filter:drop-shadow(0 0 10px var(--glow))}
+.app-name{margin:0;font-family:var(--kopf);font-weight:600;font-size:clamp(2.2rem,10vw,2.8rem);line-height:1;letter-spacing:.015em;color:var(--akzent);text-shadow:0 0 18px var(--glow)}
+[data-modus=dunkel] .app-name{color:var(--akzent2)}
+.app-text small{display:block;font:400 var(--s-klein) var(--fliess);color:var(--leise);margin-top:7px;line-height:1.35}
+/* Hinweiskarte mit kleinem X zum Ausblenden */
+.umzug-hinweis{position:relative;padding-right:46px}
+.hinweis-x{position:absolute;top:4px;right:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--leise);font-size:1.7rem;line-height:1;cursor:pointer}
+.hinweis-x:hover{color:var(--akzentT)}

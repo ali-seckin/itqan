@@ -553,7 +553,7 @@ export default {
   },
   umzug: {
     titel: 'Itqān is moving',
-    text: 'In the next few days Itqān gets a new address: <b>app.itqan-app.app</b>. So that your progress comes along, sign in with an account first. Then open the new address and add it to your home screen again. The old icon will no longer receive updates.',
+    text: 'Itqān will soon get a new address. We will let you know in good time. It is best to sign in with an account now, so your progress comes along without effort.',
     bereit: 'You are signed in, your progress comes along.',
   },
   konto: {
@@ -1549,6 +1549,8 @@ export default {
     support_1: 'Your feedback now goes to support@itqan-app.app. Also small improvements to backups and a notice about the upcoming move to a new address.',
     menue_titel: 'New menu bar',
     menue_1: 'There are now five tabs at the bottom, with the Mushaf in the middle. Settings, help and further pages are under “More”. In the Mushaf the page now sits at the top and larger; page choice and the jump to Surah, section and Ayah open under “Go to”.',
+    heute_titel: 'Today with a new title',
+    heute_1: 'On Today, Itqān now appears as a wordmark with its symbol. The notice about the move can be hidden with an X.',
     stopp_titel: 'Pause marks in colour',
     stopp_1: 'The verse marker at the end of each ayah is now gold and the pause signs are teal, so the eye finds the same spots again. The number stays dark. You can change the colour or switch it off under Settings, Readability.',
     robust_titel: 'Today never stays blank',

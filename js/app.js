@@ -672,7 +672,8 @@ function heute() {
   // Erinnerung an die Sicherung: 7 Tage nach der letzten (oder nach dem Anlegen), höchstens einmal am Tag wegklickbar
   const seitSicherung = Z.tageZwischen((P.einst.letzteSicherung || P.erstellt).slice(0, 10), Z.heute());
   let spaeter = null; try { spaeter = localStorage.getItem('itqan-sicherung-spaeter'); } catch (e) {}
-  const umzugKarte = location.hostname === 'ali-seckin.github.io' || /[?&]umzug\b/.test(location.search);
+  let umzugWeg = null; try { umzugWeg = localStorage.getItem('itqan-umzug-weg'); } catch (e) {}
+  const umzugKarte = (location.hostname === 'ali-seckin.github.io' || /[?&]umzug\b/.test(location.search)) && umzugWeg !== Z.heute();
   const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
   const installKarte = UEBERGANG.installieren && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
@@ -682,10 +683,10 @@ function heute() {
   const lernHTML = lekt.length || sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? tx('lernen.alle_lektionen') : tx('lernen.erste_lektion')}</a></div>` : '';
   app.innerHTML = `
-    <div class="kopfzeile"><div class="marke">${tx('allg.itqan')}<small>${sicher('datum', datumText)}</small></div>
+    <div class="kopfzeile app-kopf"><div class="app-titel">${laterne('app-zeichen')}<div class="app-text"><h1 class="app-name">${tx('allg.itqan')}</h1><small>${sicher('datum', datumText)}</small></div></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
-    ${umzugKarte ? `<div class="hinweisbox umzug-hinweis"><b>${tx('umzug.titel')}</b><br>${tx('umzug.text')}
+    ${umzugKarte ? `<div class="hinweisbox umzug-hinweis"><button type="button" class="hinweis-x" id="umzug-weg" aria-label="${tx('hilfe.schliessen')}"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>${tx('umzug.titel')}</b><br>${tx('umzug.text')}
       <div class="reihe" style="margin-top:10px">${Ab.status().angemeldet ? `<span class="unter">${tx('umzug.bereit')}</span>` : `<a class="knopf haupt klein" href="#konto" style="text-decoration:none">${tx('konto.karte_titel')}</a><button class="knopf leise klein" id="umzug-sichern">${tx('heute.jetzt_sichern')}</button>`}</div></div>` : ''}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
@@ -723,6 +724,7 @@ function heute() {
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };
   const b = app.querySelector('#bonus'); if (b) b.onclick = () => location.hash = `#ueben/${bonusId}/bonus`;
   const js = app.querySelector('#jetzt-sichern'); if (js) js.onclick = async () => { if (await profilSichern()) heute(); };
+  const uw = app.querySelector('#umzug-weg'); if (uw) uw.onclick = () => { try { localStorage.setItem('itqan-umzug-weg', Z.heute()); } catch (e) {} heute(); };
   const us = app.querySelector('#umzug-sichern'); if (us) us.onclick = async () => { if (await profilSichern()) heute(); };
   const sp = app.querySelector('#sichern-spaeter'); if (sp) sp.onclick = () => { try { localStorage.setItem('itqan-sicherung-spaeter', Z.heute()); } catch (e) {} heute(); };
   const iw = app.querySelector('#install-weg'); if (iw) iw.onclick = () => { try { localStorage.setItem('itqan-install-weg', '1'); } catch (e) {} heute(); };
@@ -1555,7 +1557,7 @@ async function vollbild(start) {
   const buehne = v.querySelector('.vb-buehne');
   const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
-  const farben = x => { if (D.modus === 'seite') return { lage: true }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: true, ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
+  const farben = x => { if (D.modus === 'seite') return { lage: !quer() }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: !quer(), ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
   let zaehler = 0;
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;

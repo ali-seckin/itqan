@@ -553,7 +553,7 @@ export default {
   },
   umzug: {
     titel: 'Itqān taşınıyor',
-    text: 'Önümüzdeki günlerde Itqān yeni bir adrese geçiyor: <b>app.itqan-app.app</b>. İlerlemen de gelsin diye önce bir hesapla giriş yap. Sonra yeni adresi aç ve ana ekranına yeniden ekle. Eski simge artık yenilik almayacak.',
+    text: 'Itqān yakında yeni bir adrese taşınacak. Zamanında haber vereceğiz. En iyisi şimdiden bir hesapla giriş yapmandır, böylece ilerlemen zahmetsizce gelir.',
     bereit: 'Giriş yaptın, ilerlemen birlikte gelir.',
   },
   konto: {
@@ -1549,6 +1549,8 @@ export default {
     support_1: 'Geri bildirimin artık support@itqan-app.app adresine gidiyor. Ayrıca yedeklerde küçük iyileştirmeler ve yaklaşan yeni adrese taşınma hakkında bir not var.',
     menue_titel: 'Yeni menü çubuğu',
     menue_1: 'Altta artık beş sekme var, ortada Mushaf yer alıyor. Ayarlar, yardım ve diğer sayfalar “Daha fazlası” altında. Mushaf’ta sayfa artık üstte ve daha büyük; sayfa seçimi ile sure, bölüm ve ayete atlama “Git” altında açılıyor.',
+    heute_titel: 'Bugün için yeni başlık',
+    heute_1: 'Bugün sayfasında Itqān artık simgesiyle birlikte bir logo yazısı olarak görünüyor. Taşınma bildirimi bir X ile gizlenebilir.',
     stopp_titel: 'Durak işaretleri renkli',
     stopp_1: 'Her ayetin sonundaki işaret artık altın, durak işaretleri turkuaz. Göz aynı yerleri hemen tanır. Numara koyu kalır. Rengi Ayarlar, Okunabilirlik bölümünden değiştirebilir veya kapatabilirsin.',
     robust_titel: 'Bugün artık boş kalmıyor',

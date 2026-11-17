@@ -553,7 +553,7 @@ export default {
   },
   umzug: {
     titel: 'Itqān déménage',
-    text: 'Dans les prochains jours, Itqān aura une nouvelle adresse : <b>app.itqan-app.app</b>. Pour que ta progression te suive, connecte-toi d’abord avec un compte. Ouvre ensuite la nouvelle adresse et ajoute-la de nouveau à ton écran d’accueil. L’ancienne icône ne recevra plus de nouveautés.',
+    text: 'Itqān aura bientôt une nouvelle adresse. Nous te préviendrons à temps. Le mieux est de te connecter dès maintenant avec un compte : ta progression suivra sans effort.',
     bereit: 'Tu es connecté, ta progression te suit.',
   },
   konto: {
@@ -1549,6 +1549,8 @@ export default {
     support_1: 'Ton retour arrive désormais à support@itqan-app.app. Il y a aussi de petites améliorations des sauvegardes et une information sur le prochain changement d’adresse.',
     menue_titel: 'Nouvelle barre de menu',
     menue_1: 'Il y a maintenant cinq onglets en bas, avec le Mushaf au milieu. Les réglages, l’aide et d’autres pages se trouvent sous « Plus ». Dans le Mushaf, la page est maintenant en haut et plus grande ; le choix de la page et le saut vers la sourate, la section et l’âya s’ouvrent sous « Aller à ».',
+    heute_titel: 'Aujourd’hui avec un nouveau titre',
+    heute_1: 'Sur Aujourd’hui, Itqān apparaît maintenant comme un logotype avec son symbole. L’avis sur le déménagement peut être masqué avec une croix.',
     stopp_titel: 'Signes de pause en couleur',
     stopp_1: 'La marque à la fin de chaque verset est maintenant dorée et les signes de pause turquoise, pour que l’œil retrouve ces repères. Le numéro reste sombre. Dans Réglages, Lisibilité, tu peux changer la couleur ou la désactiver.',
     robust_titel: 'Aujourd’hui ne reste jamais vide',
