@@ -13,6 +13,7 @@ import * as NL from './aehnlich.js';
 import * as AF from './abfragen.js';
 import { wahlZeichnen, ausAbschnitten, ausBereiche, zuBereichen, zuAbschnitten, istAlles, istLeer, seitenZahl, alles } from './auswahl.js';
 import * as RB from './rueckblick.js';
+import { UEBERSETZUNGEN, uebersetzungLaden } from './uebersetzung.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
 import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
 const komma = () => gebiet('komma') ?? ', ';
@@ -435,11 +436,40 @@ function menueZeichen(name) {
   m.classList.add('mit-zeichen');
   m.innerHTML = `<span class="marke-zeichen" aria-hidden="true">${sv.outerHTML}</span><div class="marke-text">${m.innerHTML}</div>`;
 }
+// ---------- Übersetzung in einer kleinen Blase (Tanzil.net, unverändert, nur nicht kommerziell) ----------
+const kreuzSvg = '<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+// Sprache der Übersetzung: gewählt in den Einstellungen, sonst die Sprache der App (wenn es dazu eine Übersetzung gibt)
+function uebersetzungSprache() {
+  const w = Z.P?.einst.uebersetzung;
+  if (w === 'aus') return null;
+  if (UEBERSETZUNGEN.includes(w)) return w;
+  return UEBERSETZUNGEN.includes(gebiet('code')) ? gebiet('code') : null;
+}
+function blaseSchliessen() { document.querySelector('.uebs-blase')?.remove(); document.querySelectorAll('.w.uebs').forEach(x => x.classList.remove('uebs')); }
+// liefert true, wenn die Übersetzung eingeschaltet ist (auch wenn sie sich nicht laden ließ)
+async function uebersetzungZeigen(vi) {
+  const code = uebersetzungSprache(); if (!code) return false;
+  const d = await uebersetzungLaden(code);
+  if (!d) { toast(tx('uebers.laedt_nicht')); return true; }
+  blaseSchliessen();
+  const [s, ay] = D.V[vi];
+  document.querySelectorAll(`.w[data-v="${vi}"]`).forEach(x => x.classList.add('uebs'));
+  const el = document.createElement('div'); el.className = 'uebs-blase'; el.setAttribute('role', 'region'); el.setAttribute('aria-live', 'polite'); el.setAttribute('aria-label', tx('uebers.link'));
+  el.innerHTML = `<button type="button" class="uebs-zu" aria-label="${tx('hilfe.schliessen')}">${kreuzSvg}</button><div class="uebs-kopf">${sureName(s)} ${s}:${ay}</div><p class="uebs-text" lang="${code}"${code === 'ur' ? ' dir="rtl"' : ''}>${esc(d.t[vi])}</p><div class="uebs-quelle">${esc(d.n)}</div>`;
+  document.body.appendChild(el);
+  const unten = document.querySelector('.steuerung') || (nav.classList.contains('verdeckt') ? null : nav);
+  el.style.bottom = unten ? `${Math.round(innerHeight - unten.getBoundingClientRect().top + 10)}px` : '16px';
+  el.querySelector('.uebs-zu').onclick = blaseSchliessen;
+  return true;
+}
+document.addEventListener('click', ev => { if (document.querySelector('.uebs-blase') && !ev.target.closest('.uebs-blase, .w, #uebers')) blaseSchliessen(); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') blaseSchliessen(); });
 // Woher kommt man auf Kurzübungen und Neu lernen: vom Heute-Reiter oder aus dem Reiter Üben (für Reiter und Zurückknopf)
 let aktuelleRoute = '', vorigeRoute = '';
 const herkunftMerk = {};
 function herkunft(platz) { if (vorigeRoute === 'uebungen') herkunftMerk[platz] = 'uebungen'; else if (vorigeRoute === 'heute') herkunftMerk[platz] = 'heute'; return herkunftMerk[platz] || 'heute'; }
 async function zeige() {
+  blaseSchliessen();
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
@@ -724,8 +754,6 @@ function heute() {
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">${tx('heute.so_gehts')}</a><button class="knopf leise klein" id="install-weg">${tx('heute.nicht_mehr_zeigen')}</button></div></div>` : ''}
     ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
-    <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
-      <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
     ${istFreitag ? sicher('freitag', () => `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: wSum.r + wSum.f + wSum.h ? Math.round(100 * (wSum.r + wSum.h * .5) / (wSum.r + wSum.f + wSum.h)) : 0 })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
@@ -1066,6 +1094,10 @@ async function ueben(idText, quelle, fokusText) {
     else return;
     ev.preventDefault(); ev.stopPropagation(); wortFokus(z);
   });
+  seitenEl.addEventListener('click', ev => {   // aufgedeckte Āya antippen: Übersetzung
+    if (!offen || markieren || abhoeren || vorschau) return;
+    const w = ev.target.closest('.w'); if (w && !w.classList.contains('zu')) uebersetzungZeigen(+w.dataset.v);
+  });
   // Wortlaute nachtragen, sobald der Text geladen ist
   textFuerLeser().then(() => { if (seitenEl.isConnected) wahlSetzen(); });
   // Wie viele Āyāt auf einmal verdeckt abgefragt werden (Einstellung); nur in der Hauptrunde und nicht bei Fehlerstellen, Kurzübungen und Lektionen
@@ -1115,7 +1147,7 @@ async function ueben(idText, quelle, fokusText) {
       if (phase === 'haupt' && verlauf.length && ti === 0 && !hilfe) links.push(`<button class="textlink mini" id="neu-bewerten">${tx('ueben.vorige_aya_neu_bewerten')}</button>`);
       if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
       const satz = L?.ph === 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? tx('ueben.sofortkorrektur_diese_aya_noch_einmal') : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
-      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz + (start ? ` ${tx('ueben.laut_hinweis')}` : '')) + (links.length ? '<br>' + links.join('') : '');
+      H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz) + (links.length ? '<br>' + links.join('') : '');
       app.querySelector('#auf').onclick = aufdecken;
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
       // Hilfe Wort für Wort: jedes Tippen deckt das nächste verdeckte Wort auf, die Āya zählt dann als „mit Hilfe“
@@ -1135,6 +1167,7 @@ async function ueben(idText, quelle, fokusText) {
       K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}`;
       if (blockAnz > 1 && blockEnde > pos) spans(vi).forEach(x => x.classList.add('dran'));
       H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : blockAnz > 1 && blockEnde > pos ? tx('ueben.block_frage', { a: D.V[vi][1] }) : tx('ueben.warst_du_sicher_und_fehlerfrei');
+      if (uebersetzungSprache() && !hilfe) { const ub = document.createElement('button'); ub.type = 'button'; ub.className = 'textlink mini'; ub.id = 'uebers'; ub.textContent = tx('uebers.link'); H.append(document.createElement('br'), ub); ub.onclick = () => uebersetzungZeigen(vi); }
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
         if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
         spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
@@ -1217,7 +1250,7 @@ async function ueben(idText, quelle, fokusText) {
     app.querySelector('#punkte').innerHTML = '';
     const nimmt = rec?.state === 'recording', ansehen = E.vorueben && k.st <= 1 && !hilfe;
     K.innerHTML = `<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>${ganzAufnahmeTaste()}`;
-    H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : `${tx('ueben.ganz_hinweis')} ${tx('ueben.laut_hinweis')}`) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
+    H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : tx('ueben.ganz_hinweis')) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
     const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
     app.querySelector('#g-auf').onclick = ganzAufdecken;
     const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
@@ -1288,6 +1321,7 @@ async function ueben(idText, quelle, fokusText) {
   function naechsteAya() {
     const weiter = phase === 'haupt' && pos + 1 < blockEnde && pos + 1 < liste.length;   // noch aufgedeckte Āyāt des Blocks zu bewerten
     if (!weiter) { aufnahmeVerwerfen(); blockEnde = 0; blockAnz = 1; }
+    blaseSchliessen();
     pos++; offen = weiter; hilfe = false; hilfeFrei = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
   function markierenFertig() {
     if (artFehlt()) return;
@@ -1540,6 +1574,7 @@ async function mushaf(pText, aText) {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
       return `<div class="karte${ganz ? '' : ` tonk${e.id % 4}`}" data-a="${i}">${ganz ? '' : '<i class="farbe"></i>'}<div class="t"><b>${esc(e.titel)}</b><span>${e.nr ? `${sureName(e.von[0])} <b class="nr-fett">${e.nr}</b>` : abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ` <span class="marke-art bonus">${tx('mushaf.heute_dran')}</span>` : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">${tx('allg.ueben')}</a></div>`;
     }).join('')}`;
+  menueZeichen('mushaf');   // Buch-Zeichen des Reiters vor der Überschrift, die Überschrift selbst bleibt klein
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
   seitenText(seiteEl); seiteHolen(seiteEl.querySelector('.roller'), seiteEl.querySelector(`.seite[data-p="${p}"]`));
@@ -1569,8 +1604,9 @@ async function mushaf(pText, aText) {
   stellenWahlBinden();
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
-  seiteEl.onclick = ev => {
+  seiteEl.onclick = async ev => {
     const w = ev.target.closest('.w'); if (!w) return;
+    if (await uebersetzungZeigen(+w.dataset.v)) return;   // Übersetzung an: Blase statt Sprung
     const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (k) blitz(k);
   };
   // aus der Auswahl angesprungen: Abschnitt auf der Seite kurz aufleuchten lassen
@@ -1738,8 +1774,8 @@ function profil() {
   const gesammelt = [...new Set(P.meilen.filter(m => m.startsWith('sure-')).map(m => +m.split('-')[2]))];
   const zuletzt = gesammelt.map(sn => ({ sn, o: Z.ornamentStand(sn) })).sort((a, b) => (b.o.datum || '').localeCompare(a.o.datum || '')).slice(0, 3);
   const vergoldet = gesammelt.filter(sn => P.meilen.includes('sure-mutqan-' + sn)).length;
-  app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
-    <a class="karte einst-karte" href="#einstellungen" style="text-decoration:none;color:inherit"><span class="einst-zahn" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10.21 4.82 L10.40 1.93 L13.60 1.93 L13.79 4.82 L15.81 5.66 L18.00 3.75 L20.25 6.00 L18.34 8.19 L19.18 10.21 L22.07 10.40 L22.07 13.60 L19.18 13.79 L18.34 15.81 L20.25 18.00 L18.00 20.25 L15.81 18.34 L13.79 19.18 L13.60 22.07 L10.40 22.07 L10.21 19.18 L8.19 18.34 L6.00 20.25 L3.75 18.00 L5.66 15.81 L4.82 13.79 L1.93 13.60 L1.93 10.40 L4.82 10.21 L5.66 8.19 L3.75 6.00 L6.00 3.75 L8.19 5.66 Z"/><circle cx="12" cy="12" r="3.1"/></svg></span><div class="t"><b>${tx('allg.einstellungen')}</b></div><span class="pfeil">›</span></a>
+  app.innerHTML = `<div class="kopfzeile"><div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
+      <a class="einst-zahnrad" href="#einstellungen" aria-label="${tx('allg.einstellungen')}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10.21 4.82 L10.40 1.93 L13.60 1.93 L13.79 4.82 L15.81 5.66 L18.00 3.75 L20.25 6.00 L18.34 8.19 L19.18 10.21 L22.07 10.40 L22.07 13.60 L19.18 13.79 L18.34 15.81 L20.25 18.00 L18.00 20.25 L15.81 18.34 L13.79 19.18 L13.60 22.07 L10.40 22.07 L10.21 19.18 L8.19 18.34 L6.00 20.25 L3.75 18.00 L5.66 15.81 L4.82 13.79 L1.93 13.60 L1.93 10.40 L4.82 10.21 L5.66 8.19 L3.75 6.00 L6.00 3.75 L8.19 5.66 Z"/><circle cx="12" cy="12" r="3.1"/></svg></a></div>
     ${rangKarte()}
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div class="zahl"><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div class="zahl"><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div>
@@ -2504,6 +2540,9 @@ function einstellungen() {
       <p class="unter" style="margin-top:14px">${tx('einstellungen.stoppzeichen_text')}</p>
       <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']]].map(([w, l, f]) => `<button data-w="${w}" class="${stoppWahl() === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
       <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
+    <div class="abschnitt"><h3>${tx('uebers.titel')}</h3><p class="unter">${tx('uebers.text')}</p>
+      <label class="auswahl"><span>${tx('uebers.sprache')}</span><select id="uebers-wahl">${[['aus', tx('einstellungen.aus')], ...UEBERSETZUNGEN.map(c => [c, SPRACHEN.find(s => s.code === c).name])].map(([w, l]) => `<option value="${w}"${(uebersetzungSprache() || 'aus') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+      <p class="unter" style="margin-top:8px">${tx('uebers.quelle', { link: '<a href="https://tanzil.net/trans/" target="_blank" rel="noopener">tanzil.net/trans</a>' })}</p></div>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_funktionen')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.erst_ansehen_dann_pruefen')}</h3><p class="unter">${tx('einstellungen.vor_der_ersten_aya_kannst_du_den')}</p>
       <div class="wahl" id="vorueben" style="margin-top:10px"><button data-w="1" class="${E.vorueben ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.vorueben ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
@@ -2570,6 +2609,7 @@ function einstellungen() {
   wahl('hasanat', w => { E.hasanat = w === '1'; });
   wahl('zielquote', w => { E.zielQuote = +w; });
   app.querySelector('#herkunft').onchange = ev => { E.herkunft = ev.target.value; Z.speichern(); };
+  app.querySelector('#uebers-wahl').onchange = ev => { E.uebersetzung = ev.target.value; Z.speichern(); };
   wahl('rhythmus', w => {
     E.rhythmus = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan'));
     app.querySelector('#schwach-block').classList.toggle('gedimmt', w === 'langzeit'); app.querySelector('.schwach-hinweis').classList.toggle('verdeckt', w !== 'langzeit');
