@@ -63,6 +63,7 @@ export function ergaenzen(p) {
   // Tageswechsel: Vorgabe 3 Uhr (Entscheidung 10.11.2026). Wer noch die alte Vorgabe Mitternacht hat, wird einmal umgestellt, danach gilt die eigene Wahl.
   if (!p.einst.tb3) { if (!p.einst.tagesbeginn) p.einst.tagesbeginn = 3; p.einst.tb3 = 1; }
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
+  p.einst.lernProTag ??= 1;
   p.lern ??= {}; p.statistik ??= { arten: artenAusStellen(p.fstellen) };
   if (!p.verlauf) { p.verlauf = {}; for (const [d, t] of Object.entries(p.tage || {})) if (t?.punkte) p.verlauf[d] = t.punkte; }
   p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %
@@ -701,14 +702,16 @@ function aufraeumen(bezug) { // alte Tage verdichten, Statistik behalten
   for (const d of Object.keys(P.tage)) if (tageZwischen(d, bezug) > 400) delete P.tage[d];
 }
 
-// ---------- Neu lernen: Ḥifẓ, Ḍabṭ, Itqān ----------
-// Eine Lektion ist ein Abschnitt außerhalb des Bereichs. P.lern[id] = { b: Beginn, ph: 0 Ḥifẓ | 1 Ḍabṭ | 2 Itqān,
-// ft: Tage mit fehlerfreiem Durchgang (Ḥifẓ), s: fehlerfreie Durchgänge in Folge (Ḍabṭ), zul: letzter Durchgang,
-// d: Tag des Übergangs in den Ḍabṭ, e: Tag des Itqān }. Fehlerfrei heißt: ohne Fehler und ohne Hilfe.
+// ---------- Neu lernen: ein Lernplan in drei Schritten (Ḥifẓ, Ḍabṭ, Itqān), danach geht der Abschnitt in die Wiederholung ----------
+// Eine Lektion ist ein Abschnitt außerhalb des Bereichs. P.lern[id] = { b: Beginn, ph: 0 aktiv | 2 fertig (im Bereich),
+// ft: Tage mit fehlerfreiem Durchgang, zul: letzter Durchgang, e: Tag des Abschlusses }. Fehlerfrei heißt: ohne Fehler und ohne Hilfe.
+// Pro Tag zählt höchstens ein Durchgang. Die Zahl der Tage ist der Schritt: 0 Ḥifẓ (aufnehmen), 1 Ḍabṭ (absichern), 2 Itqān (meistern);
+// nach dem dritten fehlerfreien Tag ist die Lektion fertig und der Abschnitt gehört zum Bereich (zur Murāǧaʿa).
 // Die drei Stufen sind das Dach über den fünf Schritten der Karte: Ḥifẓ = 0 und 1, Ḍabṭ = 2 und 3, Itqān = 4.
-export const LERN = { hifzTage: 2, dabtSerie: 4 };
+export const LERN = { schritte: 3 };
 export const dach = st => st >= 4 ? 2 : st >= 2 ? 1 : 0;
 export const lernbar = id => !!D.A[id] && !imBereich(id) && !P.lern?.[id];
+export const lernProTag = () => Math.max(1, Math.min(5, Math.round(+P.einst.lernProTag) || 1));
 // Offene Fehlerstellen eines Abschnitts (je Stelle die Āya)
 export function offeneStellen(id) {
   const [a, b] = D.A[id].v;
@@ -719,9 +722,14 @@ export function lernAbbrechen(id) { if (P.lern?.[id]?.ph < 2) eintrag('lx', { id
 export function lektionen() {
   const d = heute();
   return Object.entries(P.lern || {}).filter(([, L]) => L.ph < 2).map(([id, L]) => {
-    const st = offeneStellen(+id);
-    return { id: +id, ph: L.ph, tage: L.ft.length, serie: L.s, seit: L.b, zul: L.zul || null, heute: L.zul === d, offen: st.length, stellen: [...new Set(st)] };
+    const st = offeneStellen(+id), schritte = L.ft.length;
+    return { id: +id, ph: L.ph, schritte, st: Math.min(2, schritte), seit: L.b, zul: L.zul || null, heute: L.ft.includes(d), geuebt: L.zul === d, offen: st.length, stellen: [...new Set(st)] };
   }).sort((a, b) => a.seit.localeCompare(b.seit) || a.id - b.id);
+}
+// Was Heute aus dem Lernplan zeigt: so viele, wie pro Tag eingestellt sind; was heute schon gezählt hat, behält seinen Platz
+export function lernHeute() {
+  const alle = lektionen();
+  return [...alle.filter(l => l.heute), ...alle.filter(l => !l.heute)].slice(0, lernProTag());
 }
 export const lernFertig = () => Object.entries(P.lern || {}).filter(([, L]) => L.ph === 2).map(([id, L]) => ({ id: +id, e: L.e }));
 // Vorschlag für die nächste Lektion: die Sūra der jüngsten Lektion zu Ende, sonst der Abschnitt nach dem Bereich,
@@ -737,20 +745,20 @@ export function lernVorschlag() {
 }
 // Wie viele geübte Abschnitte (Bereich und offene Lektionen) stehen auf welcher der drei Stufen
 export function dachZahlen() {
-  const z = [0, 0, 0];
-  for (const id of reihe()) { const k = karte(id); if (k.n) z[dach(k.st)]++; }
-  for (const L of Object.values(P.lern || {})) if (L.ph < 2) z[L.ph]++;
-  return z;
+  const zz = [0, 0, 0];
+  for (const id of reihe()) { const k = karte(id); if (k.n) zz[dach(k.st)]++; }
+  for (const L of Object.values(P.lern || {})) if (L.ph < 2) zz[Math.min(2, L.ft.length)]++;
+  return zz;
 }
 function lernSchritt(L, k, id, datum, f, h, ereignisse) {
-  const vor = L.ph, rein = !f && !h;
-  if (!rein) { L.s = 0; if (f) k.fz = datum; }
-  else if (L.ph === 0) { if (!L.ft.includes(datum)) L.ft.push(datum); if (L.ft.length >= LERN.hifzTage) { L.ph = 1; L.s = 0; L.d = datum; } }
-  else { L.s++; if (L.s >= LERN.dabtSerie && !offeneStellen(id).length) { L.ph = 2; L.e = datum; } }
+  const vor = L.ft.length, rein = !f && !h, neu = rein && !L.ft.includes(datum);
+  if (neu) L.ft.push(datum);
+  if (!rein && f) k.fz = datum;
+  if (L.ft.length >= LERN.schritte) { L.ph = 2; L.e = datum; k.S = 3; }   // fertig: in drei Tagen die erste Wiederholung
   L.zul = datum;
-  k.st = L.ph === 2 ? 4 : L.ph === 1 ? (L.s >= 2 ? 3 : 2) : Math.min(1, L.ft.length);
-  if (L.ph > vor) ereignisse.push({ typ: 'lernstufe', id, ph: L.ph });
-  return { vor, ph: L.ph, tage: L.ft.length, s: L.s, offen: offeneStellen(id).length, rein };
+  k.st = L.ph === 2 ? 2 : Math.min(1, L.ft.length);
+  if (L.ph === 2 && vor < LERN.schritte) ereignisse.push({ typ: 'lernstufe', id, ph: 2 });
+  return { vor, schritte: L.ft.length, ph: L.ph, rein, neu, offen: offeneStellen(id).length };
 }
 
 // ---------- Ergebnis eines Abschnitts ----------

@@ -1265,3 +1265,18 @@ html{scrollbar-gutter:stable}
 .angebot b{font-size:1rem;line-height:1.25}
 .angebot p{margin:2px 0 8px}
 .angebot button{padding:9px 12px}
+/* Version 1.81: Neu lernen als Lernplan */
+.spur{display:flex;gap:4px;flex:none;align-items:center}
+.spur i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--rand);color:var(--leise);font-style:normal}
+.spur i svg{width:15px;height:15px}
+.spur i.ist{background:var(--akzentF);border-color:transparent;color:var(--aufAkzent)}
+.spur i.dran{border-color:var(--akzent);color:var(--akzentT)}
+[data-modus=dunkel] .spur i.dran{color:var(--akzent2)}
+.karte.lektion .t span{line-height:1.45}
+.lern-intro{margin:14px 0 4px}
+.lern-schritte{list-style:none;margin:12px 0;display:grid;gap:12px}
+.lern-schritte li{display:flex;gap:12px;align-items:flex-start}
+.lern-schritte li .spur{margin-top:2px}
+.lern-schritte b{display:block}
+.lern-schritte p{margin:2px 0 0;max-width:none}
+.lern-intro .profil-gruppe summary b{font-size:1.05rem}
