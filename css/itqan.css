@@ -1190,3 +1190,45 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .marke-text{min-width:0}
 /* Die Bildlaufleiste verschiebt am PC nichts mehr, auch wenn eine Seite kurz ist */
 html{scrollbar-gutter:stable}
+/* Version 1.78: einheitliche Kopfzeile (Zeichen links oben, Überschrift, eine kleine Zeile), Heute kompakt, Reiter Üben */
+.marke.mit-zeichen{align-items:flex-start}
+.marke-zeichen{margin-top:1px}
+.kopfzeile{align-items:flex-start}
+.kopfzeile .marke{min-width:0}
+.kopfzeile .kette-pille{flex:none;margin-top:2px}
+.stand-karte{background:var(--karte);border:1px solid var(--rand);border-radius:20px;padding:14px 16px 12px;margin:16px 0 14px}
+.stand-oben{display:flex;align-items:center;gap:14px}
+.stand-oben .ring{width:78px;height:78px;margin:0;flex:none}
+.stand-oben .ring svg{width:78px;height:78px}
+.stand-oben .ring .gross{font-size:1.5rem}
+.stand-text{min-width:0}
+.stand-text .gruss{font-size:calc(var(--s-titel) * .88);margin:0 0 3px;line-height:1.15}
+.stand-text .unter{margin:0}
+.stand-zahlen{display:flex;margin-top:12px;padding-top:10px;border-top:1px solid var(--rand)}
+.stand-zahlen div{flex:1;text-align:center;line-height:1.25}
+.stand-zahlen div+div{border-inline-start:1px solid var(--rand)}
+.stand-zahlen b{display:block;font-family:var(--kopf);font-size:1.2rem;font-weight:600;color:var(--akzentT);font-variant-numeric:lining-nums tabular-nums}
+[data-modus=dunkel] .stand-zahlen b{color:var(--akzent2)}
+.stand-zahlen span{font-size:var(--s-klein);color:var(--leise)}
+.start-knopf{margin:2px 0 16px;text-decoration:none}
+.karte.kompakt{padding:8px 12px;gap:10px;margin-bottom:6px;border-radius:14px;background:transparent}
+.karte.kompakt .nr{width:28px;height:28px}
+.karte.kompakt .t span{font-size:var(--s-klein)}
+.uebung-zeichen{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--akzentF);color:var(--aufAkzent)}
+.uebung-zeichen svg{width:26px;height:26px}
+.uebung-zeichen.klein{width:40px;height:40px;background:transparent;border:1px solid var(--akzent);color:var(--akzentT)}
+.uebung-zeichen.klein svg{width:22px;height:22px}
+[data-modus=dunkel] .uebung-zeichen.klein{color:var(--akzent2)}
+.uebung-hero{display:flex;align-items:center;gap:14px;padding:16px;margin:18px 0 4px;border-radius:20px;border:1px solid var(--akzent);background:var(--karte);box-shadow:0 8px 24px var(--glow);text-decoration:none;color:inherit}
+.uebung-hero .t{flex:1;min-width:0}
+.uebung-hero .t b{display:block;font-size:1.15rem;line-height:1.25}
+.uebung-hero .t span{font-size:var(--s-klein);color:var(--leise)}
+.kacheln{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kachel{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px;border-radius:18px;border:1px solid var(--rand);background:var(--karte);text-decoration:none;color:inherit;min-width:0}
+.kachel .uebung-zeichen{width:40px;height:40px;background:transparent;border:1px solid var(--akzent);color:var(--akzentT);margin-bottom:4px}
+.kachel .uebung-zeichen svg{width:22px;height:22px}
+[data-modus=dunkel] .kachel .uebung-zeichen{color:var(--akzent2)}
+.kachel b{font-size:var(--s-text);line-height:1.25}
+.kachel .k{font-size:var(--s-klein);color:var(--leise);line-height:1.35}
+.uebung-reihe{margin-bottom:10px}
+.w.dran{--wbg:var(--hi)!important;outline:2px solid var(--akzent);outline-offset:1px;border-radius:3px}

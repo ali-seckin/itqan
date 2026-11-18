@@ -195,7 +195,7 @@ const teilenSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="c
 const plusSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 const punkteSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
 function installieren() {
-  if (!UEBERGANG.installieren) { location.replace(Z.P ? '#mehr' : '#start'); return; }
+  if (!UEBERGANG.installieren) { location.replace(Z.P ? '#profil' : '#start'); return; }
   navSetzen(Z.P ? 'profil' : null);
   const g = geraet();
   const schritte = {
@@ -204,7 +204,7 @@ function installieren() {
     android: [tx('installieren.oeffne_itqan_in_chrome'), tx('installieren.tippe_oben_rechts_auf_das_menue', { punkteSymbol }), tx('installieren.waehle_app_installieren_oder_zum')],
     pc: [tx('installieren.oeffne_itqan_in_chrome_oder_edge'), tx('installieren.klicke_rechts_in_der_adressleiste_auf'), tx('installieren.bestaetige_mit_installieren_itqan')]
   }[g];
-  app.innerHTML = `${Z.P ? `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>` : `<button class="zurueck" onclick="history.back()">${zurueckPfeil}${tx('allg.zurueck')}</button>`}
+  app.innerHTML = `${Z.P ? `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>` : `<button class="zurueck" onclick="history.back()">${zurueckPfeil}${tx('allg.zurueck')}</button>`}
     <div class="marke">${tx('installieren.itqan_installieren')}<small>${tx('installieren.als_app_auf_dem_home_bildschirm_startet')}</small></div>
     ${istInstalliert() ? `<div class="hinweisbox"><b>${tx('installieren.itqan_ist_auf_diesem_geraet_bereits')}</b></div>` : ''}
     ${installHinweis ? `<button class="knopf haupt" id="jetzt-installieren" style="margin-top:16px">${tx('installieren.jetzt_installieren')}</button>` : ''}
@@ -222,8 +222,8 @@ function neuigkeitenHTML(liste) {
   return liste.map(n => `<div class="neu-eintrag"><div class="neu-kopf"><b>${tx('neuigkeitenhtml.version', { v: n.v })}</b><span>${datumKurz(n.datum)}</span></div><h4>${esc(n.titel)}</h4><ul>${n.punkte.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('');
 }
 function neuigkeitenSeite() {
-  navSetzen('mehr');
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  navSetzen('profil');
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('allg.was_ist_neu')}<small>${tx('neuigkeitenseite.itqan_jede_veroeffentlichung_mit_ihren', { VERSION })}</small></div>
     <div style="margin-top:16px">${neuigkeitenHTML(NEUIGKEITEN)}</div>`;
 }
@@ -241,14 +241,14 @@ async function neuigkeitenPruefen() {
 // ---------- Rückmeldung ----------
 let vorherigeAnsicht = '';
 function rueckmeldung() {
-  navSetzen('mehr');
+  navSetzen('profil');
   const P = Z.P;
   const info = [tx('rueckmeldung.itqan', { VERSION }), tx('rueckmeldung.geraet', { geraet: geraet(), a: istTouch() ? tx('rueckmeldung.touch') : '', b: istInstalliert() ? tx('rueckmeldung.installiert') : tx('rueckmeldung.im_browser') }),
     tx('rueckmeldung.bildschirm_fenster', { width: screen.width, height: screen.height, innerWidth, innerHeight }), tx('rueckmeldung.browser', { userAgent: navigator.userAgent }),
     P ? tx('rueckmeldung.druck_abschnitte_geuebt', { a: P.einst.ausgabe === 'v1' ? '1405' : '1421', b: P.einst.modus === 'anf' ? tx('rueckmeldung.anfaenger') : P.einst.modus === 'seite' ? tx('rueckmeldung.ganze_seiten') : tx('rueckmeldung.fortgeschritten'), abschnitte: P.summe.abschnitte }) : tx('rueckmeldung.noch_kein_profil'),
     vorherigeAnsicht ? tx('rueckmeldung.zuletzt_geoeffnet', { vorherigeAnsicht }) : '', letzterFehler() ? tx('rueckmeldung.letzter_fehler', { fehler: letzterFehler() }) : ''].filter(Boolean);
   let art = tx('allg.fehler');
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('rueckmeldung.rueckmeldung')}<small>${tx('rueckmeldung.was_ist_dir_aufgefallen_jede')}</small></div>
     <div class="abschnitt"><h3>${tx('rueckmeldung.worum_geht_es')}</h3><div class="wahl" id="rm-art">${[tx('allg.fehler'), tx('rueckmeldung.wunsch'), tx('rueckmeldung.frage'), tx('rueckmeldung.lob')].map(a => `<button data-w="${a}" class="${a === art ? 'an' : ''}">${a}</button>`).join('')}</div>
       <textarea id="rm-text" rows="6" placeholder="${tx('rueckmeldung.beschreibe_kurz_was_passiert_ist_oder')}"></textarea>
@@ -346,10 +346,11 @@ function abhakenSeite() {
 }
 
 function kurzSeite(was) {
-  navSetzen('heute');
+  const von = herkunft('kurz');
+  navSetzen(von === 'uebungen' ? 'uebungen' : 'heute');
   if (was === 'zeile') return zeileSeite();
   const arten = [['seite', tx('kurz.seite'), tx('kurz.seite_t')], ['juz', tx('kurz.juz'), tx('kurz.juz_t')], ['uebergang', tx('kurz.uebergang'), tx('kurz.uebergang_t')], ['mitte', tx('kurz.mitte'), tx('kurz.mitte_t')], ['titel', tx('kurz.titel_aufgabe'), tx('kurz.titel_aufgabe_t')]];
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#heute'">${zurueckPfeil}${tx('titel.heute')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#${von}'">${zurueckPfeil}${von === 'uebungen' ? tx('allg.ueben') : tx('titel.heute')}</button>
     <div class="marke">${tx('kurz.titel')}<small>${tx('kurz.untertitel')}</small></div>
     <div class="kurz-liste">${arten.map(([k, l, t]) => `<button type="button" class="kurz-karte" data-k="${k}"><b>${l}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE[k] })}</em></b><span>${t}</span></button>`).join('')}
       <a class="kurz-karte" href="#kurz/zeile"><b>${tx('kurz.zeile')}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE.zeile })}</em></b><span>${tx('kurz.zeile_t')}</span></a>
@@ -391,9 +392,9 @@ function zeileSeite() {
   window.scrollTo(0, 0);
 }
 // ---------- Router ----------
-const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, mehr, konto: kontoSeite, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, mehr: () => { location.replace('#profil'); }, uebungen: uebungsMenue, konto: kontoSeite, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { mehr: tx('profil.gruppe_mehr'), abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), konto: tx('konto.titel'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+const TITEL = { mehr: tx('allg.profil'), uebungen: tx('allg.ueben'), abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), konto: tx('konto.titel'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
   lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
@@ -416,7 +417,7 @@ const letzterFehler = () => { try { return localStorage.getItem(FEHLER_KEY) || '
 const sicher = (wo, f, ersatz = '') => { try { return f(); } catch (e) { fehlerMerken(e, wo); return ersatz; } };
 function fehlerAnsicht(e, name) {
   const z = fehlerMerken(e, name);
-  navSetzen(['heute', 'karte', 'mushaf', 'profil'].includes(name) ? name : 'heute');
+  navSetzen(['heute', 'karte', 'mushaf', 'uebungen', 'profil'].includes(name) ? name : 'heute');
   app.innerHTML = `<div class="abschnitt"><h3>${tx('app.fehler_titel')}</h3><p class="unter">${tx('app.fehler_text')}</p>
     <p class="unter" style="word-break:break-word;user-select:text;-webkit-user-select:text;font-size:.8em">${esc(z)}</p>
     <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="fe-neu">${tx('app.fehler_neu_laden')}</button><button class="knopf leise klein" id="fe-melden">${tx('app.fehler_melden')}</button></div></div>`;
@@ -429,17 +430,22 @@ function fehlerAnsicht(e, name) {
 }
 // Menüseiten: das Zeichen des Reiters steht vor der Überschrift (wie das Itqān-Zeichen auf Heute)
 function menueZeichen(name) {
-  const m = app.querySelector(':scope > .marke'), sv = nav.querySelector(`a[data-r="${name}"] svg`);
+  const m = app.querySelector(':scope > .marke, :scope > .kopfzeile > .marke'), sv = nav.querySelector(`a[data-r="${name}"] svg`);
   if (!m || !sv || m.classList.contains('mit-zeichen')) return;
   m.classList.add('mit-zeichen');
   m.innerHTML = `<span class="marke-zeichen" aria-hidden="true">${sv.outerHTML}</span><div class="marke-text">${m.innerHTML}</div>`;
 }
+// Woher kommt man auf Kurzübungen und Neu lernen: vom Heute-Reiter oder aus dem Reiter Üben (für Reiter und Zurückknopf)
+let aktuelleRoute = '', vorigeRoute = '';
+const herkunftMerk = {};
+function herkunft(platz) { if (vorigeRoute === 'uebungen') herkunftMerk[platz] = 'uebungen'; else if (vorigeRoute === 'heute') herkunftMerk[platz] = 'heute'; return herkunftMerk[platz] || 'heute'; }
 async function zeige() {
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
   if (!Z.P && name !== 'start' && name !== 'einfuehrung' && name !== 'sprachwahl' && name !== 'konto') { location.replace(einfuehrungGesehen() ? '#start' : '#einfuehrung'); return; }
   durchlaufSetzen(!!Z.P?.einst.bereich);   // ohne alle 30 Aǧzāʾ keine Ḫatma, sondern ein Durchlauf
+  if (name !== aktuelleRoute) { vorigeRoute = aktuelleRoute; aktuelleRoute = name; }
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
@@ -521,7 +527,7 @@ function einfuehrung() {
     <div class="tut-punkte" id="tut-punkte">${SCHRITTE.map((_, k) => `<i data-k="${k}"></i>`).join('')}</div>
     <div class="reihe tut-knoepfe"><button class="knopf leise" id="tut-zurueck">${tx('allg.zurueck')}</button><button class="knopf haupt" id="tut-weiter">${tx('allg.weiter')}</button></div></div>`;
   const buehne = app.querySelector('#tut-buehne'), weiter = app.querySelector('#tut-weiter'), zurueck = app.querySelector('#tut-zurueck');
-  const fertig = () => { try { localStorage.setItem(EINF_KEY, '1'); } catch (e) {} location.hash = Z.P ? '#mehr' : '#start'; };
+  const fertig = () => { try { localStorage.setItem(EINF_KEY, '1'); } catch (e) {} location.hash = Z.P ? '#profil' : '#start'; };
   function zeigeSchritt(neu, richtung = 1) {
     i = Math.max(0, Math.min(SCHRITTE.length - 1, neu));
     const s = SCHRITTE[i];
@@ -663,14 +669,21 @@ function heute() {
       : `<b>${tx('heute.heute_ist_ruhetag')}</b><p>${tx('heute.dein_wird_ruht_heute', { a: P.kette.n ? tx('heute.deine_kette_laeuft_am_naechsten_wird_tag') : '' })}</p>`}
     <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="trotzdem">${tx('heute.trotzdem_ueben')}</button>${ps ? `<button class="knopf leise klein" id="pause-ende">${tx('heute.pause_beenden')}</button>` : ''}</div></div>` : '';
   let unter = t.ruhe ? (ps ? tx('heute.du_machst_gerade_eine_pause') : tx('heute.heute_ist_dein_ruhetag')) : t.voll ? tx('heute.dein_wird_fuer_heute_ist_vollbracht') : tx('heute.dein_wird_fuer_heute_noch_abschnitte', { a: pflicht.length - erledigt });
-  const karten = t.plan.filter(id => D.A[id]).map((id, i) => {
-    const e = D.A[id], fertig = t.fertig.includes(id), jetzt = !fertig && id === offen[0];
+  // Die nächste Runde groß mit Starten-Knopf, die weiteren kompakt, Erledigtes zuletzt
+  const markeVon = (id, e, fertig) => {
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
-    const marke = angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${P.einst.rhythmus === 'langzeit' && Z.karte(id).n > 0 ? tx('heute.faellig') : tx('heute.runde')}</span>` : '');
-    return `<a class="karte ${fertig ? 'fertig' : ''} ${jetzt ? 'jetzt' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
-      <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${marke}</span></div>${stufePunkte(Z.karte(id).st)}</a>`;
-  }).join('');
+    return angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${P.einst.rhythmus === 'langzeit' && Z.karte(id).n > 0 ? tx('heute.faellig') : tx('heute.runde')}</span>` : '');
+  };
+  const karteVoll = (id, i) => { const e = D.A[id]; return `<a class="karte jetzt" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+      <div class="nr">${i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, false)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
+      <a class="knopf haupt start-knopf" href="#ueben/${id}">${tx('heute.starten')}</a>`; };
+  const karteKlein = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte kompakt ${fertig ? 'fertig' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+      <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><span>${abschnittMarke(e)} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>`; };
+  const planReihe = t.plan.filter(id => D.A[id]).map((id, i) => ({ id, i, fertig: t.fertig.includes(id) }));
+  const karten = planReihe.filter(x => !x.fertig && x.id === offen[0]).map(x => karteVoll(x.id, x.i)).join('')
+    + planReihe.filter(x => !x.fertig && x.id !== offen[0]).map(x => karteKlein(x.id, x.i)).join('')
+    + planReihe.filter(x => x.fertig).map(x => karteKlein(x.id, x.i)).join('');
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
   const wSum = woche.reduce((s, x) => ({ r: s.r + x.r, f: s.f + x.f, h: s.h + x.h, p: s.p + x.punkte, v: s.v + (x.voll ? 1 : 0) }), { r: 0, f: 0, h: 0, p: 0, v: 0 });
@@ -689,30 +702,28 @@ function heute() {
   const lekt = sicher('lektionen', () => Z.lektionen().filter(l => D.A[l.id]), []);
   const lernHTML = lekt.length || sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? tx('lernen.alle_lektionen') : tx('lernen.erste_lektion')}</a></div>` : '';
+  const ring = t.ruhe ? '' : `<div class="ring"><svg width="78" height="78" viewBox="0 0 210 210" aria-hidden="true">
+      <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
+      <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="12"/>
+      <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/></svg>
+      <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span></div></div>`;
+  const stand = t.ruhe ? '' : `<div class="stand-zahlen"><div><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}<div><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>`;
   app.innerHTML = `
-    <div class="kopfzeile app-kopf"><div class="app-titel">${laterne('app-zeichen')}<div class="app-text"><h1 class="app-name">${tx('allg.itqan')}</h1><small>${sicher('datum', datumText)}</small></div></div>
+    <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
-    <h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p>${comebackHTML}
+    <div class="stand-karte"><div class="stand-oben">${ring}<div class="stand-text"><h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p></div></div>${stand}</div>
+    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
+    ${t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}`}
+    ${!t.ruhe && Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}
+    ${comebackHTML}
+    ${t.qadaa && !t.voll ? `<div class="hinweisbox">${tx('heute.qada_ist_dein_wird_ausgefallen_holst_du', { qadaaTag: qadaaTag(), n: P.kette.n })}</div>` : ''}
     ${umzugKarte ? `<div class="hinweisbox umzug-hinweis"><button type="button" class="hinweis-x" id="umzug-weg" aria-label="${tx('hilfe.schliessen')}"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>${tx('umzug.titel')}</b><br>${tx('umzug.text')}
       <div class="reihe" style="margin-top:10px">${Ab.status().angemeldet ? `<span class="unter">${tx('umzug.bereit')}</span>` : `<a class="knopf haupt klein" href="#konto" style="text-decoration:none">${tx('konto.karte_titel')}</a><button class="knopf leise klein" id="umzug-sichern">${tx('heute.jetzt_sichern')}</button>`}</div></div>` : ''}
     ${sicherungFaellig ? `<div class="hinweisbox sicherung-hinweis">${tx('heute.sichere_dein_profil_deine_fortschritte', { a: P.einst.letzteSicherung ? tx('heute.die_letzte_sicherung_ist_tage_her', { seitSicherung }) : tx('heute.du_hast_dein_profil_noch_nie_gesichert') })}
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">${tx('heute.so_gehts')}</a><button class="knopf leise klein" id="install-weg">${tx('heute.nicht_mehr_zeigen')}</button></div></div>` : ''}
-    ${t.qadaa && !t.voll ? `<div class="hinweisbox">${tx('heute.qada_ist_dein_wird_ausgefallen_holst_du', { qadaaTag: qadaaTag(), n: P.kette.n })}</div>` : ''}
-    ${t.ruhe ? ruheHTML : `<div class="ring"><svg width="210" height="210" viewBox="0 0 210 210" aria-hidden="true">
-      <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
-      <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="10"/>
-      <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/>
-      <circle cx="105" cy="105" r="74" fill="none" stroke="var(--rand)" stroke-width="1" stroke-dasharray="2 6"/></svg>
-      <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span><span class="klein">${tx('allg.abschnitte')}</span></div></div>
-    <div class="zahlen"><div class="zahl"><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>
-      ${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}
-      <div class="zahl"><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
     ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
-    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
-    <div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}
-    ${Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}`}
     <div class="kurz-angebot"><div class="titel-klein">${tx('heute.zusaetzlich')}</div>
       <a class="karte kurz-heute" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a></div>
     ${lernHTML}
@@ -726,6 +737,7 @@ function heute() {
 `;
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#kette-info').onclick = ketteFenster;
+  menueZeichen('heute');
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };
@@ -837,6 +849,7 @@ async function ueben(idText, quelle, fokusText) {
   const zu = new Set(ayat), alt = new Set(k.fa || []), status = new Map(), erg = [];
   if (ABF && ['seite', 'juz', 'titel'].includes(ABF.art)) for (const p of e.seiten) for (const z of D.L[p - 1]) if (z?.w) for (const w of z.w) zu.add(w[1]);   // ganze Seite verdeckt
   let pos = 0, offen = false, hilfe = false, ti = 0, teile = [], markieren = false, fArt = null, vorschau = false, hilfeFrei = false;
+  let blockEnde = 0, blockAnz = 1, autoSchluessel = '', autoGesperrt = false;   // mehrere Āyāt auf einmal aufdecken (Einstellung) und automatische Aufnahme
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
   let ganz = E.ablauf === 'ganz' && art !== 'stelle' && !ABF && !L, zg = new Set();   // Ablauf „ganzer Abschnitt am Stück“ (Einstellungen)
@@ -853,15 +866,15 @@ async function ueben(idText, quelle, fokusText) {
   let mikro = null, rec = null, aufnahme = null, spieler = null, aufnahmeNr = 0, startet = false;
   // iPhone: Nach dem Abspielen schaltet Safari das Mikrofon oft stumm, dann liefert es nur noch leere Aufnahmen
   const mikroLebt = () => !!mikro && mikro.getAudioTracks().some(t => t.readyState === 'live' && !t.muted);
-  async function aufnahmeStart() {
+  async function aufnahmeStart(auto = false) {
     if (startet || rec?.state === 'recording') return;
     startet = true; aufnahmeVerwerfen();   // eine neue Aufnahme ersetzt die vorige
     try { if (!mikroLebt()) { mikro?.getTracks().forEach(t => t.stop()); mikro = await navigator.mediaDevices.getUserMedia({ audio: true }); } }
-    catch (e) { startet = false; mikro = null; toast(tx('ueben.ohne_zugriff_auf_das_mikrofon_geht_keine')); return; }
+    catch (e) { startet = false; mikro = null; if (auto) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } else toast(tx('ueben.ohne_zugriff_auf_das_mikrofon_geht_keine')); return; }
     if (offen || pos >= ayat.length) { startet = false; return; }   // inzwischen aufgedeckt
     const nr = ++aufnahmeNr, daten = [];
     let r;
-    try { r = new MediaRecorder(mikro); } catch (e) { startet = false; toast(tx('ueben.die_aufnahme_liess_sich_nicht_starten')); return; }
+    try { r = new MediaRecorder(mikro); } catch (e) { startet = false; if (auto) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } else toast(tx('ueben.die_aufnahme_liess_sich_nicht_starten')); return; }
     r.ondataavailable = ev => { if (ev.data?.size) daten.push(ev.data); };
     r.onstop = () => {
       if (nr !== aufnahmeNr) return;
@@ -871,11 +884,17 @@ async function ueben(idText, quelle, fokusText) {
       else toast(tx('ueben.die_aufnahme_ist_leer_geblieben_bitte'));
       zeichne();
     };
-    rec = r; startet = false;
+    rec = r; startet = false; if (!auto) autoGesperrt = false;
     r.start(1000);   // Daten jede Sekunde abholen, damit beim Beenden nichts verloren geht
     zeichne();
   }
   const aufnahmeStopp = () => { if (rec?.state === 'recording') rec.stop(); };
+  function autoAufnahme() {
+    if (!E.autoAufnahme || !AUFNAHME || autoGesperrt || rec || startet) return;
+    const schl = `${phase}:${pos}`;
+    if (schl === autoSchluessel) return;
+    autoSchluessel = schl; aufnahmeStart(true);
+  }
   function aufnahmeWeg() { spieler?.pause(); spieler = null; if (aufnahme) URL.revokeObjectURL(aufnahme); aufnahme = null; }
   // laufende und fertige Aufnahme verwerfen (nach der Bewertung oder vor einer neuen Aufnahme)
   function aufnahmeVerwerfen() { aufnahmeNr++; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); mikroFrei(); }
@@ -1049,10 +1068,13 @@ async function ueben(idText, quelle, fokusText) {
   });
   // Wortlaute nachtragen, sobald der Text geladen ist
   textFuerLeser().then(() => { if (seitenEl.isConnected) wahlSetzen(); });
+  // Wie viele Āyāt auf einmal verdeckt abgefragt werden (Einstellung); nur in der Hauptrunde und nicht bei Fehlerstellen, Kurzübungen und Lektionen
+  const blockN = () => phase === 'haupt' && !ganz && art !== 'stelle' && !L ? Math.max(1, Math.min(5, +E.aufdeckZahl || 1)) : 1;
   function zeichneInnen() {
     app.querySelector('#punkte').innerHTML = liste.map((a, i) => `<i class="${(phase === 'haupt' ? erg[i] : korr[i]) || (i === pos ? 'jetzt' : '')}"></i>`).join('');
     app.querySelector('.fort-zeile').classList.toggle('korrektur', phase === 'korrektur');
     seitenEl.querySelectorAll('.naechste').forEach(x => x.classList.remove('naechste'));
+    seitenEl.querySelectorAll('.dran').forEach(x => x.classList.remove('dran'));
     seitenEl.querySelectorAll('.ziel').forEach(x => x.classList.remove('ziel'));
     A.classList.add('verdeckt');
     if (abhoeren) return abhoerenZeichnen();
@@ -1078,10 +1100,12 @@ async function ueben(idText, quelle, fokusText) {
     if (!offen) {
       if (ti === 0) teile = teileVon(vi);
       teile.slice(ti).flat().forEach(x => x.classList.add('naechste'));
-      const grenze = ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
+      const nB = Math.min(blockN(), liste.length - pos);
+      if (nB > 1 && !hilfe && ti === 0) for (let j = 1; j < nB; j++) spans(liste[pos + j]).forEach(x => x.classList.add('naechste'));
+      const grenze = nB === 1 && ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
       grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
       const nimmt = rec?.state === 'recording';
-      K.innerHTML = `${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>`;
+      K.innerHTML = `${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : nB > 1 && !hilfe ? tx('ueben.ayat_aufdecken', { a: D.V[vi][1], b: D.V[liste[pos + nB - 1]][1] }) : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
       const hilfeVersteckt = !L && k.st >= 3 && !hilfeFrei && !hilfe && !ti;   // ab „sicher“ erst nach „Hilfe?“ (Hilfen zurücknehmen, wenn das Können wächst)
@@ -1106,9 +1130,11 @@ async function ueben(idText, quelle, fokusText) {
       const ah = app.querySelector('#abhoeren'); if (ah) ah.onclick = abhoerenStart;
       const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
       sichtbar(teile[ti]?.[0]);
+      autoAufnahme();
     } else {
-      K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>`;
-      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : tx('ueben.warst_du_sicher_und_fehlerfrei');
+      K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}`;
+      if (blockAnz > 1 && blockEnde > pos) spans(vi).forEach(x => x.classList.add('dran'));
+      H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : blockAnz > 1 && blockEnde > pos ? tx('ueben.block_frage', { a: D.V[vi][1] }) : tx('ueben.warst_du_sicher_und_fehlerfrei');
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
         if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
         spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
@@ -1123,6 +1149,8 @@ async function ueben(idText, quelle, fokusText) {
     aufnahmeStopp();
     const vi = liste[pos]; zu.delete(vi);
     spans(vi).forEach(x => x.classList.remove('zu', 'naechste', 'erstes'));
+    blockEnde = pos + 1; blockAnz = 1;
+    if (!hilfe && ti === 0) for (let j = 1; j < blockN() && pos + j < liste.length; j++) { const v2 = liste[pos + j]; zu.delete(v2); spans(v2).forEach(x => x.classList.remove('zu', 'naechste', 'erstes')); blockEnde = pos + j + 1; blockAnz = j + 1; }
     offen = true; zeichne(); ansagen(vi);
   }
   function teilAufdecken() {
@@ -1156,7 +1184,7 @@ async function ueben(idText, quelle, fokusText) {
     erg.length = pos; status.delete(vi);
     if (v.fs) { Z.fehlerstellenSetzen(v.fs); const fst = Z.fehlerstellenSet(); spans(vi).forEach(s => s.classList.toggle('fs', fst.has(s.dataset.v + '.' + s.dataset.i))); }
     spans(vi).forEach(s => { s.classList.remove('ok', 'hilfe', 'fehler', 'zoegern'); if (alt.has(vi)) s.classList.add('alt'); });
-    offen = true; hilfe = war === 'hilfe'; ti = 0; markieren = false;
+    offen = true; hilfe = war === 'hilfe'; ti = 0; markieren = false; blockEnde = Math.max(blockEnde, pos + 1);
     zwischenSpeichern(); zeichne(); sichtbar(spans(vi)[0]);
   }
   const zwischenSpeichern = () => { if (art !== 'stelle') Z.zwischenstandSpeichern(id, quelle, erg.slice(0, erg.length)); };
@@ -1188,12 +1216,13 @@ async function ueben(idText, quelle, fokusText) {
     Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
     app.querySelector('#punkte').innerHTML = '';
     const nimmt = rec?.state === 'recording', ansehen = E.vorueben && k.st <= 1 && !hilfe;
-    K.innerHTML = `${ganzAufnahmeTaste()}<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>`;
+    K.innerHTML = `<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>${ganzAufnahmeTaste()}`;
     H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : `${tx('ueben.ganz_hinweis')} ${tx('ueben.laut_hinweis')}`) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
     const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
     app.querySelector('#g-auf').onclick = ganzAufdecken;
     const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
     sichtbar(spans(ayat[0])[0]);
+    autoAufnahme();
   }
   function ganzAufdecken() {
     aufnahmeStopp(); abhoeren = true; fArt = null; zg = new Set();
@@ -1215,7 +1244,7 @@ async function ueben(idText, quelle, fokusText) {
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
     A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('') + `<button data-a="zg">${tx('ueben.ganz_gezoegert')}</button>`;
-    K.innerHTML = `${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>`;
+    K.innerHTML = `<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}`;
     H.innerHTML = aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
     const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
     app.querySelector('#g-neu').onclick = () => {
@@ -1256,7 +1285,10 @@ async function ueben(idText, quelle, fokusText) {
       pos = ayat.length; abschluss();
     };
   }
-  function naechsteAya() { aufnahmeVerwerfen(); pos++; offen = false; hilfe = false; hilfeFrei = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
+  function naechsteAya() {
+    const weiter = phase === 'haupt' && pos + 1 < blockEnde && pos + 1 < liste.length;   // noch aufgedeckte Āyāt des Blocks zu bewerten
+    if (!weiter) { aufnahmeVerwerfen(); blockEnde = 0; blockAnz = 1; }
+    pos++; offen = weiter; hilfe = false; hilfeFrei = false; ti = 0; markieren = false; zeichne(); if (pos < liste.length && phase === 'korrektur') sichtbar(spans(liste[pos])[0]); }
   function markierenFertig() {
     if (artFehlt()) return;
     const marken = [...seitenEl.querySelectorAll('.w.fmark')];
@@ -1707,6 +1739,7 @@ function profil() {
   const zuletzt = gesammelt.map(sn => ({ sn, o: Z.ornamentStand(sn) })).sort((a, b) => (b.o.datum || '').localeCompare(a.o.datum || '')).slice(0, 3);
   const vergoldet = gesammelt.filter(sn => P.meilen.includes('sure-mutqan-' + sn)).length;
   app.innerHTML = `<div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
+    <a class="karte einst-karte" href="#einstellungen" style="text-decoration:none;color:inherit"><span class="einst-zahn" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10.21 4.82 L10.40 1.93 L13.60 1.93 L13.79 4.82 L15.81 5.66 L18.00 3.75 L20.25 6.00 L18.34 8.19 L19.18 10.21 L22.07 10.40 L22.07 13.60 L19.18 13.79 L18.34 15.81 L20.25 18.00 L18.00 20.25 L15.81 18.34 L13.79 19.18 L13.60 22.07 L10.40 22.07 L10.21 19.18 L8.19 18.34 L6.00 20.25 L3.75 18.00 L5.66 15.81 L4.82 13.79 L1.93 13.60 L1.93 10.40 L4.82 10.21 L5.66 8.19 L3.75 6.00 L6.00 3.75 L8.19 5.66 Z"/><circle cx="12" cy="12" r="3.1"/></svg></span><div class="t"><b>${tx('allg.einstellungen')}</b></div><span class="pfeil">›</span></a>
     ${rangKarte()}
     <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
       <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div class="zahl"><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div class="zahl"><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div>
@@ -1715,31 +1748,46 @@ function profil() {
     <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div>
     <div class="unterseiten" style="margin:18px 0 12px"><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fehlerstellen"><div class="t"><b>${tx('allg.fehlerstellen')}</b><span>${tx('profil.markierte_stellen_zum_gezielten_ueben', { n: Object.keys(P.fstellen || {}).length })}</span></div><span class="pfeil">›</span></a></div></div></details>
+      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.sicherung')}</b><small>${tx('profil.gruppe_sicherung_t')}</small></span></summary>
       <div class="profil-inhalt">
     ${kontoKarte()}${Ab.status().verbunden ? `<p class="unter">${tx('konto.profil_hinweis')}</p>` : ''}<p class="unter"${Ab.status().verbunden ? ' hidden' : ''}>${tx('profil.es_gibt_keinen_server_deine_fortschritte', { a: istTouch() ? tx('profil.am_besten_in_dateien_icloud_drive_oder') : ` ${tx('profil.als_datei')}`, letzteSicherung: datumKurz(P.einst.letzteSicherung) })}</p>
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">${tx('profil.profil_sichern')}</button><button class="knopf leise klein" id="laden">${tx('profil.profil_laden')}</button></div>
-      </div></details>`;
-  app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
-  app.querySelector('#laden').onclick = profilLaden;
-  menueZeichen('profil');
-}
-
-// ---------- Mehr: Einstellungen, Üben und Nachschlagen, Hilfe ----------
-function mehr() {
-  navSetzen('mehr');
-  app.innerHTML = `<div class="marke">${tx('profil.gruppe_mehr')}<small>${tx('profil.mehr_unter')}</small></div>
-    <a class="karte einst-karte" href="#einstellungen" style="text-decoration:none;color:inherit"><span class="einst-zahn" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10.21 4.82 L10.40 1.93 L13.60 1.93 L13.79 4.82 L15.81 5.66 L18.00 3.75 L20.25 6.00 L18.34 8.19 L19.18 10.21 L22.07 10.40 L22.07 13.60 L19.18 13.79 L18.34 15.81 L20.25 18.00 L18.00 20.25 L15.81 18.34 L13.79 19.18 L13.60 22.07 L10.40 22.07 L10.21 19.18 L8.19 18.34 L6.00 20.25 L3.75 18.00 L5.66 15.81 L4.82 13.79 L1.93 13.60 L1.93 10.40 L4.82 10.21 L5.66 8.19 L3.75 6.00 L6.00 3.75 L8.19 5.66 Z"/><circle cx="12" cy="12" r="3.1"/></svg></span><div class="t"><b>${tx('allg.einstellungen')}</b></div><span class="pfeil">›</span></a>
-    <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_ueben')}</b><small>${tx('profil.gruppe_ueben_t')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lernen"><div class="t"><b>${tx('lernen.neu_lernen')}</b><span>${tx('lernen.profil_text')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#kurz"><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#aehnlich"><div class="t"><b>${tx('allg.aehnliche_stellen')}</b><span>${tx('profil.mutasabihat_nachschlagen_vergleichen_und')}</span></div><span class="pfeil">›</span></a></div></div></details>
+      </div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_hilfe')}</b><small>${tx('profil.gruppe_hilfe_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#hilfe"><div class="t"><b>${tx('profil.hilfe_und_glossar')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#einfuehrung"><div class="t"><b>${tx('profil.einfuehrung_ansehen')}</b></div><span class="pfeil">›</span></a><button type="button" class="karte" id="tour-neu"><div class="t"><b>${tx('profil.erklaerung_beim_ueben_wieder_zeigen')}</b></div><span class="pfeil">›</span></button><a class="karte" href="#rueckmeldung"><div class="t"><b>${tx('profil.rueckmeldung_senden')}</b></div><span class="pfeil">›</span></a></div></div></details>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_mehr')}</b><small>${tx('profil.gruppe_mehr_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
+  app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
+  app.querySelector('#laden').onclick = profilLaden;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
-  menueZeichen('mehr');
+  menueZeichen('profil');
+}
+
+// ---------- Üben: Zusatzübungen und Nachschlagen ----------
+const ZEICHEN = {
+  blitz: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>',
+  neu: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>',
+  ziel: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/></svg>',
+  flagge: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4M6 5h11l-2.5 3.5L17 12H6"/></svg>',
+  paar: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="11" height="11" rx="2"/><rect x="9" y="9" width="11" height="11" rx="2"/></svg>',
+  lupe: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>'
+};
+function uebungsMenue() {
+  navSetzen('uebungen');
+  const P = Z.P;
+  const schwach = sicher('schwach', () => Z.schwaechste(1)[0] || null, null);
+  const fehl = Object.keys(P.fstellen || {}).length;
+  const kachel = (href, zeichen, titel, text) => `<a class="kachel" href="${href}"><span class="uebung-zeichen">${ZEICHEN[zeichen]}</span><b>${titel}</b><span class="k">${text}</span></a>`;
+  app.innerHTML = `<div class="marke">${tx('allg.ueben')}<small>${tx('uebmenue.unter')}</small></div>
+    <a class="uebung-hero" href="#kurz"><span class="uebung-zeichen">${ZEICHEN.blitz}</span><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a>
+    <div class="titel-klein">${tx('uebmenue.gezielt')}</div>
+    <div class="kacheln">${kachel('#lernen', 'neu', tx('lernen.neu_lernen'), tx('lernen.profil_text'))}${kachel('#fehlerstellen', 'ziel', tx('allg.fehlerstellen'), tx('profil.markierte_stellen_zum_gezielten_ueben', { n: fehl }))}</div>
+    ${schwach && D.A[schwach.id] ? `<a class="karte uebung-reihe" href="#ueben/${schwach.id}/frei" style="text-decoration:none;color:inherit"><span class="uebung-zeichen klein">${ZEICHEN.flagge}</span><div class="t"><b>${tx('uebmenue.schwach_titel')}</b><span>${abschnittMarke(D.A[schwach.id])} · ${esc(D.A[schwach.id].titel)}</span></div><span class="pfeil">›</span></a>` : ''}
+    <div class="titel-klein">${tx('uebmenue.nachschlagen')}</div>
+    <div class="kacheln">${kachel('#aehnlich', 'paar', tx('allg.aehnliche_stellen'), tx('profil.mutasabihat_nachschlagen_vergleichen_und'))}${kachel('#suche', 'lupe', tx('titel.suche'), tx('uebmenue.suche_t'))}</div>`;
+  menueZeichen('uebungen');
 }
 
 // ---------- Konto und Abgleich ----------
@@ -1754,7 +1802,7 @@ let abgleichZeit = 0;
 async function abgleichStill() {
   if (!Z.P || !Ab.status().angemeldet || Date.now() - abgleichZeit < 20000) return;
   abgleichZeit = Date.now();
-  const ruhig = ['heute', 'karte', 'mushaf', 'profil', 'konto', 'einstellungen'].includes((location.hash.slice(1) || 'heute').split('/')[0]);
+  const ruhig = ['heute', 'karte', 'mushaf', 'uebungen', 'profil', 'konto', 'einstellungen'].includes((location.hash.slice(1) || 'heute').split('/')[0]);
   const r = await Ab.abgleichen({ neuAufbauen: ruhig });
   if (r.neuLaden) { location.reload(); return; }
   if (r.aufgebaut && ruhig) { themaAnwenden(); zeige(); }
@@ -1840,9 +1888,9 @@ function kontoSeite() {
 // ohne Sonderzeichen suchen: „hatma“ findet Ḫatma, „guz“ findet Ǧuzʾ
 const schlicht = s => s.normalize('NFD').replace(/[\u0300-\u036f\u02be\u02bf'’]/g, '').toLowerCase();
 function hilfeSeite(ziel) {
-  navSetzen('mehr');
+  navSetzen('profil');
   const kbd = k => `<kbd>${k}</kbd>`;
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('hilfeseite.hilfe')}<small>${tx('hilfeseite.fragen_begriffe_und_bedienung')}</small></div>
     <div class="hf-sprung" role="navigation" aria-label="${tx('hilfeseite.auf_dieser_seite')}">${[['fragen', tx('hilfeseite.fragen')], ['glossar', tx('hilfeseite.glossar')], ['lesbar', tx('hilfeseite.lesbarkeit')], ['tasten', tx('hilfeseite.tastatur')]].map(([z, l]) => `<button data-z="${z}">${l}</button>`).join('')}</div>
     <h2 class="titel-klein" id="hf-fragen" tabindex="-1">${tx('hilfeseite.fragen_und_antworten')}</h2>
@@ -1949,7 +1997,8 @@ function lernMeldung(l) {
   return l.s >= H.dabtSerie && l.offen ? tx('lernen.dabt_stellen') : tx('lernen.dabt_folge', { n: Math.min(l.s, H.dabtSerie), z: H.dabtSerie });
 }
 function lernenSeite(wahlText) {
-  navSetzen('heute');
+  const von = herkunft('lernen');
+  navSetzen(von === 'uebungen' ? 'uebungen' : 'heute');
   const lekt = Z.lektionen(), gemeistert = Z.lernFertig().length, dz = Z.dachZahlen();
   const tp = Z.tagesplan(), alteOffen = !tp.ruhe && tp.plan.some(id => !tp.fertig.includes(id) && tp.art[id] !== 'bonus');   // Altes zuerst, nur als Rat
   const wahl = wahlText != null && Z.lernbar(+wahlText) ? +wahlText : null, vor = wahl ?? Z.lernVorschlag();
@@ -2146,7 +2195,7 @@ const mitAr = s => esc(s).replace(/[؀-ۿ]+(?:[\s…]+[؀-ۿ]+)*/g, m => `<bdi c
 const mushafOrt = vi => `#mushaf/${seiteVon(vi)}${abschnittVon(vi) ? '/' + abschnittVon(vi).id : ''}`;
 // teil: 'f' = Gruppen ähnlicher Verse, 't' = Reihenfolge-Fälle; mit key nur diese eine Gruppe oder dieser eine Fall
 async function aehnlichSeite(teil, key) {
-  navSetzen('mehr');
+  navSetzen('uebungen');
   app.innerHTML = `<div class="lade">${tx('aehnlichseite.aehnliche_stellen_werden_geladen')}</div>`;
   let A, t;
   try { [A, t] = await Promise.all([NL.laden(), S.textLaden()]); } catch (e) { app.innerHTML = `<p class="leer">${tx('aehnlichseite.die_liste_liess_sich_nicht_laden_bitte')}</p>`; return; }
@@ -2234,7 +2283,7 @@ async function aehnlichSeite(teil, key) {
   if (teil === 'f' || teil === 't') NA.tab = teil;
   const begrenzt = !!P.einst.bereich;
   const wahlen = (feld, l) => `<select data-feld="${feld}" aria-label="${esc(l[0][1])}">${l.map(([w, n]) => `<option value="${w}"${String(NA[feld]) === String(w) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#uebungen'">${zurueckPfeil}${tx('allg.ueben')}</button>
     <div class="marke">${tx('allg.aehnliche_stellen')}<small>${tx('aehnlichseite.mutasabihat_zum_nachschlagen_gruppen', { n: A.f.length, stellen: A.stellen, n2: A.faelle.length })}</small></div>
     <div class="suchfeld"><input id="q" class="ah-q" type="search" dir="auto" autocomplete="off" spellcheck="false" placeholder="${tx('aehnlichseite.2_48_sura_oder_woerter')}" value="${esc(NA.q)}" aria-label="${tx('aehnlichseite.stelle_sura_oder_arabische_woerter')}">
       <button class="seitenlage" id="tast" aria-label="${tx('aehnlichseite.arabische_buchstaben_einblenden')}" aria-expanded="false">ا ب</button></div>
@@ -2344,12 +2393,12 @@ async function vergleichSeite(key, modus) {
 
 // ---------- Fehlerstellen ----------
 function fehlerstellenSeite() {
-  navSetzen('profil');
+  navSetzen('uebungen');
   const fl = Z.fehlerstellenListe(500);
   for (const f of fl) for (const d of [-1, 0, 1]) { const w = D.W.get(f.vi + '.' + (f.i + d)); if (w) schrift(w[3]); }
   const wortBild = k => { const [vi, i] = k.split('.').map(Number); return wortHTML(vi, i); };
   const abschnittVon = vi => D.A.find(e => vi >= e.v[0] && vi <= e.v[1]);
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#uebungen'">${zurueckPfeil}${tx('allg.ueben')}</button>
     <div class="marke">${tx('allg.fehlerstellen')}<small>${tx('fehlerstellenseite.die_woerter_bei_denen_du_dich_vertan')}</small></div>
     <div style="margin-top:16px">${fl.length ? fl.map(f => {
       const w = D.W.get(f.s); if (!w) return '';
@@ -2405,7 +2454,7 @@ function pensumInfo() {
   return `${tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: Z.tageProKhatma(true) })}<br>${tx('einstellungen.empfehlung_1', { n: em.N, min: em.minimal, gold: em.ideal })} ${tx('einstellungen.empfehlung_2', { t: em.tage(proTag) })}`;
 }
 function einstellungen() {
-  navSetzen('mehr');
+  navSetzen('profil');
   const P = Z.P, E = P.einst;
   // Wählbar ist jede freigegebene Sprache, dazu die gerade geladene (so kommt man aus einer Probesprache zurück)
   const sprachen = SPRACHEN.filter(s => s.frei || s.code === gebiet('code'));
@@ -2416,7 +2465,7 @@ function einstellungen() {
   const minuten = [...new Set([...Array.from({ length: 12 }, (_, i) => i * 5), mm])].sort((a, b) => a - b);
   const zwei = x => String(x).padStart(2, '0');
   const ANKER = { fajr: tx('einstellungen.anker_fajr'), zuhr: tx('einstellungen.anker_zuhr'), asr: tx('einstellungen.anker_asr'), maghrib: tx('einstellungen.anker_maghrib'), isha: tx('einstellungen.anker_isha'), schlaf: tx('einstellungen.anker_schlaf') };
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('allg.einstellungen')}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.name')}</h3><div class="feld"><input type="text" id="name" aria-label="${tx('einstellungen.name')}" autocomplete="given-name" value="${esc(P.name)}"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.erscheinungsbild')}</h3><div class="wahl" id="thema">${[['hell', tx('einstellungen.hell')], ['dunkel', tx('einstellungen.dunkel')], ['auto', tx('einstellungen.wie_geraet')]].map(([w, l]) => `<button data-w="${w}" class="${E.thema === w ? 'an' : ''}">${l}</button>`).join('')}</div></div>
@@ -2464,6 +2513,10 @@ function einstellungen() {
       <div class="wahl" id="sofort" style="margin-top:10px"><button data-w="1" class="${E.sofort !== false ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.sofort !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.abhoeren_durch_eine_zweite_person')}</h3><p class="unter">${tx('einstellungen.zu_beginn_eines_abschnitts_steht_klein')}</p>
       <div class="wahl" id="abhoeren" style="margin-top:10px"><button data-w="1" class="${E.abhoeren !== false ? 'an' : ''}">${tx('einstellungen.anbieten')}</button><button data-w="0" class="${E.abhoeren !== false ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.aufdeckzahl_titel')}</h3><p class="unter">${tx('einstellungen.aufdeckzahl_text')}</p>
+      <div class="wahl" id="aufdeckzahl" style="margin-top:10px">${[1, 2, 3, 4, 5].map(w => `<button data-w="${w}" class="${(E.aufdeckZahl || 1) === w ? 'an' : ''}">${w}</button>`).join('')}</div></div>
+    <div class="abschnitt"><h3>${tx('einstellungen.autorec_titel')}</h3><p class="unter">${tx('einstellungen.autorec_text')}</p>
+      <div class="wahl" id="autorec" style="margin-top:10px"><button data-w="1" class="${E.autoAufnahme ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.autoAufnahme ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="${E.hasanat !== false ? 'an' : ''}">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0" class="${E.hasanat !== false ? '' : 'an'}">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     </details>
@@ -2525,6 +2578,8 @@ function einstellungen() {
   pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
+  wahl('aufdeckzahl', w => { E.aufdeckZahl = +w; });
+  wahl('autorec', w => { E.autoAufnahme = w === '1'; });
   wahl('ablauf', w => { E.ablauf = w; toast(tx('einstellungen.ablauf_gilt')); });
   app.querySelector('#tagesbeginn').onchange = ev => { E.tagesbeginn = +ev.target.value; Z.speichern(); toast(tx('einstellungen.gilt_ab_sofort')); };
   app.querySelector('#tage-einzeln').onclick = ev => {
@@ -2622,7 +2677,7 @@ function einstellungen() {
 function schuelerLaden() { try { return JSON.parse(localStorage.getItem('itqan-schueler') || '[]'); } catch (e) { return []; } }
 function schuelerSpeichern(l) { try { localStorage.setItem('itqan-schueler', JSON.stringify(l)); } catch (e) { toast(tx('schuelerspeichern.speicher_voll')); } }
 async function lehrer() {
-  navSetzen('mehr');
+  navSetzen('profil');
   const liste = schuelerLaden();
   // Schülerdateien aus der anderen Gliederung (Anfänger/Fortgeschritten, ältere Fassung) für die Anzeige umrechnen
   const alt = {};
@@ -2644,7 +2699,7 @@ async function lehrer() {
       <div class="licht-seiten" role="img" aria-label="${tx('lehrer.lichtkarte_der_30_agza_von_30_mit_uebung', { n: juz.filter(o => o != null).length })}" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button tabindex="-1" aria-hidden="true" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
       <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? `${tx('lehrer.uebt_im_anfaenger_modus')} ` : kopie.einst.modus === 'seite' ? `${tx('lehrer.uebt_in_ganzen_seiten')} ` : ''}${schwach.length ? `${tx('lehrer.schwach')} ${schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ')}` : tx('lehrer.noch_keine_wiederholungen')}</p></div>`;
   }); }).join('');
-  app.innerHTML = `<button class="zurueck" onclick="location.hash='#mehr'">${zurueckPfeil}${tx('profil.gruppe_mehr')}</button>
+  app.innerHTML = `<button class="zurueck" onclick="location.hash='#profil'">${zurueckPfeil}${tx('allg.profil')}</button>
     <div class="marke">${tx('lehrer.lehreransicht')}<small>${tx('lehrer.deine_schueler_schicken_dir_ihre')}</small></div>
     <button class="knopf haupt" id="import" style="margin:18px 0">${tx('lehrer.profildateien_hinzufuegen')}</button>
     ${karten || `<p class="leer">${tx('lehrer.noch_keine_schueler_fuege_die_itqan')}</p>`}`;
