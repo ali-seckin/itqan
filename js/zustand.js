@@ -64,6 +64,7 @@ export function ergaenzen(p) {
   if (!p.einst.tb3) { if (!p.einst.tagesbeginn) p.einst.tagesbeginn = 3; p.einst.tb3 = 1; }
   p.einst.schwaechen ??= 'ausgewogen'; p.pausen ??= []; p.zyklus.konto ??= 0; p.mutash ??= {};
   p.lern ??= {}; p.statistik ??= { arten: artenAusStellen(p.fstellen) };
+  if (!p.verlauf) { p.verlauf = {}; for (const [d, t] of Object.entries(p.tage || {})) if (t?.punkte) p.verlauf[d] = t.punkte; }
   p.einst.seitenGroesse ??= 100; p.einst.textGroesse ??= 100;   // Lesbarkeit: Seite 100, 125, 150 %; Schrift 100, 112, 125 %
   // Protokoll: Sockel (Generation, Zeit, Gerät) und Liste der Einträge seit dem Sockel
   p.sockel ??= { n: 1, z: Date.parse(p.erstellt) || 0, g: '' }; p.log ??= [];
@@ -172,7 +173,14 @@ function eintrag(y, daten, extra) {
   return erg;
 }
 // Wendet einen Eintrag auf P an. Rechnet nur mit den Daten des Eintrags, nie mit der Uhr.
+// Punkte je Tag bleiben in P.verlauf stehen, auch wenn der Tag selbst später verdichtet wird (Statistik über Monate und Jahre)
 function anwenden(e, extra) {
+  const r = anwendenRoh(e, extra);
+  const t = e.d && P?.tage?.[e.d];
+  if (t && t.punkte) (P.verlauf ??= {})[e.d] = t.punkte;
+  return r;
+}
+function anwendenRoh(e, extra) {
   switch (e.y) {
     case 'pl': return planAnwenden(e);
     case 'pa': return pensumAnwenden(e);
@@ -937,6 +945,22 @@ export function seitenStufe(p) {
   const ks = ids.map(e => karte(e.id)).filter(k => k.n);
   if (!ks.length) return 0;
   return ks.reduce((s, k) => s + k.st + 0.6, 0) / ids.length;
+}
+// Reihe für das Punkte-Diagramm im Profil: 'tage' (30), 'wochen' (12, Montag bis Sonntag) oder 'monate' (12 bis 36, je nach Alter des Profils)
+export function punkteReihe(art) {
+  const alle = {}; for (const [d, t] of Object.entries(P.tage || {})) if (t?.punkte) alle[d] = t.punkte;
+  Object.assign(alle, P.verlauf || {});
+  const h = heute(), tag = d => alle[d] || 0, r = [];
+  if (art === 'wochen') {
+    const w0 = plusTage(h, -wochentag(h));
+    for (let i = 11; i >= 0; i--) { const s = plusTage(w0, -7 * i); let p = 0; for (let k = 0; k < 7; k++) p += tag(plusTage(s, k)); r.push({ d: s, p }); }
+  } else if (art === 'monate') {
+    const summe = {}; for (const [d, p] of Object.entries(alle)) summe[d.slice(0, 7)] = (summe[d.slice(0, 7)] || 0) + p;
+    const jetzt = h.slice(0, 7), [jy, jm] = jetzt.split('-').map(Number), erste = Object.keys(summe).sort()[0] || jetzt, [ey, em] = erste.split('-').map(Number);
+    const n = Math.max(12, Math.min(36, (jy - ey) * 12 + (jm - em) + 1));
+    for (let i = n - 1; i >= 0; i--) { const dt = new Date(jy, jm - 1 - i, 1), m = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`; r.push({ d: m, p: summe[m] || 0 }); }
+  } else for (let i = 29; i >= 0; i--) { const d = plusTage(h, -i); r.push({ d, p: tag(d) }); }
+  return r;
 }
 export function letzteTage(n = 30) {
   const aus = [];

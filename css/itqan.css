@@ -1242,3 +1242,26 @@ html{scrollbar-gutter:stable}
 .uebs-text{font-size:var(--s-text);line-height:1.55;max-width:none}
 .uebs-quelle{font-size:var(--s-klein);color:var(--leise);margin-top:6px}
 .uebs-zu{position:absolute;top:4px;right:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--leise)}
+/* Version 1.80: Profil-Zahlen kompakt, Diagramm-Umschalter, schlankere Begrüßung, Startseite */
+.zahlen-kompakt{background:var(--karte);border:1px solid var(--rand);border-radius:20px;padding:2px 8px;margin:18px 0 6px}
+.z-zeile{display:flex;padding:9px 0}
+.z-zeile+.z-zeile{border-top:1px solid var(--rand)}
+.z-zeile div{flex:1;text-align:center;line-height:1.25;min-width:0}
+.z-zeile div+div{border-inline-start:1px solid var(--rand)}
+.z-zeile b{display:block;font-family:var(--kopf);font-size:1.2rem;font-weight:600;color:var(--akzentT);font-variant-numeric:lining-nums tabular-nums}
+[data-modus=dunkel] .z-zeile b{color:var(--akzent2)}
+.z-zeile span{font-size:var(--s-klein);color:var(--leise)}
+.diagramm-kopf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
+.diagramm-kopf .titel-klein{margin:0}
+.diagramm-wechsel{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--leise);margin-right:-8px}
+.diagramm-wechsel:active{background:var(--karte)}
+.diagramm-kopf+.diagramm{margin-top:2px}
+.stand-text .gruss{font-size:calc(var(--s-titel) * .74)}
+.stand-text .unter{font-size:var(--s-klein)}
+.start-laden .reihe{flex-wrap:wrap}
+.start-laden .reihe .knopf{flex:1 1 150px;width:auto}
+/* Bonus-Angebot auf Heute: schlank, Titel in einer Zeile */
+.angebot{padding:12px 14px;border-radius:18px;margin-top:10px}
+.angebot b{font-size:1rem;line-height:1.25}
+.angebot p{margin:2px 0 8px}
+.angebot button{padding:9px 12px}

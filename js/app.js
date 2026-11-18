@@ -742,7 +742,7 @@ function heute() {
     <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <div class="stand-karte"><div class="stand-oben">${ring}<div class="stand-text"><h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p></div></div>${stand}</div>
-    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
+    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     ${t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}`}
     ${!t.ruhe && Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}
     ${comebackHTML}
@@ -1762,12 +1762,23 @@ function raenge() {
 }
 
 // ---------- Profil ----------
+// Punkte-Diagramm: 30 Tage, 12 Wochen oder Monate; der kleine Knopf daneben schaltet der Reihe nach um
+let punkteAnsicht = (() => { try { const w = localStorage.getItem('itqan-punkte-ansicht'); return ['tage', 'wochen', 'monate'].includes(w) ? w : 'tage'; } catch (e) { return 'tage'; } })();
+function diagrammHTML() {
+  const reihe = Z.punkteReihe(punkteAnsicht), max = Math.max(1, ...reihe.map(x => x.p)), summe = reihe.reduce((s, x) => s + x.p, 0);
+  const w = punkteAnsicht === 'wochen', m = punkteAnsicht === 'monate';
+  const titel = w ? tx('profil.itqan_punkte_wochen') : m ? tx('profil.itqan_punkte_monate') : tx('profil.itqan_punkte_der_letzten_30_tage');
+  const links = w ? tx('profil.vor_12_wochen') : m ? tx('profil.vor_monaten', { n: reihe.length }) : tx('profil.vor_30_tagen');
+  const rechts = w ? tx('profil.diese_woche') : m ? tx('profil.dieser_monat') : tx('profil.heute');
+  const name = x => m ? new Date(x.d + '-01T12:00').toLocaleDateString(gebiet('datum'), { month: 'long', year: 'numeric' }) : x.d;
+  return `<div class="diagramm-kopf"><div class="titel-klein">${titel}</div><button type="button" class="diagramm-wechsel" id="diagramm-wechsel" aria-label="${tx('profil.diagramm_wechseln')}"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg></button></div>
+    <div class="diagramm" role="img" aria-label="${tx('profil.diagramm_aria', { titel, a: zahl(summe), b: zahl(max) })}">${reihe.map(x => `<div class="${x.p ? '' : 'leer'}" style="height:${x.p ? Math.max(4, 100 * x.p / max) : 3}%" title="${name(x)}: ${x.p}"></div>`).join('')}</div>
+    <div class="klein-zeile"><span>${links}</span><span>${rechts}</span></div>`;
+}
 function profil() {
   navSetzen('profil');
   const P = Z.P, s = P.summe;
   const quote = s.r + s.f + s.h ? Math.round(100 * (s.r + s.h * .5) / (s.r + s.f + s.h)) : 0;
-  const tage = Z.letzteTage(30);
-  const max = Math.max(1, ...tage.map(x => x.t?.punkte || 0));
   const schwach = Z.schwaechste(6);
   Z.ornamenteNachtragen();
   // zuletzt gesammelte Ornamente als kleine Vorschau
@@ -1777,11 +1788,9 @@ function profil() {
   app.innerHTML = `<div class="kopfzeile"><div class="marke">${P.name ? esc(P.name) : tx('profil.dein_profil')}<small>${tx('profil.dabei_seit', { a: new Date(P.erstellt).toLocaleDateString(gebiet('datum')) })} · ${tx('profil.hatmat_vollendet', { khatma: P.zyklus.khatma })}</small></div>
       <a class="einst-zahnrad" href="#einstellungen" aria-label="${tx('allg.einstellungen')}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10.21 4.82 L10.40 1.93 L13.60 1.93 L13.79 4.82 L15.81 5.66 L18.00 3.75 L20.25 6.00 L18.34 8.19 L19.18 10.21 L22.07 10.40 L22.07 13.60 L19.18 13.79 L18.34 15.81 L20.25 18.00 L18.00 20.25 L15.81 18.34 L13.79 19.18 L13.60 22.07 L10.40 22.07 L10.21 19.18 L8.19 18.34 L6.00 20.25 L3.75 18.00 L5.66 15.81 L4.82 13.79 L1.93 13.60 L1.93 10.40 L4.82 10.21 L5.66 8.19 L3.75 6.00 L6.00 3.75 L8.19 5.66 Z"/><circle cx="12" cy="12" r="3.1"/></svg></a></div>
     ${rangKarte()}
-    <div class="zahlen" style="margin-top:18px"><div class="zahl"><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div class="zahl"><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div class="zahl"><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div>
-      <div class="zahl"><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div class="zahl"><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div class="zahl"><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div>
-    <div class="titel-klein">${tx('profil.itqan_punkte_der_letzten_30_tage')}</div>
-    <div class="diagramm" role="img" aria-label="${tx('profil.itqan_punkte_der_letzten_30_tage_2', { a: zahl(tage.reduce((a, x) => a + (x.t?.punkte || 0), 0)), b: zahl(Math.max(0, ...tage.map(x => x.t?.punkte || 0))), n: tage.filter(x => x.t?.punkte).length })}">${tage.map(x => `<div class="${x.t?.punkte ? '' : 'leer'}" style="height:${x.t?.punkte ? Math.max(4, 100 * x.t.punkte / max) : 3}%" title="${x.d}: ${x.t?.punkte || 0}"></div>`).join('')}</div>
-    <div class="klein-zeile"><span>${tx('profil.vor_30_tagen')}</span><span>${tx('profil.heute')}</span></div>
+    <div class="zahlen-kompakt"><div class="z-zeile"><div><b>${zahl(s.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div><b>${zahl(s.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}<div><b>${prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>
+      <div class="z-zeile"><div><b>${Z.ketteAktiv() ? P.kette.n : 0}</b><span>${tx('profil.kette_jetzt')}</span></div><div><b>${P.kette.beste}</b><span>${tx('profil.laengste_kette')}</span></div><div><b>${s.abschnitte}</b><span>${tx('allg.abschnitte')}</span></div></div></div>
+    <div id="diagramm-block">${diagrammHTML()}</div>
     <div class="unterseiten" style="margin:18px 0 12px"><a class="karte" href="#ornamente"><div class="orn-vorschau">${zuletzt.length ? zuletzt.map(x => ornamentSVG(x.sn, x.o.stufe, 'mini')).join('') : ornamentSVG(1, 0, 'mini')}</div><div class="t"><b>${tx('profil.ornamente_und_meilensteine')}</b><span>${tx('profil.von_114_ornamenten', { n: gesammelt.length, a: vergoldet ? ` · ${tx('profil.vergoldet', { vergoldet })}` : '' })}</span></div><span class="pfeil">›</span></a></div>
     <details class="profil-gruppe"><summary><span><b>${tx('profil.gruppe_fortschritt')}</b><small>${tx('profil.gruppe_fortschritt_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#auswertung"><div class="t"><b>${tx('allg.auswertung')}</b><span>${tx('profil.fehlerarten_suren_quote_und_zeit')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#rueckblick"><div class="t"><b>${tx('allg.rueckblick')}</b><span>${tx('profil.woche_und_monat_als_bild_zum_aufheben')}</span></div><span class="pfeil">›</span></a><a class="karte" href="#fortschritt"><div class="t"><b>${tx('allg.fortschritt')}</b><span>${tx('profil.wo_du_am_meisten_uebst')}</span></div><span class="pfeil">›</span></a></div></div></details>
@@ -1796,6 +1805,9 @@ function profil() {
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
+  const diaBlock = app.querySelector('#diagramm-block');
+  const diaBinden = () => { diaBlock.querySelector('#diagramm-wechsel').onclick = () => { punkteAnsicht = { tage: 'wochen', wochen: 'monate', monate: 'tage' }[punkteAnsicht]; try { localStorage.setItem('itqan-punkte-ansicht', punkteAnsicht); } catch (e) { /* ohne Speicher geht es auch */ } diaBlock.innerHTML = diagrammHTML(); diaBinden(); diaBlock.querySelector('#diagramm-wechsel').focus(); }; };
+  diaBinden();
   app.querySelector('#laden').onclick = profilLaden;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
   menueZeichen('profil');
