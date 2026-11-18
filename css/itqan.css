@@ -1281,14 +1281,14 @@ html{scrollbar-gutter:stable}
 .lern-schritte p{margin:2px 0 0;max-width:none}
 .lern-intro .profil-gruppe summary b{font-size:1.05rem}
 /* Version 1.82: Schimmer schwächer und nur nach unten (negativer Ausbreitungswert hält ihn oben und seitlich zurück) */
-.rangkarte{box-shadow:0 5px 14px -4px color-mix(in srgb, var(--glow) 60%, transparent)}
-.knopf.haupt{box-shadow:0 4px 12px -3px color-mix(in srgb, var(--glow) 60%, transparent)}
-.karte.jetzt{box-shadow:0 0 0 1px var(--akzent),0 5px 14px -4px color-mix(in srgb, var(--glow) 60%, transparent)}
-.rangstufe.jetzt{box-shadow:0 0 0 1px var(--akzent),0 5px 14px -4px color-mix(in srgb, var(--glow) 60%, transparent)}
-.uebung-hero{box-shadow:0 5px 14px -4px color-mix(in srgb, var(--glow) 60%, transparent)}
-.einst-zahnrad{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 60%, transparent)}
-.angebot{box-shadow:0 6px 16px -4px color-mix(in srgb, var(--glow) 60%, transparent)}
-.lk-seg button.an{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 60%, transparent)}
+.rangkarte{box-shadow:0 5px 14px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
+.knopf.haupt{box-shadow:0 4px 12px -3px color-mix(in srgb, var(--glow) 70%, transparent)}
+.karte.jetzt{box-shadow:0 0 0 1px var(--akzent),0 5px 14px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
+.rangstufe.jetzt{box-shadow:0 0 0 1px var(--akzent),0 5px 14px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
+.uebung-hero{box-shadow:0 5px 14px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
+.einst-zahnrad{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 70%, transparent)}
+.angebot{box-shadow:0 6px 16px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
+.lk-seg button.an{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 70%, transparent)}
 .angebot b{font-size:1.1rem}
 .angebot p{font-size:calc(var(--s-text) * .9)}
 .wahl-karte{position:relative;display:flex;flex-direction:column;gap:2px;padding:14px 56px 14px 16px;border:1px solid var(--rand);border-radius:16px;background:var(--karte)}
@@ -1304,4 +1304,7 @@ html{scrollbar-gutter:stable}
 /* Version 1.84: Abschnittszahlen immer farbig (Stufenfarben bleiben), Zahl in der Bonus-Karte */
 .karte .t .ab-name .ab-nr{color:var(--akzentT)}
 :where([data-modus=dunkel]) .karte .t .ab-name .ab-nr{color:var(--akzent2)}
-.angebot b .ab-nr{background:rgba(26,18,9,.14);border-radius:6px;padding:0 6px}
+.angebot .ab-fett{font-family:inherit;font-size:inherit;font-weight:700;display:inline}
+.angebot .ab-fett .ab-nr{background:rgba(26,18,9,.14);border-radius:6px;padding:0 6px}
+/* Version 1.85: aufgeklappte abgeschlossene Runde behält ihr grünes Häkchen */
+.karte.jetzt.fertig .nr{background:var(--gutF);color:var(--aufGut)}

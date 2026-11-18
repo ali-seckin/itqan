@@ -1092,6 +1092,7 @@ export default {
     keine_itqan_profildatei: 'Not an Itqān profile file',
   },
   heute: {
+    erneut_ueben: 'Practise again',
     starten: 'Start',
     kette_fenster_titel: 'Your streak',
     kette_stufe_tage: '{n} days',
@@ -1591,6 +1592,8 @@ export default {
     lichtkompakt_1: 'The five brightness levels of the Light Map now sit side by side in one row.',
     suren_titel: 'Whole sūras and expandable rounds',
     suren_1: 'In learning new you can put a whole sūra into your plan at once. On Today, a round you tap expands, and you start with the Start button. Section numbers are now highlighted everywhere.',
+    heute85_titel: 'Today: expand finished rounds',
+    heute85_1: 'A round you have already practised also expands when tapped. You only practise it again with the Practise again button. The bonus suggestion reads in one flow again.',
     uebers_titel: 'Translations and tidying up',
     uebers_1: 'Tap an Ayah in the Muṣḥaf and its translation appears in a small bubble; while practising it is available after revealing, via the Translation button. In the settings you choose the language or switch it off.',
     uebers_2: 'The gear for settings now sits at the top right of the profile. Today and Practise are leaner, and if you do not repeat the whole Qurʾān you now see “First completion” instead of “First Ḫatma”.',

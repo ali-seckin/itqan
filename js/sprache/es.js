@@ -1092,6 +1092,7 @@ export default {
     keine_itqan_profildatei: 'No es un archivo de perfil de Itqān',
   },
   heute: {
+    erneut_ueben: 'Practicar de nuevo',
     starten: 'Empezar',
     kette_fenster_titel: 'Tu racha',
     kette_stufe_tage: '{n} días',
@@ -1591,6 +1592,8 @@ export default {
     lichtkompakt_1: 'Los cinco niveles de brillo del mapa de luz están ahora uno junto a otro en una sola fila.',
     suren_titel: 'Suras completas y rondas desplegables',
     suren_1: 'En aprender algo nuevo puedes poner una sura completa en tu plan. En Hoy, la ronda que tocas se despliega y se empieza con el botón Empezar. Los números de sección se destacan ahora en todas partes.',
+    heute85_titel: 'Hoy: desplegar rondas terminadas',
+    heute85_1: 'Una ronda ya practicada también se despliega al tocarla. Solo se vuelve a practicar con el botón Practicar de nuevo. La sugerencia extra vuelve a leerse de corrido.',
     uebers_titel: 'Traducción y limpieza',
     uebers_1: 'Toca una aleya en el Muṣḥaf y verás su traducción en un pequeño globo; al practicar, después de descubrirla, con el botón «Traducción». En los ajustes eliges el idioma o la desactivas.',
     uebers_2: 'La rueda de ajustes está ahora arriba a la derecha en el perfil. Hoy y Practicar son más ligeros, y quien no repite todo el Corán ve «Primera finalización» en lugar de «1.ª Ḫatma».',

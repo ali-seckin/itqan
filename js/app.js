@@ -661,7 +661,7 @@ function start() {
 }
 
 // Name mit hervorgehobener Abschnittsnummer für Fließtext (Bonus-Vorschlag und Ähnliches)
-const abschnittFett = e => e.nr ? `<b>${esc(sureName(e.von[0]))} <span class="ab-nr">${e.nr}</span></b>` : `<b>${esc(abschnittName(e))}</b>`;
+const abschnittFett = e => e.nr ? `<strong class="ab-fett">${esc(sureName(e.von[0]))} <span class="ab-nr">${e.nr}</span></strong>` : `<strong class="ab-fett">${esc(abschnittName(e))}</strong>`;
 // Sūrenname und Abschnittsnummer fett; die Nummer zeigt farbig, wie gut der Abschnitt sitzt
 const STAND_TEXT = { nie: tx('stand_text.noch_nie_wiederholt'), neu: tx('allg.neu'), aufbau: tx('stand_text.im_aufbau'), gefestigt: tx('allg.gefestigt'), sicher: tx('allg.sicher'), mutqan: tx('allg.mutqan'), fehler: tx('stand_text.fehler_im_letzten_durchgang') };
 function abschnittMarke(e) {
@@ -683,7 +683,6 @@ function modusWahl(jetzt, mitHinweis = true) {
 }
 
 // ---------- Heute ----------
-let heuteAktiv = null;   // die aufgeklappte Runde (mit Titel und Starten-Knopf); sonst die erste offene
 function heute() {
   navSetzen('heute');
   const t = Z.tagesplan(), P = Z.P;
@@ -708,16 +707,16 @@ function heute() {
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
     return angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${P.einst.rhythmus === 'langzeit' && Z.karte(id).n > 0 ? tx('heute.faellig') : tx('heute.runde')}</span>` : '');
   };
-  const karteVoll = (id, i) => { const e = D.A[id]; return `<a class="karte jetzt" href="#ueben/${id}" style="text-decoration:none;color:inherit">
-      <div class="nr">${i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, false)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
-      <a class="knopf haupt start-knopf" href="#ueben/${id}">${tx('heute.starten')}</a>`; };
+  const karteVoll = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte jetzt${fertig ? ' fertig' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+      <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
+      <a class="knopf ${fertig ? 'leise' : 'haupt'} start-knopf" href="#ueben/${id}">${fertig ? tx('heute.erneut_ueben') : tx('heute.starten')}</a>`; };
   const karteKlein = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte kompakt ${fertig ? 'fertig' : ''}" href="#ueben/${id}" data-id="${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><span>${abschnittMarke(e)} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>`; };
   const planReihe = t.plan.filter(id => D.A[id]).map((id, i) => ({ id, i, fertig: t.fertig.includes(id) }));
   const offenIds = planReihe.filter(x => !x.fertig).map(x => x.id);
-  if (!offenIds.includes(heuteAktiv)) heuteAktiv = offenIds[0] ?? null;
+  let heuteAktiv = offenIds[0] ?? null;   // die aufgeklappte Runde (Titel und Knopf), zuerst die erste offene; antippen klappt eine andere auf, auch eine abgeschlossene
   const planListe = () => planReihe.filter(x => !x.fertig).map(x => x.id === heuteAktiv ? karteVoll(x.id, x.i) : karteKlein(x.id, x.i)).join('')
-    + planReihe.filter(x => x.fertig).map(x => karteKlein(x.id, x.i)).join('');
+    + planReihe.filter(x => x.fertig).map(x => x.id === heuteAktiv ? karteVoll(x.id, x.i) : karteKlein(x.id, x.i)).join('');
   const karten = planListe();
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
@@ -773,7 +772,7 @@ function heute() {
   menueZeichen('heute');
   const planEl = app.querySelector('#plan-liste');
   if (planEl) planEl.onclick = ev => {   // offene Runde antippen: sie klappt auf, die bisherige wird wieder klein; gestartet wird mit dem Knopf
-    const k = ev.target.closest('a.karte.kompakt:not(.fertig)'); if (!k) return;
+    const k = ev.target.closest('a.karte.kompakt'); if (!k) return;
     ev.preventDefault(); heuteAktiv = +k.dataset.id; planEl.innerHTML = planListe();
     planEl.querySelector('.karte.jetzt')?.scrollIntoView({ block: 'nearest' });
   };

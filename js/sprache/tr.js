@@ -1092,6 +1092,7 @@ export default {
     keine_itqan_profildatei: 'Itqān profil dosyası değil',
   },
   heute: {
+    erneut_ueben: 'Yeniden çalış',
     starten: 'Başla',
     kette_fenster_titel: 'Serin',
     kette_stufe_tage: '{n} gün',
@@ -1591,6 +1592,8 @@ export default {
     lichtkompakt_1: 'Işık Haritası’nın beş parlaklık düzeyi artık yan yana tek sırada.',
     suren_titel: 'Tam sureler ve açılan turlar',
     suren_1: 'Yeni ezberde bir sûreyi bütünüyle plana koyabilirsin. Bugün’de dokunduğun tur açılır, başlamak için Başla düğmesine basarsın. Bölüm numaraları artık her yerde vurgulu.',
+    heute85_titel: 'Bugün: tamamlanan turları aç',
+    heute85_1: 'Zaten çalıştığın bir tur da dokununca açılır. Yeniden çalışmak için Yeniden çalış düğmesine basarsın. Bonus önerisi yine tek akışta okunur.',
     uebers_titel: 'Çeviri ve sadeleştirme',
     uebers_1: 'Mushaf’ta bir ayete dokununca çevirisi küçük bir balonda görünür; çalışırken ayeti açtıktan sonra “Çeviri” düğmesiyle. Ayarlardan dili seçer veya kapatırsın.',
     uebers_2: 'Ayarlar dişlisi artık profilin sağ üstünde. Bugün ve Çalış daha sade, Kur’an’ın tamamını tekrar etmeyenler artık “1. Hatim” yerine “1. tamamlama” görür.',
