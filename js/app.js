@@ -707,7 +707,7 @@ function heute() {
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
     return angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${P.einst.rhythmus === 'langzeit' && Z.karte(id).n > 0 ? tx('heute.faellig') : tx('heute.runde')}</span>` : '');
   };
-  const karteVoll = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte jetzt${fertig ? ' fertig' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+  const karteVoll = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte jetzt${fertig ? ' fertig' : ''}" href="#ueben/${id}" data-id="${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
       <a class="knopf ${fertig ? 'leise' : 'haupt'} start-knopf" href="#ueben/${id}">${fertig ? tx('heute.erneut_ueben') : tx('heute.starten')}</a>`; };
   const karteKlein = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte kompakt ${fertig ? 'fertig' : ''}" href="#ueben/${id}" data-id="${id}" style="text-decoration:none;color:inherit">
@@ -772,9 +772,11 @@ function heute() {
   menueZeichen('heute');
   const planEl = app.querySelector('#plan-liste');
   if (planEl) planEl.onclick = ev => {   // offene Runde antippen: sie klappt auf, die bisherige wird wieder klein; gestartet wird mit dem Knopf
-    const k = ev.target.closest('a.karte.kompakt'); if (!k) return;
-    ev.preventDefault(); heuteAktiv = +k.dataset.id; planEl.innerHTML = planListe();
-    planEl.querySelector('.karte.jetzt')?.scrollIntoView({ block: 'nearest' });
+    const k = ev.target.closest('a.karte'); if (!k) return;   // der Knopf Starten oder Erneut üben ist ein eigener Link und startet
+    ev.preventDefault();
+    const zu = k.classList.contains('jetzt');   // die aufgeklappte Karte antippen klappt sie wieder zu, nur der Knopf darunter startet
+    heuteAktiv = zu ? null : +k.dataset.id; planEl.innerHTML = planListe();
+    if (!zu) planEl.querySelector('.karte.jetzt')?.scrollIntoView({ block: 'nearest' });
   };
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };

@@ -1590,6 +1590,8 @@ export default {
     suren_1: 'Bei Neu lernen kannst du eine ganze Sūra auf einmal in den Lernplan legen. Auf Heute klappt eine angetippte Runde auf, gestartet wird erst mit dem Knopf Starten. Abschnittszahlen sind jetzt überall hervorgehoben.',
     heute85_titel: 'Heute: abgeschlossene Runden aufklappen',
     heute85_1: 'Auch eine schon geübte Runde klappt beim Antippen auf. Erneut geübt wird erst mit dem Knopf „Erneut üben“. Der Bonus-Vorschlag steht wieder sauber in einem Fluss.',
+    heute86_titel: 'Runden wieder zuklappen',
+    heute86_1: 'Eine aufgeklappte Runde lässt sich durch Antippen wieder zuklappen. Gestartet wird nur mit „Starten“ oder „Erneut üben“, und „Erneut üben“ ist leicht golden hervorgehoben.',
     uebers_titel: 'Übersetzung und Aufräumen',
     uebers_1: 'Beim Antippen einer Āya im Muṣḥaf erscheint ihre Übersetzung in einer kleinen Blase, beim Üben nach dem Aufdecken über den Knopf „Übersetzung“. In den Einstellungen wählst du die Sprache oder schaltest sie aus.',
     uebers_2: 'Das Zahnrad für die Einstellungen sitzt jetzt oben rechts im Profil. Heute und Üben sind schlanker, und wer nicht den ganzen Qurʾān wiederholt, sieht „1. Abschluss“ statt „1. Ḫatma“.',

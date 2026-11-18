@@ -1594,6 +1594,8 @@ export default {
     suren_1: 'Dans le nouvel apprentissage, tu peux mettre une sourate entière dans ton plan. Sur Aujourd’hui, le tour que tu touches se déplie et tu démarres avec le bouton Commencer. Les numéros de section sont maintenant mis en valeur partout.',
     heute85_titel: 'Aujourd’hui : déplier les tours terminés',
     heute85_1: 'Un tour déjà travaillé se déplie aussi quand tu le touches. Tu ne t’exerces à nouveau qu’avec le bouton S’exercer à nouveau. La suggestion bonus se lit de nouveau d’un trait.',
+    heute86_titel: 'Replier les tours',
+    heute86_1: 'Un tour déplié se replie quand tu le touches de nouveau. On ne démarre qu’avec Commencer ou S’exercer à nouveau, et S’exercer à nouveau a un léger contour doré.',
     uebers_titel: 'Traduction et allègement',
     uebers_1: 'Touche un verset dans le Muṣḥaf pour voir sa traduction dans une petite bulle ; pendant l’exercice, après le dévoilement, via le bouton « Traduction ». Dans les réglages, tu choisis la langue ou tu la désactives.',
     uebers_2: 'La roue des réglages se trouve maintenant en haut à droite du profil. Aujourd’hui et S’exercer sont plus légers, et si tu ne répètes pas tout le Coran, tu vois « 1er achèvement » au lieu de « 1re Ḫatma ».',

@@ -1594,6 +1594,8 @@ export default {
     suren_1: 'In learning new you can put a whole sūra into your plan at once. On Today, a round you tap expands, and you start with the Start button. Section numbers are now highlighted everywhere.',
     heute85_titel: 'Today: expand finished rounds',
     heute85_1: 'A round you have already practised also expands when tapped. You only practise it again with the Practise again button. The bonus suggestion reads in one flow again.',
+    heute86_titel: 'Collapse rounds again',
+    heute86_1: 'An expanded round collapses again when you tap it. You only start with Start or Practise again, and Practise again is highlighted with a light gold edge.',
     uebers_titel: 'Translations and tidying up',
     uebers_1: 'Tap an Ayah in the Muṣḥaf and its translation appears in a small bubble; while practising it is available after revealing, via the Translation button. In the settings you choose the language or switch it off.',
     uebers_2: 'The gear for settings now sits at the top right of the profile. Today and Practise are leaner, and if you do not repeat the whole Qurʾān you now see “First completion” instead of “First Ḫatma”.',

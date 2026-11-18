@@ -1308,3 +1308,6 @@ html{scrollbar-gutter:stable}
 .angebot .ab-fett .ab-nr{background:rgba(26,18,9,.14);border-radius:6px;padding:0 6px}
 /* Version 1.85: aufgeklappte abgeschlossene Runde behält ihr grünes Häkchen */
 .karte.jetzt.fertig .nr{background:var(--gutF);color:var(--aufGut)}
+/* Version 1.86: Erneut üben als leise, aber erkennbare Schaltfläche mit goldenem Rahmen */
+.start-knopf.leise{border:1px solid var(--akzent);background:color-mix(in srgb, var(--akzentF) 16%, transparent);color:var(--akzentT)}
+:where([data-modus=dunkel]) .start-knopf.leise{color:var(--akzent2)}

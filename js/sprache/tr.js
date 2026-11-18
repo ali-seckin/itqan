@@ -1594,6 +1594,8 @@ export default {
     suren_1: 'Yeni ezberde bir sûreyi bütünüyle plana koyabilirsin. Bugün’de dokunduğun tur açılır, başlamak için Başla düğmesine basarsın. Bölüm numaraları artık her yerde vurgulu.',
     heute85_titel: 'Bugün: tamamlanan turları aç',
     heute85_1: 'Zaten çalıştığın bir tur da dokununca açılır. Yeniden çalışmak için Yeniden çalış düğmesine basarsın. Bonus önerisi yine tek akışta okunur.',
+    heute86_titel: 'Turları yeniden kapat',
+    heute86_1: 'Açılmış bir tur dokununca yeniden kapanır. Yalnızca Başla veya Yeniden çalış ile başlanır; Yeniden çalış hafif altın bir çerçeveyle vurgulanır.',
     uebers_titel: 'Çeviri ve sadeleştirme',
     uebers_1: 'Mushaf’ta bir ayete dokununca çevirisi küçük bir balonda görünür; çalışırken ayeti açtıktan sonra “Çeviri” düğmesiyle. Ayarlardan dili seçer veya kapatırsın.',
     uebers_2: 'Ayarlar dişlisi artık profilin sağ üstünde. Bugün ve Çalış daha sade, Kur’an’ın tamamını tekrar etmeyenler artık “1. Hatim” yerine “1. tamamlama” görür.',
