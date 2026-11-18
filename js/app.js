@@ -1512,9 +1512,11 @@ function lageInfo(p) {
   return `${buch}<div>${tx('lageinfo.im_gedruckten_mushaf_liegt_seite', { a: r ? tx('lageinfo.rechte_seite') : tx('lageinfo.linke_seite'), p, b: r ? tx('lageinfo.rechts') : tx('lageinfo.links'), c: links <= 604 && rechts >= 1 ? tx('lageinfo.aufgeschlagen_zusammen_mit_seite_daneben', { a: r ? links : rechts, b: r ? tx('lageinfo.links') : tx('lageinfo.rechts') }) : '' })}</div>`;
 }
 // Auswahl Sūra → Abschnitt, springt zur Stelle im Muṣḥaf
-function stellenWahl(sJetzt = 0, mitVers = false) {
-  return `<div class="stellenwahl${mitVers ? ' mit-vers' : ''}"><select id="wahl-sure" aria-label="${tx('stellenwahl.sura')}"><option value="">${tx('stellenwahl.sura_waehlen')}</option>${Array.from({ length: 114 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
-    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt)}</select>${mitVers ? `<select id="wahl-vers" aria-label="${tx('stellenwahl.aya_waehlen')}"${sJetzt ? '' : ' disabled'}>${versOptionen(sJetzt)}</select>` : ''}</div>`;
+// nur: Auswahl einschränken (Abschnitts-Nummer → ja/nein), etwa auf alles, was noch nicht in der Wiederholung ist
+function stellenWahl(sJetzt = 0, mitVers = false, nur = null) {
+  const sure = nur ? new Set(D.A.filter(e => nur(e.id)).flatMap(e => Array.from({ length: e.bis[0] - e.von[0] + 1 }, (_, i) => e.von[0] + i))) : null;
+  return `<div class="stellenwahl${mitVers ? ' mit-vers' : ''}"><select id="wahl-sure" aria-label="${tx('stellenwahl.sura')}"><option value="">${tx('stellenwahl.sura_waehlen')}</option>${Array.from({ length: 114 }, (_, i) => i + 1).filter(n => !sure || sure.has(n)).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
+    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt, nur)}</select>${mitVers ? `<select id="wahl-vers" aria-label="${tx('stellenwahl.aya_waehlen')}"${sJetzt ? '' : ' disabled'}>${versOptionen(sJetzt)}</select>` : ''}</div>`;
 }
 // Āya-Nummern einer Sūra (Wert = Āya-Index im Datensatz), als Alternative zum Abschnitt
 function versOptionen(s) {
@@ -1523,14 +1525,14 @@ function versOptionen(s) {
   const von = D.V.findIndex(v => v[0] === s); let n = 0; while (D.V[von + n]?.[0] === s) n++;
   return kopf + Array.from({ length: n }, (_, i) => `<option value="${von + i}">${i + 1}</option>`).join('');
 }
-function abschnittOptionen(s) {
+function abschnittOptionen(s, nur = null) {
   if (!s) return `<option value="">${tx('abschnittoptionen.abschnitt')}</option>`;
-  return `<option value="">${tx('abschnittoptionen.abschnitt_waehlen')}</option>${D.A.filter(e => e.von[0] <= s && e.bis[0] >= s)
+  return `<option value="">${tx('abschnittoptionen.abschnitt_waehlen')}</option>${D.A.filter(e => e.von[0] <= s && e.bis[0] >= s && (!nur || nur(e.id)))
     .map(e => `<option value="${e.id}">${e.nr ? e.nr + '. ' : ''}${esc(e.titel)} (${bereichText(e)})</option>`).join('')}`;
 }
-function stellenWahlBinden() {
+function stellenWahlBinden(nur = null) {
   const ss = app.querySelector('#wahl-sure'), sa = app.querySelector('#wahl-abschnitt'), sv = app.querySelector('#wahl-vers');
-  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value); sa.disabled = !ss.value; if (sv) { sv.innerHTML = versOptionen(+ss.value); sv.disabled = !ss.value; } if (ss.value) sa.focus(); };
+  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value, nur); sa.disabled = !ss.value; if (sv) { sv.innerHTML = versOptionen(+ss.value); sv.disabled = !ss.value; } if (ss.value) sa.focus(); };
   if (sv) sv.onchange = () => { if (sv.value !== '') location.hash = `#mushaf/${seiteVon(+sv.value)}/v${sv.value}`; };
   sa.onchange = () => { const e = D.A[+sa.value]; if (e) location.hash = `#mushaf/${e.seiten[0]}/${e.id}`; };
 }
@@ -2049,45 +2051,45 @@ function lernMeldung(l) {
   if (!l.rein) return tx('lernen.nochmal');
   return l.neu ? tx('lernen.schritt_geschafft', { n: l.schritte, z: n }) : tx('lernen.schon_gezaehlt');
 }
-function lernenSeite(wahlText) {
+function lernenSeite(wahlText, ohneSprung = false) {
   const von = herkunft('lernen');
   navSetzen(von === 'uebungen' ? 'uebungen' : 'heute');
   const lekt = Z.lektionen(), gemeistert = Z.lernFertig().length, E = Z.P.einst;
-  const tp = Z.tagesplan(), alteOffen = !tp.ruhe && tp.plan.some(id => !tp.fertig.includes(id) && tp.art[id] !== 'bonus');   // Altes zuerst, nur als Rat
   const wahl = wahlText != null && Z.lernbar(+wahlText) ? +wahlText : null, vor = wahl ?? Z.lernVorschlag();
   const namen = [tx('lernen.hifz_voll'), tx('lernen.dabt_voll'), tx('lernen.itqan_voll')], texte = [tx('lernen.hifz_text'), tx('lernen.dabt_text'), tx('lernen.itqan_text')];
+  const nurFehlendes = id => Z.lernbar(id);   // nur, was weder in der Wiederholung noch schon im Lernplan ist
+  const haken = '<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#${von}'">${zurueckPfeil}${von === 'uebungen' ? tx('allg.ueben') : tx('lernen.zurueck')}</button>
     <div class="marke">${tx('lernen.neu_lernen')}<small>${tx('lernen.untertitel')}</small></div>
     <div class="lern-intro"><p>${tx('lernen.intro')}</p>
       <details class="profil-gruppe"${lekt.length ? '' : ' open'}><summary><span><b>${tx('lernen.schritte_titel')}</b></span></summary><div class="profil-inhalt">
         <ol class="lern-schritte">${[0, 1, 2].map(i => `<li><span class="spur"><i class="dran">${SCHRITT_ZEICHEN[i]}</i></span><div><b>${namen[i]}</b><p class="unter">${texte[i]}</p></div></li>`).join('')}</ol>
         <p class="unter">${tx('lernen.pro_tag_regel')}</p></div></details></div>
-    <div class="titel-klein">${tx('lernen.dein_plan')}</div>
-    ${lekt.length ? lekt.map(l => `${lektionKarte(l)}<div class="klein-zeile" style="justify-content:flex-end;gap:14px;margin:-4px 0 10px">${l.offen ? `<a class="textlink" href="#ueben/${l.id}/stelle/${l.stellen[0]}">${tx('lernen.stellen_ueben')}</a>` : ''}<button class="textlink" data-ab="${l.id}">${tx('lernen.abbrechen')}</button></div>`).join('') : `<p class="unter">${tx('lernen.keine_lektion')}</p>`}
-    ${alteOffen ? `<div class="hinweisbox"><p>${tx('lernen.alt_zuerst')}</p><div class="reihe" style="margin-top:8px"><a class="knopf leise klein" href="#heute" style="text-decoration:none">${tx('lernen.zur_wiederholung')}</a></div></div>` : ''}
     <div class="titel-klein">${tx('lernen.hinzufuegen_titel')}</div>
-    ${vor == null ? `<p class="unter">${tx('lernen.alles_im_bereich')}</p>` : `<div class="abschnitt" style="margin-top:0"><p>${wahl != null ? tx('lernen.gewaehlt', { name: abschnittName(D.A[vor]), titel: esc(D.A[vor].titel) }) : tx('lernen.vorschlag', { name: abschnittName(D.A[vor]), titel: esc(D.A[vor].titel) })}</p>
+    ${vor == null ? `<p class="unter">${tx('lernen.alles_im_bereich')}</p>` : `<div class="wahl-karte${wahl != null ? ' gewaehlt' : ''}" id="wahl-karte"><span class="wahl-etikett">${wahl != null ? tx('lernen.deine_wahl') : tx('lernen.vorschlag_etikett')}</span><b>${esc(D.A[vor].titel)}</b><span class="unter">${abschnittMarke(D.A[vor])} · ${bereichText(D.A[vor])}</span><i class="wahl-haken">${haken}</i></div>
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="l-beginn">${tx('lernen.beginnen')}</button></div>
-      <p class="unter" style="margin:14px 0 8px">${tx('lernen.anderer')}</p>${stellenWahl()}
-      <p class="unter" style="margin-top:12px">${tx('lernen.groesse_hinweis')}</p></div>`}
+      <p class="unter" style="margin:14px 0 8px">${tx('lernen.anderer')}</p>${stellenWahl(0, false, nurFehlendes)}
+      <p class="unter" style="margin-top:12px">${tx('lernen.groesse_hinweis')}</p>`}
     <div class="titel-klein">${tx('lernen.pro_tag_titel')}</div>
     <div class="abschnitt" style="margin-top:0"><p class="unter">${tx('lernen.pro_tag_text')}</p>
       <div class="zaehler"><button id="lpt-minus" aria-label="${tx('start.weniger')}">−</button><b id="lpt" aria-live="polite">${Z.lernProTag()}</b><button id="lpt-plus" aria-label="${tx('start.mehr')}">+</button></div>
       ${lekt.length > Z.lernProTag() ? `<p class="unter" style="text-align:center;margin-top:6px">${tx('lernen.weitere_warten', { n: lekt.length - Z.lernProTag() })}</p>` : ''}</div>
-    ${gemeistert ? `<p class="unter" style="margin-top:12px">${tx('lernen.gemeistert', { n: gemeistert })}</p>` : ''}`;
+    ${gemeistert ? `<p class="unter" style="margin-top:12px">${tx('lernen.gemeistert', { n: gemeistert })}</p>` : ''}
+    ${lekt.length ? `<div class="titel-klein">${tx('lernen.dein_plan')}</div>${lekt.map(l => `${lektionKarte(l)}<div class="klein-zeile" style="justify-content:flex-end;gap:14px;margin:-4px 0 10px">${l.offen ? `<a class="textlink" href="#ueben/${l.id}/stelle/${l.stellen[0]}">${tx('lernen.stellen_ueben')}</a>` : ''}<button class="textlink" data-ab="${l.id}">${tx('lernen.abbrechen')}</button></div>`).join('')}` : ''}`;
   app.querySelectorAll('[data-ab]').forEach(b => b.onclick = async () => {
     const id = +b.dataset.ab;
-    if (await dialog({ titel: tx('lernen.abbrechen_titel'), html: `<p>${tx('lernen.abbrechen_text', { titel: esc(D.A[id].titel) })}</p>`, ja: tx('lernen.abbrechen'), gefahr: true })) { Z.lernAbbrechen(id); toast(tx('lernen.abgebrochen')); lernenSeite(); }
+    if (await dialog({ titel: tx('lernen.abbrechen_titel'), html: `<p>${tx('lernen.abbrechen_text', { titel: esc(D.A[id].titel) })}</p>`, ja: tx('lernen.abbrechen'), gefahr: true })) { Z.lernAbbrechen(id); toast(tx('lernen.abgebrochen')); lernenSeite(null, true); }
   });
-  const lb = app.querySelector('#l-beginn'); if (lb) lb.onclick = () => { if (Z.lernBeginnen(vor)) { toast(tx('lernen.hinzugefuegt')); lernenSeite(); } };
-  const lpt = d => { E.lernProTag = Math.max(1, Math.min(5, Z.lernProTag() + d)); Z.speichern(); lernenSeite(); };
+  const lb = app.querySelector('#l-beginn'); if (lb) lb.onclick = () => { if (Z.lernBeginnen(vor)) { toast(tx('lernen.hinzugefuegt')); lernenSeite(null, true); } };
+  const lpt = d => { E.lernProTag = Math.max(1, Math.min(5, Z.lernProTag() + d)); Z.speichern(); lernenSeite(null, true); };
   app.querySelector('#lpt-minus').onclick = () => lpt(-1); app.querySelector('#lpt-plus').onclick = () => lpt(1);
   if (app.querySelector('#wahl-sure')) {
-    stellenWahlBinden();
+    stellenWahlBinden(nurFehlendes);
     const sa = app.querySelector('#wahl-abschnitt');
-    sa.onchange = () => { if (sa.value === '') return; if (Z.lernbar(+sa.value)) lernenSeite(sa.value); else toast(tx('lernen.nicht_lernbar')); };
+    sa.onchange = () => { if (sa.value === '') return; if (Z.lernbar(+sa.value)) lernenSeite(sa.value, true); else toast(tx('lernen.nicht_lernbar')); };
   }
-  window.scrollTo(0, 0);
+  if (!ohneSprung) window.scrollTo(0, 0);
+  else if (wahl != null) app.querySelector('#wahl-karte')?.scrollIntoView({ block: 'center' });   // nach der Wahl bleibt man bei der Auswahl
 }
 function fortschrittSeite() {
   navSetzen('profil');
