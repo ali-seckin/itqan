@@ -1311,3 +1311,13 @@ html{scrollbar-gutter:stable}
 /* Version 1.86: Erneut üben als leise, aber erkennbare Schaltfläche mit goldenem Rahmen */
 .start-knopf.leise{border:1px solid var(--akzent);background:color-mix(in srgb, var(--akzentF) 16%, transparent);color:var(--akzentT)}
 :where([data-modus=dunkel]) .start-knopf.leise{color:var(--akzent2)}
+/* Version 1.87: Bereiche im Profil kompakt wie der Ornamente-Knopf, mit dezentem Symbol */
+.profil-gruppe{margin:8px 0;border-radius:16px}
+.profil-gruppe > summary{justify-content:flex-start;min-height:60px;padding:6px 0}
+.profil-gruppe > summary > span{flex:1;min-width:0}
+.profil-gruppe > summary::after{font-size:.85rem;color:var(--leise)}
+.profil-gruppe summary b{font-family:var(--fliess);font-size:var(--s-text);font-weight:700;line-height:1.25}
+.profil-gruppe summary small{margin-top:1px;line-height:1.3}
+.gr-zeichen{flex:none;display:grid;place-items:center;width:34px;height:34px;color:var(--akzentT);opacity:.85}
+:where([data-modus=dunkel]) .gr-zeichen{color:var(--akzent2)}
+.gr-zeichen svg{width:22px;height:22px}
