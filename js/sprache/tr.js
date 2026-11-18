@@ -1587,6 +1587,8 @@ export default {
     neulernen_1: 'Yeni ezber artık bir plan: Bir bölüm eklersin, üç adımda çalışırsın (Hıfz, Zabt, İtkan), sonra murâcaana geçer. Günde bir hatasız okuma sayılır; Bugün’de kaç dersin görüneceğini sen seçersin.',
     feinschliff_titel: 'Yeni ezberde son rötuşlar',
     feinschliff_1: 'Yeni ezberde artık yalnızca murâcaanda henüz olmayan sureler ve bölümler sunulur. Seçimin daha net görünür ve sayfa artık yukarı sıçramaz. Kartların ve düğmelerin etrafındaki parıltı daha sakin.',
+    lichtkompakt_titel: 'Daha derli Işık Haritası',
+    lichtkompakt_1: 'Işık Haritası’nın beş parlaklık düzeyi artık yan yana tek sırada.',
     uebers_titel: 'Çeviri ve sadeleştirme',
     uebers_1: 'Mushaf’ta bir ayete dokununca çevirisi küçük bir balonda görünür; çalışırken ayeti açtıktan sonra “Çeviri” düğmesiyle. Ayarlardan dili seçer veya kapatırsın.',
     uebers_2: 'Ayarlar dişlisi artık profilin sağ üstünde. Bugün ve Çalış daha sade, Kur’an’ın tamamını tekrar etmeyenler artık “1. Hatim” yerine “1. tamamlama” görür.',

@@ -1587,6 +1587,8 @@ export default {
     neulernen_1: 'Learning something new is now a plan: you add a section, practise it in three steps (Hifz, Dabt, Itqān), and then it moves into your review. One flawless attempt counts per day, and you choose how many lessons Today shows.',
     feinschliff_titel: 'Polish for new learning',
     feinschliff_1: 'Learning new now offers only sūras and sections that are not yet in your review. Your choice is easier to see, and the page no longer jumps to the top. The glow around cards and buttons is subtler.',
+    lichtkompakt_titel: 'Compact Light Map',
+    lichtkompakt_1: 'The five brightness levels of the Light Map now sit side by side in one row.',
     uebers_titel: 'Translations and tidying up',
     uebers_1: 'Tap an Ayah in the Muṣḥaf and its translation appears in a small bubble; while practising it is available after revealing, via the Translation button. In the settings you choose the language or switch it off.',
     uebers_2: 'The gear for settings now sits at the top right of the profile. Today and Practise are leaner, and if you do not repeat the whole Qurʾān you now see “First completion” instead of “First Ḫatma”.',

@@ -1587,6 +1587,8 @@ export default {
     neulernen_1: 'Memorizar algo nuevo es ahora un plan: añades una sección, la practicas en tres pasos (hifz, dabt, itqān) y después pasa a tu repaso. Cuenta una pasada sin errores por día y tú eliges cuántas lecciones muestra Hoy.',
     feinschliff_titel: 'Retoques en aprender algo nuevo',
     feinschliff_1: 'Aprender algo nuevo ofrece ahora solo las suras y secciones que aún no están en tu repaso. Tu elección se ve mejor y la página ya no salta arriba. El brillo alrededor de tarjetas y botones es más discreto.',
+    lichtkompakt_titel: 'Mapa de luz más compacto',
+    lichtkompakt_1: 'Los cinco niveles de brillo del mapa de luz están ahora uno junto a otro en una sola fila.',
     uebers_titel: 'Traducción y limpieza',
     uebers_1: 'Toca una aleya en el Muṣḥaf y verás su traducción en un pequeño globo; al practicar, después de descubrirla, con el botón «Traducción». En los ajustes eliges el idioma o la desactivas.',
     uebers_2: 'La rueda de ajustes está ahora arriba a la derecha en el perfil. Hoy y Practicar son más ligeros, y quien no repite todo el Corán ve «Primera finalización» en lugar de «1.ª Ḫatma».',

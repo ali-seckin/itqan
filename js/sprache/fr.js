@@ -1587,6 +1587,8 @@ export default {
     neulernen_1: 'Le nouvel apprentissage est désormais un plan : tu ajoutes une section, la travailles en trois étapes (hifz, dabt, itqān), puis elle passe dans ta murâja‘a. Un passage sans erreur compte par jour, et tu choisis combien de leçons Aujourd’hui montre.',
     feinschliff_titel: 'Finitions du nouvel apprentissage',
     feinschliff_1: 'Le nouvel apprentissage ne propose plus que les sourates et sections qui ne sont pas encore dans ta murâja‘a. Ton choix se voit mieux et la page ne remonte plus en haut. La lueur autour des cartes et des boutons est plus discrète.',
+    lichtkompakt_titel: 'Carte de lumière plus compacte',
+    lichtkompakt_1: 'Les cinq niveaux de luminosité de la carte de lumière sont désormais côte à côte sur une seule ligne.',
     uebers_titel: 'Traduction et allègement',
     uebers_1: 'Touche un verset dans le Muṣḥaf pour voir sa traduction dans une petite bulle ; pendant l’exercice, après le dévoilement, via le bouton « Traduction ». Dans les réglages, tu choisis la langue ou tu la désactives.',
     uebers_2: 'La roue des réglages se trouve maintenant en haut à droite du profil. Aujourd’hui et S’exercer sont plus légers, et si tu ne répètes pas tout le Coran, tu vois « 1er achèvement » au lieu de « 1re Ḫatma ».',

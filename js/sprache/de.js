@@ -1583,6 +1583,8 @@ export default {
     neulernen_1: 'Neu lernen ist jetzt ein Lernplan: Du fügst einen Abschnitt hinzu, übst ihn in drei Schritten (Ḥifẓ, Ḍabṭ, Itqān), und danach wandert er in deine Wiederholung. Pro Tag zählt ein fehlerfreier Durchgang, und wie viele Lektionen Heute zeigt, stellst du selbst ein.',
     feinschliff_titel: 'Feinschliff bei Neu lernen',
     feinschliff_1: 'Bei Neu lernen werden nur noch Suren und Abschnitte angeboten, die noch nicht in deiner Wiederholung sind. Deine Auswahl ist deutlicher zu sehen, und die Seite springt nicht mehr nach oben. Der Schimmer um Karten und Knöpfe ist dezenter.',
+    lichtkompakt_titel: 'Lichtkarte kompakter',
+    lichtkompakt_1: 'Die fünf Helligkeitsstufen der Lichtkarte stehen jetzt nebeneinander in einer Reihe.',
     uebers_titel: 'Übersetzung und Aufräumen',
     uebers_1: 'Beim Antippen einer Āya im Muṣḥaf erscheint ihre Übersetzung in einer kleinen Blase, beim Üben nach dem Aufdecken über den Knopf „Übersetzung“. In den Einstellungen wählst du die Sprache oder schaltest sie aus.',
     uebers_2: 'Das Zahnrad für die Einstellungen sitzt jetzt oben rechts im Profil. Heute und Üben sind schlanker, und wer nicht den ganzen Qurʾān wiederholt, sieht „1. Abschluss“ statt „1. Ḫatma“.',
