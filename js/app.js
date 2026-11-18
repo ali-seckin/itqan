@@ -660,6 +660,8 @@ function start() {
   dauerZeigen();
 }
 
+// Name mit hervorgehobener Abschnittsnummer für Fließtext (Bonus-Vorschlag und Ähnliches)
+const abschnittFett = e => e.nr ? `<b>${esc(sureName(e.von[0]))} <span class="ab-nr">${e.nr}</span></b>` : `<b>${esc(abschnittName(e))}</b>`;
 // Sūrenname und Abschnittsnummer fett; die Nummer zeigt farbig, wie gut der Abschnitt sitzt
 const STAND_TEXT = { nie: tx('stand_text.noch_nie_wiederholt'), neu: tx('allg.neu'), aufbau: tx('stand_text.im_aufbau'), gefestigt: tx('allg.gefestigt'), sicher: tx('allg.sicher'), mutqan: tx('allg.mutqan'), fehler: tx('stand_text.fehler_im_letzten_durchgang') };
 function abschnittMarke(e) {
@@ -681,6 +683,7 @@ function modusWahl(jetzt, mitHinweis = true) {
 }
 
 // ---------- Heute ----------
+let heuteAktiv = null;   // die aufgeklappte Runde (mit Titel und Starten-Knopf); sonst die erste offene
 function heute() {
   navSetzen('heute');
   const t = Z.tagesplan(), P = Z.P;
@@ -708,12 +711,14 @@ function heute() {
   const karteVoll = (id, i) => { const e = D.A[id]; return `<a class="karte jetzt" href="#ueben/${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, false)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
       <a class="knopf haupt start-knopf" href="#ueben/${id}">${tx('heute.starten')}</a>`; };
-  const karteKlein = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte kompakt ${fertig ? 'fertig' : ''}" href="#ueben/${id}" style="text-decoration:none;color:inherit">
+  const karteKlein = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte kompakt ${fertig ? 'fertig' : ''}" href="#ueben/${id}" data-id="${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><span>${abschnittMarke(e)} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>`; };
   const planReihe = t.plan.filter(id => D.A[id]).map((id, i) => ({ id, i, fertig: t.fertig.includes(id) }));
-  const karten = planReihe.filter(x => !x.fertig && x.id === offen[0]).map(x => karteVoll(x.id, x.i)).join('')
-    + planReihe.filter(x => !x.fertig && x.id !== offen[0]).map(x => karteKlein(x.id, x.i)).join('')
+  const offenIds = planReihe.filter(x => !x.fertig).map(x => x.id);
+  if (!offenIds.includes(heuteAktiv)) heuteAktiv = offenIds[0] ?? null;
+  const planListe = () => planReihe.filter(x => !x.fertig).map(x => x.id === heuteAktiv ? karteVoll(x.id, x.i) : karteKlein(x.id, x.i)).join('')
     + planReihe.filter(x => x.fertig).map(x => karteKlein(x.id, x.i)).join('');
+  const karten = planListe();
   const bonusId = t.voll ? Z.bonusVorschlag() : null;
   const woche = Z.letzteTage(7).map(x => x.t).filter(Boolean);
   const wSum = woche.reduce((s, x) => ({ r: s.r + x.r, f: s.f + x.f, h: s.h + x.h, p: s.p + x.punkte, v: s.v + (x.voll ? 1 : 0) }), { r: 0, f: 0, h: 0, p: 0, v: 0 });
@@ -742,8 +747,8 @@ function heute() {
     <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <div class="stand-karte"><div class="stand-oben">${ring}<div class="stand-text"><h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p></div></div>${stand}</div>
-    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittName(D.A[bonusId]) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
-    ${t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div>${karten}`}
+    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittFett(D.A[bonusId]) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
+    ${t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div><div id="plan-liste">${karten}</div>`}
     ${!t.ruhe && Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}
     ${lernHTML}
     ${comebackHTML}
@@ -766,6 +771,12 @@ function heute() {
   requestAnimationFrame(() => setTimeout(() => app.querySelector('circle.fort')?.setAttribute('stroke-dashoffset', U * (1 - anteil)), 60));
   app.querySelector('#kette-info').onclick = ketteFenster;
   menueZeichen('heute');
+  const planEl = app.querySelector('#plan-liste');
+  if (planEl) planEl.onclick = ev => {   // offene Runde antippen: sie klappt auf, die bisherige wird wieder klein; gestartet wird mit dem Knopf
+    const k = ev.target.closest('a.karte.kompakt:not(.fertig)'); if (!k) return;
+    ev.preventDefault(); heuteAktiv = +k.dataset.id; planEl.innerHTML = planListe();
+    planEl.querySelector('.karte.jetzt')?.scrollIntoView({ block: 'nearest' });
+  };
   const tz = app.querySelector('#trotzdem'); if (tz) tz.onclick = () => { Z.trotzdemUeben(); heute(); };
   const cbv = app.querySelector('#comeback-voll'); if (cbv) cbv.onclick = () => { Z.comebackBeenden(); heute(); };
   const pe = app.querySelector('#pause-ende'); if (pe) pe.onclick = () => { Z.pauseBeenden(); toast(tx('heute.die_pause_ist_beendet_willkommen_zurueck')); heute(); };
@@ -1513,10 +1524,10 @@ function lageInfo(p) {
 }
 // Auswahl Sūra → Abschnitt, springt zur Stelle im Muṣḥaf
 // nur: Auswahl einschränken (Abschnitts-Nummer → ja/nein), etwa auf alles, was noch nicht in der Wiederholung ist
-function stellenWahl(sJetzt = 0, mitVers = false, nur = null) {
+function stellenWahl(sJetzt = 0, mitVers = false, nur = null, ganz = false) {
   const sure = nur ? new Set(D.A.filter(e => nur(e.id)).flatMap(e => Array.from({ length: e.bis[0] - e.von[0] + 1 }, (_, i) => e.von[0] + i))) : null;
   return `<div class="stellenwahl${mitVers ? ' mit-vers' : ''}"><select id="wahl-sure" aria-label="${tx('stellenwahl.sura')}"><option value="">${tx('stellenwahl.sura_waehlen')}</option>${Array.from({ length: 114 }, (_, i) => i + 1).filter(n => !sure || sure.has(n)).map(n => `<option value="${n}"${n === sJetzt ? ' selected' : ''}>${n}. ${esc(sureName(n))}</option>`).join('')}</select>
-    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt, nur)}</select>${mitVers ? `<select id="wahl-vers" aria-label="${tx('stellenwahl.aya_waehlen')}"${sJetzt ? '' : ' disabled'}>${versOptionen(sJetzt)}</select>` : ''}</div>`;
+    <select id="wahl-abschnitt" aria-label="${tx('allg.abschnitt')}"${sJetzt ? '' : ' disabled'}>${abschnittOptionen(sJetzt, nur, ganz)}</select>${mitVers ? `<select id="wahl-vers" aria-label="${tx('stellenwahl.aya_waehlen')}"${sJetzt ? '' : ' disabled'}>${versOptionen(sJetzt)}</select>` : ''}</div>`;
 }
 // Āya-Nummern einer Sūra (Wert = Āya-Index im Datensatz), als Alternative zum Abschnitt
 function versOptionen(s) {
@@ -1525,14 +1536,16 @@ function versOptionen(s) {
   const von = D.V.findIndex(v => v[0] === s); let n = 0; while (D.V[von + n]?.[0] === s) n++;
   return kopf + Array.from({ length: n }, (_, i) => `<option value="${von + i}">${i + 1}</option>`).join('');
 }
-function abschnittOptionen(s, nur = null) {
+function abschnittOptionen(s, nur = null, ganz = false) {
   if (!s) return `<option value="">${tx('abschnittoptionen.abschnitt')}</option>`;
-  return `<option value="">${tx('abschnittoptionen.abschnitt_waehlen')}</option>${D.A.filter(e => e.von[0] <= s && e.bis[0] >= s && (!nur || nur(e.id)))
+  const liste = D.A.filter(e => e.von[0] <= s && e.bis[0] >= s && (!nur || nur(e.id)));
+  const alle = ganz && liste.length > 1 ? `<option value="s${s}">${tx('lernen.ganze_sure_titel', { name: esc(sureName(s)) })} (${tx('lernen.ganze_sure_n', { n: liste.length })})</option>` : '';
+  return `<option value="">${tx('abschnittoptionen.abschnitt_waehlen')}</option>${alle}${liste
     .map(e => `<option value="${e.id}">${e.nr ? e.nr + '. ' : ''}${esc(e.titel)} (${bereichText(e)})</option>`).join('')}`;
 }
-function stellenWahlBinden(nur = null) {
+function stellenWahlBinden(nur = null, ganz = false) {
   const ss = app.querySelector('#wahl-sure'), sa = app.querySelector('#wahl-abschnitt'), sv = app.querySelector('#wahl-vers');
-  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value, nur); sa.disabled = !ss.value; if (sv) { sv.innerHTML = versOptionen(+ss.value); sv.disabled = !ss.value; } if (ss.value) sa.focus(); };
+  ss.onchange = () => { sa.innerHTML = abschnittOptionen(+ss.value, nur, ganz); sa.disabled = !ss.value; if (sv) { sv.innerHTML = versOptionen(+ss.value); sv.disabled = !ss.value; } if (ss.value) sa.focus(); };
   if (sv) sv.onchange = () => { if (sv.value !== '') location.hash = `#mushaf/${seiteVon(+sv.value)}/v${sv.value}`; };
   sa.onchange = () => { const e = D.A[+sa.value]; if (e) location.hash = `#mushaf/${e.seiten[0]}/${e.id}`; };
 }
@@ -2055,7 +2068,10 @@ function lernenSeite(wahlText, ohneSprung = false) {
   const von = herkunft('lernen');
   navSetzen(von === 'uebungen' ? 'uebungen' : 'heute');
   const lekt = Z.lektionen(), gemeistert = Z.lernFertig().length, E = Z.P.einst;
-  const wahl = wahlText != null && Z.lernbar(+wahlText) ? +wahlText : null, vor = wahl ?? Z.lernVorschlag();
+  const wahlSure = typeof wahlText === 'string' && /^s\d+$/.test(wahlText) ? +wahlText.slice(1) : null;   // „s2“: ganze Sūra 2
+  const sureIds = wahlSure ? D.A.filter(e => e.von[0] <= wahlSure && e.bis[0] >= wahlSure && Z.lernbar(e.id)).map(e => e.id) : [];
+  const wahl = !wahlSure && wahlText != null && Z.lernbar(+wahlText) ? +wahlText : null, vor = sureIds.length ? sureIds[0] : (wahl ?? Z.lernVorschlag());
+  const gewaehlt = sureIds.length > 0 || wahl != null, ids = sureIds.length ? sureIds : vor != null ? [vor] : [];
   const namen = [tx('lernen.hifz_voll'), tx('lernen.dabt_voll'), tx('lernen.itqan_voll')], texte = [tx('lernen.hifz_text'), tx('lernen.dabt_text'), tx('lernen.itqan_text')];
   const nurFehlendes = id => Z.lernbar(id);   // nur, was weder in der Wiederholung noch schon im Lernplan ist
   const haken = '<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -2066,9 +2082,9 @@ function lernenSeite(wahlText, ohneSprung = false) {
         <ol class="lern-schritte">${[0, 1, 2].map(i => `<li><span class="spur"><i class="dran">${SCHRITT_ZEICHEN[i]}</i></span><div><b>${namen[i]}</b><p class="unter">${texte[i]}</p></div></li>`).join('')}</ol>
         <p class="unter">${tx('lernen.pro_tag_regel')}</p></div></details></div>
     <div class="titel-klein">${tx('lernen.hinzufuegen_titel')}</div>
-    ${vor == null ? `<p class="unter">${tx('lernen.alles_im_bereich')}</p>` : `<div class="wahl-karte${wahl != null ? ' gewaehlt' : ''}" id="wahl-karte"><span class="wahl-etikett">${wahl != null ? tx('lernen.deine_wahl') : tx('lernen.vorschlag_etikett')}</span><b>${esc(D.A[vor].titel)}</b><span class="unter">${abschnittMarke(D.A[vor])} · ${bereichText(D.A[vor])}</span><i class="wahl-haken">${haken}</i></div>
+    ${vor == null ? `<p class="unter">${tx('lernen.alles_im_bereich')}</p>` : `<div class="wahl-karte${gewaehlt ? ' gewaehlt' : ''}" id="wahl-karte"><span class="wahl-etikett">${gewaehlt ? tx('lernen.deine_wahl') : tx('lernen.vorschlag_etikett')}</span>${sureIds.length ? `<b>${tx('lernen.ganze_sure_titel', { name: esc(sureName(wahlSure)) })}</b><span class="unter">${tx('lernen.ganze_sure_n', { n: sureIds.length })}</span>` : `<b>${esc(D.A[vor].titel)}</b><span class="unter">${abschnittMarke(D.A[vor])} · ${bereichText(D.A[vor])}</span>`}<i class="wahl-haken">${haken}</i></div>
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="l-beginn">${tx('lernen.beginnen')}</button></div>
-      <p class="unter" style="margin:14px 0 8px">${tx('lernen.anderer')}</p>${stellenWahl(0, false, nurFehlendes)}
+      <p class="unter" style="margin:14px 0 8px">${tx('lernen.anderer')}</p>${stellenWahl(0, false, nurFehlendes, true)}
       <p class="unter" style="margin-top:12px">${tx('lernen.groesse_hinweis')}</p>`}
     <div class="titel-klein">${tx('lernen.pro_tag_titel')}</div>
     <div class="abschnitt" style="margin-top:0"><p class="unter">${tx('lernen.pro_tag_text')}</p>
@@ -2080,16 +2096,16 @@ function lernenSeite(wahlText, ohneSprung = false) {
     const id = +b.dataset.ab;
     if (await dialog({ titel: tx('lernen.abbrechen_titel'), html: `<p>${tx('lernen.abbrechen_text', { titel: esc(D.A[id].titel) })}</p>`, ja: tx('lernen.abbrechen'), gefahr: true })) { Z.lernAbbrechen(id); toast(tx('lernen.abgebrochen')); lernenSeite(null, true); }
   });
-  const lb = app.querySelector('#l-beginn'); if (lb) lb.onclick = () => { if (Z.lernBeginnen(vor)) { toast(tx('lernen.hinzugefuegt')); lernenSeite(null, true); } };
+  const lb = app.querySelector('#l-beginn'); if (lb) lb.onclick = () => { let n = 0; for (const id of ids) if (Z.lernBeginnen(id)) n++; if (n) { toast(tx('lernen.hinzugefuegt')); lernenSeite(null, true); } };
   const lpt = d => { E.lernProTag = Math.max(1, Math.min(5, Z.lernProTag() + d)); Z.speichern(); lernenSeite(null, true); };
   app.querySelector('#lpt-minus').onclick = () => lpt(-1); app.querySelector('#lpt-plus').onclick = () => lpt(1);
   if (app.querySelector('#wahl-sure')) {
-    stellenWahlBinden(nurFehlendes);
+    stellenWahlBinden(nurFehlendes, true);
     const sa = app.querySelector('#wahl-abschnitt');
-    sa.onchange = () => { if (sa.value === '') return; if (Z.lernbar(+sa.value)) lernenSeite(sa.value, true); else toast(tx('lernen.nicht_lernbar')); };
+    sa.onchange = () => { if (sa.value === '') return; if (/^s\d+$/.test(sa.value) || Z.lernbar(+sa.value)) lernenSeite(sa.value, true); else toast(tx('lernen.nicht_lernbar')); };
   }
   if (!ohneSprung) window.scrollTo(0, 0);
-  else if (wahl != null) app.querySelector('#wahl-karte')?.scrollIntoView({ block: 'center' });   // nach der Wahl bleibt man bei der Auswahl
+  else if (gewaehlt) app.querySelector('#wahl-karte')?.scrollIntoView({ block: 'center' });   // nach der Wahl bleibt man bei der Auswahl
 }
 function fortschrittSeite() {
   navSetzen('profil');

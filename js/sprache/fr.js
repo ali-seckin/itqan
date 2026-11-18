@@ -1589,6 +1589,8 @@ export default {
     feinschliff_1: 'Le nouvel apprentissage ne propose plus que les sourates et sections qui ne sont pas encore dans ta murâja‘a. Ton choix se voit mieux et la page ne remonte plus en haut. La lueur autour des cartes et des boutons est plus discrète.',
     lichtkompakt_titel: 'Carte de lumière plus compacte',
     lichtkompakt_1: 'Les cinq niveaux de luminosité de la carte de lumière sont désormais côte à côte sur une seule ligne.',
+    suren_titel: 'Sourates entières et tours dépliables',
+    suren_1: 'Dans le nouvel apprentissage, tu peux mettre une sourate entière dans ton plan. Sur Aujourd’hui, le tour que tu touches se déplie et tu démarres avec le bouton Commencer. Les numéros de section sont maintenant mis en valeur partout.',
     uebers_titel: 'Traduction et allègement',
     uebers_1: 'Touche un verset dans le Muṣḥaf pour voir sa traduction dans une petite bulle ; pendant l’exercice, après le dévoilement, via le bouton « Traduction ». Dans les réglages, tu choisis la langue ou tu la désactives.',
     uebers_2: 'La roue des réglages se trouve maintenant en haut à droite du profil. Aujourd’hui et S’exercer sont plus légers, et si tu ne répètes pas tout le Coran, tu vois « 1er achèvement » au lieu de « 1re Ḫatma ».',
@@ -1862,6 +1864,8 @@ export default {
     nochmal: 'Seul un passage sans erreur et sans aide compte. Regarde encore le texte et réessaie.',
     deine_wahl: 'Ton choix',
     vorschlag_etikett: 'Suggestion',
+    ganze_sure_titel: 'Sourate entière : {name}',
+    ganze_sure_n: '{n} {n, plural, one {section} other {sections}}',
   },
   seite: {
     beschreibung: 'Itqān : la murâja‘a de tout le Coran en sections de sens.',
@@ -1914,6 +1918,7 @@ export default {
     app__abschnitte_umgestellt_dein_fortschritt: 'Pages réorganisées : ta progression a été conservée.',
     lernen__nicht_lernbar: 'Cette page fait déjà partie de ta plage, ou c’est déjà une leçon.',
     lernen__erste_lektion: 'Apprendre une nouvelle page',
+    lernen__ganze_sure_n: '{n} {n, plural, one {page} other {pages}}',
   },
   durchlauf: {
     rueckblick__hatma_vollendet: 'Cycle achevé',

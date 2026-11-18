@@ -1589,6 +1589,8 @@ export default {
     feinschliff_1: 'Aprender algo nuevo ofrece ahora solo las suras y secciones que aún no están en tu repaso. Tu elección se ve mejor y la página ya no salta arriba. El brillo alrededor de tarjetas y botones es más discreto.',
     lichtkompakt_titel: 'Mapa de luz más compacto',
     lichtkompakt_1: 'Los cinco niveles de brillo del mapa de luz están ahora uno junto a otro en una sola fila.',
+    suren_titel: 'Suras completas y rondas desplegables',
+    suren_1: 'En aprender algo nuevo puedes poner una sura completa en tu plan. En Hoy, la ronda que tocas se despliega y se empieza con el botón Empezar. Los números de sección se destacan ahora en todas partes.',
     uebers_titel: 'Traducción y limpieza',
     uebers_1: 'Toca una aleya en el Muṣḥaf y verás su traducción en un pequeño globo; al practicar, después de descubrirla, con el botón «Traducción». En los ajustes eliges el idioma o la desactivas.',
     uebers_2: 'La rueda de ajustes está ahora arriba a la derecha en el perfil. Hoy y Practicar son más ligeros, y quien no repite todo el Corán ve «Primera finalización» en lugar de «1.ª Ḫatma».',
@@ -1862,6 +1864,8 @@ export default {
     nochmal: 'Cuenta una pasada sin errores y sin ayuda. Mira el texto una vez más e inténtalo de nuevo.',
     deine_wahl: 'Tu elección',
     vorschlag_etikett: 'Sugerencia',
+    ganze_sure_titel: 'Sura completa: {name}',
+    ganze_sure_n: '{n} {n, plural, one {sección} other {secciones}}',
   },
   seite: {
     beschreibung: 'Itqān: la muraya‘a de todo el Corán en secciones con sentido.',
@@ -1914,6 +1918,7 @@ export default {
     app__abschnitte_umgestellt_dein_fortschritt: 'Páginas reorganizadas; tu progreso se ha conservado.',
     lernen__nicht_lernbar: 'Esta página ya forma parte de tu repaso o ya es una lección.',
     lernen__erste_lektion: 'Aprender una página nueva',
+    lernen__ganze_sure_n: '{n} {n, plural, one {página} other {páginas}}',
   },
   durchlauf: {
     rueckblick__hatma_vollendet: 'Ciclo completado',

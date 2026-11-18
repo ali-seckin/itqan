@@ -1589,6 +1589,8 @@ export default {
     feinschliff_1: 'Yeni ezberde artık yalnızca murâcaanda henüz olmayan sureler ve bölümler sunulur. Seçimin daha net görünür ve sayfa artık yukarı sıçramaz. Kartların ve düğmelerin etrafındaki parıltı daha sakin.',
     lichtkompakt_titel: 'Daha derli Işık Haritası',
     lichtkompakt_1: 'Işık Haritası’nın beş parlaklık düzeyi artık yan yana tek sırada.',
+    suren_titel: 'Tam sureler ve açılan turlar',
+    suren_1: 'Yeni ezberde bir sûreyi bütünüyle plana koyabilirsin. Bugün’de dokunduğun tur açılır, başlamak için Başla düğmesine basarsın. Bölüm numaraları artık her yerde vurgulu.',
     uebers_titel: 'Çeviri ve sadeleştirme',
     uebers_1: 'Mushaf’ta bir ayete dokununca çevirisi küçük bir balonda görünür; çalışırken ayeti açtıktan sonra “Çeviri” düğmesiyle. Ayarlardan dili seçer veya kapatırsın.',
     uebers_2: 'Ayarlar dişlisi artık profilin sağ üstünde. Bugün ve Çalış daha sade, Kur’an’ın tamamını tekrar etmeyenler artık “1. Hatim” yerine “1. tamamlama” görür.',
@@ -1862,6 +1864,8 @@ export default {
     nochmal: 'Hatasız ve yardımsız bir okuma sayılır. Metne bir kez daha bak ve yeniden dene.',
     deine_wahl: 'Seçimin',
     vorschlag_etikett: 'Öneri',
+    ganze_sure_titel: 'Sûrenin tamamı: {name}',
+    ganze_sure_n: '{n} {n, plural, one {bölüm} other {bölüm}}',
   },
   seite: {
     beschreibung: 'Itqān: Kur’an’ın tamamının anlam bölümleriyle murâcaası.',
@@ -1914,6 +1918,7 @@ export default {
     app__abschnitte_umgestellt_dein_fortschritt: 'Sayfalar yeniden düzenlendi, ilerlemen aktarıldı.',
     lernen__nicht_lernbar: 'Bu sayfa ya zaten ezberine dahil ya da hâlihazırda bir ders.',
     lernen__erste_lektion: 'Yeni bir sayfa ezberle',
+    lernen__ganze_sure_n: '{n} {n, plural, one {sayfa} other {sayfa}}',
   },
   durchlauf: {
     rueckblick__hatma_vollendet: 'Devir tamamlandı',

@@ -1589,6 +1589,8 @@ export default {
     feinschliff_1: 'Learning new now offers only sūras and sections that are not yet in your review. Your choice is easier to see, and the page no longer jumps to the top. The glow around cards and buttons is subtler.',
     lichtkompakt_titel: 'Compact Light Map',
     lichtkompakt_1: 'The five brightness levels of the Light Map now sit side by side in one row.',
+    suren_titel: 'Whole sūras and expandable rounds',
+    suren_1: 'In learning new you can put a whole sūra into your plan at once. On Today, a round you tap expands, and you start with the Start button. Section numbers are now highlighted everywhere.',
     uebers_titel: 'Translations and tidying up',
     uebers_1: 'Tap an Ayah in the Muṣḥaf and its translation appears in a small bubble; while practising it is available after revealing, via the Translation button. In the settings you choose the language or switch it off.',
     uebers_2: 'The gear for settings now sits at the top right of the profile. Today and Practise are leaner, and if you do not repeat the whole Qurʾān you now see “First completion” instead of “First Ḫatma”.',
@@ -1862,6 +1864,8 @@ export default {
     nochmal: 'An attempt counts when it is flawless and without help. Look at the text once more and try again.',
     deine_wahl: 'Your choice',
     vorschlag_etikett: 'Suggestion',
+    ganze_sure_titel: 'Whole sūra {name}',
+    ganze_sure_n: '{n} {n, plural, one {section} other {sections}}',
   },
   seite: {
     beschreibung: 'Itqān: the Muraja’ah of the whole Qur’an, in sections by meaning.',
@@ -1914,6 +1918,7 @@ export default {
     app__abschnitte_umgestellt_dein_fortschritt: 'Pages converted. Your progress has been carried over.',
     lernen__nicht_lernbar: 'This page is already in your range or already a lesson.',
     lernen__erste_lektion: 'Memorise a new page',
+    lernen__ganze_sure_n: '{n} {n, plural, one {page} other {pages}}',
   },
   durchlauf: {
     rueckblick__hatma_vollendet: 'Cycle complete',

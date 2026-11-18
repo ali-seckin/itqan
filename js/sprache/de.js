@@ -1585,6 +1585,8 @@ export default {
     feinschliff_1: 'Bei Neu lernen werden nur noch Suren und Abschnitte angeboten, die noch nicht in deiner Wiederholung sind. Deine Auswahl ist deutlicher zu sehen, und die Seite springt nicht mehr nach oben. Der Schimmer um Karten und Knöpfe ist dezenter.',
     lichtkompakt_titel: 'Lichtkarte kompakter',
     lichtkompakt_1: 'Die fünf Helligkeitsstufen der Lichtkarte stehen jetzt nebeneinander in einer Reihe.',
+    suren_titel: 'Ganze Suren und aufklappbare Runden',
+    suren_1: 'Bei Neu lernen kannst du eine ganze Sūra auf einmal in den Lernplan legen. Auf Heute klappt eine angetippte Runde auf, gestartet wird erst mit dem Knopf Starten. Abschnittszahlen sind jetzt überall hervorgehoben.',
     uebers_titel: 'Übersetzung und Aufräumen',
     uebers_1: 'Beim Antippen einer Āya im Muṣḥaf erscheint ihre Übersetzung in einer kleinen Blase, beim Üben nach dem Aufdecken über den Knopf „Übersetzung“. In den Einstellungen wählst du die Sprache oder schaltest sie aus.',
     uebers_2: 'Das Zahnrad für die Einstellungen sitzt jetzt oben rechts im Profil. Heute und Üben sind schlanker, und wer nicht den ganzen Qurʾān wiederholt, sieht „1. Abschluss“ statt „1. Ḫatma“.',
@@ -1858,6 +1860,8 @@ export default {
     nochmal: 'Gezählt wird ein Durchgang ohne Fehler und ohne Hilfe. Sieh dir den Text noch einmal an und versuche es erneut.',
     deine_wahl: 'Deine Wahl',
     vorschlag_etikett: 'Vorschlag',
+    ganze_sure_titel: 'Ganze Sūra {name}',
+    ganze_sure_n: '{n} {n, plural, one {Abschnitt} other {Abschnitte}}',
   },
   seite: {
     beschreibung: 'Itqān: die Murāǧaʿa des ganzen Qurʾāns in sinnvollen Abschnitten.',
@@ -1910,6 +1914,7 @@ export default {
     app__abschnitte_umgestellt_dein_fortschritt: 'Seiten umgestellt, dein Fortschritt ist übernommen.',
     lernen__nicht_lernbar: 'Diese Seite gehört schon zu deinem Bereich oder ist bereits eine Lektion.',
     lernen__erste_lektion: 'Eine neue Seite lernen',
+    lernen__ganze_sure_n: '{n} {n, plural, one {Seite} other {Seiten}}',
   },
   durchlauf: {
     rueckblick__hatma_vollendet: 'Durchlauf vollendet',
