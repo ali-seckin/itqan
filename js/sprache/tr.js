@@ -1608,6 +1608,8 @@ export default {
     startbild94_1: 'Uygulama açılırken artık yükleme yazısı yerine büyük harflerle Itqān adı ve yeni hat yazısı görünür.',
     kalligrafie95_titel: 'Her yerde hat yazısı',
     kalligrafie95_1: 'Dil seçiminde, kurulumda ve tanıtımda artık basılı yazı yerine adın yeni hat yazısı görünür.',
+    umzug96_titel: 'Taşınmaya hazırlık',
+    umzug96_1: 'Eski bağlantılar ve ana ekran simgesi artık otomatik olarak yeni adrese yönlendirilir.',
     lichtkarte92_titel: 'Işık haritası, sayfa çevirme, renkler',
     lichtkarte92_1: 'Işık haritasının sayfa panelinde açık hata yeri olan bölümler artık kırmızı işaretli. Mushaf’ta sayfa çevirmek, tam ekran olmadan da bir sonraki sayfayı kesintisiz içeri kaydırır. Durak işareti renk seçiminin sırası değişti. Tam ekranı kapatmak daha akıcı: sayfa yerine yumuşakça kayar.',
     blaettern91_titel: 'Kayarak sayfa çevirme, grafik penceresi',

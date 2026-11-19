@@ -1604,6 +1604,8 @@ export default {
     startbild94_1: 'Beim Öffnen der App erscheint jetzt der Name Itqān groß mit der neuen Kalligrafie, statt eines Ladehinweises.',
     kalligrafie95_titel: 'Kalligrafie überall',
     kalligrafie95_1: 'Bei der Sprachwahl, der Einrichtung und in der Einführung steht jetzt die neue Kalligrafie des Namens statt der Druckschrift.',
+    umzug96_titel: 'Bereit für den Umzug',
+    umzug96_1: 'Alte Links und das Symbol auf dem Startbildschirm leiten künftig von selbst auf die neue Adresse weiter.',
     lichtkarte92_titel: 'Lichtkarte, Blättern, Farbwahl',
     lichtkarte92_1: 'Im Seitenblatt der Lichtkarte sind Abschnitte mit offenen Fehlerstellen jetzt rot gekennzeichnet. Das Blättern im Muṣḥaf schiebt die nächste Seite nahtlos herein, auch ohne Vollbild. Die Farbwahl der Stoppzeichen hat eine neue Reihenfolge. Das Schließen des Vollbilds ist geschmeidiger: Die Seite wandert fließend an ihren Platz.',
     blaettern91_titel: 'Blättern mit Gleiten, Diagrammfenster',

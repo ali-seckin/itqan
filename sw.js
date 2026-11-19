@@ -1,5 +1,5 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v155';
+const SCHALE = 'itqan-schale-v156';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/sprache.js', 'js/sprache/de.js', 'js/app.js', 'js/uebersetzung.js', 'js/daten.js', 'js/zustand.js', 'js/abfragen.js', 'js/auswahl.js', 'js/lichtkarte.js', 'js/sperre.js', 'js/mushaf.js', 'js/ziffern.js', 'js/abgleich.js', 'js/konto.js', 'js/server.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/abschnitte_seite_v1.json', 'daten/abschnitte_seite_v2.json',
@@ -25,8 +25,9 @@ self.addEventListener('fetch', e => {
     e.respondWith(caches.open(SEITEN).then(async c => (await c.match(e.request)) || fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; })));
     return;
   }
+  // Seitenaufrufe: eine Umleitung (Umzug an eine neue Adresse) nicht selbst abholen, sondern dem Browser überlassen, sonst zeigt er eine Fehlerseite
   // App-Gerüst: erst Netz (für Updates), sonst Speicher
   // immer beim Server nachfragen (ETag), damit nie alte und neue Programmdateien gemischt werden
-  e.respondWith(fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }).then(r => { if (r.ok) { const k = r.clone(); caches.open(SCHALE).then(c => c.put(e.request, k)); } return r; })
+  e.respondWith(fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin', redirect: e.request.mode === 'navigate' ? 'manual' : 'follow' }).then(r => { if (r.ok) { const k = r.clone(); caches.open(SCHALE).then(c => c.put(e.request, k)); } return r; })
     .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
 });

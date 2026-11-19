@@ -101,3 +101,4 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 72. Helle Darstellung: der aktive Reiter unten hat eine runde Hinterlegung und fette Schrift.
 73. Startbild: beim Öffnen steht die Kalligrafie mit „Itqān“ groß (helle Darstellung dunkelblau, dunkle golden), kein Ladetext; Bildschirmleser liest „Itqān wird geladen“.
 74. Die Kalligrafie ersetzt die arabische Schrift bei Sprachwahl, Einrichtung und Einführung (Größe wie zuvor, helle Darstellung dunkelblau, dunkle golden).
+75. Service Worker: Seitenaufrufe holen eine Umleitung nicht selbst ab (Test mit zwei lokalen Adressen: alter Standort leitet per 301 auf neuen, Gerät mit installiertem Service Worker landet auf dem neuen Standort statt auf einer Fehlerseite).
