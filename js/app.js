@@ -350,7 +350,7 @@ function kurzSeite(was) {
   const von = herkunft('kurz');
   navSetzen(von === 'uebungen' ? 'uebungen' : 'heute');
   if (was === 'zeile') return zeileSeite();
-  const arten = [['seite', tx('kurz.seite'), tx('kurz.seite_t')], ['juz', tx('kurz.juz'), tx('kurz.juz_t')], ['uebergang', tx('kurz.uebergang'), tx('kurz.uebergang_t')], ['mitte', tx('kurz.mitte'), tx('kurz.mitte_t')], ['titel', tx('kurz.titel_aufgabe'), tx('kurz.titel_aufgabe_t')]];
+  const arten = [['seite', tx('kurz.seite'), tx('kurz.seite_t')], ['juz', tx('kurz.juz'), tx('kurz.juz_t')], ['uebergang', tx('kurz.uebergang'), tx('kurz.uebergang_t')], ['mitte', tx('kurz.mitte'), tx('kurz.mitte_t')], ...(D.modus === 'seite' ? [] : [['titel', tx('kurz.titel_aufgabe'), tx('kurz.titel_aufgabe_t')]])];
   app.innerHTML = `<button class="zurueck" onclick="location.hash='#${von}'">${zurueckPfeil}${von === 'uebungen' ? tx('allg.ueben') : tx('titel.heute')}</button>
     <div class="marke">${tx('kurz.titel')}<small>${tx('kurz.untertitel')}</small></div>
     <div class="kurz-liste">${arten.map(([k, l, t]) => `<button type="button" class="kurz-karte" data-k="${k}"><b>${l}<em>${tx('kurz.punkte_n', { n: Z.KURZ_PUNKTE[k] })}</em></b><span>${t}</span></button>`).join('')}
@@ -2528,9 +2528,9 @@ function fehlerstellenSeite() {
 // ---------- Einstellungen ----------
 const TAGE = [tx('tage.montag'), tx('tage.dienstag'), tx('tage.mittwoch'), tx('tage.donnerstag'), tx('tage.freitag'), tx('tage.samstag'), tx('tage.sonntag')];
 const SCHWACH_TEXT = {
-  khatma: tx('schwach_text.nur_die_wiederholung_nach_fehlern_nach_1'),
-  ausgewogen: tx('schwach_text.schwache_abschnitte_kommen_zwischen_zwei'),
-  schwaechen: tx('schwach_text.schwache_abschnitte_kommen_etwa_doppelt')
+  get khatma() { return tx('schwach_text.nur_die_wiederholung_nach_fehlern_nach_1'); },
+  get ausgewogen() { return tx('schwach_text.schwache_abschnitte_kommen_zwischen_zwei'); },
+  get schwaechen() { return tx('schwach_text.schwache_abschnitte_kommen_etwa_doppelt'); }
 };
 // Pause: bis zu 30 Tage ohne Wird
 function pauseHTML() {

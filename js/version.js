@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.88';
+export const VERSION = '1.89';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = 'support@itqan.at';
@@ -11,6 +11,9 @@ export const RUECKMELDUNG_AN = 'support@itqan.at';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '1.89', datum: '2026-11-19', titel: tx('version.seiten89_titel'), punkte: [
+    tx('version.seiten89_1')
+  ] },
   { v: '1.88', datum: '2026-11-19', titel: tx('version.vollbild88_titel'), punkte: [
     tx('version.vollbild88_1')
   ] },
@@ -226,10 +229,10 @@ export const NEUIGKEITEN = [
     tx('version.ganze_seiten_2'),
     tx('version.ganze_seiten_3')
   ] },
-  { v: '1.14', datum: '2026-11-10', titel: tx('lernen.neu_titel'), punkte: [
-    tx('lernen.neu_1'),
-    tx('lernen.neu_2'),
-    tx('lernen.neu_3')
+  { v: '1.14', datum: '2026-11-10', titel: tx('version.lernen14_titel'), punkte: [
+    tx('version.lernen14_1'),
+    tx('version.lernen14_2'),
+    tx('version.lernen14_3')
   ] },
   { v: '1.13', datum: '2026-11-10', titel: tx('version.vorlesen_und_markieren_ohne_tippen'), punkte: [
     tx('version.jede_mushaf_seite_gibt_es_jetzt_auch_als'),

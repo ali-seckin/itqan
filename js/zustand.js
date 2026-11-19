@@ -892,19 +892,19 @@ export function ornamentStand(s) {
 // ohne Fehler und ohne Hilfe, gemessen über den ganzen gewählten Bereich), st2/st3/st4 (% der Abschnitte
 // mindestens gefestigt / sicher / mutqan), offen0 (keine Fehlerwiederholung offen)
 export const RAENGE = [
-  { n: tx('zustand.mubtadi'), ar: 'مُبْتَدِئ', de: tx('zustand.der_beginnende'), hifz: tx('zustand.du_hast_mit_der_geordneten_muragaa'), b: {} },
-  { n: tx('zustand.murid'), ar: 'مُرِيد', de: tx('zustand.der_wollende_der_strebende'), hifz: tx('zustand.die_absicht_ist_gefasst_und_durch_taten'), b: { punkte: 1000 } },
-  { n: tx('zustand.muwazib'), ar: 'مُوَاظِب', de: tx('zustand.der_bestaendige'), hifz: tx('zustand.die_wiederholung_hat_einen_festen_platz'), b: { punkte: 5000, kette: 7 } },
-  { n: tx('zustand.mutaahid'), ar: 'مُتَعَاهِد', de: tx('zustand.der_der_den_quran_pflegt'), hifz: tx('zustand.nach_dem_hadit_taahadu_hada_l_quran_er'), b: { punkte: 15000, kette: 40 } },
-  { n: tx('zustand.murabit'), ar: 'مُرَابِط', de: tx('zustand.der_auf_seinem_posten_ausharrende'), hifz: tx('zustand.du_haeltst_deinen_bereich_gegen_das'), b: { punkte: 30000, quote: 75 } },
-  { n: tx('zustand.hatim'), ar: 'خَاتِم', de: tx('zustand.der_vollendende'), hifz: tx('zustand.eine_ganze_runde_durch_deinen_bereich'), b: { punkte: 60000, khatma: 1, quote: 85 } },
-  { n: tx('zustand.mustahdir'), ar: 'مُسْتَحْضِر', de: tx('zustand.der_den_quran_gegenwaertig_hat'), hifz: tx('zustand.der_ganze_quran_ist_einmal_vollstaendig'), b: { punkte: 100000, ganz: 1, voll: 1, quote: 88 } },
-  { n: tx('zustand.dabit'), ar: 'ضَابِط', de: tx('zustand.der_genaue'), hifz: tx('zustand.dabt_heisst_in_den_haditwissenschaften'), b: { punkte: 180000, ganz: 1, voll: 2, quote: 92, st2: 50 } },
-  { n: tx('zustand.hadiq'), ar: 'حَاذِق', de: tx('zustand.der_geuebte_der_kundige'), hifz: tx('zustand.in_den_alten_quranschulen_hiess_der'), b: { punkte: 270000, ganz: 1, voll: 3, quote: 94, st2: 75 } },
-  { n: tx('zustand.rasih'), ar: 'رَاسِخ', de: tx('zustand.der_fest_verwurzelte'), hifz: tx('zustand.wie_ar_rasihuna_fi_l_ilm_3_7_fehler_sind'), b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
-  { n: tx('zustand.mutqin'), ar: 'مُتْقِن', de: tx('zustand.der_meisterhafte'), hifz: tx('zustand.vom_selben_stamm_wie_itqan_der_quran'), b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
-  { n: tx('zustand.tabt'), ar: 'ثَبْت', de: tx('zustand.der_verlaessliche'), hifz: tx('zustand.tiqa_tabt_ist_das_hoechste_lob_fuer'), b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
-  { n: tx('zustand.mutqin_mutlaq'), ar: 'مُتْقِنٌ مُطْلَق', de: tx('zustand.der_uneingeschraenkt_meisterhafte'), hifz: tx('zustand.jede_stelle_des_ganzen_quran_sitzt_ohne'), b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
+  { get n() { return tx('zustand.mubtadi'); }, ar: 'مُبْتَدِئ', get de() { return tx('zustand.der_beginnende'); }, get hifz() { return tx('zustand.du_hast_mit_der_geordneten_muragaa'); }, b: {} },
+  { get n() { return tx('zustand.murid'); }, ar: 'مُرِيد', get de() { return tx('zustand.der_wollende_der_strebende'); }, get hifz() { return tx('zustand.die_absicht_ist_gefasst_und_durch_taten'); }, b: { punkte: 1000 } },
+  { get n() { return tx('zustand.muwazib'); }, ar: 'مُوَاظِب', get de() { return tx('zustand.der_bestaendige'); }, get hifz() { return tx('zustand.die_wiederholung_hat_einen_festen_platz'); }, b: { punkte: 5000, kette: 7 } },
+  { get n() { return tx('zustand.mutaahid'); }, ar: 'مُتَعَاهِد', get de() { return tx('zustand.der_der_den_quran_pflegt'); }, get hifz() { return tx('zustand.nach_dem_hadit_taahadu_hada_l_quran_er'); }, b: { punkte: 15000, kette: 40 } },
+  { get n() { return tx('zustand.murabit'); }, ar: 'مُرَابِط', get de() { return tx('zustand.der_auf_seinem_posten_ausharrende'); }, get hifz() { return tx('zustand.du_haeltst_deinen_bereich_gegen_das'); }, b: { punkte: 30000, quote: 75 } },
+  { get n() { return tx('zustand.hatim'); }, ar: 'خَاتِم', get de() { return tx('zustand.der_vollendende'); }, get hifz() { return tx('zustand.eine_ganze_runde_durch_deinen_bereich'); }, b: { punkte: 60000, khatma: 1, quote: 85 } },
+  { get n() { return tx('zustand.mustahdir'); }, ar: 'مُسْتَحْضِر', get de() { return tx('zustand.der_den_quran_gegenwaertig_hat'); }, get hifz() { return tx('zustand.der_ganze_quran_ist_einmal_vollstaendig'); }, b: { punkte: 100000, ganz: 1, voll: 1, quote: 88 } },
+  { get n() { return tx('zustand.dabit'); }, ar: 'ضَابِط', get de() { return tx('zustand.der_genaue'); }, get hifz() { return tx('zustand.dabt_heisst_in_den_haditwissenschaften'); }, b: { punkte: 180000, ganz: 1, voll: 2, quote: 92, st2: 50 } },
+  { get n() { return tx('zustand.hadiq'); }, ar: 'حَاذِق', get de() { return tx('zustand.der_geuebte_der_kundige'); }, get hifz() { return tx('zustand.in_den_alten_quranschulen_hiess_der'); }, b: { punkte: 270000, ganz: 1, voll: 3, quote: 94, st2: 75 } },
+  { get n() { return tx('zustand.rasih'); }, ar: 'رَاسِخ', get de() { return tx('zustand.der_fest_verwurzelte'); }, get hifz() { return tx('zustand.wie_ar_rasihuna_fi_l_ilm_3_7_fehler_sind'); }, b: { punkte: 360000, ganz: 1, voll: 4, quote: 96, st3: 50 } },
+  { get n() { return tx('zustand.mutqin'); }, ar: 'مُتْقِن', get de() { return tx('zustand.der_meisterhafte'); }, get hifz() { return tx('zustand.vom_selben_stamm_wie_itqan_der_quran'); }, b: { punkte: 450000, ganz: 1, voll: 5, quote: 98, st3: 80, st4: 30 } },
+  { get n() { return tx('zustand.tabt'); }, ar: 'ثَبْت', get de() { return tx('zustand.der_verlaessliche'); }, get hifz() { return tx('zustand.tiqa_tabt_ist_das_hoechste_lob_fuer'); }, b: { punkte: 630000, ganz: 1, voll: 7, quote: 99, st4: 75 } },
+  { get n() { return tx('zustand.mutqin_mutlaq'); }, ar: 'مُتْقِنٌ مُطْلَق', get de() { return tx('zustand.der_uneingeschraenkt_meisterhafte'); }, get hifz() { return tx('zustand.jede_stelle_des_ganzen_quran_sitzt_ohne'); }, b: { punkte: 900000, ganz: 1, voll: 10, quote: 100, st4: 100, offen0: 1 } }
 ];
 export function kennzahlen() {
   const ids = reihe(); let ay = 0, ok = 0, offen = 0; const st = [0, 0, 0, 0, 0];
