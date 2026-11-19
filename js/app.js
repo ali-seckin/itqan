@@ -1562,6 +1562,7 @@ function seitenOptionen(p) {
   return h;
 }
 const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+let blaetterRichtung = 0;   // gesetzt beim Blättern: 1 = weiter, -1 = zurück; die nächste Ansicht gleitet von der Gegenseite herein
 async function mushaf(pText, aText) {
   navSetzen('mushaf');
   const p = Math.min(604, Math.max(1, +pText || gemerkteSeite())), dop = doppelseitig();
@@ -1570,7 +1571,7 @@ async function mushaf(pText, aText) {
   document.body.classList.toggle('doppelt', dop);
   const naechste = Math.min(604, seiten[seiten.length - 1] + 1), vorige = Math.max(1, seiten[0] - 1);
   const knopfText = x => dop ? `${tx('allg.seiten')} ${paarVon(x).join(` ${tx('mushaf.und')} `)}` : `${tx('mushaf.seite_3')} ${x}`;
-  app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`;
+  if (!blaetterRichtung) app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`;   // beim Blättern bleibt die alte Ansicht stehen, bis die neue bereit ist
   await schriftenLaden(seiten);
   const abschnitte = D.A.filter(e => e.seiten.some(x => seiten.includes(x)));
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
@@ -1594,7 +1595,15 @@ async function mushaf(pText, aText) {
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
   seitenText(seiteEl); seiteHolen(seiteEl.querySelector('.roller'), seiteEl.querySelector(`.seite[data-p="${p}"]`));
-  const blaettern = ziel => { if (seiten.includes(ziel)) return; scrollBehalten = scrollY; location.replace('#mushaf/' + ziel); };
+  const blaettern = ziel => {
+    if (seiten.includes(ziel)) return; scrollBehalten = scrollY;
+    const r = ziel > seiten[seiten.length - 1] ? 1 : -1, ro = seiteEl.querySelector('.roller'), ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let gegangen = false; const geh = () => { if (gegangen) return; gegangen = true; blaetterRichtung = ruhig ? 0 : r; location.replace('#mushaf/' + ziel); };
+    if (ruhig || !ro || !ro.animate) { geh(); return; }
+    seiteEl.style.overflowX = 'clip';
+    ro.animate([{ transform: 'none' }, { transform: `translateX(${r * innerWidth * 0.6}px)` }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).onfinish = geh;
+    setTimeout(geh, 260);
+  };
   app.querySelector('#vor').onclick = () => blaettern(naechste);
   app.querySelector('#zur').onclick = () => blaettern(vorige);
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
@@ -1626,6 +1635,12 @@ async function mushaf(pText, aText) {
   };
   addEventListener('keydown', tasten);
   stellenWahlBinden();
+  if (blaetterRichtung) {   // eben geblättert: die neue Seite gleitet von der Gegenseite herein
+    const r = blaetterRichtung; blaetterRichtung = 0; seiteEl.style.overflowX = 'clip';
+    const an = seiteEl.querySelector('.roller').animate([{ transform: `translateX(${-r * innerWidth * 0.6}px)` }, { transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.22,.7,.2,1)' });
+    an.onfinish = an.oncancel = () => { seiteEl.style.overflowX = ''; };
+    setTimeout(() => { seiteEl.style.overflowX = ''; }, 700);   // falls die Animation nie meldet
+  }
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
   seiteEl.onclick = async ev => {
@@ -1667,18 +1682,32 @@ async function vollbild(start) {
     const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
     const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
     blaseSchliessen(); p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
-    buehne.innerHTML = `<div class="vb-seiten${doppel ? ' doppel' : ''}">${seiten.map(x => seiteHTML(x, farben(x))).join('')}</div>`;
-    const ss = [...buehne.querySelectorAll('.seite')];
+    const neuEl = document.createElement('div'); neuEl.className = 'vb-seiten' + (doppel ? ' doppel' : ''); neuEl.innerHTML = seiten.map(x => seiteHTML(x, farben(x))).join('');
+    while (buehne.children.length > 1) buehne.firstElementChild.remove();   // Rest einer unterbrochenen Animation
+    const alt = buehne.lastElementChild;
+    if (richtung && alt) buehne.appendChild(neuEl); else buehne.replaceChildren(neuEl);
+    const ss = [...neuEl.querySelectorAll('.seite')];
     const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 60;   // unten bleibt Platz für den Regler
     ss.forEach(s => s.style.width = breite + 'px');
     const h = Math.max(...ss.map(s => s.offsetHeight));
     if (h > hoehe) ss.forEach(s => s.style.width = Math.floor(breite * hoehe / h) + 'px');
-    zeilenEinpassen(buehne); grenzenZeichnen(buehne); seitenText(buehne);
-    if (richtung) buehne.firstElementChild.classList.add(richtung > 0 ? 'von-links' : 'von-rechts');
+    zeilenEinpassen(neuEl); grenzenZeichnen(neuEl); seitenText(neuEl);
+    if (richtung && alt && alt !== neuEl) gleiten(alt, neuEl, richtung);
     const nach = Math.max(...seiten), vor = Math.min(...seiten);
     if (nach < 604) schriftenLaden([nach + 1]); if (vor > 1) schriftenLaden([vor - 1]);
     pfeileZeigen();
   }
+  // Blättern wie in einem E-Book: die alte Seite gleitet seitlich hinaus, die neue von der Gegenseite herein (ohne Hell-Dunkel-Wechsel)
+  let fingerX = 0;
+  const gleiten = (alt, neuEl, richtung) => {
+    const W = innerWidth, ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches, opt = { duration: ruhig ? 0 : 280, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
+    alt.style.transform = ''; alt.style.transition = '';
+    neuEl.animate([{ transform: `translateX(${-richtung * W + fingerX}px)` }, { transform: 'translateX(0)' }], opt);
+    const a = alt.animate([{ transform: `translateX(${fingerX}px)` }, { transform: `translateX(${richtung * W}px)` }], opt);
+    a.onfinish = a.oncancel = () => alt.remove();
+    setTimeout(() => { if (alt.isConnected) alt.remove(); }, 450);   // falls die Animation nie meldet (verdecktes Fenster)
+    fingerX = 0;
+  };
   // Die Blätterpfeile erscheinen nur kurz beim Blättern (und am PC bei Mausbewegung) und blenden nach einer Sekunde aus; sie bleiben antippbar
   let pfeilZeit = null;
   function pfeileZeigen() { v.classList.add('pfeile'); clearTimeout(pfeilZeit); pfeilZeit = setTimeout(() => v.classList.remove('pfeile'), 1100); }
@@ -1691,7 +1720,7 @@ async function vollbild(start) {
   // Bei Maßstab 1 wischt ein Finger wie bisher die Seiten um.
   const Z0 = { s: 1, x: 0, y: 0 };
   const zoomSetzen = (s, x, y) => {
-    const el = buehne.firstElementChild; if (!el) return;
+    const el = buehne.lastElementChild; if (!el) return;
     const r = el.getBoundingClientRect(), bw = r.width / Z0.s, bh = r.height / Z0.s;   // Grundgröße ohne Maßstab
     s = Math.min(4, Math.max(1, s)); if (s < 1.02) { s = 1; x = 0; y = 0; }
     const gx = (s - 1) * bw / 2, gy = (s - 1) * bh / 2;
@@ -1703,10 +1732,29 @@ async function vollbild(start) {
   const zoomAuf = (ns, px, py) => { const c = mitteVon(), f = ns / Z0.s; zoomSetzen(ns, (px - c[0]) - f * (px - c[0] - Z0.x), (py - c[1]) - f * (py - c[1] - Z0.y)); };
   const dopptipp = (px, py) => { if (Z0.s > 1) zoomSetzen(1, 0, 0); else zoomAuf(2.4, px, py); };
   let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0, senkrecht = null;
-  // Nach oben oder unten wischen: das Vollbild folgt dem Finger (verschiebt sich, schrumpft, wird heller) und geht ab einer Schwelle zu, sonst springt es zurück
+  // Nach oben oder unten wischen: das Vollbild schrumpft dem Finger folgend auf die Seite der normalen Ansicht dahinter und blendet in sie über
   const SCHWELLE = 90;
-  const zug = dy => { const f = Math.min(1, Math.abs(dy) / 320); v.style.transform = `translateY(${dy * 0.7}px) scale(${1 - 0.1 * f})`; v.style.borderRadius = Math.round(34 * f) + 'px'; v.style.opacity = String(1 - 0.45 * f); };
-  const zugAus = () => { v.style.transition = 'transform .22s ease, opacity .22s ease, border-radius .22s ease'; v.style.transform = ''; v.style.borderRadius = ''; v.style.opacity = ''; };
+  let mz = null, schliesst = false;
+  const morphZiel = () => {
+    const q = buehne.lastElementChild, z = document.querySelector('#app #seite .roller') || document.querySelector('#app #seite'); if (!q || !z) return null;
+    const a = q.getBoundingClientRect(), b = z.getBoundingClientRect(); if (!a.width || !b.width) return null;
+    const lim = innerHeight * 0.6;
+    return { ox: a.left + a.width / 2, oy: a.top + a.height / 2, tx: Math.max(-lim, Math.min(lim, b.left + b.width / 2 - a.left - a.width / 2)), ty: Math.max(-lim, Math.min(lim, b.top + b.height / 2 - a.top - a.height / 2)), s: Math.max(.5, Math.min(1, b.width / a.width, b.height / a.height)) };
+  };
+  const morphSetzen = f => {
+    mz ||= morphZiel();
+    if (mz) { v.style.transformOrigin = `${mz.ox}px ${mz.oy}px`; v.style.transform = `translate(${f * mz.tx}px, ${f * mz.ty}px) scale(${1 + f * (mz.s - 1)})`; }
+    else v.style.transform = `scale(${1 - 0.1 * f})`;
+    v.style.borderRadius = Math.round(28 * f) + 'px'; v.style.opacity = String(1 - Math.max(0, f - 0.45) * 1.8);
+  };
+  const zug = dy => morphSetzen(Math.min(0.5, Math.abs(dy) / 360));
+  const zugAus = () => { v.style.transition = 'transform .22s ease, opacity .22s ease, border-radius .22s ease'; v.style.transform = ''; v.style.borderRadius = ''; v.style.opacity = ''; mz = null; };
+  const morphZu = () => {
+    if (schliesst) return; schliesst = true;
+    const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    v.style.transition = ruhig ? 'none' : 'transform .28s cubic-bezier(.3,.7,.2,1), opacity .2s ease .1s, border-radius .28s ease';
+    morphSetzen(1); setTimeout(schliessen, ruhig ? 0 : 280);
+  };
   const abstand = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   const mitteZwei = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
   v.addEventListener('touchstart', e => {
@@ -1723,8 +1771,9 @@ async function vollbild(start) {
     } else if (pan && e.touches.length === 1) zoomSetzen(Z0.s, pan.zx + e.touches[0].clientX - pan.x, pan.zy + e.touches[0].clientY - pan.y);
     else if (x0 != null && Z0.s === 1 && e.touches.length === 1) {
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx);
+      if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) { senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx); mz = null; }
       if (senkrecht) zug(dy);
+      else if (senkrecht === false) { fingerX = dx; const el = buehne.lastElementChild; if (el) { el.style.transition = ''; el.style.transform = `translateX(${dx}px)`; } }
     }
   }, { passive: false });
   v.addEventListener('touchend', e => {
@@ -1733,17 +1782,21 @@ async function vollbild(start) {
     const px = e.changedTouches[0].clientX, py = e.changedTouches[0].clientY, dx = px - x0, dy = py - y0; x0 = null; pan = null;
     if (senkrecht && Z0.s === 1) {   // nach oben oder nach unten gewischt
       senkrecht = null;
-      if (Math.abs(dy) > SCHWELLE && Math.abs(dy) > 1.5 * Math.abs(dx)) { v.style.transition = 'transform .16s ease-in, opacity .16s ease-in'; v.style.transform = `translateY(${dy > 0 ? '' : '-'}${innerHeight * 0.5}px) scale(.88)`; v.style.opacity = '0'; setTimeout(schliessen, 150); } else zugAus();
+      if (Math.abs(dy) > SCHWELLE && Math.abs(dy) > 1.5 * Math.abs(dx)) morphZu(); else zugAus();
       return;
     }
-    senkrecht = null;
+    const waag = senkrecht === false; senkrecht = null;
+    const zurueckFedern = () => { fingerX = 0; const el = buehne.lastElementChild; if (el) { el.style.transition = 'transform .2s ease'; el.style.transform = ''; } };
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {   // Tipp: zwei kurz hintereinander zoomen
       if (Date.now() - letzterTipp < 320) { letzterTipp = 0; dopptipp(px, py); } else letzterTipp = Date.now();
       return;
     }
-    if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
+    if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+      const schritt = quer() ? 2 : 1, ziel = dx > 0 ? p + schritt : p - schritt;
+      if (ziel >= 1 && ziel <= 604) dx > 0 ? weiter() : zurueck(); else zurueckFedern();   // an den Enden des Buches federt die Seite zurück
+    } else if (waag) zurueckFedern();
   });
-  v.addEventListener('touchcancel', () => { x0 = null; pan = null; pinch = null; if (senkrecht) { senkrecht = null; zugAus(); } });
+  v.addEventListener('touchcancel', () => { x0 = null; pan = null; pinch = null; if (senkrecht) zugAus(); else if (senkrecht === false && fingerX) { fingerX = 0; const el = buehne.lastElementChild; if (el) { el.style.transition = 'transform .2s ease'; el.style.transform = ''; } } senkrecht = null; });
   // Tippen auf eine Āya zeigt ihre Übersetzung; kurz warten, damit ein Doppeltipp (Zoom) keine Blase öffnet
   let tippZeit = null;
   v.addEventListener('click', ev => {
@@ -1775,7 +1828,7 @@ async function vollbild(start) {
   regler.addEventListener('pointermove', ev => { if (zieht) ziehen(ev); });
   regler.addEventListener('pointerup', ev => { if (!zieht) return; zieht = false; clearTimeout(verz); zeige(seiteAusX(ev.clientX)); ausblenden = setTimeout(() => { vorschau.hidden = true; }, 700); });
   regler.addEventListener('pointercancel', () => { zieht = false; clearTimeout(verz); vorschau.hidden = true; });
-  const tasten = e => { if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); else if (e.key === 'Escape') schliessen(); };
+  const tasten = e => { if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); else if (e.key === 'Escape') morphZu(); };
   addEventListener('keydown', tasten);
   // Drehen des Handys: neu aufbauen (einzeln hoch, Doppelseite quer)
   let warte = null; const anpassen = () => { clearTimeout(warte); warte = setTimeout(() => zeige(p), 120); };
@@ -1787,7 +1840,7 @@ async function vollbild(start) {
     blaseSchliessen(); v.remove(); document.body.classList.remove('im-vollbild');
     if (p !== start) location.replace('#mushaf/' + p);
   }
-  v.querySelector('.vb-zu').onclick = schliessen;
+  v.querySelector('.vb-zu').onclick = morphZu;
   document.addEventListener('fullscreenchange', function f() { if (!document.fullscreenElement && v.isConnected) { document.removeEventListener('fullscreenchange', f); schliessen(); } });
   await zeige(p);
 }
@@ -1830,8 +1883,9 @@ function diagrammHTML() {
   const ab = reihe.findIndex(x => x.p > 0), teil = ab < 0 ? [] : reihe.slice(ab), schnitt = teil.length ? Math.round(teil.reduce((s, x) => s + x.p, 0) / teil.length) : 0;
   const sz = { s: zahl(schnitt) }, schnittText = !schnitt ? '' : w ? tx('profil.dia_schnitt_woche', sz) : m ? tx('profil.dia_schnitt_monat', sz) : tx('profil.dia_schnitt_tag', sz);
   return `<div class="diagramm-kopf"><div class="titel-klein">${titel}</div><button type="button" class="diagramm-wechsel" id="diagramm-wechsel" aria-label="${tx('profil.diagramm_wechseln')}"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg></button></div>
-    <div class="dia-zeile"><span class="dia-wert" aria-live="polite"></span>${schnitt ? `<span class="dia-schnitt-text">${schnittText}</span>` : ''}</div>
-    <div class="diagramm" tabindex="0" role="group" aria-label="${tx('profil.diagramm_aria', { titel, a: zahl(summe), b: zahl(max) })}">${reihe.map(x => `<div class="${x.p ? '' : 'leer'}" style="height:${x.p ? Math.max(4, 100 * x.p / max) : 3}%" data-t="${esc(name(x) + ': ' + tx('kurz.punkte_n', { n: x.p }))}"></div>`).join('')}${schnitt ? `<b class="dia-schnitt" style="bottom:${Math.min(100, 100 * schnitt / max)}%"></b>` : ''}</div>
+    ${schnitt ? `<div class="dia-zeile"><span class="dia-schnitt-text">${schnittText}</span></div>` : ''}
+    <div class="diagramm-huelle"><div class="diagramm" tabindex="0" role="group" aria-label="${tx('profil.diagramm_aria', { titel, a: zahl(summe), b: zahl(max) })}">${reihe.map(x => `<div class="${x.p ? '' : 'leer'}" style="height:${x.p ? Math.max(4, 100 * x.p / max) : 3}%" data-d="${esc(name(x))}" data-p="${esc(tx('kurz.punkte_n', { n: x.p }))}"></div>`).join('')}${schnitt ? `<b class="dia-schnitt" style="bottom:${Math.min(100, 100 * schnitt / max)}%"></b>` : ''}</div>
+    <div class="dia-fenster" hidden role="status"></div></div>
     <div class="klein-zeile"><span>${links}</span><span>${rechts}</span></div>`;
 }
 function profil() {
@@ -1865,17 +1919,26 @@ function profil() {
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   const diaBlock = app.querySelector('#diagramm-block');
-  // Tippen oder Darüberwischen zeigt den genauen Wert des Balkens; ein zweiter Tipp auf denselben Balken schließt die Anzeige
+  // Tippen oder Darüberwischen öffnet ein kleines Fenster mit Datum und Punkten über dem Balken; ein Tipp daneben oder auf dasselbe Fenster schließt es
   const diaWerte = () => {
-    const fl = diaBlock.querySelector('.diagramm'), anz = diaBlock.querySelector('.dia-wert'); if (!fl || !anz) return;
+    const huelle = diaBlock.querySelector('.diagramm-huelle'), fl = diaBlock.querySelector('.diagramm'), fenster = diaBlock.querySelector('.dia-fenster'); if (!fl || !fenster) return;
     const balken = [...fl.querySelectorAll(':scope > div')]; let sel = -1, vorher = -1, bewegt = false, druck = false;
-    const waehlen = i => { sel = i; balken.forEach((b, k) => b.classList.toggle('gewaehlt', k === i)); anz.textContent = i < 0 ? '' : balken[i].dataset.t; };
+    const waehlen = i => {
+      sel = i; balken.forEach((b, k) => b.classList.toggle('gewaehlt', k === i));
+      if (i < 0) { fenster.hidden = true; fenster.textContent = ''; return; }
+      fenster.innerHTML = `<span>${esc(balken[i].dataset.d)}</span><b>${esc(balken[i].dataset.p)}</b>`; fenster.hidden = false;
+      const hr = huelle.getBoundingClientRect(), br = balken[i].getBoundingClientRect(), fw = fenster.offsetWidth, fh = fenster.offsetHeight;
+      const mitte = br.left + br.width / 2 - hr.left, links = Math.max(0, Math.min(hr.width - fw, mitte - fw / 2));
+      fenster.style.left = links + 'px'; fenster.style.top = (br.top - hr.top - fh - 10) + 'px'; fenster.style.setProperty('--pfeil', Math.max(12, Math.min(fw - 12, mitte - links)) + 'px');
+    };
     const stelle = x => { let k = balken.findIndex(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right; }); if (k < 0) { let best = 1e9; balken.forEach((b, j) => { const r = b.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); if (d < best) { best = d; k = j; } }); } return k; };
     fl.addEventListener('pointerdown', e => { druck = true; bewegt = false; vorher = sel; try { fl.setPointerCapture(e.pointerId); } catch (err) { /* egal */ } waehlen(stelle(e.clientX)); });
     fl.addEventListener('pointermove', e => { if (!druck) return; const k = stelle(e.clientX); if (k !== sel) { bewegt = true; waehlen(k); } });
     fl.addEventListener('pointerup', () => { if (druck && !bewegt && sel === vorher) waehlen(-1); druck = false; });
     fl.addEventListener('pointercancel', () => { druck = false; });
-    fl.addEventListener('blur', () => waehlen(-1));
+    fenster.addEventListener('click', () => waehlen(-1));
+    const aussen = e => { if (!huelle.isConnected) { document.removeEventListener('pointerdown', aussen, true); return; } if (!huelle.contains(e.target)) waehlen(-1); };
+    document.addEventListener('pointerdown', aussen, true);
     fl.addEventListener('keydown', e => {
       if (e.key === 'Escape') { waehlen(-1); return; }
       const rtl = getComputedStyle(fl).direction === 'rtl', schritt = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
