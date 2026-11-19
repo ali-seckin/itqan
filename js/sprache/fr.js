@@ -1606,6 +1606,8 @@ export default {
     versatz93_1: 'En tournant les pages du Mushaf, le cadre de la page reste maintenant exactement au même endroit, y compris à la fin de la transition.',
     startbild94_titel: 'Nouvel écran de démarrage',
     startbild94_1: 'À l’ouverture, l’application affiche maintenant le nom Itqān en grand avec la nouvelle calligraphie, au lieu d’un message de chargement.',
+    kalligrafie95_titel: 'Calligraphie partout',
+    kalligrafie95_1: 'La nouvelle calligraphie du nom apparaît maintenant au choix de la langue, à la configuration et dans la présentation, à la place de la typographie.',
     lichtkarte92_titel: 'Carte de lumière, pages, couleurs',
     lichtkarte92_1: 'Dans la feuille de page de la carte de lumière, les sections avec des points d’erreur ouverts sont désormais marquées en rouge. Tourner les pages dans le Mushaf fait glisser la page suivante sans rupture, même hors plein écran. Le choix de couleur des signes de pause a un nouvel ordre. La fermeture du plein écran est plus fluide : la page glisse jusqu’à sa place.',
     blaettern91_titel: 'Pages qui glissent, fenêtre du graphique',

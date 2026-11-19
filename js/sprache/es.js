@@ -1606,6 +1606,8 @@ export default {
     versatz93_1: 'Al pasar de página en el Mushaf, el marco de la página permanece ahora siempre en el mismo sitio, también al final de la transición.',
     startbild94_titel: 'Nueva pantalla de inicio',
     startbild94_1: 'Al abrir la app aparece ahora el nombre Itqān en grande con la nueva caligrafía, en lugar de un aviso de carga.',
+    kalligrafie95_titel: 'Caligrafía en todas partes',
+    kalligrafie95_1: 'La nueva caligrafía del nombre aparece ahora en la elección del idioma, la configuración y la introducción, en lugar de la letra impresa.',
     lichtkarte92_titel: 'Mapa de luz, páginas, colores',
     lichtkarte92_1: 'En la hoja de página del mapa de luz, las secciones con puntos de error abiertos aparecen ahora marcadas en rojo. Al pasar de página en el Mushaf, la siguiente entra sin saltos, también sin pantalla completa. La elección de color de los signos de pausa tiene un nuevo orden. Cerrar la pantalla completa es más fluido: la página se desliza hasta su lugar.',
     blaettern91_titel: 'Páginas que se deslizan, ventana del gráfico',

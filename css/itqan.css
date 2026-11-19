@@ -405,7 +405,9 @@ html.tippt .nav{display:none}
 .start .qandil{height:150px}
 .start h1{font-size:var(--s-anzeige);color:var(--akzentT);margin-top:8px}
 [data-modus=dunkel] .start h1{color:var(--akzent2)}
-.start .ar{font-family:'Uthmani',serif;font-size:29px;color:var(--leise)}
+.kalli{display:block;margin:0 auto;width:auto}
+[data-modus=hell] .kalli-dunkel,[data-modus=dunkel] .kalli-hell{display:none}
+.start .kalli{height:54px}
 .lade{display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:var(--s-text)}
 .lade-logo{display:flex;flex-direction:column;align-items:center;gap:6px;animation:ladeEin .6s ease both}
 .lade-kalli{display:block;width:min(64vw,260px);height:auto}
@@ -555,7 +557,8 @@ body.im-vollbild{overflow:hidden}
 /* 1 Laterne */
 .tb-laterne .qandil{height:170px;animation:laterne 4s ease-in-out infinite,tutSchweben 4s ease-in-out infinite}
 @keyframes tutSchweben{50%{transform:translateY(-6px)}}
-.tb-ar{font-family:'Uthmani',serif;font-size:28px;color:var(--leise);animation:tutAuf .8s .4s both}
+.tb-ar{animation:tutAuf .8s .4s both}
+.tb-ar .kalli{height:52px}
 @keyframes tutAuf{from{opacity:0;transform:translateY(10px)}}
 /* 2 Seite in Abschnitte */
 .tb-seite{width:140px;padding:14px 12px;background:var(--seite);border:1px solid #c9a45c;border-radius:4px;display:grid;gap:6px;box-shadow:var(--schatten)}

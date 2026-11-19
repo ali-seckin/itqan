@@ -93,6 +93,8 @@ const stufePunkte = st => `<div class="stufe" role="img" aria-label="${tx('stufe
 const NISCHE = 'M272 820 V470 C272 330 392 230 512 176 C632 230 752 330 752 470 V820 H672 V488 C672 384 592 314 512 270 C432 314 352 384 352 488 V820 Z', FLAMME = 'M512 452 C576 532 600 596 578 652 C566 684 540 706 512 712 C484 706 458 684 446 652 C424 596 448 532 512 452 Z';
 const laterne = klasse => `<span class="${klasse} zeichen" aria-hidden="true"><svg viewBox="232 156 560 684"><defs><linearGradient id="zv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--z1)"/><stop offset="1" style="stop-color:var(--z2)"/></linearGradient></defs><path d="${NISCHE}" fill="url(#zv)"/><path d="${FLAMME}" fill="url(#zv)"/></svg></span>`;
 const qandil = () => laterne('qandil');
+// Kalligrafie des Namens (helle Darstellung dunkelblau, dunkle golden); die Datei der jeweils anderen Darstellung wird per CSS ausgeblendet
+const kalli = () => ['tinte', 'gold'].map(f => `<img class="kalli kalli-${f === 'tinte' ? 'hell' : 'dunkel'}" src="icons/kalligraphie-${f}.webp" alt="إِتْقَان" lang="ar" width="700" height="456" decoding="async">`).join('');
 const lampeKlein = laterne('lampe-k');
 function herunterladen(name, inhalt, typ) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([inhalt], { type: typ })); a.download = name;
@@ -502,7 +504,7 @@ function sprachwahl() {
   const frei = SPRACHEN.filter(s => s.frei);
   let wahl = spracheGewaehlt() ? gebiet('code') : geraeteSprache();
   if (!frei.some(s => s.code === wahl)) wahl = 'de';
-  app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
+  app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="start-kalli">${kalli()}</div>
     <p class="unter" style="margin-top:8px">${tx('sprachwahl.titel')}</p></div>
     <div class="sprachwahl" id="sprachwahl" role="radiogroup" aria-label="${esc(tx('sprachwahl.titel'))}">${frei.map(s => `<button class="knopf leise sw-wahl" role="radio" data-w="${s.code}" lang="${s.code}" dir="${s.rtl ? 'rtl' : 'ltr'}">${esc(s.name)}</button>`).join('')}</div>
     <div class="sprachwahl sw-los"><button class="knopf haupt" id="sw-los">${esc(frei.find(s => s.code === wahl).los)}</button></div>`;
@@ -524,7 +526,7 @@ function einfuehrung() {
   navSetzen(null);
   const linien = (n, klasse = '') => Array.from({ length: n }, (_, i) => `<i class="${klasse}" style="--i:${i}"></i>`).join('');
   const SCHRITTE = [
-    { bild: `<div class="tb-laterne">${qandil()}</div><div class="tb-ar">إِتْقَان</div>`,
+    { bild: `<div class="tb-laterne">${qandil()}</div><div class="tb-ar">${kalli()}</div>`,
       titel: tx('einfuehrung.assalamu_alaikum'),
       text: tx('einfuehrung.itqan_begleitet_dich_bei_der_muragaa_des') },
     { bild: `<div class="tb-seite">${[3, 4, 5, 3].map((n, g) => linien(n, 'g' + g)).join('')}</div>`,
@@ -603,7 +605,7 @@ function start() {
     const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
     return `${ganz ? tx('start.seiten_zahl', { ids }) : tx('start.abschnitte', { ids })} · ${istAlles(s.sel) ? tx('start.eine_hatma_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) }) : tx('start.ein_durchlauf_dauert_damit_etwa_tage', { a: Math.ceil(ids / s.pensum) })}<br>${(em => tx('start.empfehlung', { min: em.minimal, gold: em.ideal }))(Z.pensumEmpfehlung(ids))}`;
   };
-  app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="ar">إِتْقَان</div>
+  app.innerHTML = `<div class="start">${qandil()}<h1>${tx('allg.itqan')}</h1><div class="start-kalli">${kalli()}</div>
     <p class="unter" style="margin-top:8px">${tx('start.die_muragaa_des_ganzen_qurans_abschnitt')}</p>
     <a class="textlink" href="#einfuehrung">${tx('start.einfuehrung_noch_einmal_ansehen')}</a></div>
     <div class="abschnitt start-laden"><h3>${tx('start.schon_ein_profil')}</h3><p class="unter">${tx('start.wenn_du_itqan_auf_einem_anderen_geraet')}</p>

@@ -1606,6 +1606,8 @@ export default {
     versatz93_1: 'When turning pages in the Mushaf, the page frame now stays in exactly the same place throughout, including at the end of the transition.',
     startbild94_titel: 'New start screen',
     startbild94_1: 'When the app opens it now shows the name Itqān in large type with the new calligraphy instead of a loading message.',
+    kalligrafie95_titel: 'Calligraphy throughout',
+    kalligrafie95_1: 'The new calligraphy of the name now appears on the language choice, the setup and the introduction instead of plain Arabic type.',
     lichtkarte92_titel: 'Light map, page turns, colours',
     lichtkarte92_1: 'In the light map’s page sheet, sections with open trouble spots are now marked in red. Turning pages in the Mushaf slides the next page in seamlessly, even without full screen. The stop sign colour choice has a new order. Closing full screen is smoother: the page glides to its place.',
     blaettern91_titel: 'Sliding page turns, chart popup',

@@ -100,3 +100,4 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 71. Profil › Diagramm: gestrichelte Durchschnittslinie mit Beschriftung rechts über dem Diagramm; Tipp oder Darüberwischen über Balken zeigt Datum und Punkte links, zweiter Tipp schließt; in Wochen und Monaten ebenso.
 72. Helle Darstellung: der aktive Reiter unten hat eine runde Hinterlegung und fette Schrift.
 73. Startbild: beim Öffnen steht die Kalligrafie mit „Itqān“ groß (helle Darstellung dunkelblau, dunkle golden), kein Ladetext; Bildschirmleser liest „Itqān wird geladen“.
+74. Die Kalligrafie ersetzt die arabische Schrift bei Sprachwahl, Einrichtung und Einführung (Größe wie zuvor, helle Darstellung dunkelblau, dunkle golden).
