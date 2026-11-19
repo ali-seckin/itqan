@@ -1289,4 +1289,12 @@ html{scrollbar-gutter:stable}
 .dia-schnitt-text{color:var(--leise);margin-inline-start:auto;white-space:nowrap}
 .dia-schnitt-text::before{content:"";display:inline-block;width:14px;border-top:1.5px dashed var(--text);opacity:.55;vertical-align:middle;margin-inline-end:6px}
 /* Vollbild: beim Wischen nach oben oder unten folgt es dem Finger */
-.vollbild{will-change:transform}
+/* Version 1.92: Abschnitte mit offenen Fehlerstellen im Seitenblatt der Lichtkarte rot gekennzeichnet */
+.lk-ab[data-e="1"]{box-shadow:inset 3px 0 0 var(--schlecht);padding-inline-start:10px;margin-inline-start:-10px}
+.lk-ab .t small.lk-fehler{display:flex;align-items:center;gap:7px;margin-top:3px;color:var(--schlechtT);font-weight:700}
+/* Vollbild beim Wischen nach oben oder unten: Hintergrund und Bedienelemente blenden aus, die Seite wandert an ihren Platz */
+.vollbild.zieht{background:transparent}
+.vollbild.zieht::before{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--vb-bg,1)}
+.vollbild.zieht .vb-buehne{position:relative;z-index:1}
+.vollbild.zieht .vb-zu,.vollbild.zieht .vb-regler,.vollbild.zieht .vb-vorschau{opacity:var(--vb-ui,1);transition:none}
+.vollbild.zieht .vb-pfeil{opacity:0;transition:none}

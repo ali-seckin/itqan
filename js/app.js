@@ -1562,7 +1562,7 @@ function seitenOptionen(p) {
   return h;
 }
 const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
-let blaetterRichtung = 0;   // gesetzt beim Blättern: 1 = weiter, -1 = zurück; die nächste Ansicht gleitet von der Gegenseite herein
+let blaetterNahtlos = false;   // gesetzt nach dem Gleiten: die Ansicht wird ohne Ladehinweis neu aufgebaut
 async function mushaf(pText, aText) {
   navSetzen('mushaf');
   const p = Math.min(604, Math.max(1, +pText || gemerkteSeite())), dop = doppelseitig();
@@ -1571,7 +1571,8 @@ async function mushaf(pText, aText) {
   document.body.classList.toggle('doppelt', dop);
   const naechste = Math.min(604, seiten[seiten.length - 1] + 1), vorige = Math.max(1, seiten[0] - 1);
   const knopfText = x => dop ? `${tx('allg.seiten')} ${paarVon(x).join(` ${tx('mushaf.und')} `)}` : `${tx('mushaf.seite_3')} ${x}`;
-  if (!blaetterRichtung) app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`;   // beim Blättern bleibt die alte Ansicht stehen, bis die neue bereit ist
+  if (!blaetterNahtlos) app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`;   // nach dem Gleiten steht die neue Seite schon da
+  blaetterNahtlos = false;
   await schriftenLaden(seiten);
   const abschnitte = D.A.filter(e => e.seiten.some(x => seiten.includes(x)));
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
@@ -1579,6 +1580,7 @@ async function mushaf(pText, aText) {
   const s = D.V[D.L[seiten[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   // Ganze Seiten: keine Tönung und keine Grenzlinien, die Seite ist die Einheit
   const ganz = D.modus === 'seite';
+  const optFuer = ss => { const ab = D.A.filter(e => e.seiten.some(x => ss.includes(x))); return ganz ? { fst: Z.fehlerstellenSet(), lage: !dop } : { lage: !dop, ton: vi => { const i = ab.findIndex(e => vi >= e.v[0] && vi <= e.v[1]); return i < 0 ? null : ab[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true }; };
   const opt = ganz ? { fst: Z.fehlerstellenSet(), lage: !dop } : { lage: !dop, ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
   app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${seiten.length > 1 ? `${tx('allg.seiten')} ${seiten.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p })} · ${sureName(s)} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(p) })}</small></div>
       <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button></div></div>
@@ -1595,14 +1597,25 @@ async function mushaf(pText, aText) {
   const seiteEl = app.querySelector('#seite');
   zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
   seitenText(seiteEl); seiteHolen(seiteEl.querySelector('.roller'), seiteEl.querySelector(`.seite[data-p="${p}"]`));
-  const blaettern = ziel => {
-    if (seiten.includes(ziel)) return; scrollBehalten = scrollY;
+  // Blättern wie in einem E-Book: die alte Seite gleitet hinaus, die nächste schiebt sich gleichzeitig nahtlos herein; danach wird die Ansicht regulär neu aufgebaut
+  let blaettert = false;
+  const blaettern = async ziel => {
+    if (seiten.includes(ziel) || blaettert) return; blaettert = true; scrollBehalten = scrollY;
     const r = ziel > seiten[seiten.length - 1] ? 1 : -1, ro = seiteEl.querySelector('.roller'), ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let gegangen = false; const geh = () => { if (gegangen) return; gegangen = true; blaetterRichtung = ruhig ? 0 : r; location.replace('#mushaf/' + ziel); };
+    let gegangen = false; const geh = () => { if (gegangen) return; gegangen = true; blaetterNahtlos = !ruhig; location.replace('#mushaf/' + ziel); };
     if (ruhig || !ro || !ro.animate) { geh(); return; }
-    seiteEl.style.overflowX = 'clip';
-    ro.animate([{ transform: 'none' }, { transform: `translateX(${r * innerWidth * 0.6}px)` }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).onfinish = geh;
-    setTimeout(geh, 260);
+    const neu = dop ? paarVon(ziel) : [ziel];
+    try { await schriftenLaden(neu); } catch (e) { geh(); return; }
+    const nr = document.createElement('div'); nr.className = ro.className; nr.setAttribute('aria-hidden', 'true');
+    nr.innerHTML = dop ? paarHTML(neu, optFuer(neu)) : seiteHTML(ziel, optFuer(neu));
+    nr.style.cssText = 'position:absolute;left:0;right:0;top:0';
+    seiteEl.style.overflowX = 'clip'; seiteEl.appendChild(nr);
+    zeilenEinpassen(nr); grenzenZeichnen(nr); seitenText(nr);
+    seiteEl.style.minHeight = Math.max(ro.offsetHeight, nr.offsetHeight) + 'px';
+    const W = innerWidth, opt2 = { duration: 300, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
+    nr.animate([{ transform: `translateX(${-r * W}px)` }, { transform: 'translateX(0)' }], opt2);
+    ro.animate([{ transform: 'none' }, { transform: `translateX(${r * W}px)` }], opt2).onfinish = geh;
+    setTimeout(geh, 450);
   };
   app.querySelector('#vor').onclick = () => blaettern(naechste);
   app.querySelector('#zur').onclick = () => blaettern(vorige);
@@ -1635,12 +1648,6 @@ async function mushaf(pText, aText) {
   };
   addEventListener('keydown', tasten);
   stellenWahlBinden();
-  if (blaetterRichtung) {   // eben geblättert: die neue Seite gleitet von der Gegenseite herein
-    const r = blaetterRichtung; blaetterRichtung = 0; seiteEl.style.overflowX = 'clip';
-    const an = seiteEl.querySelector('.roller').animate([{ transform: `translateX(${-r * innerWidth * 0.6}px)` }, { transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.22,.7,.2,1)' });
-    an.onfinish = an.oncancel = () => { seiteEl.style.overflowX = ''; };
-    setTimeout(() => { seiteEl.style.overflowX = ''; }, 700);   // falls die Animation nie meldet
-  }
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
   seiteEl.onclick = async ev => {
@@ -1732,28 +1739,49 @@ async function vollbild(start) {
   const zoomAuf = (ns, px, py) => { const c = mitteVon(), f = ns / Z0.s; zoomSetzen(ns, (px - c[0]) - f * (px - c[0] - Z0.x), (py - c[1]) - f * (py - c[1] - Z0.y)); };
   const dopptipp = (px, py) => { if (Z0.s > 1) zoomSetzen(1, 0, 0); else zoomAuf(2.4, px, py); };
   let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0, senkrecht = null;
-  // Nach oben oder unten wischen: das Vollbild schrumpft dem Finger folgend auf die Seite der normalen Ansicht dahinter und blendet in sie über
+  // Nach oben oder unten wischen (Shared-Element-Übergang wie auf dem iPhone): Die Seite folgt zuerst dem Finger und wandert dann
+  // fließend an ihren Platz in der normalen Ansicht dahinter. Hintergrund und Bedienelemente blenden dabei aus. Beim Loslassen läuft die
+  // Bewegung mit auslaufendem Tempo zu Ende (schnelles Wischen genügt) oder die Seite federt zurück.
   const SCHWELLE = 90;
-  let mz = null, schliesst = false;
+  let mz = null, schliesst = false, zugX = 0, zugY = 0, zugB = 0, tempo = 0, letzterY = 0, letzteZeit = 0;
+  const glatt = f => f * f * (3 - 2 * f);
+  const lauf = (ms, f) => new Promise(res => {   // f(k) mit k von 0 bis 1, auslaufend (ease-out)
+    const t0 = performance.now();
+    const schritt = jetzt => { const k = Math.min(1, (jetzt - t0) / ms); f(1 - Math.pow(1 - k, 3)); if (k < 1) requestAnimationFrame(schritt); else res(); };
+    requestAnimationFrame(schritt);
+  });
   const morphZiel = () => {
-    const q = buehne.lastElementChild, z = document.querySelector('#app #seite .roller') || document.querySelector('#app #seite'); if (!q || !z) return null;
-    const a = q.getBoundingClientRect(), b = z.getBoundingClientRect(); if (!a.width || !b.width) return null;
-    const lim = innerHeight * 0.6;
-    return { ox: a.left + a.width / 2, oy: a.top + a.height / 2, tx: Math.max(-lim, Math.min(lim, b.left + b.width / 2 - a.left - a.width / 2)), ty: Math.max(-lim, Math.min(lim, b.top + b.height / 2 - a.top - a.height / 2)), s: Math.max(.5, Math.min(1, b.width / a.width, b.height / a.height)) };
+    const q = buehne.lastElementChild, z = document.querySelector('#app #seite .paar') || document.querySelector('#app #seite .seite');
+    if (!q || !z) return { tx: 0, ty: 0, s: 0.92 };
+    const a = q.getBoundingClientRect(), b = z.getBoundingClientRect(); if (!a.width || !b.width) return { tx: 0, ty: 0, s: 0.92 };
+    const lim = innerHeight * 0.7;
+    return { tx: Math.max(-lim, Math.min(lim, b.left + b.width / 2 - a.left - a.width / 2)), ty: Math.max(-lim, Math.min(lim, b.top + b.height / 2 - a.top - a.height / 2)), s: Math.max(0.5, Math.min(1.2, b.width / a.width, b.height / a.height)) };
   };
-  const morphSetzen = f => {
-    mz ||= morphZiel();
-    if (mz) { v.style.transformOrigin = `${mz.ox}px ${mz.oy}px`; v.style.transform = `translate(${f * mz.tx}px, ${f * mz.ty}px) scale(${1 + f * (mz.s - 1)})`; }
-    else v.style.transform = `scale(${1 - 0.1 * f})`;
-    v.style.borderRadius = Math.round(28 * f) + 'px'; v.style.opacity = String(1 - Math.max(0, f - 0.45) * 1.8);
+  const zeichne = () => {   // zugX/zugY: Versatz des Fingers, zugB: Weg zum Ziel von 0 bis 1
+    const q = buehne.lastElementChild; if (!q) return; mz ||= morphZiel();
+    const b = zugB, x = (1 - b) * zugX + b * mz.tx, y = (1 - b) * zugY + b * mz.ty, s = 1 + b * (mz.s - 1);
+    q.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+    v.style.setProperty('--vb-bg', String(Math.max(0, 1 - b * 1.15))); v.style.setProperty('--vb-ui', String(Math.max(0, 1 - b * 3.5)));
   };
-  const zug = dy => morphSetzen(Math.min(0.5, Math.abs(dy) / 360));
-  const zugAus = () => { v.style.transition = 'transform .22s ease, opacity .22s ease, border-radius .22s ease'; v.style.transform = ''; v.style.borderRadius = ''; v.style.opacity = ''; mz = null; };
+  const zugStart = () => { zugX = zugY = zugB = 0; tempo = 0; mz = null; v.classList.add('zieht'); const q = buehne.lastElementChild; if (q) q.style.transition = ''; };
+  const zug = (dx, dy, zeit) => {
+    if (letzteZeit) { const dt = zeit - letzteZeit; if (dt > 0) tempo = 0.7 * tempo + 0.3 * ((dy - letzterY) / dt); }
+    letzterY = dy; letzteZeit = zeit;
+    zugX = dx * 0.6; zugY = dy; zugB = 0.85 * glatt(Math.min(1, Math.abs(dy) / 260)); zeichne();
+  };
+  const zugEnde = () => { v.classList.remove('zieht'); v.style.removeProperty('--vb-bg'); v.style.removeProperty('--vb-ui'); const q = buehne.lastElementChild; if (q) q.style.transform = ''; zugX = zugY = zugB = 0; mz = null; };
+  const zugAus = () => {   // zurückfedern
+    const b0 = zugB, x0_ = zugX, y0_ = zugY; letzteZeit = 0;
+    lauf(260, k => { zugB = b0 * (1 - k); zugX = x0_ * (1 - k); zugY = y0_ * (1 - k); zeichne(); }).then(zugEnde);
+  };
   const morphZu = () => {
-    if (schliesst) return; schliesst = true;
-    const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    v.style.transition = ruhig ? 'none' : 'transform .28s cubic-bezier(.3,.7,.2,1), opacity .2s ease .1s, border-radius .28s ease';
-    morphSetzen(1); setTimeout(schliessen, ruhig ? 0 : 280);
+    if (schliesst) return; schliesst = true; letzteZeit = 0;
+    if (!v.classList.contains('zieht')) zugStart();
+    mz ||= morphZiel();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { schliessen(); return; }
+    const b0 = zugB, dauer = 230 + 230 * (1 - b0);
+    lauf(dauer, k => { zugB = b0 + (1 - b0) * k; zeichne(); }).then(schliessen);
+    setTimeout(schliessen, dauer + 200);   // falls das Fenster verdeckt ist und keine Bilder zeichnet
   };
   const abstand = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   const mitteZwei = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
@@ -1771,8 +1799,8 @@ async function vollbild(start) {
     } else if (pan && e.touches.length === 1) zoomSetzen(Z0.s, pan.zx + e.touches[0].clientX - pan.x, pan.zy + e.touches[0].clientY - pan.y);
     else if (x0 != null && Z0.s === 1 && e.touches.length === 1) {
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) { senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx); mz = null; }
-      if (senkrecht) zug(dy);
+      if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) { senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx); letzteZeit = 0; if (senkrecht) zugStart(); }
+      if (senkrecht) zug(dx, dy, e.timeStamp);
       else if (senkrecht === false) { fingerX = dx; const el = buehne.lastElementChild; if (el) { el.style.transition = ''; el.style.transform = `translateX(${dx}px)`; } }
     }
   }, { passive: false });
@@ -1782,7 +1810,7 @@ async function vollbild(start) {
     const px = e.changedTouches[0].clientX, py = e.changedTouches[0].clientY, dx = px - x0, dy = py - y0; x0 = null; pan = null;
     if (senkrecht && Z0.s === 1) {   // nach oben oder nach unten gewischt
       senkrecht = null;
-      if (Math.abs(dy) > SCHWELLE && Math.abs(dy) > 1.5 * Math.abs(dx)) morphZu(); else zugAus();
+      if ((Math.abs(dy) > SCHWELLE || (Math.abs(tempo) > 0.6 && Math.abs(dy) > 30)) && Math.abs(dy) > 1.5 * Math.abs(dx)) morphZu(); else zugAus();
       return;
     }
     const waag = senkrecht === false; senkrecht = null;
@@ -1834,7 +1862,9 @@ async function vollbild(start) {
   let warte = null; const anpassen = () => { clearTimeout(warte); warte = setTimeout(() => zeige(p), 120); };
   const lageMQ = matchMedia('(orientation: landscape)');
   addEventListener('resize', anpassen); lageMQ.addEventListener('change', anpassen);
+  let geschlossen = false;
   function schliessen() {
+    if (geschlossen) return; geschlossen = true;
     removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); lageMQ.removeEventListener('change', anpassen);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     blaseSchliessen(); v.remove(); document.body.classList.remove('im-vollbild');
@@ -2706,7 +2736,7 @@ function einstellungen() {
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
       <div class="wahl" id="textgroesse" role="group" aria-label="${tx('einstellungen.schriftgroesse')}" style="margin-top:10px">${[[100, tx('einstellungen.normal')], [112, tx('einstellungen.gross')], [125, tx('einstellungen.sehr_gross')]].map(([w, l]) => `<button data-w="${w}" class="${(E.textGroesse || 100) === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.stoppzeichen_text')}</p>
-      <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['aus', tx('einstellungen.stopp_aus'), null], ['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']]].map(([w, l, f]) => `<button data-w="${w}" class="${stoppWahl() === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
+      <div class="wahl stopp-wahl" id="stoppfarbe" role="group" aria-label="${tx('einstellungen.stoppzeichen_titel')}" style="margin-top:10px">${[['6', tx('einstellungen.stopp_6'), ['#8f5410', '#0f6a74']], ['4', tx('einstellungen.stopp_4'), ['#8f5410', '#3b4a9c']], ['2', tx('einstellungen.stopp_2'), ['#a3321f', '#8f5410']], ['3', tx('einstellungen.stopp_3'), ['#17704a', '#8f5410']], ['5', tx('einstellungen.stopp_5'), ['#8a5a1c', '#75654f']], ['aus', tx('einstellungen.stopp_aus'), null]].map(([w, l, f]) => `<button data-w="${w}" class="${stoppWahl() === w ? 'an' : ''}">${f ? `<i style="background:${f[0]}"></i><i style="background:${f[1]}"></i>` : ''}${l}</button>`).join('')}</div>
       <p class="lesbar-probe">${tx('einstellungen.mit_zwei_fingern_kannst_du_ausserdem')}</p></div>
     <div class="abschnitt"><h3>${tx('uebers.titel')}</h3><p class="unter">${tx('uebers.text')}</p>
       <label class="auswahl"><span>${tx('uebers.sprache')}</span><select id="uebers-wahl">${[['aus', tx('einstellungen.aus')], ...UEBERSETZUNGEN.map(c => [c, SPRACHEN.find(s => s.code === c).name])].map(([w, l]) => `<option value="${w}"${(uebersetzungSprache() || 'aus') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
