@@ -1608,10 +1608,12 @@ async function mushaf(pText, aText) {
     try { await schriftenLaden(neu); } catch (e) { geh(); return; }
     const nr = document.createElement('div'); nr.className = ro.className; nr.setAttribute('aria-hidden', 'true');
     nr.innerHTML = dop ? paarHTML(neu, optFuer(neu)) : seiteHTML(ziel, optFuer(neu));
-    nr.style.cssText = 'position:absolute;left:0;right:0;top:0';
+    // genau über der alten Seite: Ein absolut gesetzter Rahmen lässt den oberen Seitenrand (4 px) nicht mehr durchschlagen wie der echte Rahmen, das wird ausgeglichen
+    const rand = parseFloat(getComputedStyle(ro.querySelector('.seite') || ro).marginTop) || 0;
+    nr.style.cssText = `position:absolute;margin:0;left:${ro.offsetLeft}px;top:${ro.offsetTop - rand}px;width:${ro.offsetWidth}px`;
     seiteEl.style.overflowX = 'clip'; seiteEl.appendChild(nr);
     zeilenEinpassen(nr); grenzenZeichnen(nr); seitenText(nr);
-    seiteEl.style.minHeight = Math.max(ro.offsetHeight, nr.offsetHeight) + 'px';
+    if (nr.offsetHeight > ro.offsetHeight) seiteEl.style.minHeight = nr.offsetHeight + ro.offsetTop + 'px';   // nur wenn die neue Seite höher ist
     const W = innerWidth, opt2 = { duration: 300, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
     nr.animate([{ transform: `translateX(${-r * W}px)` }, { transform: 'translateX(0)' }], opt2);
     ro.animate([{ transform: 'none' }, { transform: `translateX(${r * W}px)` }], opt2).onfinish = geh;

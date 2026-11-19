@@ -1598,6 +1598,8 @@ export default {
     heute85_1: 'Auch eine schon geübte Runde klappt beim Antippen auf. Erneut geübt wird erst mit dem Knopf „Erneut üben“. Der Bonus-Vorschlag steht wieder sauber in einem Fluss.',
     heute86_titel: 'Runden wieder zuklappen',
     heute86_1: 'Eine aufgeklappte Runde lässt sich durch Antippen wieder zuklappen. Gestartet wird nur mit „Starten“ oder „Erneut üben“, und „Erneut üben“ ist leicht golden hervorgehoben.',
+    versatz93_titel: 'Blättern ohne Versatz',
+    versatz93_1: 'Beim Blättern im Muṣḥaf bleibt der Seitenrahmen jetzt die ganze Zeit an derselben Stelle, auch beim Übergang zur nächsten Seite.',
     lichtkarte92_titel: 'Lichtkarte, Blättern, Farbwahl',
     lichtkarte92_1: 'Im Seitenblatt der Lichtkarte sind Abschnitte mit offenen Fehlerstellen jetzt rot gekennzeichnet. Das Blättern im Muṣḥaf schiebt die nächste Seite nahtlos herein, auch ohne Vollbild. Die Farbwahl der Stoppzeichen hat eine neue Reihenfolge. Das Schließen des Vollbilds ist geschmeidiger: Die Seite wandert fließend an ihren Platz.',
     blaettern91_titel: 'Blättern mit Gleiten, Diagrammfenster',

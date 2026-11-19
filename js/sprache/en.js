@@ -1602,6 +1602,8 @@ export default {
     heute85_1: 'A round you have already practised also expands when tapped. You only practise it again with the Practise again button. The bonus suggestion reads in one flow again.',
     heute86_titel: 'Collapse rounds again',
     heute86_1: 'An expanded round collapses again when you tap it. You only start with Start or Practise again, and Practise again is highlighted with a light gold edge.',
+    versatz93_titel: 'Page turns without a jump',
+    versatz93_1: 'When turning pages in the Mushaf, the page frame now stays in exactly the same place throughout, including at the end of the transition.',
     lichtkarte92_titel: 'Light map, page turns, colours',
     lichtkarte92_1: 'In the light map’s page sheet, sections with open trouble spots are now marked in red. Turning pages in the Mushaf slides the next page in seamlessly, even without full screen. The stop sign colour choice has a new order. Closing full screen is smoother: the page glides to its place.',
     blaettern91_titel: 'Sliding page turns, chart popup',
