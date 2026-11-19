@@ -1702,14 +1702,18 @@ async function vollbild(start) {
   const mitteVon = () => [innerWidth / 2, innerHeight / 2];
   const zoomAuf = (ns, px, py) => { const c = mitteVon(), f = ns / Z0.s; zoomSetzen(ns, (px - c[0]) - f * (px - c[0] - Z0.x), (py - c[1]) - f * (py - c[1] - Z0.y)); };
   const dopptipp = (px, py) => { if (Z0.s > 1) zoomSetzen(1, 0, 0); else zoomAuf(2.4, px, py); };
-  let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0;
+  let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0, senkrecht = null;
+  // Nach oben oder unten wischen: das Vollbild folgt dem Finger (verschiebt sich, schrumpft, wird heller) und geht ab einer Schwelle zu, sonst springt es zurück
+  const SCHWELLE = 90;
+  const zug = dy => { const f = Math.min(1, Math.abs(dy) / 320); v.style.transform = `translateY(${dy * 0.7}px) scale(${1 - 0.1 * f})`; v.style.borderRadius = Math.round(34 * f) + 'px'; v.style.opacity = String(1 - 0.45 * f); };
+  const zugAus = () => { v.style.transition = 'transform .22s ease, opacity .22s ease, border-radius .22s ease'; v.style.transform = ''; v.style.borderRadius = ''; v.style.opacity = ''; };
   const abstand = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   const mitteZwei = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
   v.addEventListener('touchstart', e => {
     if (e.target.closest('.vb-regler,.vb-zu,.vb-pfeil')) { x0 = null; return; }
     if (e.touches.length === 2) { pinch = { d: abstand(e.touches), s: Z0.s, m: mitteZwei(e.touches), x: Z0.x, y: Z0.y }; x0 = null; pan = null; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pinch = null;
-    pan = Z0.s > 1 ? { x: x0, y: y0, zx: Z0.x, zy: Z0.y } : null;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pinch = null; senkrecht = null;
+    v.style.transition = ''; pan = Z0.s > 1 ? { x: x0, y: y0, zx: Z0.x, zy: Z0.y } : null;
   }, { passive: true });
   v.addEventListener('touchmove', e => {
     e.preventDefault();
@@ -1717,18 +1721,29 @@ async function vollbild(start) {
       const ns = Math.min(4, Math.max(1, pinch.s * abstand(e.touches) / pinch.d)), m = mitteZwei(e.touches), c = mitteVon(), f = ns / pinch.s;
       zoomSetzen(ns, (m[0] - c[0]) - f * (pinch.m[0] - c[0] - pinch.x), (m[1] - c[1]) - f * (pinch.m[1] - c[1] - pinch.y));
     } else if (pan && e.touches.length === 1) zoomSetzen(Z0.s, pan.zx + e.touches[0].clientX - pan.x, pan.zy + e.touches[0].clientY - pan.y);
+    else if (x0 != null && Z0.s === 1 && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+      if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx);
+      if (senkrecht) zug(dy);
+    }
   }, { passive: false });
   v.addEventListener('touchend', e => {
     if (pinch) { if (e.touches.length < 2) pinch = null; x0 = null; return; }
     if (x0 == null) return;
     const px = e.changedTouches[0].clientX, py = e.changedTouches[0].clientY, dx = px - x0, dy = py - y0; x0 = null; pan = null;
+    if (senkrecht && Z0.s === 1) {   // nach oben oder nach unten gewischt
+      senkrecht = null;
+      if (Math.abs(dy) > SCHWELLE && Math.abs(dy) > 1.5 * Math.abs(dx)) { v.style.transition = 'transform .16s ease-in, opacity .16s ease-in'; v.style.transform = `translateY(${dy > 0 ? '' : '-'}${innerHeight * 0.5}px) scale(.88)`; v.style.opacity = '0'; setTimeout(schliessen, 150); } else zugAus();
+      return;
+    }
+    senkrecht = null;
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {   // Tipp: zwei kurz hintereinander zoomen
       if (Date.now() - letzterTipp < 320) { letzterTipp = 0; dopptipp(px, py); } else letzterTipp = Date.now();
       return;
     }
     if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
-    else if (Z0.s === 1 && dy < -70 && -dy > 1.5 * Math.abs(dx)) schliessen();   // nach oben wischen verlässt das Vollbild (der Daumen erreicht das X oben nicht immer)
   });
+  v.addEventListener('touchcancel', () => { x0 = null; pan = null; pinch = null; if (senkrecht) { senkrecht = null; zugAus(); } });
   // Tippen auf eine Āya zeigt ihre Übersetzung; kurz warten, damit ein Doppeltipp (Zoom) keine Blase öffnet
   let tippZeit = null;
   v.addEventListener('click', ev => {
@@ -1809,9 +1824,14 @@ function diagrammHTML() {
   const titel = w ? tx('profil.itqan_punkte_wochen') : m ? tx('profil.itqan_punkte_monate') : tx('profil.itqan_punkte_der_letzten_30_tage');
   const links = w ? tx('profil.vor_12_wochen') : m ? tx('profil.vor_monaten', { n: reihe.length }) : tx('profil.vor_30_tagen');
   const rechts = w ? tx('profil.diese_woche') : m ? tx('profil.dieser_monat') : tx('profil.heute');
-  const name = x => m ? new Date(x.d + '-01T12:00').toLocaleDateString(gebiet('datum'), { month: 'long', year: 'numeric' }) : x.d;
+  const kurzDatum = d => new Date(d + 'T12:00').toLocaleDateString(gebiet('datum'), { weekday: 'short', day: 'numeric', month: 'short' });
+  const name = x => m ? new Date(x.d + '-01T12:00').toLocaleDateString(gebiet('datum'), { month: 'long', year: 'numeric' }) : w ? tx('profil.dia_woche', { a: kurzDatum(x.d) }) : kurzDatum(x.d);
+  // Durchschnitt ab dem ersten Wert mit Punkten (Leerlauf vor dem Start zählt nicht mit)
+  const ab = reihe.findIndex(x => x.p > 0), teil = ab < 0 ? [] : reihe.slice(ab), schnitt = teil.length ? Math.round(teil.reduce((s, x) => s + x.p, 0) / teil.length) : 0;
+  const sz = { s: zahl(schnitt) }, schnittText = !schnitt ? '' : w ? tx('profil.dia_schnitt_woche', sz) : m ? tx('profil.dia_schnitt_monat', sz) : tx('profil.dia_schnitt_tag', sz);
   return `<div class="diagramm-kopf"><div class="titel-klein">${titel}</div><button type="button" class="diagramm-wechsel" id="diagramm-wechsel" aria-label="${tx('profil.diagramm_wechseln')}"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg></button></div>
-    <div class="diagramm" role="img" aria-label="${tx('profil.diagramm_aria', { titel, a: zahl(summe), b: zahl(max) })}">${reihe.map(x => `<div class="${x.p ? '' : 'leer'}" style="height:${x.p ? Math.max(4, 100 * x.p / max) : 3}%" title="${name(x)}: ${x.p}"></div>`).join('')}</div>
+    <div class="dia-zeile"><span class="dia-wert" aria-live="polite"></span>${schnitt ? `<span class="dia-schnitt-text">${schnittText}</span>` : ''}</div>
+    <div class="diagramm" tabindex="0" role="group" aria-label="${tx('profil.diagramm_aria', { titel, a: zahl(summe), b: zahl(max) })}">${reihe.map(x => `<div class="${x.p ? '' : 'leer'}" style="height:${x.p ? Math.max(4, 100 * x.p / max) : 3}%" data-t="${esc(name(x) + ': ' + tx('kurz.punkte_n', { n: x.p }))}"></div>`).join('')}${schnitt ? `<b class="dia-schnitt" style="bottom:${Math.min(100, 100 * schnitt / max)}%"></b>` : ''}</div>
     <div class="klein-zeile"><span>${links}</span><span>${rechts}</span></div>`;
 }
 function profil() {
@@ -1845,7 +1865,25 @@ function profil() {
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
   const diaBlock = app.querySelector('#diagramm-block');
-  const diaBinden = () => { diaBlock.querySelector('#diagramm-wechsel').onclick = () => { punkteAnsicht = { tage: 'wochen', wochen: 'monate', monate: 'tage' }[punkteAnsicht]; try { localStorage.setItem('itqan-punkte-ansicht', punkteAnsicht); } catch (e) { /* ohne Speicher geht es auch */ } diaBlock.innerHTML = diagrammHTML(); diaBinden(); diaBlock.querySelector('#diagramm-wechsel').focus(); }; };
+  // Tippen oder Darüberwischen zeigt den genauen Wert des Balkens; ein zweiter Tipp auf denselben Balken schließt die Anzeige
+  const diaWerte = () => {
+    const fl = diaBlock.querySelector('.diagramm'), anz = diaBlock.querySelector('.dia-wert'); if (!fl || !anz) return;
+    const balken = [...fl.querySelectorAll(':scope > div')]; let sel = -1, vorher = -1, bewegt = false, druck = false;
+    const waehlen = i => { sel = i; balken.forEach((b, k) => b.classList.toggle('gewaehlt', k === i)); anz.textContent = i < 0 ? '' : balken[i].dataset.t; };
+    const stelle = x => { let k = balken.findIndex(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right; }); if (k < 0) { let best = 1e9; balken.forEach((b, j) => { const r = b.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); if (d < best) { best = d; k = j; } }); } return k; };
+    fl.addEventListener('pointerdown', e => { druck = true; bewegt = false; vorher = sel; try { fl.setPointerCapture(e.pointerId); } catch (err) { /* egal */ } waehlen(stelle(e.clientX)); });
+    fl.addEventListener('pointermove', e => { if (!druck) return; const k = stelle(e.clientX); if (k !== sel) { bewegt = true; waehlen(k); } });
+    fl.addEventListener('pointerup', () => { if (druck && !bewegt && sel === vorher) waehlen(-1); druck = false; });
+    fl.addEventListener('pointercancel', () => { druck = false; });
+    fl.addEventListener('blur', () => waehlen(-1));
+    fl.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { waehlen(-1); return; }
+      const rtl = getComputedStyle(fl).direction === 'rtl', schritt = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
+      if (!schritt) return;
+      e.preventDefault(); waehlen(sel < 0 ? balken.length - 1 : Math.max(0, Math.min(balken.length - 1, sel + schritt)));
+    });
+  };
+  const diaBinden = () => { diaWerte(); diaBlock.querySelector('#diagramm-wechsel').onclick = () => { punkteAnsicht = { tage: 'wochen', wochen: 'monate', monate: 'tage' }[punkteAnsicht]; try { localStorage.setItem('itqan-punkte-ansicht', punkteAnsicht); } catch (e) { /* ohne Speicher geht es auch */ } diaBlock.innerHTML = diagrammHTML(); diaBinden(); diaBlock.querySelector('#diagramm-wechsel').focus(); }; };
   diaBinden();
   app.querySelector('#laden').onclick = profilLaden;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };

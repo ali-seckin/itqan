@@ -91,9 +91,11 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 62. Üben-Reiter: Kurzübungen, Neu lernen, Fehlerstellen, schwächster Abschnitt, Ähnliche Stellen, Suche; Zurück-Pfeile führen wieder in den Reiter Üben.
 63. Neu lernen: Abschnitt oder ganze Sūra zum Lernplan hinzufügen (nur Fehlendes wird angeboten), Tagesziel 1 bis 5, Heute zeigt so viele Lektionen; pro Tag zählt ein Durchgang ohne Fehler, Hilfe und Zögern, nach dem dritten Tag geht der Abschnitt in die Wiederholung.
 64. Übersetzung: Muṣḥaf und Vollbild, Āya antippen zeigt die Blase mit Quelle; beim Üben nach dem Aufdecken über „Übersetzung“ oder durch Antippen; Einstellungen: Sprache wählen oder aus; erstes Mal braucht Internet, danach auch offline.
-65. Vollbild: Pfeile erscheinen nur kurz beim Blättern; nach oben wischen verlässt das Vollbild; Doppeltipp zoomt, ohne dass sich eine Blase öffnet.
+65. Vollbild: Pfeile erscheinen nur kurz beim Blättern; nach oben oder unten wischen verlässt das Vollbild (die Seite folgt dem Finger, kurzes Ziehen springt zurück); Doppeltipp zoomt, ohne dass sich eine Blase öffnet.
 66. Muṣḥaf-Seite (nicht Vollbild): schräges Wischen blättert, nur deutlich senkrechtes Wischen scrollt.
 67. Üben: Aufnahme-Knopf ● und ▶ stehen rechts neben dem Hauptknopf; Einstellungen › Funktionen: mehrere Āyāt auf einmal aufdecken (1 bis 5), Aufnahme automatisch starten.
 68. Lichtkarte: die fünf Helligkeitsstufen stehen in einer Reihe.
 69. Heute: Bonus-Angebot nach vollbrachtem Wird (Name und Abschnittszahl hervorgehoben); Sicherungs-Hinweis erscheint nicht, wenn ein Konto verbunden ist.
 70. Bei Teilbereich heißt die Runde „1. Abschluss“ statt „1. Ḫatma“ (Heute, Profil, Rückblick, Einstellungen).
+71. Profil › Diagramm: gestrichelte Durchschnittslinie mit Beschriftung rechts über dem Diagramm; Tipp oder Darüberwischen über Balken zeigt Datum und Punkte links, zweiter Tipp schließt; in Wochen und Monaten ebenso.
+72. Helle Darstellung: der aktive Reiter unten hat eine runde Hinterlegung und fette Schrift.

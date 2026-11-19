@@ -1270,3 +1270,21 @@ html{scrollbar-gutter:stable}
 .vollbild.pfeile .vb-pfeil{opacity:.8}
 .vollbild.gezoomt.pfeile .vb-pfeil{opacity:.2}
 .uebs-blase{z-index:90}
+/* Version 1.90: helle Navigation mit deutlich hervorgehobenem aktiven Reiter, Diagramm mit Durchschnitt und Einzelwert */
+.nav a svg{box-sizing:content-box;padding:3px 14px;border-radius:999px;transition:background .15s}
+.nav a[data-r=mushaf] svg{padding:10px;border-radius:50%}
+.nav a.an:not([data-r=mushaf]) svg{background:color-mix(in srgb, var(--akzent) 22%, transparent)}
+.nav a.an{font-weight:700}
+:where([data-modus=hell]) .nav a.an:not([data-r=mushaf]){color:#6e3f06}
+.diagramm{position:relative;touch-action:pan-y;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:6px}
+.diagramm:focus-visible{outline:2px solid var(--akzent);outline-offset:3px}
+.diagramm div.gewaehlt{opacity:1;background:var(--akzentT)}
+:where([data-modus=dunkel]) .diagramm div.gewaehlt{background:var(--akzent2)}
+.diagramm div.leer.gewaehlt{background:var(--leise)}
+.dia-schnitt{position:absolute;left:0;right:0;height:0;border-top:1.5px dashed var(--text);opacity:.55;pointer-events:none}
+.dia-zeile{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:22px;margin-top:6px;font-size:var(--s-klein)}
+.dia-wert{color:var(--text);font-weight:700;min-width:0}
+.dia-schnitt-text{color:var(--leise);margin-inline-start:auto;white-space:nowrap}
+.dia-schnitt-text::before{content:"";display:inline-block;width:14px;border-top:1.5px dashed var(--text);opacity:.55;vertical-align:middle;margin-inline-end:6px}
+/* Vollbild: beim Wischen nach oben oder unten folgt es dem Finger */
+.vollbild{will-change:transform}
