@@ -457,7 +457,7 @@ async function uebersetzungZeigen(vi) {
   const el = document.createElement('div'); el.className = 'uebs-blase'; el.setAttribute('role', 'region'); el.setAttribute('aria-live', 'polite'); el.setAttribute('aria-label', tx('uebers.link'));
   el.innerHTML = `<button type="button" class="uebs-zu" aria-label="${tx('hilfe.schliessen')}">${kreuzSvg}</button><div class="uebs-kopf">${sureName(s)} ${s}:${ay}</div><p class="uebs-text" lang="${code}"${code === 'ur' ? ' dir="rtl"' : ''}>${esc(d.t[vi])}</p><div class="uebs-quelle">${esc(d.n)}</div>`;
   document.body.appendChild(el);
-  const unten = document.querySelector('.steuerung') || (nav.classList.contains('verdeckt') ? null : nav);
+  const unten = document.querySelector('.steuerung, .vb-regler') || (nav.classList.contains('verdeckt') ? null : nav);
   el.style.bottom = unten ? `${Math.round(innerHeight - unten.getBoundingClientRect().top + 10)}px` : '16px';
   el.querySelector('.uebs-zu').onclick = blaseSchliessen;
   return true;
@@ -728,7 +728,7 @@ function heute() {
   let spaeter = null; try { spaeter = localStorage.getItem('itqan-sicherung-spaeter'); } catch (e) {}
   let umzugWeg = null; try { umzugWeg = localStorage.getItem('itqan-umzug-weg'); } catch (e) {}
   const umzugKarte = (location.hostname === 'ali-seckin.github.io' || /[?&]umzug\b/.test(location.search)) && umzugWeg !== Z.heute();
-  const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute();
+  const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute() && !Ab.status().verbunden;   // wer mit einem Konto abgleicht, braucht die Erinnerung nicht
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
   const installKarte = UEBERGANG.installieren && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
   const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
@@ -746,7 +746,7 @@ function heute() {
     <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
     <div class="stand-karte"><div class="stand-oben">${ring}<div class="stand-text"><h2 class="gruss">${tx('heute.assalamu_alaikum', { a: P.name ? komma() + esc(P.name) : '' })}</h2><p class="unter">${unter}</p></div></div>${stand}</div>
-    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittFett(D.A[bonusId]) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
+    ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: abschnittFett(D.A[bonusId]), titel: esc(D.A[bonusId].titel) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     ${t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div><div id="plan-liste">${karten}</div>`}
     ${!t.ruhe && Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}
     ${lernHTML}
@@ -1601,14 +1601,22 @@ async function mushaf(pText, aText) {
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
   app.querySelector('#sprung-auf').onclick = ev => { const zu = app.querySelector('#sprung-panel').classList.toggle('verdeckt'); ev.currentTarget.setAttribute('aria-expanded', String(!zu)); };
   app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
-  // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige
-  let sx = null, sy = null;
-  seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige.
+  // Die Richtung wird gleich zu Beginn der Bewegung festgelegt, zugunsten des Blätterns: Nur eine deutlich senkrechte Bewegung
+  // (steiler als etwa 58 Grad) scrollt die Seite; sonst blättert die Bewegung, und die Seite scrollt dabei nicht mit.
+  let sx = null, sy = null, richt = null;   // richt: null offen, 'h' waagerecht, 'v' senkrecht
+  const vergroessert = () => { const ro = seiteEl.querySelector('.roller'); return ro.scrollWidth > ro.clientWidth + 1; };   // vergrößerte Seite: Wischen schiebt die Seite, geblättert wird mit den Knöpfen darüber
+  seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; richt = null; }, { passive: true });
+  seiteEl.addEventListener('touchmove', e => {
+    if (sx == null || vergroessert()) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if (richt == null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) richt = Math.abs(dy) > 1.6 * Math.abs(dx) ? 'v' : 'h';
+    if (richt === 'h' && e.cancelable) e.preventDefault();
+  }, { passive: false });
   seiteEl.addEventListener('touchend', e => {
-    if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
-    // vergrößerte Seite: Wischen schiebt die Seite, geblättert wird mit den Knöpfen darüber
-    const ro = seiteEl.querySelector('.roller'); if (ro.scrollWidth > ro.clientWidth + 1) return;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) blaettern(dx > 0 ? naechste : vorige);
+    if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; const r = richt; sx = null; richt = null;
+    if (vergroessert()) return;
+    if (r === 'h' && Math.abs(dx) > 55) blaettern(dx > 0 ? naechste : vorige);
   });
   // Tastatur am PC: Pfeil links = weiter (wie im Buch), Pfeil rechts = zurück
   const tasten = ev => {
@@ -1658,7 +1666,7 @@ async function vollbild(start) {
     // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
     const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
     const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
-    p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
+    blaseSchliessen(); p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
     buehne.innerHTML = `<div class="vb-seiten${doppel ? ' doppel' : ''}">${seiten.map(x => seiteHTML(x, farben(x))).join('')}</div>`;
     const ss = [...buehne.querySelectorAll('.seite')];
     const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 60;   // unten bleibt Platz für den Regler
@@ -1669,7 +1677,12 @@ async function vollbild(start) {
     if (richtung) buehne.firstElementChild.classList.add(richtung > 0 ? 'von-links' : 'von-rechts');
     const nach = Math.max(...seiten), vor = Math.min(...seiten);
     if (nach < 604) schriftenLaden([nach + 1]); if (vor > 1) schriftenLaden([vor - 1]);
+    pfeileZeigen();
   }
+  // Die Blätterpfeile erscheinen nur kurz beim Blättern (und am PC bei Mausbewegung) und blenden nach einer Sekunde aus; sie bleiben antippbar
+  let pfeilZeit = null;
+  function pfeileZeigen() { v.classList.add('pfeile'); clearTimeout(pfeilZeit); pfeilZeit = setTimeout(() => v.classList.remove('pfeile'), 1100); }
+  v.addEventListener('mousemove', pfeileZeigen);
   // im Muṣḥaf liegt die nächste Seite links: nach rechts wischen oder links tippen = weiter
   const weiter = () => zeige(p + (quer() ? 2 : 1), 1), zurueck = () => zeige(p - (quer() ? 2 : 1), -1);
   v.querySelector('.vb-pfeil.links').onclick = weiter;
@@ -1714,6 +1727,16 @@ async function vollbild(start) {
       return;
     }
     if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) dx > 0 ? weiter() : zurueck();
+    else if (Z0.s === 1 && dy < -70 && -dy > 1.5 * Math.abs(dx)) schliessen();   // nach oben wischen verlässt das Vollbild (der Daumen erreicht das X oben nicht immer)
+  });
+  // Tippen auf eine Āya zeigt ihre Übersetzung; kurz warten, damit ein Doppeltipp (Zoom) keine Blase öffnet
+  let tippZeit = null;
+  v.addEventListener('click', ev => {
+    if (ev.target.closest('.vb-regler,.vb-zu,.vb-pfeil')) return;
+    clearTimeout(tippZeit);
+    if (ev.detail > 1) return;
+    const w = ev.target.closest('.w'); if (!w) { blaseSchliessen(); return; }
+    tippZeit = setTimeout(() => uebersetzungZeigen(+w.dataset.v), 300);
   });
   v.addEventListener('wheel', e => {
     if (!e.ctrlKey && Z0.s === 1) return;
@@ -1746,7 +1769,7 @@ async function vollbild(start) {
   function schliessen() {
     removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); lageMQ.removeEventListener('change', anpassen);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    v.remove(); document.body.classList.remove('im-vollbild');
+    blaseSchliessen(); v.remove(); document.body.classList.remove('im-vollbild');
     if (p !== start) location.replace('#mushaf/' + p);
   }
   v.querySelector('.vb-zu').onclick = schliessen;

@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.87';
+export const VERSION = '1.88';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = 'support@itqan.at';
@@ -11,6 +11,9 @@ export const RUECKMELDUNG_AN = 'support@itqan.at';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '1.88', datum: '2026-11-19', titel: tx('version.vollbild88_titel'), punkte: [
+    tx('version.vollbild88_1')
+  ] },
   { v: '1.87', datum: '2026-11-19', titel: tx('version.profil87_titel'), punkte: [
     tx('version.profil87_1')
   ] },
@@ -49,8 +52,8 @@ export const NEUIGKEITEN = [
   { v: '1.76', datum: '2026-11-18', titel: tx('version.ueberschriften_titel'), punkte: [
     tx('version.ueberschriften_1')
   ] },
-  { v: '1.75', datum: '2026-11-18', titel: tx('version.heute_titel'), punkte: [
-    tx('version.heute_1')
+  { v: '1.75', datum: '2026-11-18', titel: tx('version.heute75_titel'), punkte: [
+    tx('version.heute75_1')
   ] },
   { v: '1.74', datum: '2026-11-17', titel: tx('version.menue_titel'), punkte: [
     tx('version.menue_1')
@@ -200,7 +203,7 @@ export const NEUIGKEITEN = [
     tx('version.urdu_1')
   ] },
   { v: '1.19', datum: '2026-11-11', titel: tx('version.reihenfolge_titel'), punkte: [
-    tx('version.sprachwahl_1'),
+    tx('version.sprachwahl19_1'),
     tx('version.reihenfolge_1')
   ] },
   { v: '1.18', datum: '2026-11-11', titel: tx('version.sprachen_titel'), punkte: [

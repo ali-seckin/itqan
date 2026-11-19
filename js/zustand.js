@@ -743,13 +743,6 @@ export function lernVorschlag() {
   const vor = frei.filter(x => x < im[0]); if (!vor.length) return frei[0];
   const s = D.A[vor[vor.length - 1]].von[0]; return vor.find(x => D.A[x].von[0] === s);
 }
-// Wie viele geübte Abschnitte (Bereich und offene Lektionen) stehen auf welcher der drei Stufen
-export function dachZahlen() {
-  const zz = [0, 0, 0];
-  for (const id of reihe()) { const k = karte(id); if (k.n) zz[dach(k.st)]++; }
-  for (const L of Object.values(P.lern || {})) if (L.ph < 2) zz[Math.min(2, L.ft.length)]++;
-  return zz;
-}
 function lernSchritt(L, k, id, datum, f, h, ereignisse) {
   const vor = L.ft.length, rein = !f && !h, neu = rein && !L.ft.includes(datum);
   if (neu) L.ft.push(datum);

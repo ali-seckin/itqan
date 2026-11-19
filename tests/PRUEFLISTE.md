@@ -11,7 +11,7 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 4. Installationsanleitung passt zum Gerät, „Nicht mehr zeigen“ blendet die Karte auf Heute aus.
 
 ## Heute und Üben
-5. Heute zeigt Wird, Ring, Kette, Ḥasanāt, Lichtkarte.
+5. Heute zeigt den kompakten Kopf (kleiner Kreis, Kette, Ḥasanāt, Āyāt sicher), die erste offene Runde aufgeklappt mit „Starten“, die übrigen als schmale Zeilen; Antippen klappt eine Runde auf und wieder zu (auch Erledigtes, dort „Erneut üben“), gestartet wird nur über den Knopf.
 6. Erste Übung: geführte Erklärung Teil 1 erscheint nach der Einblendung.
 7. Aufdecken, Bis zum Zeichen, Anfang zeigen, Erst ansehen funktionieren.
 8. Nach dem ersten Aufdecken: Erklärung Teil 2.
@@ -24,10 +24,10 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 15. Bonusabschnitt bringt 50 % mehr.
 
 ## Fehler und Fortschritt
-16. Fehlerstellen-Liste zeigt das Wort mit Nachbarn, Üben der Stelle, dreimal richtig entfernt sie.
+16. Üben › Fehlerstellen: Liste zeigt das Wort mit Nachbarn, Üben der Stelle, dreimal richtig entfernt sie.
 17. Fortschritt zeigt die schwächsten Abschnitte.
 18. Ränge-Seite und Rangkarte im Profil.
-19. Ornamente: Reihenfolge und Größen, Legende, Detail, Filter.
+19. Profil › Ornamente und Meilensteine: Reihenfolge und Größen, Legende, Detail, Filter.
 
 ## Muṣḥaf
 20. Seite wechseln mit Knöpfen, Wischen, Auswahlliste; Sūra und Abschnitt anspringen.
@@ -75,12 +75,25 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 50. Wochentag auf „Ruhetag“: an diesem Tag zeigt Heute „Heute ist Ruhetag“, die Kette bleibt; „Trotzdem üben“ bringt einen normalen Plan; alle sieben Tage auf Ruhetag lässt sich nicht einstellen.
 51. Pause 7 Tage: Dialog nennt Beginn und Ende; schon geübt heißt Beginn morgen; Heute zeigt die Pausenkarte; „Pause beenden“ auf Heute und in den Einstellungen.
 52. Nach der Pause: Kette läuft weiter, kein Qaḍāʾ, Fehlerwiederholungen kommen um die Pausentage später.
-53. Profil › Auswertung: Quote, Wochenbalken, Fehlerarten, Sūren mit Fehlern, Zeit je Abschnitt; ein frisch geübter Abschnitt erscheint mit seiner Zeit; App im Hintergrund zählt nicht mit.
+53. Profil › Fortschritt im Detail › Auswertung: Quote, Wochenbalken, Fehlerarten, Sūren mit Fehlern, Zeit je Abschnitt; ein frisch geübter Abschnitt erscheint mit seiner Zeit; App im Hintergrund zählt nicht mit.
 
 ## Etappe 4: Text und Suche
 54. Muṣḥaf › Lupe: Suche „الحي القيوم“ zeigt 2:255, 3:2 und 20:111 mit markierten Wörtern; Tippen öffnet die Seite.
 55. Buchstabenleiste „ا ب“: Tippen schreibt ins Suchfeld, ⌫ löscht; „2:255“ springt direkt zur Āya.
 56. Flugmodus nach einmaligem Öffnen: Suche und ähnliche Stellen funktionieren weiter.
-57. Profil › Ähnliche Stellen: „In deinem Bereich“ und „Alle“; Paare mit eigener Verwechslung stehen oben.
+57. Üben › Nachschlagen › Ähnliche Stellen: „In deinem Bereich“ und „Alle“; Paare mit eigener Verwechslung stehen oben.
 58. Vergleich: Unterschiede markiert; „Unterscheiden üben“ verdeckt genau diese Wörter, „Aufdecken“, dann „Beide richtig“ oder „Verwechselt“; danach „Nächstes Paar“.
 59. Fehlerstellen: Bei einer Stelle mit ähnlicher Āya steht „Ähnlich wie … · vergleichen“.
+
+## Neu seit Version 1.74 (Navigation und neue Funktionen)
+60. Fünf Reiter: Heute, Lichtkarte, Muṣḥaf (Mitte, hervorgehoben), Üben, Profil. Jeder Reiter hat dieselbe Kopfzeile (Zeichen links, Überschrift, eine kleine Zeile); ein alter Link #mehr führt ins Profil.
+61. Profil: Zahnrad oben rechts öffnet die Einstellungen; Bereiche Fortschritt im Detail, Sicherung, Hilfe und Anleitungen, Mehr sind kompakt mit Symbol; Diagramm-Knopf schaltet 30 Tage, 12 Wochen, Monate.
+62. Üben-Reiter: Kurzübungen, Neu lernen, Fehlerstellen, schwächster Abschnitt, Ähnliche Stellen, Suche; Zurück-Pfeile führen wieder in den Reiter Üben.
+63. Neu lernen: Abschnitt oder ganze Sūra zum Lernplan hinzufügen (nur Fehlendes wird angeboten), Tagesziel 1 bis 5, Heute zeigt so viele Lektionen; pro Tag zählt ein Durchgang ohne Fehler, Hilfe und Zögern, nach dem dritten Tag geht der Abschnitt in die Wiederholung.
+64. Übersetzung: Muṣḥaf und Vollbild, Āya antippen zeigt die Blase mit Quelle; beim Üben nach dem Aufdecken über „Übersetzung“ oder durch Antippen; Einstellungen: Sprache wählen oder aus; erstes Mal braucht Internet, danach auch offline.
+65. Vollbild: Pfeile erscheinen nur kurz beim Blättern; nach oben wischen verlässt das Vollbild; Doppeltipp zoomt, ohne dass sich eine Blase öffnet.
+66. Muṣḥaf-Seite (nicht Vollbild): schräges Wischen blättert, nur deutlich senkrechtes Wischen scrollt.
+67. Üben: Aufnahme-Knopf ● und ▶ stehen rechts neben dem Hauptknopf; Einstellungen › Funktionen: mehrere Āyāt auf einmal aufdecken (1 bis 5), Aufnahme automatisch starten.
+68. Lichtkarte: die fünf Helligkeitsstufen stehen in einer Reihe.
+69. Heute: Bonus-Angebot nach vollbrachtem Wird (Name und Abschnittszahl hervorgehoben); Sicherungs-Hinweis erscheint nicht, wenn ein Konto verbunden ist.
+70. Bei Teilbereich heißt die Runde „1. Abschluss“ statt „1. Ḫatma“ (Heute, Profil, Rückblick, Einstellungen).

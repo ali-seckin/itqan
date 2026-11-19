@@ -70,9 +70,6 @@ body.doppelt .s-trenn::before{content:'-'}
 .lk-mitte span{font-size:var(--s-klein);color:var(--leise);margin-inline-start:1px}
 .lk-hero-t p{margin:0 0 5px;font-size:var(--s-klein);color:var(--leise);line-height:1.35}
 .lk-hero-t p:first-child{color:var(--text)}
-.lk-seg{position:relative;display:grid;grid-template-columns:repeat(2,1fr);padding:4px;border:1px solid var(--rand);border-radius:16px;background:var(--karte)}
-.lk-seg button{min-height:44px;border:0;background:transparent;color:var(--leise);font:inherit;font-weight:600;border-radius:12px;cursor:pointer;transition:color .3s,background-color .3s,box-shadow .3s}
-.lk-seg button.an{background:var(--akzentF);color:var(--aufAkzent);box-shadow:0 4px 14px var(--glow)}
 .lk-hinweis{font-size:var(--s-klein);color:var(--leise);margin:12px 0 10px;min-height:2.7em;line-height:1.35}
 .lk-kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
 .lk-kachel{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:64px;padding:10px 4px 8px;border:1px solid var(--rand);border-radius:14px;background:var(--karte);color:inherit;font:inherit;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .15s}
@@ -148,11 +145,6 @@ body.doppelt .s-trenn::before{content:'-'}
 .lk-ab small{display:block;font-size:var(--s-etikett);color:var(--leise);margin-top:2px}
 .lk-ab .knopf{grid-column:2;justify-self:start;width:auto}
 .lk-aktionen{display:grid;gap:8px;margin-top:12px}
-.licht-mini span[data-k="0"]{background:transparent;box-shadow:inset 0 0 0 1px var(--lk-rand)}
-.licht-mini span[data-k="1"]{background:var(--lk1)}
-.licht-mini span[data-k="2"]{background:var(--lk2)}
-.licht-mini span[data-k="3"]{background:var(--lk3)}
-.licht-mini span[data-k="4"]{background:var(--lk4);box-shadow:0 0 10px var(--lk-glow)}
 @keyframes lkEin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes lkAuf{0%{transform:scale(1)}40%{transform:scale(1.22);box-shadow:0 0 16px var(--lk-glow)}100%{transform:scale(1)}}
 @keyframes lkPuls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.3)}}
@@ -163,10 +155,6 @@ body.doppelt .s-trenn::before{content:'-'}
 .abh-zeile input{width:24px;height:24px;flex:none;accent-color:var(--akzentT)}
 .w.zmark{outline:2px dashed var(--akzentT);outline-offset:1px;--wbg:rgba(217,154,78,.4)!important}
 button.karte{font:inherit;color:inherit;cursor:pointer;min-height:56px}
-.kurz-angebot{margin-top:22px;padding-top:6px;border-top:1px solid var(--rand)}
-.kurz-heute{text-decoration:none;color:inherit;border-color:var(--akzentF)}
-.kurz-heute .t b{color:var(--akzentT)}
-.kurz-heute .pfeil{font-size:var(--s-titel);color:var(--akzentT);padding:0 4px}
 .profil-gruppe{margin:12px 0;border:1px solid var(--rand);border-radius:18px;background:var(--karte);padding:0 14px}
 .profil-gruppe > summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:8px 0;cursor:pointer;list-style:none}
 .profil-gruppe > summary::-webkit-details-marker{display:none}
@@ -331,9 +319,6 @@ html.tippt .nav{display:none}
 @keyframes puls{50%{background-color:rgba(183,119,47,.88)}}
 
 /* Üben */
-.ab-kopf .ueber{font-size:var(--s-klein);letter-spacing:1.4px;text-transform:uppercase;color:var(--akzentT)}
-.ab-kopf h2{font-size:var(--s-titel);margin:4px 0 6px}
-.ab-kopf p{font-size:var(--s-klein);color:var(--leise)}
 .zurueck{display:inline-flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--leise);background:none;border:0;padding:4px 0;margin-bottom:8px}
 .steuerung{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 18px calc(env(safe-area-inset-bottom) + 12px);background:var(--bg);border-top:1px solid var(--rand)}
 [data-modus=hell] .steuerung{background:rgba(243,232,210,.96);backdrop-filter:blur(10px)}
@@ -350,10 +335,8 @@ html.tippt .nav{display:none}
 .qandil{height:170px;margin:0 auto;display:flex;justify-content:center;animation:laterne 4s ease-in-out infinite}
 .qandil img,.lampe-k img,.zeichen svg{height:100%;width:auto;display:block}
 .lampe-k{display:inline-flex;height:20px}
-[data-modus=dunkel] .nur-hell,[data-modus=hell] .nur-dunkel{display:none!important}
 @keyframes laterne{0%,100%{filter:drop-shadow(0 0 14px var(--glow))}50%{filter:drop-shadow(0 0 30px var(--glow))}}
 @media (prefers-reduced-motion:reduce){.qandil{animation:none;filter:drop-shadow(0 0 20px var(--glow))}}
-.qandil .flamme{animation:flackern 3s ease-in-out infinite;transform-origin:60px 96px}
 @keyframes flackern{0%,100%{transform:scale(1)}40%{transform:scale(1.04,.97)}70%{transform:scale(.97,1.03)}}
 .feier .ar{font-family:'Uthmani',serif;font-size:34px;color:var(--akzentT);margin-top:8px}
 .feier h2{font-size:var(--s-titel);color:var(--akzentT)}
@@ -373,18 +356,9 @@ html.tippt .nav{display:none}
 .angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:var(--s-text);font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
 
 /* Lichtkarte */
-.licht-juz{display:grid;grid-template-columns:34px 1fr 44px;align-items:center;gap:8px;margin-bottom:12px}
-.licht-juz>span{font-size:var(--s-klein);color:var(--leise);text-align:right}
-.licht-juz>span.lk-anz{text-align:left;font-size:var(--s-etikett);font-variant-numeric:tabular-nums}
 .lk-reihen{display:grid;gap:4px}
 /* 12 Spalten: oben 10 Seiten, unten 9 bis 11; Ǧuzʾ 30 (23 Seiten) oben 11, unten 12 */
 .licht-seiten.lk-reihe{grid-template-columns:repeat(12,1fr);gap:4px}
-.lk-erklaerung{font-size:var(--s-klein);color:var(--leise);margin:20px 0 10px}
-.lk-erklaerung b{color:var(--text);font-weight:600}
-.licht-juz.lk-kopf{margin-bottom:6px}
-.licht-juz.lk-kopf span{font-size:var(--s-etikett);letter-spacing:1px;text-transform:uppercase;color:var(--leise);text-align:left}
-.licht-juz.lk-kopf span:first-child{text-align:right}
-.licht-juz.lk-kopf span.lk-anz{font-size:var(--s-etikett)}
 .licht-seiten.lk-reihe button{border-radius:3px}
 .licht-seiten{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;flex:1}
 .licht-seiten button{aspect-ratio:1/1.35;border:0;border-radius:2px;background:var(--akzent);padding:0}
@@ -404,9 +378,6 @@ html.tippt .nav{display:none}
 .zaehler{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
 .zaehler button{width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-titel)}
 .zaehler b{font-family:var(--kopf);font-size:var(--s-anzeige);min-width:64px;text-align:center}
-.wochentage{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.wochentage div{text-align:center;font-size:var(--s-klein);color:var(--leise)}
-.wochentage input{width:100%;text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--rand);background:var(--karte2)}
 .juzwahl{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .juzwahl button{padding:9px 0;border-radius:10px;border:1px solid var(--rand);background:var(--karte);font-size:var(--s-text)}
 .juzwahl button.an{background:var(--akzentF);color:var(--aufAkzent);border-color:transparent}
@@ -505,8 +476,6 @@ html.tippt .nav{display:none}
 .fstelle .wortbild .nb{opacity:.6;font-size:.78em}
 .fstelle .textlink{white-space:nowrap}
 
-.stufenwahl .zahl{cursor:pointer;color:inherit;font:inherit}
-.stufenwahl .zahl.an{border-color:var(--akzent);box-shadow:0 0 0 1px var(--akzent)}
 /* Sūra- und Abschnittsauswahl, Seitenauswahl */
 .stellenwahl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;margin:14px 0 0}
 .stellenwahl select{width:100%;font-size:var(--s-klein);text-overflow:ellipsis}
@@ -535,7 +504,7 @@ body.im-vollbild{overflow:hidden}
 @keyframes vonLinks{from{opacity:0;transform:translateX(-24px)}}
 @keyframes vonRechts{from{opacity:0;transform:translateX(24px)}}
 .vb-zu{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:44px;height:44px;border-radius:50%;border:1px solid var(--rand);background:var(--karte);color:var(--leise);font-size:var(--s-klein);z-index:2}
-.vb-pfeil{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:12px;background:color-mix(in srgb,var(--bg) 60%,transparent);color:var(--text);font-size:34px;opacity:.8;z-index:2}
+.vb-pfeil{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:12px;background:color-mix(in srgb,var(--bg) 60%,transparent);color:var(--text);font-size:34px;z-index:2}
 .vb-regler{position:absolute;left:calc(env(safe-area-inset-left,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 4px);height:44px;touch-action:none;cursor:pointer;z-index:3}
 .vb-spur{position:absolute;left:18px;right:18px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:color-mix(in srgb,var(--text) 22%,transparent)}
 .vb-griff{position:absolute;top:50%;width:22px;height:22px;margin:-11px -11px 0 0;border-radius:50%;background:var(--akzentF);border:2px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.35);right:calc(18px + (100% - 36px) * var(--f,0));transition:scale .15s}
@@ -543,17 +512,9 @@ body.im-vollbild{overflow:hidden}
 .vb-vorschau{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 58px);z-index:4;min-width:160px;padding:10px 16px;border-radius:14px;background:rgba(36,36,40,.94);color:#fff;font-size:var(--s-text);line-height:1.5;text-align:end;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .vb-vorschau[hidden]{display:none}
 .vb-seiten{will-change:transform}
-.vollbild.gezoomt .vb-pfeil{opacity:.2}
 .vb-pfeil.links{left:calc(env(safe-area-inset-left,0px) + 2px)}
 .vb-pfeil.rechts{right:calc(env(safe-area-inset-right,0px) + 2px)}
-@media (hover:none){.vb-pfeil{opacity:.7}}
 .licht-seiten button.gewaehlt{outline:2px solid var(--text);outline-offset:1px;position:relative;z-index:1}
-.seiteninfo{background:var(--karte);border:1px solid var(--akzent);border-radius:14px;padding:12px 14px;margin:4px 0 10px;display:grid;gap:8px}
-.seiteninfo .kopf b{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;margin-right:8px}
-.seiteninfo .kopf span{font-size:var(--s-klein);color:var(--leise)}
-.seiteninfo .zeile{display:flex;justify-content:space-between;gap:10px;font-size:var(--s-klein);border-top:1px dotted var(--rand);padding-top:6px}
-.seiteninfo .zeile small{display:block;font-size:var(--s-etikett);color:var(--leise)}
-.seiteninfo .st{color:var(--akzentT);white-space:nowrap}
 /* Abschnittsname auf der Startseite: Nummer nach Stand */
 :root,[data-modus=hell]{--st-hellblau:#2866a8;--st-dunkelblau:#1d4f91;--st-gruen:#2f7549;--st-rot:#c62828}
 [data-modus=dunkel]{--st-hellblau:#8cc3f2;--st-dunkelblau:#7aa6ee;--st-gruen:#7fcf98;--st-rot:#ff9090}
@@ -631,7 +592,6 @@ body.im-vollbild{overflow:hidden}
 .dauer-zahl{font-size:1.15em;color:var(--text);font-weight:700}
 .tut-mess{position:absolute;left:-9999px;top:0;visibility:hidden}
 .tut-mess *{animation:none!important}
-.seiteninfo .zeile b{font-weight:700;color:var(--text)}
 /* Profil-Unterseiten und Fehlerstellen */
 .unterseiten{margin-top:6px}
 .unterseiten .karte{text-decoration:none;color:inherit}
@@ -896,7 +856,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 /* Große Überschriften minimal enger (Feinschliff 1.5): ab 34 Pixel −0,015em, 28 Pixel −0,01em */
 .marke,.start h1,.einblendung h2{letter-spacing:-.015em}
 .marke small{letter-spacing:0}
-.gruss,.ab-kopf h2,.feier h2,.tut-schritt h2,.orn-karte h2,.rangkarte b,.rangstufe .kopf b{letter-spacing:-.01em}
+.gruss,.feier h2,.tut-schritt h2,.orn-karte h2,.rangkarte b,.rangstufe .kopf b{letter-spacing:-.01em}
 /* Etappe 3: Festigen, Ruhetag und Pause, Auswertung */
 .marke-art.festigen{background:rgba(90,120,170,.16);color:var(--text)}
 .ruhe-karte{background:var(--karte);border:1px solid var(--rand);border-radius:20px;padding:20px 18px;margin:22px 0 8px;text-align:center}
@@ -1068,11 +1028,6 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-orte li>a::after{content:'';position:absolute;inset:0}
 .ah-orte li .ah-danach{position:relative;z-index:1}
 /* Lichtkarte auf der Startseite: ein einziger Verweis, Zahlen ohne Durchsichtigkeit */
-.licht-mini{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;text-decoration:none}
-.licht-mini span{aspect-ratio:1;border-radius:6px;font-size:13px;display:grid;place-items:center;color:#1c140c}
-[data-modus=dunkel] .licht-mini span{color:#fff}
-[data-modus=dunkel] .licht-mini span.voll{color:#000}
-.licht-mini span.aus,[data-modus=dunkel] .licht-mini span.aus{background:color-mix(in srgb,var(--rand) 35%,var(--bg));color:var(--leise)}
 /* Seitengröße 125 und 150 %: die Seite wächst über den Rand, man schiebt sie mit dem Finger. Bei 100 % ändert sich nichts. */
 html[data-gross] .roller{direction:rtl;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:6px 4px 44px;margin:-6px -4px -44px;scrollbar-width:thin}
 html[data-gross] .roller>*{direction:ltr}
@@ -1157,10 +1112,6 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .nav a[data-r=mushaf] svg{box-sizing:content-box;width:26px;height:26px;padding:10px;margin-top:-26px;border-radius:50%;background:var(--akzent);color:var(--bg);border:3px solid var(--bg);box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .nav a[data-r=mushaf].an svg{background:var(--akzent2)}
 /* Mehr: die Einstellungen als große, farbige Karte */
-.einst-karte{margin:16px 0 14px;padding:18px 16px;border:1px solid var(--akzent);background:linear-gradient(135deg,color-mix(in srgb,var(--akzent) 24%,var(--karte)),var(--karte))}
-.einst-karte .t b{color:var(--akzentT);font-size:1.18rem}
-.einst-zahn{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--akzent);color:var(--bg);flex:none;margin-right:2px}
-.einst-zahn svg{width:28px;height:28px}
 /* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Gehe zu klappt darunter auf */
 [data-ansicht=mushaf] .marke{font-size:1.7rem}
 [data-ansicht=mushaf] .marke small{margin-top:5px}
@@ -1170,12 +1121,6 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .sprung-panel .stellenwahl{margin-top:10px}
 .sprung-panel .auswahl select{flex:1;max-width:60%}
 /* Heute: der App-Titel als Wortmarke mit dem Itqān-Zeichen */
-.app-kopf{align-items:center}
-.app-titel{display:flex;align-items:center;gap:12px;min-width:0}
-.app-zeichen{flex:none;display:block;height:58px;filter:drop-shadow(0 0 10px var(--glow))}
-.app-name{margin:0;font-family:var(--kopf);font-weight:600;font-size:clamp(2.2rem,10vw,2.8rem);line-height:1;letter-spacing:.015em;color:var(--akzent);text-shadow:0 0 18px var(--glow)}
-[data-modus=dunkel] .app-name{color:var(--akzent2)}
-.app-text small{display:block;font:400 var(--s-klein) var(--fliess);color:var(--leise);margin-top:7px;line-height:1.35}
 /* Hinweiskarte mit kleinem X zum Ausblenden */
 .umzug-hinweis{position:relative;padding-right:46px}
 .hinweis-x{position:absolute;top:4px;right:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--leise);font-size:1.7rem;line-height:1;cursor:pointer}
@@ -1288,7 +1233,6 @@ html{scrollbar-gutter:stable}
 .uebung-hero{box-shadow:0 5px 14px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
 .einst-zahnrad{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 70%, transparent)}
 .angebot{box-shadow:0 6px 16px -4px color-mix(in srgb, var(--glow) 70%, transparent)}
-.lk-seg button.an{box-shadow:0 3px 8px -2px color-mix(in srgb, var(--glow) 70%, transparent)}
 .angebot b{font-size:1.1rem}
 .angebot p{font-size:calc(var(--s-text) * .9)}
 .wahl-karte{position:relative;display:flex;flex-direction:column;gap:2px;padding:14px 56px 14px 16px;border:1px solid var(--rand);border-radius:16px;background:var(--karte)}
@@ -1321,3 +1265,8 @@ html{scrollbar-gutter:stable}
 .gr-zeichen{flex:none;display:grid;place-items:center;width:34px;height:34px;color:var(--akzentT);opacity:.85}
 :where([data-modus=dunkel]) .gr-zeichen{color:var(--akzent2)}
 .gr-zeichen svg{width:22px;height:22px}
+/* Version 1.88: Blätterpfeile im Vollbild nur kurz sichtbar */
+.vb-pfeil{opacity:0;transition:opacity .45s}
+.vollbild.pfeile .vb-pfeil{opacity:.8}
+.vollbild.gezoomt.pfeile .vb-pfeil{opacity:.2}
+.uebs-blase{z-index:90}
