@@ -1,10 +1,10 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v151';
+const SCHALE = 'itqan-schale-v152';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/sprache.js', 'js/sprache/de.js', 'js/app.js', 'js/uebersetzung.js', 'js/daten.js', 'js/zustand.js', 'js/abfragen.js', 'js/auswahl.js', 'js/lichtkarte.js', 'js/sperre.js', 'js/mushaf.js', 'js/ziffern.js', 'js/abgleich.js', 'js/konto.js', 'js/server.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/abschnitte_seite_v1.json', 'daten/abschnitte_seite_v2.json',
   'daten/gliederungen/fort-1.json', 'daten/gliederungen/fort-2.json', 'daten/gliederungen/anf-1.json', 'daten/gliederungen/seite-v1.json', 'daten/gliederungen/seite-v2.json', 'daten/suren.json', 'schriften/uthmanic_hafs.woff2',
-  'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
+  'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png', 'icons/kalligraphie-gold.webp', 'icons/kalligraphie-tinte.webp'];
 // einzeln laden und speichern: cache.addAll meldet in der Android-Hülle fälschlich doppelte Anfragen
 const sammeln = (c, liste) => Promise.all(liste.map(async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u); await c.put(u, r); }));
 self.addEventListener('install', e => e.waitUntil((async () => {
