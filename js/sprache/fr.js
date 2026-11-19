@@ -1610,6 +1610,8 @@ export default {
     kalligrafie95_1: 'La nouvelle calligraphie du nom apparaît maintenant au choix de la langue, à la configuration et dans la présentation, à la place de la typographie.',
     umzug96_titel: 'Prêt pour le déménagement',
     umzug96_1: 'Les anciens liens et l’icône de l’écran d’accueil redirigeront automatiquement vers la nouvelle adresse.',
+    wiederherstellen97_titel: 'Les sections du jour après une restauration',
+    wiederherstellen97_1: 'Quand tu restaures ton profil, « Aujourd’hui » montre maintenant les sections déjà terminées aujourd’hui au lieu de 0/0.',
     lichtkarte92_titel: 'Carte de lumière, pages, couleurs',
     lichtkarte92_1: 'Dans la feuille de page de la carte de lumière, les sections avec des points d’erreur ouverts sont désormais marquées en rouge. Tourner les pages dans le Mushaf fait glisser la page suivante sans rupture, même hors plein écran. Le choix de couleur des signes de pause a un nouvel ordre. La fermeture du plein écran est plus fluide : la page glisse jusqu’à sa place.',
     blaettern91_titel: 'Pages qui glissent, fenêtre du graphique',

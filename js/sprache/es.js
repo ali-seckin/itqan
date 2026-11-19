@@ -1610,6 +1610,8 @@ export default {
     kalligrafie95_1: 'La nueva caligrafía del nombre aparece ahora en la elección del idioma, la configuración y la introducción, en lugar de la letra impresa.',
     umzug96_titel: 'Listo para la mudanza',
     umzug96_1: 'Los enlaces antiguos y el icono de la pantalla de inicio redirigirán automáticamente a la nueva dirección.',
+    wiederherstellen97_titel: 'Secciones de hoy tras restaurar',
+    wiederherstellen97_1: 'Al restaurar tu perfil, «Hoy» muestra ahora las secciones que ya completaste hoy en lugar de 0/0.',
     lichtkarte92_titel: 'Mapa de luz, páginas, colores',
     lichtkarte92_1: 'En la hoja de página del mapa de luz, las secciones con puntos de error abiertos aparecen ahora marcadas en rojo. Al pasar de página en el Mushaf, la siguiente entra sin saltos, también sin pantalla completa. La elección de color de los signos de pausa tiene un nuevo orden. Cerrar la pantalla completa es más fluido: la página se desliza hasta su lugar.',
     blaettern91_titel: 'Páginas que se deslizan, ventana del gráfico',

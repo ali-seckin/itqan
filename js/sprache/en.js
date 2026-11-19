@@ -1610,6 +1610,8 @@ export default {
     kalligrafie95_1: 'The new calligraphy of the name now appears on the language choice, the setup and the introduction instead of plain Arabic type.',
     umzug96_titel: 'Ready for the move',
     umzug96_1: 'Old links and the home screen icon will forward automatically to the new address.',
+    wiederherstellen97_titel: 'Today’s sections after a restore',
+    wiederherstellen97_1: 'When you restore your profile, Today now shows the sections you already completed today instead of 0/0.',
     lichtkarte92_titel: 'Light map, page turns, colours',
     lichtkarte92_1: 'In the light map’s page sheet, sections with open trouble spots are now marked in red. Turning pages in the Mushaf slides the next page in seamlessly, even without full screen. The stop sign colour choice has a new order. Closing full screen is smoother: the page glides to its place.',
     blaettern91_titel: 'Sliding page turns, chart popup',

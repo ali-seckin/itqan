@@ -223,10 +223,13 @@ export function zusammenfuehren(sockel, ...logs) {
 // Abschlüsse werden über ihren Āya-Bereich dem heutigen Abschnitt zugeordnet, Pläne entstehen neu.
 export function umziehen(eintraege, profilNeu) {
   const ab = profilNeu.sockel?.z ?? 0, uebernommen = [], offen = []; let verworfen = 0;
+  const gestern = plusTage(heute(), -1), abschnittVon = e => e.v && D.A.find(x => x.v[0] === e.v[0] && x.v[1] === e.v[1]);
+  // Abschlüsse von gestern und heute, die der neue Sockel noch nicht kennt (die Generation entstand auf einem anderen Gerät), gehen nicht verloren
+  const frisch = e => e.y === 'ab' && e.d >= gestern && !profilNeu.tage?.[e.d]?.fertig?.includes(abschnittVon(e)?.id);
   for (const e of eintraege) {
-    if (e.z <= ab || e.y === 'pl' || e.y === 'pa' || (e.y === 'ei' && e.k === 'einst.bereich')) { verworfen++; continue; }
+    if ((e.z <= ab && !frisch(e)) || e.y === 'pl' || e.y === 'pa' || (e.y === 'ei' && e.k === 'einst.bereich')) { verworfen++; continue; }
     if (e.y !== 'ab' && e.y !== 'lb' && e.y !== 'lx') { uebernommen.push(e); continue; }
-    const a = D.A.find(x => x.v[0] === e.v[0] && x.v[1] === e.v[1]);
+    const a = abschnittVon(e);
     if (a) uebernommen.push({ ...e, id: a.id }); else offen.push(e);
   }
   return { uebernommen, offen, verworfen };
@@ -821,6 +824,7 @@ function abschlussAnwenden(e0) {
   P.karten[id] = k;
   // Tag und Summen
   if (!t.fertig.includes(id)) t.fertig.push(id);
+  if (['zyklus', 'fehler', 'festigen', 'qadaa'].includes(art) && !t.plan.includes(id)) { t.plan.push(id); t.art[id] = art; }   // Abschluss eines geplanten Abschnitts, dessen Plan dieses Gerät nicht kennt (Wiederherstellung, andere Generation): er zählt heute mit
   if (art === 'bonus' && !t.plan.includes(id)) { t.plan.push(id); t.art[id] = 'bonus'; }
   Object.assign(t, { punkte: t.punkte + punkte, hasanat: t.hasanat + hasanat, r: t.r + r, f: t.f + f, h: t.h + h + z });
   Object.assign(P.summe, { punkte: P.summe.punkte + punkte, hasanat: P.summe.hasanat + hasanat, r: P.summe.r + r, f: P.summe.f + f, h: P.summe.h + h + z, abschnitte: P.summe.abschnitte + 1 });

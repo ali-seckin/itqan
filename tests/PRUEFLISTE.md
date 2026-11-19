@@ -102,3 +102,4 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 73. Startbild: beim Öffnen steht die Kalligrafie mit „Itqān“ groß (helle Darstellung dunkelblau, dunkle golden), kein Ladetext; Bildschirmleser liest „Itqān wird geladen“.
 74. Die Kalligrafie ersetzt die arabische Schrift bei Sprachwahl, Einrichtung und Einführung (Größe wie zuvor, helle Darstellung dunkelblau, dunkle golden).
 75. Service Worker: Seitenaufrufe holen eine Umleitung nicht selbst ab (Test mit zwei lokalen Adressen: alter Standort leitet per 301 auf neuen, Gerät mit installiertem Service Worker landet auf dem neuen Standort statt auf einer Fehlerseite).
+76. Profil aus dem Konto wiederherstellen (anderes Gerät oder neue Adresse), nachdem heute schon Abschnitte abgeschlossen wurden: „Heute“ zeigt die heutigen Abschlüsse (z. B. 3/3 und die Hasanāt von heute), nicht 0/0 (Test tests/heute_wiederherstellen.test.mjs).
