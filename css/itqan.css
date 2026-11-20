@@ -1308,3 +1308,5 @@ html{scrollbar-gutter:stable}
 .vollbild.zieht .vb-buehne{position:relative;z-index:1}
 .vollbild.zieht .vb-zu,.vollbild.zieht .vb-regler,.vollbild.zieht .vb-vorschau{opacity:var(--vb-ui,1);transition:none}
 .vollbild.zieht .vb-pfeil{opacity:0;transition:none}
+/* Store-App: keine Anleitung zum Installieren (die App ist ja installiert) */
+.nativ a[href="#installieren"]{display:none!important}

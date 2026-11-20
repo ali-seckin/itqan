@@ -16,6 +16,7 @@ import * as RB from './rueckblick.js';
 import { UEBERSETZUNGEN, uebersetzungLaden } from './uebersetzung.js';
 import { FRAGEN, GLOSSAR, TASTEN } from './hilfe.js';
 import { tx, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
+import { NATIV, mitteilungMoeglich, mitteilungAn, mitteilungSchalten, mitteilungPlanen } from './nativ.js';
 const komma = () => gebiet('komma') ?? ', ';
 
 const app = document.getElementById('app');
@@ -198,7 +199,7 @@ const teilenSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="c
 const plusSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 const punkteSymbol = '<svg class="sym" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
 function installieren() {
-  if (!UEBERGANG.installieren) { location.replace(Z.P ? '#profil' : '#start'); return; }
+  if (!UEBERGANG.installieren || NATIV) { location.replace(Z.P ? '#profil' : '#start'); return; }
   navSetzen(Z.P ? 'profil' : null);
   const g = geraet();
   const schritte = {
@@ -292,6 +293,11 @@ function schnappschussBinden(wurzel) {
   });
 }
 
+// Inhalt der täglichen Erinnerung (Store-App: echte Mitteilung; Browser: Kalendereintrag)
+function erinnerungInhalt() {
+  const E = Z.P?.einst || {}, A = { fajr: tx('einstellungen.anker_fajr'), zuhr: tx('einstellungen.anker_zuhr'), asr: tx('einstellungen.anker_asr'), maghrib: tx('einstellungen.anker_maghrib'), isha: tx('einstellungen.anker_isha'), schlaf: tx('einstellungen.anker_schlaf') };
+  return { zeit: E.erinnerung || '05:30', titel: tx('einstellungen.kalender_titel') + (A[E.anker] ? ' · ' + A[E.anker] : ''), text: tx('einstellungen.kalender_text') };
+}
 // ---------- Alle Seiten offline speichern ----------
 const SEITEN_CACHE = 'itqan-seiten-v1';
 const seitenUrl = x => `schriften/${D.ausgabe === 'v1' ? 'v1' : 'v2'}/p${x}.woff2`;
@@ -302,7 +308,7 @@ async function gespeicherteSeiten() {
 }
 // Die Seiten des heutigen Wird im Hintergrund speichern, damit es auch ohne Netz in Muṣḥaf-Schrift da ist
 async function vorratSpeichern() {
-  if (!Z.P || !navigator.onLine || navigator.connection?.saveData) return;
+  if (NATIV || !Z.P || !navigator.onLine || navigator.connection?.saveData) return;
   try {
     const da = await gespeicherteSeiten(); if (!da) return;
     const t = Z.tagesplan(), cache = await caches.open(SEITEN_CACHE);
@@ -732,7 +738,7 @@ function heute() {
   const umzugKarte = (location.hostname === 'ali-seckin.github.io' || /[?&]umzug\b/.test(location.search)) && umzugWeg !== Z.heute();
   const sicherungFaellig = UEBERGANG.sicherungErinnern && seitSicherung >= 7 && P.summe.abschnitte > 0 && spaeter !== Z.heute() && !Ab.status().verbunden;   // wer mit einem Konto abgleicht, braucht die Erinnerung nicht
   let installWeg = null; try { installWeg = localStorage.getItem('itqan-install-weg'); } catch (e) {}
-  const installKarte = UEBERGANG.installieren && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
+  const installKarte = UEBERGANG.installieren && !NATIV && sicher('install', () => !istInstalliert() && istTouch(), false) && !installWeg;
   const comebackHTML = t.cb && t.plan.length < Z.pensumAm(Z.heute()) ? `<div class="hinweisbox"><b>${tx('heute.comeback_titel')}</b><p style="margin-top:4px">${tx('heute.comeback_text')}</p><div class="reihe" style="margin-top:8px"><button class="knopf leise klein" id="comeback-voll">${tx('heute.comeback_voll')}</button></div></div>` : '';
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
   const lekt = sicher('lektionen', () => Z.lernHeute().filter(l => D.A[l.id]), []), wartend = sicher('lektionen-warten', () => Z.lektionen().length - lekt.length, 0);
@@ -2765,16 +2771,16 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
     <div class="abschnitt"><h3>${tx('einstellungen.dein_tag_beginnt_um')}</h3><p class="unter">${tx('einstellungen.vorgabe_ist_3_uhr_ein_wird_um_1_uhr')}</p>
       <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.tageswechsel')}</span><select id="tagesbeginn">${optionen([0, 1, 2, 3, 4, 5], E.tagesbeginn || 0, x => x ? tx('einstellungen.um_uhr', { x }) : tx('einstellungen.mitternacht'))}</select></label></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
+    <div class="abschnitt"><h3>${tx('einstellungen.taegliche_erinnerung')}</h3><p class="unter">${mitteilungMoeglich ? tx('einstellungen.mitteilung_text') : tx('einstellungen.ohne_server_kann_die_app_selbst_keine')}</p>
       <div class="zeitwahl"><select id="std" aria-label="${tx('einstellungen.stunde')}">${optionen(Array.from({ length: 24 }, (_, i) => i), hh, zwei)}</select><b>:</b><select id="min" aria-label="${tx('einstellungen.minute')}">${optionen(minuten, mm, zwei)}</select><span>${tx('einstellungen.uhr')}</span></div>
       <label class="auswahl" style="margin-top:10px"><span>${tx('einstellungen.anker')}</span><select id="anker">${['', 'fajr', 'zuhr', 'asr', 'maghrib', 'isha', 'schlaf'].map(k => `<option value="${k}"${(E.anker || '') === k ? ' selected' : ''}>${k ? ANKER[k] : tx('einstellungen.anker_ohne')}</option>`).join('')}</select></label>
-      <p class="unter" style="margin-top:6px">${tx('einstellungen.anker_text')}</p>
-      <button class="knopf leise" id="ics" style="margin-top:10px">${tx('einstellungen.in_den_kalender_eintragen')}</button></div>
+      <p class="unter" style="margin-top:6px">${mitteilungMoeglich ? tx('einstellungen.anker_text_mitteilung') : tx('einstellungen.anker_text')}</p>
+      ${mitteilungMoeglich ? `<button class="knopf ${mitteilungAn() ? 'leise' : 'haupt'}" id="mitteilung" style="margin-top:10px">${mitteilungAn() ? tx('einstellungen.mitteilung_aus') : tx('einstellungen.mitteilung_an')}</button>` : `<button class="knopf leise" id="ics" style="margin-top:10px">${tx('einstellungen.in_den_kalender_eintragen')}</button>`}</div>
     </details>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_wiederherstellung')}</summary>
-    <div class="abschnitt"><h3>${tx('einstellungen.offline')}</h3><p class="unter">${tx('einstellungen.laedt_alle_604_seiten_des_drucks_damit', { a: D.ausgabe === 'v1' ? tx('einstellungen.1405_etwa_48_mb') : tx('einstellungen.1421_etwa_95_mb') })}</p>
+    ${NATIV ? '' : `<div class="abschnitt"><h3>${tx('einstellungen.offline')}</h3><p class="unter">${tx('einstellungen.laedt_alle_604_seiten_des_drucks_damit', { a: D.ausgabe === 'v1' ? tx('einstellungen.1405_etwa_48_mb') : tx('einstellungen.1421_etwa_95_mb') })}</p>
       <p class="offline-stand" id="offline-stand">${tx('einstellungen.gespeicherte_seiten_werden_gezaehlt')}</p><div class="balken verdeckt" id="offline-balken"><div style="width:0%"></div></div>
-      <button class="knopf leise" id="offline" style="margin-top:10px">${tx('einstellungen.alle_seiten_speichern')}</button></div>
+      <button class="knopf leise" id="offline" style="margin-top:10px">${tx('einstellungen.alle_seiten_speichern')}</button></div>`}
     <div class="abschnitt"><h3>${tx('einstellungen.schnappschuesse')}</h3><p class="unter">${tx('einstellungen.itqan_legt_einmal_am_tag_und_vor')}</p>
       <div style="margin-top:10px">${schnappschussListe()}</div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.quellen')}</h3><p class="unter">${tx('einstellungen.die_schriften_der_mushaf_seiten_drucke')}</p></div>
@@ -2870,10 +2876,17 @@ function einstellungen() {
   }, { leer: tx('auswahl.leer_einst') });
   const verlassen = () => { removeEventListener('hashchange', verlassen); if (istLeer(sel)) toast(tx('auswahl.leer_verlassen')); };
   addEventListener('hashchange', verlassen);
-  const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); };
+  const zeit = () => { E.erinnerung = `${zwei(app.querySelector('#std').value)}:${zwei(app.querySelector('#min').value)}`; Z.speichern(); mitteilungPlanen(erinnerungInhalt()); };
   app.querySelector('#std').onchange = zeit; app.querySelector('#min').onchange = zeit;
-  app.querySelector('#anker').onchange = ev => { E.anker = ev.target.value; Z.speichern(); };
-  app.querySelector('#ics').onclick = () => {
+  app.querySelector('#anker').onchange = ev => { E.anker = ev.target.value; Z.speichern(); mitteilungPlanen(erinnerungInhalt()); };
+  const mk = app.querySelector('#mitteilung');
+  if (mk) mk.onclick = async () => {
+    const an = !mitteilungAn(), ok = await mitteilungSchalten(an, erinnerungInhalt());
+    if (an && !ok) { toast(tx('einstellungen.mitteilung_verweigert')); return; }
+    if (an) toast(tx('einstellungen.mitteilung_ist_an'));
+    mk.textContent = mitteilungAn() ? tx('einstellungen.mitteilung_aus') : tx('einstellungen.mitteilung_an'); mk.className = `knopf ${mitteilungAn() ? 'leise' : 'haupt'}`;
+  };
+  const icsK = app.querySelector('#ics'); if (icsK) icsK.onclick = () => {
     const [h, m] = (E.erinnerung || '05:30').split(':'), d = Z.heute().replace(/-/g, '');
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Itqan//Wird//DE', 'BEGIN:VEVENT', `UID:itqan-wird-${Date.now()}@itqan`, `DTSTAMP:${stamp}`,
@@ -2882,7 +2895,7 @@ function einstellungen() {
     herunterladen('Itqan-Wird.ics', ics, 'text/calendar');
   };
   // Stand anzeigen, nur fehlende Seiten laden, Abbrüche zählen und „Erneut versuchen“ anbieten
-  const stand = app.querySelector('#offline-stand'), balken = app.querySelector('#offline-balken'), ob = app.querySelector('#offline');
+  const stand = app.querySelector('#offline-stand') || document.createElement('p'), balken = app.querySelector('#offline-balken') || document.createElement('div'), ob = app.querySelector('#offline') || document.createElement('button');
   const standZeigen = async () => {
     const da = await gespeicherteSeiten();
     if (!da) { stand.textContent = tx('einstellungen.dieser_browser_kann_keine_seiten'); ob.disabled = true; return null; }
@@ -2988,7 +3001,9 @@ async function starten() {
   const tippfeld = el => !!el?.matches?.('textarea, [contenteditable=""], [contenteditable="true"], input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=file]):not([type=color])');
   const tippt = () => document.documentElement.classList.toggle('tippt', tippfeld(document.activeElement));
   document.addEventListener('focusin', tippt); document.addEventListener('focusout', () => setTimeout(tippt, 0));
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!NATIV && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Store-App: tägliche Mitteilung mit aktueller Sprache und Uhrzeit neu planen
+  if (NATIV && Z.P && mitteilungAn()) mitteilungPlanen(erinnerungInhalt());
   // Tageswechsel, wenn die App über Nacht offen bleibt
   let tag = Z.heute();
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Z.heute() !== tag) { tag = Z.heute(); if ((location.hash || '#heute') === '#heute') zeige(); } });
