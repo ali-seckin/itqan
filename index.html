@@ -2,6 +2,8 @@
 <html lang="de" data-modus="hell">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-IU7AOVLg0xBdKoFW01BerfIMkmvYnfo6M1F655xROFc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: https://cmhhkibcfzjdftitxxpy.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3e8d2">
 <meta name="color-scheme" content="light dark">
@@ -15,11 +17,25 @@
 <link rel="icon" href="icons/favicon-32.png?v=3" sizes="32x32">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
 <link rel="stylesheet" href="css/schriften.css?v=47">
-<link rel="stylesheet" href="css/itqan.css?v=139">
-<script>try{var h=document.documentElement,p=JSON.parse(localStorage.getItem('itqan-profil-v1')||'null'),e=p&&p.einst||{},w=e.thema||localStorage.getItem('itqan-thema')||'auto';h.dataset.modus=w==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dunkel':'hell'):w;var s=+e.seitenGroesse||100,t=+e.textGroesse||100;h.style.setProperty('--sm',s/100);h.style.setProperty('--tm',t/100);if(s>100)h.dataset.gross='1'}catch(x){}</script>
+<link rel="stylesheet" href="css/itqan.css?v=140">
+<!-- Startpfad vorab laden (alle statisch eingebundenen Module); tests/vorrat.test.mjs hält die Liste aktuell -->
+<link rel="modulepreload" href="js/huelle.js"><link rel="modulepreload" href="js/sprache.js"><link rel="modulepreload" href="js/sprache/de.js"><link rel="modulepreload" href="js/app.js">
+<link rel="modulepreload" href="js/daten.js"><link rel="modulepreload" href="js/zustand.js"><link rel="modulepreload" href="js/lernmodell.js"><link rel="modulepreload" href="js/lichtkarte.js">
+<link rel="modulepreload" href="js/abfragen.js"><link rel="modulepreload" href="js/sperre.js"><link rel="modulepreload" href="js/forschung.js"><link rel="modulepreload" href="js/server.js">
+<link rel="modulepreload" href="js/mushaf.js"><link rel="modulepreload" href="js/ziffern.js"><link rel="modulepreload" href="js/suche.js"><link rel="modulepreload" href="js/ornamente.js">
+<link rel="modulepreload" href="js/version.js"><link rel="modulepreload" href="js/abgleich.js"><link rel="modulepreload" href="js/konto.js"><link rel="modulepreload" href="js/fuehrung.js">
+<link rel="modulepreload" href="js/aehnlich.js"><link rel="modulepreload" href="js/auswahl.js"><link rel="modulepreload" href="js/rueckblick.js"><link rel="modulepreload" href="js/uebersetzung.js">
+<link rel="modulepreload" href="js/hilfe.js"><link rel="modulepreload" href="js/nativ.js">
+<script>try{var h=document.documentElement,p=JSON.parse(localStorage.getItem('itqan-profil-v1')||'null'),e=p&&p.einst||{},w=e.thema||localStorage.getItem('itqan-thema')||'auto';h.dataset.modus=w==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dunkel':'hell'):w;var s=+e.seitenGroesse||100,t=+e.textGroesse||100;h.style.setProperty('--sm',s/100);h.style.setProperty('--tm',t/100);if(s>100)h.dataset.gross='1';var m=document.querySelector('meta[name=theme-color]');if(m&&h.dataset.modus==='dunkel')m.content='#0d2230'}catch(x){}</script>
 </head>
 <body>
-<main id="app" tabindex="-1"><div class="lade" role="status" data-tx-label="seite.laedt" aria-label="Itqān wird geladen …"><div class="lade-logo"><img class="lade-kalli lade-hell" src="icons/kalligraphie-tinte.webp" alt="" width="700" height="456" decoding="async"><img class="lade-kalli lade-dunkel" src="icons/kalligraphie-gold.webp" alt="" width="700" height="456" decoding="async"><span class="lade-name">Itqān</span></div></div></main>
+<main id="app" tabindex="-1"><div class="lade" role="status" data-tx-label="seite.laedt" aria-label="Itqān wird geladen …"><div class="lade-logo"><img class="lade-kalli lade-hell" src="icons/kalligraphie-tinte.webp" alt="" width="700" height="456" decoding="async"><img class="lade-kalli lade-dunkel" src="icons/kalligraphie-gold.webp" alt="" width="700" height="456" decoding="async"><span class="lade-name">Itqān</span></div>
+<div class="lade-spaet not" dir="ltr"><p lang="de">Itqān lädt nicht? Prüfe deine Verbindung und lade neu. Hilft das nicht, aktualisiere deinen Browser (mindestens iOS 16, Chrome 105 oder Firefox 110). Dein Lernstand bleibt auf diesem Gerät erhalten.</p><p lang="en">Itqān does not load? Check your connection and reload. If that does not help, update your browser (at least iOS 16, Chrome 105 or Firefox 110). Your progress stays saved on this device.</p><a class="knopf haupt" href="./">Neu laden · Reload</a></div></div></main>
+<!-- Notansicht (js/start.js): feste Texte auf Deutsch und Englisch, falls Sprache oder App nicht laden -->
+<template id="not-laden"><div class="not" dir="ltr" role="alert"><h2 lang="de">Itqān lässt sich gerade nicht laden.</h2><p lang="de">Bitte prüfe deine Verbindung und lade neu. Dein Lernstand bleibt auf diesem Gerät erhalten.</p><h2 lang="en">Itqān cannot load right now.</h2><p lang="en">Please check your connection and reload. Your progress stays saved on this device.</p><button type="button" class="knopf haupt">Neu laden · Reload</button></div></template>
+<template id="not-langsam"><div class="not" dir="ltr" role="alert"><h2 lang="de">Itqān braucht länger als sonst.</h2><p lang="de">Du kannst weiter warten oder neu laden. Dein Lernstand bleibt auf diesem Gerät erhalten.</p><h2 lang="en">Itqān is taking longer than usual.</h2><p lang="en">You can keep waiting or reload. Your progress stays saved on this device.</p><button type="button" class="knopf haupt">Neu laden · Reload</button></div></template>
+<template id="not-alt"><div class="not" dir="ltr" role="alert"><h2 lang="de">Dein Browser ist zu alt für Itqān.</h2><p lang="de">Bitte aktualisiere ihn: mindestens iOS 16, Chrome 105 oder Firefox 110. Dein Lernstand bleibt auf diesem Gerät erhalten.</p><h2 lang="en">Your browser is too old for Itqān.</h2><p lang="en">Please update it: at least iOS 16, Chrome 105 or Firefox 110. Your progress stays saved on this device.</p><button type="button" class="knopf leise">Trotzdem öffnen · Open anyway</button></div></template>
+<template id="not-rahmen"><div class="not" dir="ltr" role="alert"><h2 lang="de">Itqān läuft nicht eingebettet in einer fremden Seite.</h2><p lang="de">Bitte öffne die App direkt.</p><h2 lang="en">Itqān does not run embedded in another site.</h2><p lang="en">Please open the app directly.</p><button type="button" class="knopf haupt">Itqān öffnen · Open Itqān</button></div></template>
 <nav class="nav verdeckt" id="nav" aria-label="Hauptnavigation" data-tx-label="seite.hauptnavigation"><div>
   <a href="#heute" data-r="heute" data-tx="titel.heute"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>Heute</a>
   <a href="#karte" data-r="karte" data-tx="allg.lichtkarte"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Lichtkarte</a>

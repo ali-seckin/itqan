@@ -1,4 +1,4 @@
-// Itqān · Lernmodell: Stabilität, Fälligkeit, Auswahl
+// Itqān · Lernmodell: Stabilität, Fälligkeit, Auswahl (früher langzeit.test.mjs, nach dem abgeschafften Modus benannt)
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { Z, D, frisch, naechsterTag, tagSetzenZurueck } from './umgebung.mjs';

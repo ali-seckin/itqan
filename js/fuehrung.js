@@ -1,4 +1,5 @@
 import { tx } from './sprache.js';
+import { ueberlagerung } from './sperre.js';
 // Itqān · Geführte Erklärung: dunkelt den Bildschirm ab, lässt ein Element ausgespart hell stehen
 // und zeigt daneben einen kleinen Erklärkasten. Schritte: { ziel: () => Element | Element[] | null, titel, text }
 
@@ -22,9 +23,9 @@ export function fuehrung(schritte) {
   if (!schritte.length) return Promise.resolve();
   return new Promise(fertig => {
     const o = document.createElement('div'); o.className = 'fuehrung';
-    o.innerHTML = `<div class="fh-loch"></div><div class="fh-box" role="dialog" aria-live="polite">
+    o.innerHTML = `<div class="fh-loch"></div><div class="fh-box" role="dialog" aria-modal="true" aria-labelledby="fh-titel" aria-live="polite">
       <div class="fh-kopf"><span class="fh-nr"></span><button class="fh-weg">${tx('fuehrung.ueberspringen')}</button></div>
-      <h3></h3><p></p>
+      <h3 id="fh-titel"></h3><p></p>
       <div class="fh-knoepfe"><button class="knopf leise klein fh-zurueck">${tx('allg.zurueck')}</button><button class="knopf haupt klein fh-weiter">${tx('allg.weiter')}</button></div></div>`;
     document.body.appendChild(o);
     const loch = o.querySelector('.fh-loch'), box = o.querySelector('.fh-box');
@@ -66,13 +67,16 @@ export function fuehrung(schritte) {
       box.classList.remove('neu'); void box.offsetWidth; box.classList.add('neu');
       requestAnimationFrame(lage);
     }
-    function schliessen() { removeEventListener('resize', lage); removeEventListener('scroll', lage, true); removeEventListener('keydown', taste, true); o.classList.add('weg'); setTimeout(() => o.remove(), 220); fertig(); }
-    const taste = ev => { ev.stopPropagation(); if (ev.key === 'Escape') schliessen(); else if (ev.key === 'Enter' || ev.key === 'ArrowRight' || ev.key === ' ') { ev.preventDefault(); o.querySelector('.fh-weiter').click(); } else if (ev.key === 'ArrowLeft' && i) zeige(i - 1); };
+    // Zurück-Taste und Escape schließen die Erklärung, die Tabulatortaste bleibt im Kasten, der Fokus kehrt danach zurück
+    const ende = ueberlagerung(o, grund => { removeEventListener('resize', lage); removeEventListener('scroll', lage, true); removeEventListener('keydown', taste, true); if (grund === 'wechsel') o.remove(); else { o.classList.add('weg'); setTimeout(() => o.remove(), 220); } fertig(); },
+      { hinter: [document.getElementById('app'), document.getElementById('nav')], fokus: () => o.querySelector('.fh-weiter') });
+    const schliessen = () => ende();
+    // Enter und Leertaste auf einem Knopf des Kastens wirken wie ein Tipp darauf; sonst geht es mit ihnen weiter
+    const taste = ev => { ev.stopPropagation(); if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.key === 'Escape' || ev.key === 'Tab') return; const aufKnopf = ev.target?.closest?.('.fh-box button'); if (ev.key === 'ArrowRight' || (!aufKnopf && (ev.key === 'Enter' || ev.key === ' '))) { ev.preventDefault(); if (!ev.repeat) o.querySelector('.fh-weiter').click(); } else if (ev.key === 'ArrowLeft' && i && !ev.repeat) zeige(i - 1); };
     o.querySelector('.fh-weiter').onclick = () => i < schritte.length - 1 ? zeige(i + 1) : schliessen();
     o.querySelector('.fh-zurueck').onclick = () => i && zeige(i - 1);
     o.querySelector('.fh-weg').onclick = schliessen;
     addEventListener('resize', lage); addEventListener('scroll', lage, true); addEventListener('keydown', taste, true);
-    addEventListener('hashchange', () => o.isConnected && schliessen(), { once: true });
     zeige(0);
   });
 }

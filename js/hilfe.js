@@ -1,9 +1,11 @@
 import { tx } from './sprache.js';
+import { mitteilungMoeglich } from './nativ.js';
 // Itqān · Hilfe und Glossar (Gutachten Teil A, Punkt 21)
 // Nur Texte, damit sie sich prüfen und später übersetzen lassen. Die Wortwahl folgt den Texten der App.
+// Als Funktionen: Die Texte werden erst beim Zeichnen der Hilfe geholt, wenn die Fassung des Lernmodus (Ganze Seiten) schon gesetzt ist.
 
 // Fragen und Antworten. th: Themen, nach denen die Tests prüfen, ob jede Testfrage beantwortet ist.
-export const FRAGEN = [
+export const fragen = () => [
   { th: 'lernen', f: tx('lernen.frage'),
     a: tx('lernen.antwort') },
   { th: 'wird', f: tx('hilfe.was_mache_ich_jeden_tag'),
@@ -49,7 +51,7 @@ export const FRAGEN = [
   { th: 'farben', f: tx('hilfe.was_bedeuten_die_farben_der'),
     a: tx('hilfe.sie_zeigen_die_stufe_des_abschnitts') },
   { th: 'erinnerung', f: tx('hilfe.wie_bekomme_ich_eine_taegliche'),
-    a: tx('hilfe.in_den_einstellungen_unter_taegliche') },
+    a: mitteilungMoeglich ? tx('hilfe.erinnerung_mitteilung') : tx('hilfe.in_den_einstellungen_unter_taegliche') },   // Store-App: echte Mitteilung; Browser: Kalendereintrag
   { th: 'mushaf', f: tx('hilfe.welcher_mushaf_wird_gezeigt'),
     a: tx('hilfe.der_madina_mushaf_in_der_lesart_hafs_von') },
   { th: 'leser', f: tx('hilfe.wie_bediene_ich_itqan_mit_tastatur_oder'),
@@ -57,7 +59,7 @@ export const FRAGEN = [
 ];
 
 // Glossar. b: Begriff, ar: arabische Schreibung (wenn es ein arabisches Wort ist), t: Erklärung, mehr: Zusatz.
-export const GLOSSAR = [
+export const glossar = () => [
   { b: tx('allg.abschnitt'), t: tx('hilfe.der_quran_ist_in_kleine_sinnabschnitte'), mehr: tx('hilfe.anfaenger_hoechstens_eine_halbe_seite') },
   { b: tx('hilfe.amana'), ar: 'أَمَانَة', t: tx('hilfe.anvertrautes_gut_beim_ueben_pruefst_du') },
   { b: tx('hilfe.aya'), ar: 'آيَة', t: tx('hilfe.ein_vers_des_quran_mehrzahl_ayat') },
@@ -110,7 +112,7 @@ export const GLOSSAR = [
 ];
 
 // Tastenkürzel (PC und Tablet mit Tastatur)
-export const TASTEN = [
+export const tasten = () => [
   { wo: tx('allg.ueben'), kuerzel: [[[tx('hilfe.leertaste'), 'Enter'], tx('hilfe.aya_aufdecken')], [['S', '↓'], tx('hilfe.bis_zum_zeichen_aufdecken')], [['R', '→'], tx('hilfe.richtig')], [['F', '←'], tx('allg.fehler')], [['←', '→'], tx('hilfe.nach_fehler_wort_der_aya_waehlen')], [[tx('hilfe.leertaste')], tx('hilfe.gewaehltes_wort_markieren')], [['W', 'Enter'], tx('hilfe.nach_dem_markieren_weiter')], [['Z'], tx('hilfe.gezoegert_kuerzel')]] },
   { wo: tx('allg.mushaf'), kuerzel: [[['←'], tx('hilfe.naechste_seite_wie_im_buch')], [['→'], tx('hilfe.vorige_seite')]] },
   { wo: tx('hilfe.vollbild'), kuerzel: [[['←', '→'], tx('hilfe.blaettern')], [['Esc'], tx('hilfe.schliessen')]] },

@@ -20,11 +20,18 @@ html{background:var(--bg);touch-action:manipulation;-webkit-text-size-adjust:100
 body{min-height:100vh;min-height:100dvh;font-family:var(--fliess);font-variant-numeric:lining-nums;font-size:var(--s-text);line-height:1.45;color:var(--text);background:var(--bg);-webkit-tap-highlight-color:transparent}
 [data-modus=hell] body{background:radial-gradient(900px 500px at 50% -120px,#fbf3e2 0%,var(--bg) 70%) fixed}
 [data-modus=dunkel] body{background:radial-gradient(900px 600px at 50% -100px,#17394a 0%,var(--bg) 65%) fixed}
+/* iPhone und iPad: fester Hintergrund und Gummiband gelten dort als Auslöser für verrutschte feste Leisten (Audit B-01, Hypothesen 5 bis 7). Andere Geräte bleiben unverändert */
+@supports (-webkit-touch-callout:none){[data-modus=hell] body,[data-modus=dunkel] body{background-attachment:scroll}}
+@media (display-mode:standalone){@supports (-webkit-touch-callout:none){html{overscroll-behavior-y:none}}}
+html.nativ{overscroll-behavior-y:none}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 a{color:var(--akzentT)}
 #app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
+#app{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
 .verdeckt{display:none!important}
+/* Die untere Leiste bleibt als Ebene bestehen und wird nur unsichtbar: Aus- und Einblenden mit display legt sie auf dem iPhone neu an, im Moment des Seitenwechsels (Audit B-01, Hypothese 1) */
+.nav.verdeckt{display:flex!important;visibility:hidden;pointer-events:none}
 html.sperre,html.sperre body{overflow:hidden}
 .dialog,.dialog-karte,.lk-blatt-wrap,.lk-blatt{overscroll-behavior:contain}
 .lk-banner{margin:0 0 12px;padding:10px 14px;border:1px solid var(--akzent);border-radius:14px;background:var(--karte);font-weight:600;text-align:center;animation:lkEin .5s both}
@@ -178,7 +185,6 @@ button.karte{font:inherit;color:inherit;cursor:pointer;min-height:56px}
 .opt{border-inline-start:3px solid var(--akzentF);padding-inline-start:14px}
 .opt-name{display:block;font-weight:700;color:var(--akzentT);margin-bottom:2px}
 .opt-notiz{margin:0;padding-top:2px}
-.abschnitt.gedimmt > :not(h3):not(.schwach-hinweis){opacity:.45;pointer-events:none}
 .kurz-liste{display:grid;gap:10px;margin-top:14px}
 .kurz-karte{display:block;text-align:start;text-decoration:none;color:inherit;background:var(--karte);border:1px solid var(--rand);border-radius:14px;padding:12px 14px;min-height:44px;font:inherit;width:100%}
 .kurz-karte b{display:block}.kurz-karte span{display:block;font-size:var(--s-klein);margin-top:2px}
@@ -218,7 +224,7 @@ h1,h2,h3{font-family:var(--kopf);font-weight:600;line-height:1.15}
 .zahl span{font-size:var(--s-klein);color:var(--leise)}
 
 /* Karten */
-.karte{display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px;margin-bottom:8px;width:100%;text-align:left}
+.karte{display:flex;align-items:center;gap:12px;background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px;margin-bottom:8px;width:100%;text-align:start}
 button.karte:active{transform:scale(.99)}
 .karte .nr{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:var(--s-klein);border:1px solid var(--rand)}
 .karte.fertig .nr{background:var(--gutF);border-color:transparent;color:var(--aufGut)}
@@ -227,7 +233,7 @@ button.karte:active{transform:scale(.99)}
 .karte .t{flex:1;min-width:0}
 .karte .t b{display:block;font-weight:700;font-size:var(--s-text);line-height:1.25}
 .karte .t span{font-size:var(--s-klein);color:var(--leise)}
-.marke-art{display:inline-block;font-size:var(--s-etikett);letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.marke-art{display:inline-block;font-size:var(--s-etikett);letter-spacing:.5px;padding:1px 7px;border-radius:999px;margin-inline-start:4px;vertical-align:1px}
 .marke-art.fehler{background:rgba(181,84,58,.14);color:var(--schlechtT)}
 .marke-art.qadaa{background:rgba(183,119,47,.16);color:var(--akzentT)}
 [data-modus=dunkel] .marke-art.qadaa{color:var(--akzent2)}
@@ -256,7 +262,7 @@ button.karte:active{transform:scale(.99)}
 .textlink{background:none;border:0;color:var(--leise);font-size:var(--s-text);text-decoration:underline;text-underline-offset:3px;padding:8px}
 
 /* Navigation */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);display:flex;justify-content:center;background:var(--bg);border-top:1px solid var(--rand);padding:8px 0 calc(env(safe-area-inset-bottom) + 8px)}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;background:var(--bg);border-top:1px solid var(--rand);padding:8px env(safe-area-inset-right,0px) calc(env(safe-area-inset-bottom,0px) + 8px) env(safe-area-inset-left,0px)}
 [data-modus=hell] .nav{background:#fbf4e4}
 [data-modus=dunkel] .nav{background:#0d2230}
 .nav div{display:flex;justify-content:space-around;width:100%;max-width:560px}
@@ -296,7 +302,7 @@ body.doppelt #lage,body.doppelt .seitenlage[data-lage],body.doppelt .lageinfo{di
 .mz.ers{gap:.18em}
 .ers-hinweis{font:500 max(12px,3.1cqw)/1.35 var(--fliess);text-align:center;margin:1.8cqw 2cqw 0;opacity:.78}
 /* Solange getippt wird, weicht die Navigation (iPhone: sie rutscht sonst mit der Tastatur über den Inhalt) */
-html.tippt .nav{display:none}
+html.tippt .nav{visibility:hidden;pointer-events:none}
 .snr-k{display:inline-flex;align-items:center;gap:.6em;font:500 4cqw/1 var(--fliess);color:#6b5338;border:1.5px solid #c9a45c;border-radius:4px;padding:.3em 1em;background:rgba(201,164,92,.08)}
 .snr-k .ar{font-family:system-ui,'Geeza Pro','Noto Naskh Arabic',sans-serif;font-size:1.05em}
 .snr-k i{font-style:normal;color:#c9a45c}
@@ -320,7 +326,11 @@ html.tippt .nav{display:none}
 
 /* Üben */
 .zurueck{display:inline-flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--leise);background:none;border:0;padding:4px 0;margin-bottom:8px}
-.steuerung{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 18px calc(env(safe-area-inset-bottom) + 12px);background:var(--bg);border-top:1px solid var(--rand)}
+[dir=rtl] .zurueck>svg{transform:scaleX(-1)}
+/* Bewertungsknöpfe: Fehler links, Richtig rechts, in jeder Schreibrichtung (die Pfeiltasten ← und → gehören dazu); die Beschriftung bleibt in der Sprache */
+[dir=rtl] .steuerung #knoepfe{direction:ltr}
+[dir=rtl] .steuerung #knoepfe>*{direction:rtl}
+.steuerung{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(18px,env(safe-area-inset-left,0px));background:var(--bg);border-top:1px solid var(--rand)}
 [data-modus=hell] .steuerung{background:rgba(243,232,210,.96);backdrop-filter:blur(10px)}
 [data-modus=dunkel] .steuerung{background:rgba(13,34,48,.96);backdrop-filter:blur(10px)}
 .steuerung .innen{max-width:560px;margin:0 auto}
@@ -342,15 +352,15 @@ html.tippt .nav{display:none}
 .feier h2{font-size:var(--s-titel);color:var(--akzentT)}
 [data-modus=dunkel] .feier h2,[data-modus=dunkel] .feier .ar{color:var(--akzent2)}
 .feier>p{margin:6px 0 18px}
-.ernte{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
+.ernte{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:start}
 .ernte div{background:var(--karte);border:1px solid var(--rand);border-radius:16px;padding:12px 14px}
 .ernte b{display:block;font-family:var(--kopf);font-size:var(--s-titel);font-weight:600}
 .ernte span{font-size:var(--s-klein);color:var(--leise)}
 .niyya{font-size:var(--s-klein);color:var(--leise);margin:10px 4px 0;text-align:center}
-.aufschl{font-size:var(--s-klein);color:var(--leise);margin:10px 0;text-align:left}
+.aufschl{font-size:var(--s-klein);color:var(--leise);margin:10px 0;text-align:start}
 .aufschl div{display:flex;justify-content:space-between;padding:3px 2px;border-bottom:1px dotted var(--rand)}
-.band{margin:12px 0;padding:12px 14px;border-radius:16px;display:flex;gap:12px;align-items:center;text-align:left;border:1px dashed var(--akzent);font-size:var(--s-text);background:var(--karte)}
-.angebot{background:linear-gradient(135deg,var(--akzentF),var(--akzentF2));color:var(--aufAkzent);border-radius:20px;padding:16px;text-align:left;box-shadow:0 12px 28px var(--glow);margin-top:14px}
+.band{margin:12px 0;padding:12px 14px;border-radius:16px;display:flex;gap:12px;align-items:center;text-align:start;border:1px dashed var(--akzent);font-size:var(--s-text);background:var(--karte)}
+.angebot{background:linear-gradient(135deg,var(--akzentF),var(--akzentF2));color:var(--aufAkzent);border-radius:20px;padding:16px;text-align:start;box-shadow:0 12px 28px var(--glow);margin-top:14px}
 .angebot b{font-family:var(--kopf);font-size:var(--s-unter);font-weight:600;display:block}
 .angebot p{font-size:var(--s-text);margin:4px 0 12px;opacity:.92}
 .angebot button{width:100%;border:0;border-radius:12px;padding:12px;font-size:var(--s-text);font-weight:500;background:rgba(255,255,255,.93);color:#3a2a1d}
@@ -363,8 +373,6 @@ html.tippt .nav{display:none}
 .licht-seiten{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;flex:1}
 .licht-seiten button{aspect-ratio:1/1.35;border:0;border-radius:2px;background:var(--akzent);padding:0}
 .licht-seiten button.aus{background:var(--rand);opacity:.35}
-.legende{display:flex;flex-wrap:wrap;gap:12px;font-size:var(--s-klein);color:var(--leise);margin:12px 0}
-.legende i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--akzent);margin-right:5px;vertical-align:-1px}
 
 /* Formulare */
 .feld{margin:14px 0}
@@ -373,6 +381,7 @@ html.tippt .nav{display:none}
 .wahl{display:flex;gap:6px;background:var(--karte);border:1px solid var(--rand);padding:4px;border-radius:999px}
 .wahl button{flex:1;border:0;background:none;padding:8px 6px;border-radius:999px;font-size:var(--s-text)}
 .wahl button.an{background:var(--akzentF);color:var(--aufAkzent)}
+@media (max-width:359px){.wahl button{overflow-wrap:anywhere;hyphens:auto}}
 #sprache{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;border-radius:26px}   /* vier je Zeile, die letzte Zeile mittig */
 #sprache button{flex:0 0 calc((100% - 18px) / 4);min-width:48px;padding:12px 6px;white-space:nowrap}
 .zaehler{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
@@ -408,7 +417,7 @@ html.tippt .nav{display:none}
 .kalli{display:block;margin:0 auto;width:auto}
 [data-modus=hell] .kalli-dunkel,[data-modus=dunkel] .kalli-hell{display:none}
 .start .kalli{height:54px;margin-top:14px}
-.lade{display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:var(--s-text)}
+.lade{position:relative;display:grid;place-items:center;min-height:70vh;color:var(--leise);font-size:var(--s-text)}
 .lade-logo{display:flex;flex-direction:column;align-items:center;gap:6px;animation:ladeEin .6s ease both}
 .lade-kalli{display:block;width:min(64vw,260px);height:auto}
 [data-modus=hell] .lade-dunkel,[data-modus=dunkel] .lade-hell{display:none}
@@ -416,6 +425,13 @@ html.tippt .nav{display:none}
 [data-modus=dunkel] .lade-name{color:var(--akzent2)}
 @keyframes ladeEin{from{opacity:0;transform:translateY(6px)}}
 @media (prefers-reduced-motion:reduce){.lade-logo{animation:none}}
+/* Notansicht (js/start.js), wenn Sprache oder App nicht laden; dazu ein Hinweis im Ladebild, der ganz ohne Skript nach 25 Sekunden erscheint */
+.not{max-width:440px;margin:14vh auto 0;text-align:center}
+.not h2{font-family:var(--kopf);font-size:var(--s-unter);line-height:1.25;margin:22px 0 6px;color:var(--text)}
+.not p{margin:0 0 10px;color:var(--leise)}
+.not .knopf{margin-top:18px;text-decoration:none}
+.lade-spaet{position:absolute;top:100%;left:0;right:0;margin:0 auto;font-size:var(--s-klein);visibility:hidden;opacity:0;animation:ladeSpaet .4s 25s forwards}
+@keyframes ladeSpaet{to{visibility:visible;opacity:1}}
 @media (min-width:700px){#app{padding-top:36px}}
 
 /* Stoppzeichen bleiben beim Verdecken sichtbar */
@@ -443,7 +459,7 @@ html.tippt .nav{display:none}
 .gz{position:absolute;pointer-events:none;border:0 dashed rgba(110,72,30,.5)}
 
 /* Üben: große Seite, kleine Kopfzeile, Einblendung */
-[data-ansicht=ueben] #app{padding-left:5px;padding-right:5px;padding-top:calc(env(safe-area-inset-top) + 8px);max-width:760px}
+[data-ansicht=ueben] #app{padding-left:max(5px,env(safe-area-inset-left,0px));padding-right:max(5px,env(safe-area-inset-right,0px));padding-top:calc(env(safe-area-inset-top) + 8px);max-width:760px}
 [data-ansicht=ueben] .seite{padding:3.2cqw 1.8cqw 1.4cqw}
 .ueb-kopf{display:flex;align-items:center;gap:4px;padding:0 6px;margin-bottom:6px}
 .ueb-kopf .zurueck{margin:0;padding:6px 6px 6px 0}
@@ -481,9 +497,6 @@ html.tippt .nav{display:none}
 .steuerung #zaehler{white-space:nowrap}
 
 /* Fehlerstellen im Profil */
-.fstelle .wortbild{direction:rtl;display:flex;gap:.28em;align-items:center;justify-content:center;font-size:30px;line-height:1.35;color:var(--text);text-decoration:none;flex:none;min-width:92px}
-.fstelle .wortbild .nb{opacity:.6;font-size:.78em}
-.fstelle .textlink{white-space:nowrap}
 
 /* Sūra- und Abschnittsauswahl, Seitenauswahl */
 .stellenwahl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;margin:14px 0 0}
@@ -533,7 +546,6 @@ body.im-vollbild{overflow:hidden}
 .knopf.rund{flex:0 0 52px;padding:0;font-size:var(--s-unter);display:grid;place-items:center;color:var(--schlechtT)}
 .knopf.rund.nimmt{background:var(--schlecht);color:var(--aufSchlecht);border-color:transparent;animation:nimmt 1.2s ease-in-out infinite}
 #hoeren.knopf.rund{color:var(--akzentT)}
-.nimmt-text{color:var(--schlechtT);font-weight:600}
 @keyframes nimmt{50%{opacity:.7}}
 /* Einführung */
 [data-ansicht=einfuehrung] #app{padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}
@@ -546,14 +558,15 @@ body.im-vollbild{overflow:hidden}
 @keyframes tutZurueck{from{opacity:0;transform:translateX(-28px)}}
 .tut-schritt h2{font-size:var(--s-titel);color:var(--akzent);margin:30px 0 10px;text-wrap:balance}
 [data-modus=dunkel] .tut-schritt h2{color:var(--akzent2)}
-.tut-text{font-size:var(--s-text);line-height:1.55;max-width:34em;margin:0 auto;text-align:left}
+.tut-text{font-size:var(--s-text);line-height:1.55;max-width:34em;margin:0 auto;text-align:start}
 .tut-text b{color:var(--text)}
 .tut-bild{height:250px;display:grid;place-items:center}
-.tut-punkte{display:flex;justify-content:center;gap:8px;margin:18px 0 12px}
-.tut-punkte i{width:9px;height:9px;border-radius:50%;background:var(--rand);cursor:pointer;transition:all .3s}
-.tut-punkte i.an{background:var(--akzent);width:24px;border-radius:5px}
+.tut-punkte{display:flex;justify-content:center;gap:0;margin:0 0 -6px}
+.tut-punkte button{position:relative;flex:0 1 44px;min-width:0;height:44px;padding:0;border:0;background:none;cursor:pointer}
+.tut-punkte button::after{content:'';position:absolute;top:50%;left:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:50%;background:var(--rand);transition:all .3s}
+.tut-punkte button.an::after{background:var(--akzent);width:24px;border-radius:5px}
 .tut-knoepfe{padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
-.tb-punkte{padding-left:1.1em;display:grid;gap:9px;font-size:var(--s-klein)}
+.tb-punkte{padding-inline-start:1.1em;display:grid;gap:9px;font-size:var(--s-klein)}
 /* 1 Laterne */
 .tb-laterne .qandil{height:170px;animation:laterne 4s ease-in-out infinite,tutSchweben 4s ease-in-out infinite}
 @keyframes tutSchweben{50%{transform:translateY(-6px)}}
@@ -592,7 +605,7 @@ body.im-vollbild{overflow:hidden}
 .tb-kette small{font-size:var(--s-etikett);color:var(--leise)}
 @keyframes tutLampe{0%,5%{opacity:.2;filter:grayscale(1)}15%,85%{opacity:1;filter:drop-shadow(0 0 8px var(--glow))}100%{opacity:.2;filter:grayscale(1)}}
 /* 7 Liste */
-.tb-liste{display:grid;gap:8px;text-align:left}
+.tb-liste{display:grid;gap:8px;text-align:start}
 .tb-liste div{display:flex;align-items:center;gap:10px;font-size:var(--s-klein);padding:7px 12px;border-radius:12px;background:var(--karte);border:1px solid var(--rand);animation:tutAuf .6s calc(.2s + var(--i) * .35s) both}
 .tb-liste b{width:22px;height:22px;border-radius:50%;background:var(--gutF);color:var(--aufGut);display:grid;place-items:center;font-size:var(--s-etikett)}
 @media (prefers-reduced-motion:reduce){.tutorial *{animation-duration:30s!important}}
@@ -698,6 +711,8 @@ body.doppelt #app{max-width:1500px;--sb:min(calc((min(100vw, 1500px) - 60px) / 2
 body.doppelt[data-ansicht=mushaf] #app>:not(#seite){max-width:760px;margin-left:auto!important;margin-right:auto!important}
 body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lageinfo,body.doppelt[data-ansicht=ueben] .kontext{max-width:900px;margin-left:auto;margin-right:auto}
 .paar{display:flex;flex-direction:row-reverse;justify-content:center;align-items:stretch;gap:3px}
+/* Die ungerade Seite steht immer rechts. row-reverse leistet das nur bei Schreibrichtung ltr; bei rtl (Arabisch, Urdu) läuft die Achse schon von rechts (Audit H12, B-04) */
+[dir=rtl] .paar,[dir=rtl] .vb-seiten.doppel,[dir=rtl] .skizze,[dir=rtl] .sk-paar{flex-direction:row}
 .paar .seite{flex:none;width:var(--sb);margin:0}
 .paar .seite.rechts{border-radius:2px 6px 6px 2px;box-shadow:inset 10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
 .paar .seite.links{border-radius:6px 2px 2px 6px;box-shadow:inset -10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
@@ -741,7 +756,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .orn-band .ornament{width:46px;flex:none}
 .orn-vorschau{display:flex;flex:none}
 .orn-vorschau .ornament{width:34px}
-.orn-vorschau .ornament+.ornament{margin-left:-10px}
+.orn-vorschau .ornament+.ornament{margin-inline-start:-10px}
 .meilensteine{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .meilenstein{display:flex;flex-direction:column;align-items:center;background:var(--karte);border:1px dashed var(--rand);border-radius:14px;padding:8px 2px}
 .meilenstein>:first-child{opacity:.38;filter:grayscale(1)}
@@ -765,7 +780,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 /* Fortschritt beim Üben: Punkte und „Āya x von y“ in einer eigenen Zeile, getrennt vom Hinweistext */
 .fort-zeile{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:4px 12px;margin:2px 0 10px}
 .fort-zeile .punkte{margin:0}
-.fort-zeile .zaehler{font-size:var(--s-klein);line-height:1;color:var(--leise);white-space:nowrap;padding-left:12px;border-left:1px solid var(--rand)}
+.fort-zeile .zaehler{font-size:var(--s-klein);line-height:1;color:var(--leise);white-space:nowrap;padding-inline-start:12px;border-inline-start:1px solid var(--rand)}
 .steuerung .zeile2 #hinweis{flex:1}
 
 /* Geführte Erklärung beim ersten Üben: Bildschirm abgedunkelt, das erklärte Element hell ausgespart */
@@ -873,7 +888,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .aw-liste{display:grid;gap:9px;margin-top:6px}
 .aw-zeile{display:grid;grid-template-columns:minmax(0,9em) 1fr auto;align-items:center;gap:10px;font-size:var(--s-klein)}
 .aw-zeile span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aw-zeile b{font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right;font-weight:500}
+.aw-zeile b{font-variant-numeric:tabular-nums;min-width:3.2em;text-align:end;font-weight:500}
 .aw-balken{height:10px;border-radius:999px;background:var(--rand);overflow:hidden}
 .aw-balken i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--akzent),var(--akzent2))}
 .aw-zeile.leise .aw-balken i{background:var(--leise);opacity:.6}
@@ -902,7 +917,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .vergleich-karte{background:var(--karte);border:1px solid var(--rand);border-radius:18px;padding:12px 16px 8px;margin-top:14px}
 .vk-kopf{display:flex;gap:8px;align-items:baseline;font-size:var(--s-klein);color:var(--leise)}
 .vk-kopf b{font-family:var(--kopf);font-size:var(--s-text);color:var(--akzentT);font-weight:600}
-.vk-kopf a{margin-left:auto;color:var(--leise)}
+.vk-kopf a{margin-inline-start:auto;color:var(--leise)}
 .vk-text .uthmani{font-size:26px}
 .fs-aehnlich{display:block;font-size:var(--s-klein);color:var(--akzentT);margin-top:4px}
 /* Etappe 5: Mutašābihāt nachschlagen (Gruppen ähnlicher Verse, Reihenfolge-Fälle) */
@@ -915,7 +930,7 @@ textarea{width:100%;margin-top:12px;border:1px solid var(--rand);border-radius:1
 .ah-reiter{display:flex;gap:4px;border-bottom:1px solid var(--rand);margin:18px 0 14px}
 .ah-reiter button{flex:1;border:0;background:none;padding:10px 4px 9px;font:600 var(--s-unter)/1.15 var(--kopf);color:var(--leise);border-bottom:3px solid transparent;margin-bottom:-1px}
 .ah-reiter button.an{color:var(--akzentT);border-bottom-color:var(--akzent)}
-.ah-reiter small{font:400 var(--s-klein) var(--fliess);margin-left:6px;font-variant-numeric:tabular-nums}
+.ah-reiter small{font:400 var(--s-klein) var(--fliess);margin-inline-start:6px;font-variant-numeric:tabular-nums}
 .wahl.vier button{font-size:var(--s-klein);padding:8px 2px;white-space:nowrap}
 .ah-filter{margin-top:10px}
 .ah-filter summary{font-size:var(--s-klein);color:var(--leise);cursor:pointer;padding:6px 2px}
@@ -932,7 +947,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-art{font-size:var(--s-etikett);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--akzentT)}
 .ah-art.gleich{color:var(--ah-eins)}
 .ah-nr{font-size:var(--s-klein);color:var(--leise);font-variant-numeric:tabular-nums}
-.ah-kopf .marke-art{margin-left:auto}
+.ah-kopf .marke-art{margin-inline-start:auto}
 .ah-marken{display:flex;flex-wrap:wrap;gap:6px}
 .ah-marken span{border:1px solid var(--rand);border-radius:999px;padding:1px 10px;font-size:var(--s-etikett);color:var(--leise);white-space:nowrap}
 .ah-merk{font-size:var(--s-klein);color:var(--leise)}
@@ -952,7 +967,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-verweise{display:grid;gap:8px;font-size:var(--s-klein);color:var(--leise);border-top:1px solid var(--rand);padding-top:10px}
 .ah-verweise div{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap}
 .ah-verweis{display:inline-block;border:1px solid var(--rand);background:var(--karte2);border-radius:999px;padding:4px 12px;font:400 var(--s-klein) var(--fliess);font-style:normal;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums}
-.ah-verweis small{margin-left:6px;color:var(--leise);font-size:var(--s-etikett)}
+.ah-verweis small{margin-inline-start:6px;color:var(--leise);font-size:var(--s-etikett)}
 .ah-verweis.ueben{border-color:var(--akzent)}
 .ah-verweis .ah-ar{line-height:1.4}
 .ah-themen{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
@@ -986,7 +1001,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .ah-chip.ah-treffer{box-shadow:0 0 0 2px var(--akzent2)}
 .ah-ayat{display:grid;gap:8px}
 .ah-ayat:empty{display:none}
-@media (max-width:440px){.ah-reiter button{font-size:var(--s-text)}.ah-reiter small{font-size:var(--s-etikett);margin-left:4px}}
+@media (max-width:440px){.ah-reiter button{font-size:var(--s-text)}.ah-reiter small{font-size:var(--s-etikett);margin-inline-start:4px}}
 @media (max-width:400px){.ah-gegen{grid-template-columns:minmax(0,1fr)}.ah-tausch{transform:rotate(90deg);justify-self:center}.ah-wahlen{grid-template-columns:minmax(0,1fr)}}
 
 /* Rückblick als Bild (Woche, Monat) */
@@ -1001,7 +1016,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 .rb-bild img:not([src]){visibility:hidden}
 .rb-name{margin-top:14px;min-height:44px;font-size:var(--s-text)}
 .rb-name input{width:22px;height:22px}
-.rb-worte{margin:6px 0 0;padding-left:22px;display:grid;gap:6px;font-size:var(--s-text)}
+.rb-worte{margin:6px 0 0;padding-inline-start:22px;display:grid;gap:6px;font-size:var(--s-text)}
 .rb-leer{margin-top:26px;text-align:center}
 /* Etappe 6: Lesbarkeit und Barrierefreiheit (Gutachten Teil A, Punkte 19 bis 21) */
 /* Nur für Bildschirmleser */
@@ -1038,6 +1053,7 @@ mark.ah-probe.kern,.uthmani mark.kern{background:var(--ah-kern);box-shadow:inset
 /* Seitengröße 125 und 150 %: die Seite wächst über den Rand, man schiebt sie mit dem Finger. Bei 100 % ändert sich nichts. */
 html[data-gross] .roller{direction:rtl;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:6px 4px 44px;margin:-6px -4px -44px;scrollbar-width:thin}
 html[data-gross] .roller>*{direction:ltr}
+html[data-gross][dir=rtl] .roller>.paar{flex-direction:row-reverse}
 html[data-gross] .roller>.seite{width:calc((100% - 8px) * var(--sm,1));flex:none}
 html[data-gross][data-modus=dunkel] .roller>.seite{width:calc((100% - 16px) * var(--sm,1))}
 html[data-gross] .roller>.paar{width:max-content;min-width:100%}
@@ -1046,6 +1062,8 @@ html[data-gross] #seite.doppel{width:auto;max-width:100%}
 html[data-gross] #seite>.roller{margin-bottom:0;padding-bottom:6px}
 /* Weniger Bewegung: was nur einmal hereingleitet, steht sofort da (bei 30 s blieb es unsichtbar) */
 @media (prefers-reduced-motion:reduce){.tut-schritt,.tb-ar,.tb-zurueck span,.tb-liste div{animation:none!important}html{scroll-behavior:auto}}
+/* Endlos pulsierende Zeichen stehen dann ruhig in ihrem deutlichen Zustand (Audit B-25) */
+@media (prefers-reduced-motion:reduce){.w.zu.naechste::before,.knopf.rund.nimmt{animation:none}.w .wq.ziel{animation:none;text-shadow:0 0 .1em #fff,0 0 .3em #fff}.feier.strahlt .qandil{animation:none}}
 /* Hilfe und Glossar */
 .hf-sprung{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
 .hf-sprung button{border:1px solid var(--rand);background:var(--karte);border-radius:999px;padding:9px 16px;min-height:44px;font-size:var(--s-text)}
@@ -1064,7 +1082,7 @@ html[data-gross] #seite>.roller{margin-bottom:0;padding-bottom:6px}
 .glossar dd{font-size:var(--s-text);margin-top:4px}
 .glossar dd small{display:block;font-size:var(--s-klein);color:var(--leise);margin-top:4px}
 .hf-tasten{width:100%;border-collapse:collapse;font-size:var(--s-text)}
-.hf-tasten th{text-align:left;font-weight:400;color:var(--leise);padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap}
+.hf-tasten th{text-align:start;font-weight:400;color:var(--leise);padding:6px 0;padding-inline-end:10px;vertical-align:top;white-space:nowrap}
 .hf-tasten td{padding:6px 0}
 kbd{font:600 var(--s-klein) var(--fliess);border:1px solid var(--rand);border-bottom-width:2px;border-radius:7px;padding:1px 7px;background:var(--karte2);color:var(--text);white-space:nowrap}
 .lesbar-probe{margin-top:12px;font-size:var(--s-klein);color:var(--leise)}
@@ -1112,7 +1130,7 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 .stopp-wahl{display:grid;grid-template-columns:1fr 1fr;border-radius:24px}
 .stopp-wahl button{display:inline-flex;min-height:44px;min-width:0;padding:8px 4px;justify-content:center;align-items:center;gap:6px;white-space:nowrap;font-size:.96em}
 .stopp-wahl i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
-.stopp-wahl i+i{margin-left:-9px}
+.stopp-wahl i+i{margin-inline-start:-9px}
 /* Menüleiste mit fünf Reitern: der Muṣḥaf liegt in der Mitte und ist hervorgehoben */
 .nav a{min-width:56px;padding:4px 6px}
 .nav a[data-r=mushaf]{color:var(--akzentT)}
@@ -1124,13 +1142,15 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 [data-ansicht=mushaf] .marke small{margin-top:5px}
 .reihe.mushaf-leiste{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0 10px}
 .mushaf-leiste .knopf{min-height:44px;padding-left:8px;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Blättern folgt dem Buch, nicht der Sprache: „nächste Seite“ bleibt links, auch in Arabisch und Urdu (Audit B-07) */
+.reihe.mushaf-leiste{direction:ltr}
 .sprung-panel{margin:0 0 12px}
 .sprung-panel .stellenwahl{margin-top:10px}
 .sprung-panel .auswahl select{flex:1;max-width:60%}
 /* Heute: der App-Titel als Wortmarke mit dem Itqān-Zeichen */
 /* Hinweiskarte mit kleinem X zum Ausblenden */
-.umzug-hinweis{position:relative;padding-right:46px}
-.hinweis-x{position:absolute;top:4px;right:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--leise);font-size:1.7rem;line-height:1;cursor:pointer}
+.umzug-hinweis{position:relative;padding-inline-end:46px}
+.hinweis-x{position:absolute;top:4px;inset-inline-end:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--leise);font-size:1.7rem;line-height:1;cursor:pointer}
 .hinweis-x:hover{color:var(--akzentT)}
 /* Überschriften der Menüseiten: wie der App-Titel, mit dem Zeichen ihres Reiters */
 .marke{font-size:clamp(1.9rem,8.5vw,2.4rem);letter-spacing:.015em;text-shadow:0 0 18px var(--glow)}
@@ -1205,7 +1225,7 @@ html{scrollbar-gutter:stable}
 .z-zeile span{font-size:var(--s-klein);color:var(--leise)}
 .diagramm-kopf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
 .diagramm-kopf .titel-klein{margin:0}
-.diagramm-wechsel{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--leise);margin-right:-8px}
+.diagramm-wechsel{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--leise);margin-inline-end:-8px}
 .diagramm-wechsel:active{background:var(--karte)}
 .diagramm-kopf+.diagramm{margin-top:2px}
 .stand-text .gruss{font-size:calc(var(--s-titel) * .74)}

@@ -63,5 +63,4 @@ export async function suchen(eingabe) {
 }
 
 // Mutašābihāt einer Āya und alle Paare
-export async function paareVon(vi) { return (await paareLaden()).filter(p => p.a === vi || p.b === vi); }
 export async function paar(key) { return (await paareLaden()).find(p => p.key === key) || null; }

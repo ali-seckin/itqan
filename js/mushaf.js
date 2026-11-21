@@ -5,6 +5,19 @@ import { textLaden } from './suche.js';
 import { tx } from './sprache.js';
 
 const geladen = new Map(), da = new Set();   // da: Seiten, deren Schrift angemeldet ist
+// Angemeldete Schriften in der Reihenfolge ihrer letzten Nutzung. Mehr als SCHRIFT_MAX bleiben nicht im Arbeitsspeicher:
+// Die am längsten nicht gebrauchten werden abgemeldet, sofern keine Seite und kein Wort im Dokument sie gerade zeigt (Audit P19).
+const SCHRIFT_MAX = 40, gesicht = new Map();
+const imDokument = p => { try { return !!document.querySelector(`.seite[data-p="${p}"], [data-fp="${p}"]`); } catch (e) { return false; } };
+function schriftenBegrenzen() {
+  if (gesicht.size <= SCHRIFT_MAX) return;
+  for (const [p, f] of gesicht) {
+    if (gesicht.size <= SCHRIFT_MAX) break;
+    if (imDokument(p)) continue;
+    try { document.fonts.delete(f); } catch (e) { /* dann bleibt sie eben angemeldet */ }
+    gesicht.delete(p); da.delete(p); geladen.delete(p);
+  }
+}
 // Fehlt eine Seitenschrift (ohne Netz und noch nicht gespeichert), steht der Text in der einfachen Uthmani-Schrift:
 // gleiche Zeilen, gleiche Wörter, nur ein anderes Schriftbild. U: Wörter je Āya aus daten/text.json
 let U = null;
@@ -21,9 +34,9 @@ export function schrift(p) {
     const holen = () => { const c = new AbortController(), t = setTimeout(() => c.abort(), 12000);
       return fetch(url, { signal: c.signal }).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).finally(() => clearTimeout(t)); };
     geladen.set(p, holen().catch(holen)
-      .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); da.add(p); return true; })
+      .then(b => new FontFace('qp' + p, b).load()).then(x => { document.fonts.add(x); da.add(p); gesicht.set(p, x); schriftenBegrenzen(); return true; })
       .catch(() => { geladen.delete(p); return textHolen().then(() => false); }));
-  }
+  } else if (gesicht.has(p)) { const f = gesicht.get(p); gesicht.delete(p); gesicht.set(p, f); }   // gerade gebraucht: ans Ende der Reihe
   return geladen.get(p);
 }
 export const schriftenLaden = seiten => Promise.all([...new Set(seiten.flatMap(schriftSeiten))].map(schrift));
@@ -168,10 +181,10 @@ export function seiteHTML(p, opt = {}) {
       // das letzte Zeichen einer Āya ist ihre Rosette mit der Nummer; data-g erlaubt die schwarze Zahl über der farbigen Rosette
       const ende = !D.W.has(vi + '.' + (i + 1));   // Rosette der Āya: Ring golden, nur die Zahl schwarz (Ausschnitt je Nummer aus ziffern.js)
       const sty = [fp !== p ? `font-family:qp${fp}` : '', ende ? `--zc:${zifferClip(vi)}` : ''].filter(Boolean).join(';');
-      return `<span class="${k}${ende ? ' ende' : ''}" data-v="${vi}" data-i="${i}"${ende ? ` data-g="${c}"` : ''}${ah}${sty ? ` style="${sty}"` : ''}>${glyphen(c, ty)}</span>`;
+      return `<span class="${k}${ende ? ' ende' : ''}" data-v="${vi}" data-i="${i}"${fp !== p ? ` data-fp="${fp}"` : ''}${ende ? ` data-g="${c}"` : ''}${ah}${sty ? ` style="${sty}"` : ''}>${glyphen(c, ty)}</span>`;
     }).join('');
     return `<div class="mz${p < 3 ? ' mitte' : ''}${zers ? ' ers' : ''}" style="font-family:qp${p}">${w}</div>`;
   }).join('');
   // Madanī-Muṣḥaf: ungerade Seiten liegen rechts, gerade links (Bundsteg jeweils innen)
-  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="${wahl ? 'group' : 'img'}" aria-label="${tx('mushaf.mushaf_seite', { p })}">${zeilen}</div><div class="stext nur-leser" data-st="${p}" role="group" aria-label="${tx('mushaf.text_der_seite', { p })}"></div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</b>` : ''}</span></div>${einfach ? `<p class="ers-hinweis">${tx('mushaf.ohne_netz_in_einfacher_schrift_die')}</p>` : ''}</div>`;
+  return `<div class="seite ${p % 2 ? 'rechts' : 'links'}${p < 3 ? ' zier' : ''}" data-p="${p}"><div class="seite-innen" role="${wahl ? 'group' : 'img'}" aria-label="${tx('mushaf.mushaf_seite', { p })}">${zeilen}</div><div class="stext nur-leser" data-st="${p}" role="group" aria-label="${tx('mushaf.text_der_seite', { p })}"></div><div class="snr" aria-hidden="true"><span class="snr-k"><span class="ar" lang="ar">${arZahl(p)}</span><i>|</i><span>${p}</span>${lage ? `<i>|</i><b>${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</b>` : ''}</span></div>${einfach ? `<p class="ers-hinweis">${tx('mushaf.ohne_netz_in_einfacher_schrift_die')}</p>` : ''}</div>`;
 }

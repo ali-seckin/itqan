@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Z, frisch } from './umgebung.mjs';
-import { FRAGEN, GLOSSAR, TASTEN } from '../js/hilfe.js';
+import { fragen, glossar, tasten } from '../js/hilfe.js';
+const FRAGEN = fragen(), GLOSSAR = glossar(), TASTEN = tasten();
 import { VERSION, NEUIGKEITEN } from '../js/version.js';
 
 const datei = n => readFileSync(new URL('../' + n, import.meta.url), 'utf8');
@@ -137,7 +138,7 @@ test('Glossar: alle Begriffe der App, geordnet, ohne Doppelte', () => {
 test('Hilfe: Tastenkürzel entsprechen dem Programm, Texte ohne Gedankenstriche', () => {
   const alle = TASTEN.flatMap(t => t.kuerzel.flatMap(([k]) => k));
   for (const k of ['Leertaste', 'Enter', 'S', 'R', 'F', 'Esc', 'Tab']) assert.ok(alle.includes(k), `Taste ${k} fehlt`);
-  for (const [taste, muster] of [['s', /ev\.key === 's'/], ['r', /ev\.key === 'r'/], ['f', /ev\.key === 'f'/]]) assert.match(app, muster, `Kürzel ${taste} nicht im Programm`);
+  for (const [taste, muster] of [['s', /bst === 's'/], ['r', /bst === 'r'/], ['f', /bst === 'f'/]]) assert.match(app, muster, `Kürzel ${taste} nicht im Programm`);
   assert.doesNotMatch(hilfe, /[–—]/);
   for (const n of NEUIGKEITEN) assert.doesNotMatch(JSON.stringify(n), /[–—]/);
 });

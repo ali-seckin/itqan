@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { D, lies } from './umgebung.mjs';
-import { TASTEN } from '../js/hilfe.js';
+import { tasten } from '../js/hilfe.js';
+const TASTEN = tasten();
 const daten = await import('../js/daten.js');
 const M = await import('../js/mushaf.js');
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,7 +70,7 @@ test('Tastatur: Die Kürzel zum Markieren des Fehlerworts stehen in der Hilfe un
   const ueben = TASTEN[0].kuerzel;
   assert.ok(ueben.some(([k]) => k.includes('W')), 'W fehlt in der Hilfe');
   assert.ok(ueben.filter(([k]) => k.includes('←')).length >= 2, 'Pfeiltasten zum Wählen fehlen in der Hilfe');
-  assert.match(app, /ev\.key === 'w'/);
+  assert.match(app, /bst === 'w'/);
   assert.match(app, /aria-pressed/);
   assert.match(app, /function seiteHolen\(/);
 });

@@ -2,7 +2,7 @@
 // Die Zahlen kommen aus zustand.js (rueckblick). Hier: Texte dazu und das Bild auf einer Zeichenfläche (1080 × 1350).
 import { zahl, prozent } from './daten.js';
 import { RAENGE } from './zustand.js';
-import { tx, gebiet } from './sprache.js';
+import { tx, alsHtml, gebiet } from './sprache.js';
 
 const MONATE = [tx('rueckblick.januar'), tx('rueckblick.februar'), tx('rueckblick.maerz'), tx('rueckblick.april'), tx('rueckblick.mai'), tx('rueckblick.juni'), tx('rueckblick.juli'), tx('rueckblick.august'), tx('rueckblick.september'), tx('rueckblick.oktober'), tx('rueckblick.november'), tx('rueckblick.dezember')];
 const WT = [tx('rueckblick.mo'), tx('rueckblick.di'), tx('rueckblick.mi'), tx('rueckblick.do'), tx('rueckblick.fr'), tx('rueckblick.sa'), tx('rueckblick.so')];
@@ -38,8 +38,8 @@ export function ereignisse(R, vergleich = true) {
   if (n.khatma) l.push(n.khatma === 1 ? tx('rueckblick.hatma_vollendet') : tx('rueckblick.hatmat_vollendet', { khatma: n.khatma }));
   if (n.kette) l.push(tx('rueckblick.kette_von_tagen_erreicht', { kette: n.kette }));
   if (n.ornamente) l.push(n.ornamente === 1 ? tx('rueckblick.1_neues_ornament') : tx('rueckblick.neue_ornamente', { ornamente: n.ornamente }));
-  if (n.vergoldet) l.push(tx('rueckblick.vergoldet', { vergoldet: tx('rueckblick.z_ornamente', mz(n.vergoldet)) }));
-  if (vergleich && R.vor.ayat > 0 && R.ayat > R.vor.ayat) l.push(tx('rueckblick.ayat_mehr_als_davor', { a: zahl(R.ayat - R.vor.ayat), b: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche') }));
+  if (n.vergoldet) l.push(tx('rueckblick.vergoldet', { vergoldet: alsHtml(tx('rueckblick.z_ornamente', mz(n.vergoldet))) }));
+  if (vergleich && R.vor.ayat > 0 && R.ayat > R.vor.ayat) l.push(tx('rueckblick.ayat_mehr_als_davor', { a: zahl(R.ayat - R.vor.ayat), b: alsHtml(R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche')) }));
   return l;
 }
 // die vier Kacheln: [Wert, Bezeichnung]
@@ -54,19 +54,19 @@ export function kacheln(R) {
 export const unterzeile = R => [seitenText(R.seiten), tx('rueckblick.z_abschnitte', mz(R.abschnitte)), ...(R.zeit >= 30 ? [dauerText(R.zeit)] : [])].join(' · ');
 // der ganze Rückblick in Sätzen: Bildbeschreibung für Bildschirmleser und Text unter dem Bild
 export function beschreibung(R, name = '') {
-  const kopf = `${R.art === 'monat' ? tx('rueckblick.rueckblick_auf_den_monat') : tx('rueckblick.rueckblick_auf_die_woche_vom')} ${zeitraumTitel(R)}${name ? ` ${tx('rueckblick.von_2', { name })}` : ''}.`;
+  const kopf = `${R.art === 'monat' ? tx('rueckblick.rueckblick_auf_den_monat') : tx('rueckblick.rueckblick_auf_die_woche_vom')} ${zeitraumTitel(R)}${name ? ` ${tx('rueckblick.von_2', { name: alsHtml(name) })}` : ''}.`;
   if (R.leer) return [kopf, tx('rueckblick.in_diesem_zeitraum_wurde_nicht_geuebt')];
   const s = [kopf,
-    tx('rueckblick.wiederholt_das_sind_in', { ayat: tx('rueckblick.z_ayat', mz(R.ayat)), seiten: seitenText(R.seiten), abschnitte: tx('rueckblick.z_abschnitten', mz(R.abschnitte)) }),
-    tx('rueckblick.an_geuebt_der_wird_wurde_an_von_erfuellt', { geuebt: tx('rueckblick.z_tagen', mz(R.geuebt)), voll: R.voll, wird: tx('rueckblick.z_tagen', mz(R.wird)), a: R.nach ? tx('rueckblick.davon_am_tag_danach_nachgeholt', { nach: R.nach }) : '' }),
-    tx('rueckblick.der_ayat_ohne_fehler_und_ohne_hilfe', { quote: Math.floor(R.quote), a: R.f + R.h ? ` ${tx('rueckblick.mit_hilfe', { f: tx('rueckblick.z_fehler', mz(R.f)), h: R.h })}` : '' }),
-    tx('rueckblick.itqan_punkte', { punkte: zahl(R.punkte), a: R.zeit >= 30 ? tx('rueckblick.uebungszeit', { zeit: dauerText(R.zeit) }) : '' }),
-    R.kette != null ? tx('rueckblick.die_kette_steht_bei', { kette: tx('rueckblick.z_tagen', mz(R.kette)) }) : tx('rueckblick.laengste_folge_erfuellter_tage', { folge: R.folge })];
-  if (R.bester && R.geuebt > 1) s.push(tx('rueckblick.staerkster_tag_mit', { a: WT_LANG[wochentag(R.bester.d)], b: teile(R.bester.d)[2], c: MONATE[teile(R.bester.d)[1] - 1], ayat: tx('rueckblick.z_ayat', mz(R.bester.ayat)) }));
+    tx('rueckblick.wiederholt_das_sind_in', { ayat: alsHtml(tx('rueckblick.z_ayat', mz(R.ayat))), seiten: seitenText(R.seiten), abschnitte: alsHtml(tx('rueckblick.z_abschnitten', mz(R.abschnitte))) }),
+    tx('rueckblick.an_geuebt_der_wird_wurde_an_von_erfuellt', { geuebt: alsHtml(tx('rueckblick.z_tagen', mz(R.geuebt))), voll: R.voll, wird: alsHtml(tx('rueckblick.z_tagen', mz(R.wird))), a: alsHtml(R.nach ? tx('rueckblick.davon_am_tag_danach_nachgeholt', { nach: R.nach }) : '') }),
+    tx('rueckblick.der_ayat_ohne_fehler_und_ohne_hilfe', { quote: Math.floor(R.quote), a: alsHtml(R.f + R.h ? ` ${tx('rueckblick.mit_hilfe', { f: alsHtml(tx('rueckblick.z_fehler', mz(R.f))), h: R.h })}` : '') }),
+    tx('rueckblick.itqan_punkte', { punkte: zahl(R.punkte), a: alsHtml(R.zeit >= 30 ? tx('rueckblick.uebungszeit', { zeit: dauerText(R.zeit) }) : '') }),
+    R.kette != null ? tx('rueckblick.die_kette_steht_bei', { kette: alsHtml(tx('rueckblick.z_tagen', mz(R.kette))) }) : tx('rueckblick.laengste_folge_erfuellter_tage', { folge: R.folge })];
+  if (R.bester && R.geuebt > 1) s.push(tx('rueckblick.staerkster_tag_mit', { a: WT_LANG[wochentag(R.bester.d)], b: teile(R.bester.d)[2], c: MONATE[teile(R.bester.d)[1] - 1], ayat: alsHtml(tx('rueckblick.z_ayat', mz(R.bester.ayat))) }));
   const e = ereignisse(R, false);
   if (e.length) s.push(tx('rueckblick.erreicht', { e: e.join(', ') }));
-  if (R.vor.ayat > 0 && (!R.laufend || R.ayat > R.vor.ayat)) s.push(R.ayat === R.vor.ayat ? tx('rueckblick.gleich_viele_ayat_wie_davor', { a: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche') })
-    : tx('rueckblick.ayat_als_davor', { a: zahl(Math.abs(R.ayat - R.vor.ayat)), b: R.ayat > R.vor.ayat ? tx('rueckblick.mehr') : tx('rueckblick.weniger'), c: R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche'), ayat: zahl(R.vor.ayat) }));
+  if (R.vor.ayat > 0 && (!R.laufend || R.ayat > R.vor.ayat)) s.push(R.ayat === R.vor.ayat ? tx('rueckblick.gleich_viele_ayat_wie_davor', { a: alsHtml(R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche')) })
+    : tx('rueckblick.ayat_als_davor', { a: zahl(Math.abs(R.ayat - R.vor.ayat)), b: alsHtml(R.ayat > R.vor.ayat ? tx('rueckblick.mehr') : tx('rueckblick.weniger')), c: alsHtml(R.art === 'monat' ? tx('rueckblick.im_monat') : tx('rueckblick.in_der_woche')), ayat: zahl(R.vor.ayat) }));
   return s;
 }
 export const dateiName = (R, name = '') => `Itqan-Rueckblick-${R.art === 'monat' ? R.von.slice(0, 7) : R.von}${name ? '-' + name.replace(/[^\p{L}\p{N}]+/gu, '_') : ''}.png`;

@@ -193,7 +193,7 @@ test('Neu bewerten: Fehlerstellen lassen sich auf den Stand davor zurücksetzen'
   const vorher = Z.fehlerstellenStand();
   Z.fehlerstellenMerken(['11.0', '10.2'], 'abweichung');
   assert.equal(Z.P.fstellen['10.2'].n, 2);
-  assert.equal(Z.P.statistik.arten.abweichung, 1);
+  assert.equal(Z.P.statistik.arten.abweichung, 2);   // zwei Āyāt markiert: die Art zählt je Āya (Audit Abl. 20)
   Z.fehlerstellenSetzen(vorher);
   assert.deepEqual(Z.P.fstellen, vorher.f);
   assert.equal(Z.P.fstellen['11.0'], undefined);

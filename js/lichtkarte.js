@@ -1,11 +1,11 @@
 // Itqān · Lichtkarte: Modell (Seiten und Abschnitte mit Stand, Frische und Tagesplan) und Darstellung
-// Drei Ansichten: Stand (wie fest es sitzt), Frische (wie frisch es im Gedächtnis ist), Heute (der Tag auf der Karte).
+// Eine Ansicht: Stand (wie fest es sitzt).
 // Eine Seite zeigt immer ihren schwächsten Abschnitt; die beste Stelle erscheint als Ecke.
-import { tx } from './sprache.js';
+import { tx, alsHtml } from './sprache.js';
 import { D, sureName, abschnittName, bereichText, esc, juzStart, juzVonVers } from './daten.js';
 import * as Z from './zustand.js';
 import * as AF from './abfragen.js';
-import { hintergrundSperren } from './sperre.js';
+import { hintergrundSperren, ueberlagerung } from './sperre.js';
 
 // Die klassischen Namen der Aǧzāʾ nach ihren ersten Worten
 const JUZ_NAMEN = ['Alif Lām Mīm', 'Sayaqūl', 'Tilka r-Rusul', 'Lan tanālū', 'Wa l-muḥṣanāt', 'Lā yuḥibbu llāh', 'Wa iḏā samiʿū', 'Wa law annanā', 'Qāla l-malaʾ', 'Wa ʿlamū',
@@ -82,18 +82,17 @@ function blatt({ titel, unter, koerper, aktionen }) {
     <div class="lk-kopf"><b>${esc(titel)}</b>${unter ? `<span>${unter}</span>` : ''}</div>
     <div class="lk-koerper">${koerper}</div>
     <div class="lk-aktionen">${aktionen}</div></section>`;
-  const vorher = document.activeElement;
   hintergrundSperren(true);
-  const zu = () => {
-    hintergrundSperren(false); removeEventListener('keydown', taste, true); wurzel.classList.remove('auf');
-    setTimeout(() => wurzel.remove(), 280); if (vorher?.isConnected) vorher.focus({ preventScroll: true });
-  };
-  const taste = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); zu(); } };
-  wurzel.querySelector('.lk-schleier').onclick = zu; wurzel.querySelector('.lk-zu').onclick = zu;
-  wurzel.addEventListener('click', ev => { if (ev.target.closest('a[href]')) { hintergrundSperren(false); removeEventListener('keydown', taste, true); wurzel.remove(); } });
-  addEventListener('keydown', taste, true);
   document.body.appendChild(wurzel);
-  requestAnimationFrame(() => { wurzel.classList.add('auf'); wurzel.querySelector('.lk-zu').focus({ preventScroll: true }); });
+  // Zurück-Taste, Escape, Fokus im Blatt und Rückkehr des Fokus: gemeinsame Hilfe für Überlagerungen
+  const ende = ueberlagerung(wurzel, grund => {
+    hintergrundSperren(false);
+    if (grund === 'wechsel') { wurzel.remove(); return; }
+    wurzel.classList.remove('auf'); setTimeout(() => wurzel.remove(), 280);
+  }, { hinter: [document.getElementById('app'), document.getElementById('nav')], fokus: () => wurzel.querySelector('.lk-zu') });
+  const zu = () => ende();
+  wurzel.querySelector('.lk-schleier').onclick = zu; wurzel.querySelector('.lk-zu').onclick = zu;
+  requestAnimationFrame(() => wurzel.classList.add('auf'));
   return zu;
 }
 
@@ -115,7 +114,7 @@ function seitenBlatt(p, m) {
   for (const z of D.L[p - 1]) if (z?.w) for (const w of z.w) vis.add(w[1]);
   const lo = Math.min(...vis), hi = Math.max(...vis), ja = juzVonVers(lo), jb = juzVonVers(hi);
   const su = D.V[lo][0], sb = D.V[hi][0];
-  const unter = `${esc(sureName(su))}${sb !== su ? ` · ${esc(sureName(sb))}` : ''} · ${ja !== jb ? tx('lichtkarte.guz_und', { a: ja, b: jb }) : tx('lichtkarte.guz_2', { juzVonSeite: ja })} · ${tx('lichtkarte.seite_3', { a: p % 2 ? tx('allg.rechte') : tx('allg.linke') })}`;
+  const unter = `${esc(sureName(su))}${sb !== su ? ` · ${esc(sureName(sb))}` : ''} · ${ja !== jb ? tx('lichtkarte.guz_und', { a: ja, b: jb }) : tx('lichtkarte.guz_2', { juzVonSeite: ja })} · ${tx('lichtkarte.seite_3', { a: alsHtml(p % 2 ? tx('allg.rechte') : tx('allg.linke')) })}`;
   const zeilen = s.aus ? `<p class="unter">${tx('lichtkarte.diese_seite_gehoert_nicht_zu_deinem')}</p>` : s.ids.map(id => abschnittsZeile(D.A[id], m)).join('');
   const pruefen = s.aus ? null : AF.seitenAufgabe(p);
   blatt({
@@ -155,7 +154,7 @@ export function zeichne(app, K) {
   const wochen = imBer.filter(s => s.w).length;
   const share = nBer ? gef / nBer : 0, C = 2 * Math.PI * 46;
   const zellen = s => {
-    if (s.aus) return `<button type="button" class="lk-z aus" data-p="${s.p}" aria-label="${tx('lichtkarte.seite_2', { p: s.p, a: tx('lichtkarte.nicht_gewaehlt') })}"></button>`;
+    if (s.aus) return `<button type="button" class="lk-z aus" data-p="${s.p}" aria-label="${tx('lichtkarte.seite_2', { p: s.p, a: alsHtml(tx('lichtkarte.nicht_gewaehlt')) })}"></button>`;
     return `<button type="button" class="lk-z" data-p="${s.p}"${s.su ? ' data-su="1"' : ''}><span class="lk-m"><i class="lk-e"></i></span></button>`;
   };
   const juzZeilen = Array.from({ length: 30 }, (_, i) => {
@@ -185,7 +184,7 @@ export function zeichne(app, K) {
     <p class="lk-banner verdeckt" role="status"></p>
     <p class="lk-legende"><i class="lk-fp" aria-hidden="true"></i>${tx('lichtkarte.legende_fehler')}</p>
     <div class="lk-info verdeckt" role="status"></div>
-    <div class="lk-gruppe" role="tablist"><button type="button" role="tab" data-g="guz">${tx('lichtkarte.ansicht_guz')}</button><button type="button" role="tab" data-g="sure">${tx('lichtkarte.ansicht_sure')}</button></div>
+    <div class="lk-gruppe" role="group"><button type="button" data-g="guz">${tx('lichtkarte.ansicht_guz')}</button><button type="button" data-g="sure">${tx('lichtkarte.ansicht_sure')}</button></div>
     <div class="lk-karte" id="licht" data-ansicht="stand"></div>
     <details class="lk-spring"><summary>${tx('lichtkarte.springen')}</summary>${K.stellenWahl()}</details>`;
 
@@ -204,7 +203,7 @@ export function zeichne(app, K) {
     hinweis.textContent = A.hinweis();
     const zaehl = {}; for (const s of m.seiten) if (s && !s.aus) { const v = A.wert(s); zaehl[v] = (zaehl[v] || 0) + 1; }
     kacheln.innerHTML = A.kats().map(([k, name]) => `<button type="button" class="lk-kachel${fokus === k ? ' an' : ''}" data-k="${k}" aria-pressed="${fokus === k}"><i data-k="${k}"></i><b>${zaehl[k] || 0}</b><span>${name}</span></button>`).join('');
-    app.querySelectorAll('.lk-gruppe button').forEach(b => { const an = b.dataset.g === merk.gruppe; b.classList.toggle('an', an); b.setAttribute('aria-selected', an); });
+    app.querySelectorAll('.lk-gruppe button').forEach(b => { const an = b.dataset.g === merk.gruppe; b.classList.toggle('an', an); b.setAttribute('aria-pressed', String(an)); });
     for (const b of wurzel.querySelectorAll('.lk-sure')) {
       const ids = sureAb[+b.dataset.s], bal = b.querySelectorAll('.lk-balken i'); kompakt(ids.map(id => A.wert(m.ab[id]))).forEach((v, i) => { if (bal[i]) bal[i].dataset.k = v; });
     }

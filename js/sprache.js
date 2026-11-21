@@ -112,6 +112,16 @@ export function tx(schluessel, w) {
   return typeof f === 'string' ? f : f(w || {});
 }
 
+// Platzhalterwerte sind Text: Zeichen, die in HTML etwas bedeuten, werden maskiert (Namen aus Profildateien, Angaben vom Konto,
+// Suchbegriffe). Wer bewusst fertiges HTML einsetzt (ein Symbol, einen schon zusammengesetzten Text), kennzeichnet es mit alsHtml(...).
+const MASKE = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+export const alsHtml = s => ({ html: String(s ?? '') });
+function wert(x) {
+  if (typeof x === 'number') return String(x);
+  if (x !== null && typeof x === 'object' && typeof x.html === 'string') return x.html;
+  return String(x).replace(/[&<>"]/g, c => MASKE[c]);
+}
+
 const mehrzahl = n => (regel ||= new Intl.PluralRules(gebiet('code'))).select(n);
 
 // Meldung mit Platzhaltern einmal zerlegen, danach nur noch zusammensetzen
@@ -129,7 +139,7 @@ function bauen(t) {
       while (j < t.length && t[j] !== ',' && t[j] !== '}') j++;
       const name = t.slice(i, j).trim();
       i = j + 1;
-      if (t[j] !== ',') { teile.push(w => String(w[name])); continue; }
+      if (t[j] !== ',') { teile.push(w => wert(w[name])); continue; }
       i = t.indexOf(',', i) + 1;
       const zweige = {};
       for (;;) {
@@ -142,7 +152,7 @@ function bauen(t) {
         i++;
       }
       teile.push(w => {
-        const n = w[name];
+        const roh = w[name], n = roh !== null && typeof roh === 'object' ? NaN : roh;   // nur Zahlen und kurze Kennwörter wählen einen Zweig
         const z = zweige['=' + n] ?? (typeof n === 'number' ? zweige[mehrzahl(n)] : undefined) ?? zweige.other;
         return z ? z(w) : '';
       });

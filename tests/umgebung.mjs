@@ -1,5 +1,5 @@
 // Itqān · Testumgebung für Node: Speicher, Dateizugriff und Uhr nachbilden, Daten aus app/daten laden.
-// Aufruf aus dem Ordner app: node --test tests/
+// Aufruf aus dem Ordner app: node --test tests/*.test.mjs
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';

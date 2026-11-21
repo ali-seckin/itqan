@@ -37,32 +37,91 @@ test('Ruhetag: fällt der Wird-Tag davor aus, gibt es Qaḍāʾ über den Ruheta
   wirdErfuellen(); assert.equal(Z.P.kette.n, 3);
 });
 
-test('Pause: höchstens 30 Tage, keine Wird-Tage, Kette und Fehlerwiederholung warten', () => {
+// Abschnitt 5 mit einer offenen Kontrolle nach Fehler (kon), fällig in n Tagen
+const kontrolleIn = n => { Z.P.karten[5] = { st: 0, n: 1, fe: 3, zul: Z.heute(), fa: [], lf: 3, S: 1, kon: Z.plusTage(Z.heute(), n) }; };
+
+test('Pause: höchstens 30 Tage, keine Wird-Tage, die Kette wartet, die Kontrolle nach Fehler steht am ersten Tag danach im Plan', () => {
   frisch({ datum: '2026-01-05', pensum: 3 });
   wirdErfuellen(); naechsterTag(); wirdErfuellen();     // Kette 2
   naechsterTag();
-  Z.P.karten[5] = { ...Z.karte(5), n: 1, fae: Z.plusTage(Z.heute(), 2) };
+  kontrolleIn(2);
   const p = Z.pauseBeginnen(45);
   assert.equal(Z.tageZwischen(p.von, p.bis), Z.PAUSE_MAX - 1);
-  assert.equal(Z.karte(5).fae, Z.plusTage(Z.heute(), 2 + Z.PAUSE_MAX));
   assert.equal(Z.tagesplan().ruhe, 'pause');
   naechsterTag(Z.PAUSE_MAX);                            // erster Tag nach der Pause
   assert.ok(!Z.inPause()); assert.ok(Z.ketteAktiv());
-  assert.equal(Z.tagesplan().qadaa, 0);
-  wirdErfuellen(); assert.equal(Z.P.kette.n, 3);
+  const t = Z.tagesplan();
+  assert.equal(t.qadaa, 0);
+  assert.equal(t.art[5], 'fehler', 'die Kontrolle hat gewartet und ist jetzt dran');
+  wirdErfuellen(); assert.equal(Z.P.kette.n, 3); assert.equal(Z.karte(5).kon, null);
 });
 
-test('Pause: vorzeitig beenden gibt die übrigen Tage an die Fehlerwiederholung zurück', () => {
+test('Pause: vorzeitig beenden, die Kette läuft weiter und die Kontrolle nach Fehler ist sofort dran', () => {
   frisch({ datum: '2026-01-05', pensum: 3 });
   wirdErfuellen(); naechsterTag();
-  Z.P.karten[5] = { ...Z.karte(5), n: 1, fae: Z.plusTage(Z.heute(), 1) };
-  Z.pauseBeginnen(10);                                  // heute bis +9, fae +11
+  kontrolleIn(1);
+  Z.pauseBeginnen(10);
   naechsterTag(3);
   assert.ok(Z.pauseBeenden());
   assert.ok(!Z.inPause());
-  assert.equal(Z.karte(5).fae, Z.plusTage(Z.heute(), 1));    // ursprünglich 2 Tage vor heute fällig, um die 3 genutzten Pausentage später
   assert.ok(Z.ketteAktiv());
   const t = Z.tagesplan(); assert.ok(!t.ruhe); assert.ok(t.plan.length >= 3);
+  assert.equal(t.art[5], 'fehler');
+});
+
+test('Pause beenden: was am Pausentag frei geübt wurde, bleibt im Tag stehen (Audit Abl. 25)', () => {
+  frisch({ datum: '2026-01-05', pensum: 2 });
+  Z.pauseBeginnen(5);
+  assert.equal(Z.tagesplan().ruhe, 'pause');
+  const r = Z.abschnittAbschliessen(7, Array(D.A[7].ayat).fill('ok'), 'frei');
+  assert.ok(r.punkte > 0);
+  assert.ok(!r.ereignisse.some(x => x.typ === 'wird'), 'in der Pause gibt es keinen Wird');
+  assert.ok(Z.pauseBeenden());
+  const t = Z.tagesplan();
+  assert.ok(!t.ruhe); assert.equal(t.plan.length, 2);
+  assert.equal(t.punkte, r.punkte); assert.ok(t.fertig.includes(7));
+});
+
+test('Ruhetag, Pause, leerer Bestand: freies Üben erfüllt keinen Wird und zählt die Kette nicht (Audit Abl. 8)', () => {
+  frisch({ datum: '2026-01-05', pensum: 3 });           // Montag
+  Z.P.einst.pensum[1] = 0;                              // Dienstag Ruhetag
+  wirdErfuellen(); assert.equal(Z.P.kette.n, 1);
+  naechsterTag();
+  assert.equal(Z.tagesplan().ruhe, 'ruhetag');
+  const r = Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'frei');
+  assert.ok(!r.ereignisse.some(x => x.typ === 'wird'));
+  assert.equal(Z.P.kette.n, 1); assert.equal(Z.P.tage[Z.heute()].voll, false);
+  naechsterTag(); wirdErfuellen(); assert.equal(Z.P.kette.n, 2, 'die Kette läuft über den Ruhetag weiter');
+  // leerer Bestand: kein Plan, kein Wird, keine Ḫatma (Audit N9)
+  frisch({ datum: '2026-01-05', pensum: 3 });
+  Z.P.einst.bereich = []; Z.speichern();
+  assert.equal(Z.tagesplan().plan.length, 0);
+  const b = Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'bonus');
+  assert.ok(!b.ereignisse.some(x => x.typ === 'wird' || x.typ === 'khatma'));
+  assert.equal(Z.P.kette.n, 0); assert.equal(Z.P.zyklus.khatma, 0);
+});
+
+test('Ruhetage wirken ab dem Tag der Änderung, nicht rückwirkend auf Kette und Rückblick (Audit Abl. 22)', () => {
+  frisch({ datum: '2026-01-05', pensum: 3 });           // Montag
+  wirdErfuellen(); naechsterTag(); wirdErfuellen();     // Montag, Dienstag erfüllt
+  naechsterTag(3);                                      // Mittwoch, Donnerstag verpasst, heute Freitag
+  assert.equal(Z.ketteAktiv(), false);
+  Z.P.einst.pensum[2] = 0; Z.P.einst.pensum[3] = 0; Z.speichern();
+  assert.equal(Z.ketteAktiv(), false, 'die gerissene Kette lebt nicht wieder auf');
+  assert.deepEqual(Z.rueckblick('woche', 0).tage.slice(2, 4).map(t => t.stand), ['aus', 'aus']);
+  assert.equal(Z.ruhetag('2026-01-07'), false); assert.equal(Z.ruhetag('2026-01-14'), true);
+  wirdErfuellen(); assert.equal(Z.P.kette.n, 1);
+  // der Nachbau aus dem Protokoll kommt zum selben Ergebnis
+  assert.deepEqual(Z.P.pensumVor.map(x => x.bis), ['2026-01-09']);
+});
+
+test('Fehlerarten: je markierte Āya zählt die gewählte Art einmal, ältere Einträge bleiben, wie sie waren (Audit Abl. 20)', () => {
+  frisch({ datum: '2026-01-05', pensum: 1 });
+  const sockel = JSON.parse(JSON.stringify({ ...Z.P, log: [] }));
+  Z.fehlerstellenMerken(['3.0', '4.1', '5.2', '5.3'], 'haraka');
+  assert.equal(Z.P.statistik.arten.haraka, 3);
+  const alt = { i: 'alt-000001', z: 1, y: 'fm', d: '2026-01-05', w: ['3.0', '4.1', '5.2'], a: 'haraka' };
+  assert.equal(Z.nachbau(sockel, [alt]).statistik.arten.haraka, 1);
 });
 
 test('Pause: heute schon geübt, dann beginnt sie morgen', () => {

@@ -1,4 +1,4 @@
-import { tx, gebiet, umschrift, fassungSetzen } from './sprache.js';
+import { tx, alsHtml, gebiet, umschrift, fassungSetzen } from './sprache.js';
 // Itqān · Daten: Muṣḥaf-Layout (Druck 1405), Āyāt, Abschnitte, Sūren
 export const D = { L: null, V: null, A: null, S: null, W: null, ausgabe: 'v2', modus: 'fort', gliederung: 'fort-2' };
 // Gliederungen: Fortgeschritten (bis etwa eine Seite) und Anfänger (höchstens eine halbe Seite); Name = Fassung für die Umstellung
@@ -25,7 +25,7 @@ async function titelUebersetzen(A) {
   for (const e of A) {
     if (e.seite || !e.titel) continue;
     const m = e.titel.match(TEIL), grund = m ? e.titel.slice(0, m.index) : e.titel, ue = t.get(grund);
-    if (ue) e.titel = m ? tx('daten.titel_teil', { titel: ue, a: m[1], b: m[2] }) : ue;
+    if (ue) e.titel = m ? tx('daten.titel_teil', { titel: alsHtml(ue), a: m[1], b: m[2] }) : ue;
   }
 }
 
@@ -101,7 +101,7 @@ export const vers = vi => ({ s: D.V[vi][0], a: D.V[vi][1], b: D.V[vi][2], p: D.V
 export function abschnittName(e) {
   if (e.nr) return `${sureName(e.von[0])} ${e.nr}`;
   if (e.von[0] === e.bis[0]) return sureName(e.von[0]);
-  return e.seite ? tx('daten.suren_bis', { a: sureName(e.von[0]), b: sureName(e.bis[0]) }) : tx('daten.sammelkarte');
+  return e.seite ? tx('daten.suren_bis', { a: alsHtml(sureName(e.von[0])), b: alsHtml(sureName(e.bis[0])) }) : tx('daten.sammelkarte');
 }
 export function bereichText(e) {
   return e.von[0] === e.bis[0] ? tx('daten.bis', { a: e.von[0], b: e.von[1], c: e.bis[1] }) : tx('daten.bis_2', { a: e.von[0], b: e.von[1], c: e.bis[0], d: e.bis[1] });

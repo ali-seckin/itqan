@@ -5,13 +5,15 @@ on:
     branches: [main]
   workflow_dispatch: {}
 permissions:
+  # actions: read muss bleiben: ohne dieses Recht findet deploy-pages das Artefakt nicht
   actions: read
   contents: read
   pages: write
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # eine begonnene Veröffentlichung läuft zu Ende; von mehreren wartenden Läufen bleibt nur der neueste
+  cancel-in-progress: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,14 +22,64 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
-      # Logiktests zuerst: schlägt einer fehl, wird nichts veröffentlicht
+      # Prüfungen zuerst: schlägt eine fehl, wird nichts veröffentlicht
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: node --test tests/*.test.mjs
+      - name: Service Worker ist gültiges JavaScript
+        run: node --check sw.js
+      - name: Logiktests, Vorrat des Service Workers, Verhalten des Service Workers
+        run: node --test tests/*.test.mjs
+      - name: Keine Gedankenstriche in der App
+        run: |
+          if grep -rn -e '–' -e '—' js css index.html sw.js manifest.webmanifest; then
+            echo "::error::Gedankenstriche in Texten der App"; exit 1
+          fi
+      # Veröffentlicht wird nur, was die App braucht: keine Tests, kein README, keine Arbeitsdateien
+      - name: Seite zusammenstellen
+        run: |
+          set -e
+          # Jeder Eintrag im Wurzelverzeichnis muss hier bekannt sein: entweder er wird veröffentlicht oder bewusst ausgelassen
+          for f in $(ls -A); do
+            case "$f" in
+              index.html|sw.js|manifest.webmanifest|css|js|daten|schriften|icons|CNAME|robots.txt|404.html) ;;
+              tests|README.md|.git|.github|.gitignore|.nojekyll) ;;
+              *) echo "::error::Unbekannter Eintrag im Wurzelverzeichnis: $f (in pages.yml veröffentlichen oder auslassen)"; exit 1 ;;
+            esac
+          done
+          mkdir _site
+          cp -r index.html sw.js manifest.webmanifest css js daten schriften icons _site/
+          for f in CNAME robots.txt 404.html; do
+            if [ -e "$f" ]; then cp -r "$f" _site/; fi
+          done
+          # falsche Adressen führen zur App statt zur Fehlerseite des Hosters
+          if [ ! -e _site/404.html ]; then
+            printf '%s\n' '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=/"><title>Itqān</title></head><body><a href="/">Itqān</a></body></html>' > _site/404.html
+          fi
+          # Gegenprobe: das Nötige ist da, das Übrige nicht
+          test -f _site/index.html && test -f _site/sw.js && test -f _site/js/app.js && test -f _site/daten/verse.json && test -f _site/schriften/v2/p1.woff2 && test -f _site/icons/icon-192.png
+          test ! -e _site/tests && test ! -e _site/README.md && test ! -e _site/.github
+          du -sh _site
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v5
+      # Rauchprobe nach der Veröffentlichung: die Schale im Netz ist die aus diesem Stand, Tests sind nicht abrufbar.
+      # Meldet nur (der Stand ist dann schon veröffentlicht, und das Netz des Hosters braucht manchmal einige Sekunden)
+      - name: Rauchprobe
+        continue-on-error: true
+        env:
+          ADRESSE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          schale=$(grep -o 'itqan-schale-v[0-9]*' sw.js | head -1)
+          for i in 1 2 3 4 5 6; do
+            sleep 10
+            if curl -fsS "${ADRESSE%/}/sw.js" | grep -q "$schale"; then
+              code=$(curl -s -o /dev/null -w '%{http_code}' "${ADRESSE%/}/tests/PRUEFLISTE.md")
+              if [ "$code" = "200" ]; then echo "::error::tests/ ist öffentlich abrufbar"; exit 1; fi
+              echo "Im Netz: $schale, tests/ antwortet mit $code"; exit 0
+            fi
+          done
+          echo "::error::Im Netz steht nicht $schale"; exit 1

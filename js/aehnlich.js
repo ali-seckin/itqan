@@ -5,7 +5,7 @@
 //      ab = die häufigere Reihenfolge, ta und tb = Wortlaut der beiden Folgen
 import { D, sureName } from './daten.js';
 import { normal, stelle, paareLaden } from './suche.js';
-import { tx, gebiet } from './sprache.js';
+import { tx, alsHtml, gebiet } from './sprache.js';
 
 export const ART = { gleich: tx('aehnlich.wortgleich'), fast: tx('aehnlich.fast_gleich'), aehnlich: tx('aehnlich.aehnlich') };
 export const WAS = { zusatz: tx('aehnlich.zusatz_oder_auslassung'), wort: tx('aehnlich.anderes_wort'), wortform: tx('aehnlich.andere_wortform'), bindewort: tx('aehnlich.oder_davor'), reihenfolge: tx('aehnlich.andere_reihenfolge') };
@@ -114,9 +114,9 @@ export function danach(t, vi) {
 }
 export function merksatz(f) {
   const n = f.s.length;
-  if (f.art === 'gleich') return tx('aehnlich.derselbe_wortlaut_an_stellen_verwechselt', { a: n === 2 ? tx('aehnlich.beiden') : tx('aehnlich.allen', { n }) });
+  if (f.art === 'gleich') return tx('aehnlich.derselbe_wortlaut_an_stellen_verwechselt', { a: alsHtml(n === 2 ? tx('aehnlich.beiden') : tx('aehnlich.allen', { n })) });
   const wo = f.wo.map(x => WO[x]);
-  return tx('aehnlich.der_unterschied_liegt', { a: wo.length > 1 ? `${wo.slice(0, -1).join(', ')} ${tx('aehnlich.und', { at: wo.at(-1) })}` : wo[0] });
+  return tx('aehnlich.der_unterschied_liegt', { a: alsHtml(wo.length > 1 ? `${wo.slice(0, -1).join(', ')} ${tx('aehnlich.und', { at: wo.at(-1) })}` : wo[0]) });
 }
 // Reihenfolge-Fall: regel = eine Folge ist klar die häufigere
 export function fallSatz(x) {
