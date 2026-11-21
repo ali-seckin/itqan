@@ -89,26 +89,25 @@ test('Kettenbonus: 3 Tage 3 %, 7 Tage 10 %, 40 Tage 50 % als Höchstwert, Kette 
   assert.ok(p40 <= Math.round(basis * 1.5));
 });
 
-test('Tagesmischung: auch mit einem Abschnitt am Tag kommt trotz ständiger Fehler Neues dran (beide Rhythmen)', () => {
-  for (const rhythmus of ['langzeit', 'khatma']) {
-    frisch({ pensum: 1 }); Z.P.einst.rhythmus = rhythmus;
-    const gesehen = new Set(); let fehlerTage = 0;
-    for (let tag = 0; tag < 14; tag++) {
-      const t = Z.tagesplan();
-      for (const id of t.plan.filter(x => !t.fertig.includes(x))) {
-        if (t.art[id] === 'fehler') fehlerTage++;
-        gesehen.add(id);
-        Z.abschnittAbschliessen(id, ['fehler', ...Array(D.A[id].ayat - 1).fill('ok')]);
-      }
-      naechsterTag();
+test('Tagesmischung: trotz ständiger Fehler kommt Neues dran, und Kontrollen nach Fehlern kommen vor', () => {
+  frisch({ pensum: 4 });
+  const gesehen = new Set(); let fehlerTage = 0;
+  for (let tag = 0; tag < 14; tag++) {
+    const t = Z.tagesplan();
+    for (const id of t.plan.filter(x => !t.fertig.includes(x))) {
+      if (t.art[id] === 'fehler') fehlerTage++;
+      gesehen.add(id);
+      const nn = D.A[id].ayat, m = Math.ceil(nn / 3);
+      Z.abschnittAbschliessen(id, [...Array(m).fill('fehler'), ...Array(nn - m).fill('ok')]);
     }
-    assert.ok(gesehen.size >= 4, `${rhythmus}: nur ${gesehen.size} verschiedene Abschnitte in 14 Tagen`);
-    assert.ok(fehlerTage >= 3, `${rhythmus}: Fehlerwiederholungen kamen nicht dran`);
+    naechsterTag();
   }
+  assert.ok(gesehen.size >= 8, `nur ${gesehen.size} verschiedene Abschnitte in 14 Tagen`);
+  assert.ok(fehlerTage >= 3, 'Kontrollen nach Fehlern kamen nicht dran');
 });
 
 test('Tagesmischung: mit 3 Abschnitten gehören mindestens ein Neuer und höchstens zwei Fehlerwiederholungen auf den Plan', () => {
-  frisch({ pensum: 3 }); Z.P.einst.rhythmus = 'langzeit';
+  frisch({ pensum: 3 });
   for (let tag = 0; tag < 6; tag++) {
     const t = Z.tagesplan();
     assert.equal(t.plan.length, 3);

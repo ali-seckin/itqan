@@ -1,6 +1,7 @@
 // Itqān · Profil, Tagesplan (Wird), Karteisystem, Punkte, Kette
 import { D, gliederungVon } from './daten.js';
 import { tx, gebiet } from './sprache.js';
+import * as LM from './lernmodell.js';
 
 const SCHLUESSEL = 'itqan-profil-v1';
 export const STUFEN = [tx('allg.neu'), tx('zustand.im_aufbau'), tx('allg.gefestigt'), tx('allg.sicher'), tx('allg.mutqan')];
@@ -13,13 +14,11 @@ export function kettenBonus(n) {
   return { p, naechst: nae ? nae[0] : null };
 }
 export const kettenTage = () => ketteAktiv() ? P.kette.n : 0;
-const FEHLER_ABSTAND = [1, 3, 7];      // Tage bis zur nächsten Fehlerwiederholung
-// Tagesmischung und Anfangswerte, abgestimmt mit tests/simulation_takt.mjs (siehe konzept/lernmodell_kapazitaet_2026-11-15.md).
-// neuMin/neuMax: Anteil der Tagesplätze für noch nie geprüfte Abschnitte im Langzeit-Rhythmus, je nach Rückstau (druckStart bis druckEnde: Tage an fälliger Arbeit).
-// neuKlassisch: Anteil im klassischen Rhythmus (Fehlerwiederholungen bekommen höchstens den Rest). S0: Stabilität nach dem ersten fehlerfreien Durchgang.
-// ketteLangzeit: im Langzeit-Rhythmus übernimmt das Modell nach dem ersten Wiedersehen am Folgetag.
-export const TAKT = { neuMin: 0.35, neuMax: 0.8, neuKlassisch: 0.5, S0: 20, ketteLangzeit: [1], druckStart: 1, druckEnde: 5, fehlerMax: 1 };
-const kette = () => P.einst.rhythmus === 'langzeit' ? TAKT.ketteLangzeit : FEHLER_ABSTAND;
+// Ein Lernmodell für alle (lernmodell.js, Begründung in konzept/lernmodell_einheitlich/DOSSIER.md): Stabilität je Abschnitt, Plätze für Modell, Zyklus und Erstprüfung.
+const tagNr = d => tageZwischen('2000-01-01', d), nrTag = n => plusTage('2000-01-01', n);
+// Haken nach jedem abgeschlossenen Abschnitt (freiwilliges Lernprotokoll, forschung.js)
+let abschlussHaken = null;
+export const abschlussHakenSetzen = f => { abschlussHaken = f; };
 export let P = null;
 
 // ---------- Datum (lokal) ----------
@@ -393,12 +392,7 @@ export function ketteAktiv(datum = heute()) {
   const z = P.kette.zuletzt; if (!z || !P.kette.n) return false;
   return z >= vorigerWirdTag(vorigerWirdTag(datum));
 }
-// Anteil des Pensums für zusätzliches Festigen schwacher Abschnitte (Regler in den Einstellungen).
-// Eingestellt mit tests/simulation.mjs (200 Tage, 8 Läufe): „Schwächen zuerst“ verlängert die Ḫatma um etwa 7 %,
-// schwache Abschnitte kommen außerhalb der Fehlerwiederholung gut doppelt so oft dran.
-export const SCHWAECHEN = { khatma: 0, ausgewogen: 0.03, schwaechen: 0.065 };
-// schwach: ein Fehler innerhalb der letzten zwei Runden (fz: Tag des letzten Fehlers) oder im Schnitt viele Fehler je Durchgang
-const istSchwach = (k, seit) => k.n > 0 && k.fe > 0 && ((k.fz && k.fz >= seit) || k.fe / k.n >= 0.5);
+// schwach (Anzeige in Auswertung und Profil): viele Fehler je Durchgang, niedrige Stufe, Kontrolle offen
 export const schwachWert = k => (k.fe / k.n) * 2 + (4 - k.st) + (k.fae ? 1 : 0);
 // versäumte Wird-Tage zwischen dem letzten erfüllten Tag und datum (Ruhetage und Pause zählen nicht)
 function ausgefallenSeit(zuletzt, datum) {
@@ -431,41 +425,9 @@ export function tagesplan(datum = heute(), trotzdem = false) {
   const w1 = vorigerWirdTag(datum), w2 = vorigerWirdTag(w1), z = P.kette.zuletzt;
   if (!frei && P.kette.n > 0 && z && z >= w2 && z < w1) qadaa = pensumAm(w1);
   const plan = [], art = {};
-  const faellig = Object.entries(P.karten)
-    .filter(([id, k]) => k.fae && k.fae <= datum && imBereich(+id))
-    .sort((a, b) => a[1].fae.localeCompare(b[1].fae) || a[1].st - b[1].st)
-    .map(([id]) => +id);
-  // Mischung des Tages: ein fester Anteil der Plätze gehört dem Neuen (auch bei 1 oder 2 Abschnitten am Tag, über einen Guthaben-Zähler), den Rest teilen sich Fehlerwiederholungen und Fälliges
-  const gesamt = n + qadaa, langzeit = P.einst.rhythmus === 'langzeit';
-  let neuVerf = Infinity, druck = faellig.length, q = TAKT.neuKlassisch;
-  if (langzeit) {
-    const zl = (P.einst.zielQuote ?? 90) / 100; neuVerf = 0;
-    for (const id of reihe()) { const k = P.karten[id]; if (!k || !k.n) neuVerf++; else if (!k.fae && abruf(tageZwischen(k.zul, datum), stabilitaet(k)) < zl) druck++; }
-    const p = druck / Math.max(1, gesamt);
-    q = p <= TAKT.druckStart ? TAKT.neuMax : p >= TAKT.druckEnde ? TAKT.neuMin : TAKT.neuMax - (TAKT.neuMax - TAKT.neuMin) * (p - TAKT.druckStart) / (TAKT.druckEnde - TAKT.druckStart);
-  }
-  const kn0 = (P.zyklus.kn || 0) + gesamt * q;   // Guthaben für Neues: wächst täglich, sinkt um die tatsächlich vergebenen Neu-Plätze
-  const neuPlaetze = Math.max(0, Math.min(gesamt, neuVerf, Math.floor(kn0 + 1e-9)));
-  for (const id of faellig.slice(0, Math.min(gesamt - neuPlaetze, Math.ceil(gesamt * TAKT.fehlerMax)))) { plan.push(id); art[id] = 'fehler'; }
-  // Festigen: schwache Abschnitte, deren letzte Wiederholung mindestens eine halbe Runde zurückliegt
-  const anteil = P.einst.rhythmus === 'langzeit' ? 0 : SCHWAECHEN[P.einst.schwaechen] ?? SCHWAECHEN.ausgewogen;   // im Langzeit-Rhythmus übernimmt das Modell das Festigen
-  let konto = P.zyklus.konto || 0;    // der Plan wird erst berechnet, dann als Eintrag angewendet
-  if (anteil > 0) {
-    konto += n * anteil;
-    const runde = tageProKhatma(), grenze = plusTage(datum, -Math.max(14, Math.round(runde / 4))), seit = plusTage(datum, -2 * runde);
-    const platz = n + qadaa - plan.length - 1;    // mindestens ein Abschnitt der Runde bleibt
-    const kand = Object.entries(P.karten).map(([id, k]) => [+id, k])
-      .filter(([id, k]) => !plan.includes(id) && !k.fae && k.zul && k.zul <= grenze && istSchwach(k, seit) && imBereich(id))
-      .sort((a, b) => schwachWert(b[1]) - schwachWert(a[1]) || a[1].zul.localeCompare(b[1].zul));
-    const zahl = Math.max(0, Math.min(Math.floor(konto), platz, kand.length));
-    for (const [id] of kand.slice(0, zahl)) { plan.push(id); art[id] = 'festigen'; }
-    konto = kand.length > zahl ? konto - zahl : Math.min(konto - zahl, 1);   // ohne Kandidaten kein Stau
-  }
-  const naechste = naechsteImZyklus(n + qadaa - plan.length, new Set(plan), datum, neuPlaetze);
-  const neuGenutzt = langzeit ? naechste.filter(id => !P.karten[id]?.n).length : naechste.length;
-  const kn = Math.round(Math.max(0, Math.min(1.5, kn0 - neuGenutzt)) * 1000) / 1000;
-  naechste.forEach((id, i) => { plan.push(id); art[id] = i >= naechste.length - qadaa && qadaa ? 'qadaa' : 'zyklus'; });
-  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, gl: D.gliederung, ...(cb ? { cb } : {}), ...(frei ? { freiwillig: true } : {}) }, kn, ...(anteil > 0 ? { k: konto } : {}) });
+  const e = LM.planen({ karten: modellKarten(), reihe: reiheFuerPlan(datum, new Set()), tag: tagNr(datum), n: n + qadaa, kn: P.zyklus.kn || 0, kz: P.zyklus.kz || 0 });
+  e.plan.forEach(({ id, art: x }, i) => { plan.push(id); art[id] = qadaa && i >= e.plan.length - qadaa ? 'qadaa' : x === 'kontrolle' ? 'fehler' : 'zyklus'; });
+  eintrag('pl', { d: datum, t: { plan, art, fertig: [], punkte: 0, hasanat: 0, r: 0, f: 0, h: 0, voll: false, qadaa, gl: D.gliederung, fl: e.faellig, ...(cb ? { cb } : {}), ...(frei ? { freiwillig: true } : {}) }, kn: e.kn, kz: e.kz });
   return P.tage[datum];
 }
 // Tagesplan anwenden. Gibt es für den Tag schon einen Plan (zweites Gerät), bleibt der erste;
@@ -477,6 +439,7 @@ function planAnwenden(e) {
   P.tage[e.d] = neu;
   if (e.k != null) P.zyklus.konto = e.k;
   if (e.kn != null) P.zyklus.kn = e.kn;
+  if (e.kz != null) P.zyklus.kz = e.kz;
   if (!neu.ruhe) aufraeumen(e.d);
 }
 // Tag für einen Abschluss, zu dem es keinen Plan gibt (Einträge aus einer älteren Generation)
@@ -491,52 +454,29 @@ function zufall(text) {
   for (let i = 0; i < text.length; i++) { h = Math.imul(h ^ text.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
   return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
 }
-// ---------- Rhythmus „Langzeit“: Behaltensmodell je Abschnitt ----------
-// Stabilität S in Tagen: nach S Tagen sind noch 90 % behalten. Abrufwahrscheinlichkeit R(t) = 1 / (1 + t / (9 S)), wie in FSRS.
-// Der nächste Termin liegt dort, wo R auf den Zielwert (Behaltensquote) fällt: t = 9 S (1 / Ziel - 1). Für Abschnitte ohne S gilt ein Anfangswert nach Stufe.
+// ---------- Gedächtnismodell je Abschnitt (lernmodell.js) ----------
+// Stabilität S in Tagen: nach S Tagen sind noch 90 % behalten. Abrufwahrscheinlichkeit nach einer Potenzkurve. Für ältere Karten ohne S gilt ein Anfangswert nach Stufe.
 const STUFE_S = [1, 3, 10, 30, 90];
 export const stabilitaet = k => k.S ?? STUFE_S[k.st || 0];
-export const abruf = (tage, S) => 1 / (1 + Math.max(0, tage) / (9 * S));
-// Abschnitte für den Plan: zuerst die fälligen (niedrigste Abrufwahrscheinlichkeit zuerst), dann noch nie geübte in der Reihenfolge des Bereichs,
-// reicht das nicht, die am wenigsten sicheren der übrigen
-function langzeitWahl(anzahl, ausser, datum, neuMind = 0) {
-  const ziel = (P.einst.zielQuote ?? 90) / 100, faellig = [], rest = [], neu = [], aus = [];
-  for (const id of reihe()) {
-    if (ausser.has(id)) continue;
-    const k = P.karten[id];
-    if (!k || !k.n) { neu.push(id); continue; }
-    const R = abruf(tageZwischen(k.zul, datum), stabilitaet(k));
-    (R < ziel ? faellig : rest).push([id, R]);
-  }
-  faellig.sort((a, b) => a[1] - b[1]); rest.sort((a, b) => a[1] - b[1]);
-  // Der Neuzugang ist gesichert (neuMind Plätze), die übrigen Plätze gehören den am stärksten Verblassten; reicht das Fällige nicht, rücken Neues und dann das Übrige nach
-  const fest = Math.min(neuMind, neu.length, anzahl);
-  for (const [id] of faellig) if (aus.length < anzahl - fest) aus.push(id);
-  for (const id of neu) if (aus.length < anzahl) aus.push(id);
-  for (const [id] of rest) if (aus.length < anzahl) aus.push(id);
-  return aus;
+export const abruf = (tage, S) => LM.abruf(tage, S);
+export const MODELL = LM.PAR;   // Zahlen des Modells (Tests und Anzeige)
+// Abschnitte mit Stand für das Modell (nur geprüfte, Lektionen in Arbeit bleiben außen vor)
+function modellKarten() {
+  const m = {};
+  for (const id of reihe()) { const k = P.karten[id]; if (k?.n && k.zul && !(P.lern?.[id]?.ph < 2)) m[id] = { S: stabilitaet(k), zul: tagNr(k.zul), n: k.n, kon: k.kon ? tagNr(k.kon) : null }; }
+  return m;
 }
+// Reihenfolge der Erstprüfung: Grundreihe, bei Zufall je Tag fest gemischt (derselbe Tag ergibt auf jedem Gerät dieselbe Folge)
+function reiheFuerPlan(datum, ausser) {
+  const r = reihe().filter(id => !ausser.has(id) && !(P.lern?.[id]?.ph < 2)), E = P.einst;
+  if (E.reihenfolge !== 'zufall' || r.length < 2) return r;
+  const rnd = zufall(`${datum}|${P.erstellt}|${[...ausser].join(',')}|${r.length}`);
+  if (E.zufall === 'block') { const k = Math.floor(rnd() * r.length); return [...r.slice(k), ...r.slice(0, k)]; }
+  const a = [...r]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a;
+}
+// die nächsten Abschnitte außerhalb von ausser (mehr Abschnitte heute, Reihenfolge geändert, Bereich geändert). neuMind: Guthaben für Erstprüfung
 export function naechsteImZyklus(anzahl, ausser = new Set(), datum = heute(), neuMind = 0) {
-  if (P.einst.rhythmus === 'langzeit') return langzeitWahl(anzahl, ausser, datum, neuMind);
-  const erl = new Set(P.zyklus.erledigt), aus = [];
-  if (P.einst.reihenfolge === 'zufall') {
-    const r = reihe(), rnd = zufall(`${datum}|${P.erstellt}|${erl.size}|${[...ausser].join(',')}`);
-    const offen = r.filter(id => !erl.has(id) && !ausser.has(id));
-    const pool = offen.length ? offen : r.filter(id => !ausser.has(id));
-    if (P.einst.zufall === 'block') {  // eine zufällige Stelle, dann am Stück weiter (ohne Sprung vom Ende an den Anfang)
-      const k = Math.floor(rnd() * (Math.max(0, pool.length - anzahl) + 1));
-      aus.push(...pool.slice(k, k + anzahl));
-    } else {
-      const a = [...pool]; while (aus.length < anzahl && a.length) aus.push(a.splice(Math.floor(rnd() * a.length), 1)[0]);
-    }
-    if (aus.length < anzahl) for (const id of r) { if (aus.length >= anzahl) break; if (!ausser.has(id) && !aus.includes(id)) aus.push(id); }
-    return aus;
-  }
-  for (const id of reihe()) { if (aus.length >= anzahl) break; if (!erl.has(id) && !ausser.has(id)) aus.push(id); }
-  if (aus.length < anzahl) { // Runde fast fertig: von vorne weiter
-    for (const id of reihe()) { if (aus.length >= anzahl) break; if (!ausser.has(id) && !aus.includes(id)) aus.push(id); }
-  }
-  return aus;
+  return LM.planen({ karten: modellKarten(), reihe: reiheFuerPlan(datum, ausser), tag: tagNr(datum), n: anzahl, kn: neuMind, kz: 0 }).plan.map(x => x.id);
 }
 // nächster Abschnitt nach dem heutigen Plan: bei „Zufall am Stück“ direkt im Anschluss
 function fortsetzung(t) {
@@ -730,9 +670,14 @@ export function lektionen() {
   }).sort((a, b) => a.seit.localeCompare(b.seit) || a.id - b.id);
 }
 // Was Heute aus dem Lernplan zeigt: so viele, wie pro Tag eingestellt sind; was heute schon gezählt hat, behält seinen Platz
+// Ḥifẓ-Tempo: neue Lektionen beginnen nur, wenn die Wiederholung im Griff ist (lernmodell.js); angefangene laufen immer weiter
+export function lernErlaubt() {
+  const t = tagesplan(); if (t.ruhe) return { ok: true, grund: 'ruhe' };
+  return LM.lernTempo({ n: Math.max(1, t.plan.length), faellig: t.fl ?? 0, offen: lektionen().filter(l => l.schritte > 0).length });
+}
 export function lernHeute() {
-  const alle = lektionen();
-  return [...alle.filter(l => l.heute), ...alle.filter(l => !l.heute)].slice(0, lernProTag());
+  const alle = lektionen(), lauf = alle.filter(l => l.schritte > 0 || l.heute), warte = alle.filter(l => !lauf.includes(l));
+  return [...lauf.filter(l => l.heute), ...lauf.filter(l => !l.heute), ...(lernErlaubt().ok ? warte : [])].slice(0, lernProTag());
 }
 export const lernFertig = () => Object.entries(P.lern || {}).filter(([, L]) => L.ph === 2).map(([id, L]) => ({ id: +id, e: L.e }));
 // Vorschlag für die nächste Lektion: die Sūra der jüngsten Lektion zu Ende, sonst der Abschnitt nach dem Bereich,
@@ -750,7 +695,7 @@ function lernSchritt(L, k, id, datum, f, h, ereignisse) {
   const vor = L.ft.length, rein = !f && !h, neu = rein && !L.ft.includes(datum);
   if (neu) L.ft.push(datum);
   if (!rein && f) k.fz = datum;
-  if (L.ft.length >= LERN.schritte) { L.ph = 2; L.e = datum; k.S = 3; }   // fertig: in drei Tagen die erste Wiederholung
+  if (L.ft.length >= LERN.schritte) { L.ph = 2; L.e = datum; k.S = LM.PAR.sLern; }   // fertig: erstes Wiedersehen am Folgetag
   L.zul = datum;
   k.st = L.ph === 2 ? 2 : Math.min(1, L.ft.length);
   if (L.ph === 2 && vor < LERN.schritte) ereignisse.push({ typ: 'lernstufe', id, ph: 2 });
@@ -773,9 +718,11 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   if (art === 'bonus') { const b = Math.round(punkte * 0.5); punkte += b; teile.push([tx('zustand.bonusabschnitt_50'), b]); }
   const kp = kettenBonus(kettenTage()).p;
   if (kp) { const b = Math.round(punkte * kp / 100); punkte += b; teile.push([tx('zustand.kette', { kp }), b]); }
+  const k0 = karte(id), vorherStand = { n: k0.n, S: k0.n ? stabilitaet(k0) : null, zul: k0.zul };
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   // hw: seit 1.17 zählt eine Āya mit Hilfe für Stufe und Wiederholung wie ein Fehler (ältere Einträge ohne hw bleiben bei der alten Regel)
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte, ...(h ? { hw: 1 } : {}) });
+  try { abschlussHaken?.({ id, art, v: ergebnisse.length, f, h, z, vorher: vorherStand, datum, pensum: t.plan.length, gliederung: D.gliederung }); } catch (e) {}
   return { punkte, teile, hasanat: erg.hasanat, r, f, h: h + z, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern };
 }
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };
@@ -801,22 +748,15 @@ function abschlussAnwenden(e0) {
   const L = art === 'lern' && P.lern?.[id]?.ph < 2 ? P.lern[id] : null;
   const lern = L ? lernSchritt(L, k, id, datum, f, h + z, ereignisse) : null;
   if (L) { /* Stufe steht schon */ }
-  else if (ab) { /* Stufe und Fehlerwiederholung bleiben, wie sie sind */ }
-  else if (f || (e0.hw && h)) { const u = f + (e0.hw ? h : 0); if (f) k.fz = datum; k.st = Math.max(0, k.st - (u / ergebnisse.length > 0.3 ? 2 : 1)); k.fae = plusTage(datum, kette()[0]); k.fs = 0; }
-  else if (h || z) { k.fae = k.fae && k.fae <= plusTage(datum, 3) ? k.fae : plusTage(datum, 3); }
-  else {
-    k.st = Math.min(4, k.st + 1);
-    if (k.fae) { k.fs = (k.fs || 0) + 1; k.fae = k.fs < kette().length ? plusTage(datum, kette()[k.fs]) : null; if (!k.fae) k.fs = 0; }
-  }
-  // Behaltensmodell: Stabilität wächst bei Erfolg umso stärker, je mehr vergessen war (erwünschte Schwierigkeit); Fehler lassen sie fallen
+  else if (ab) { /* Stufe bleibt, wie sie ist */ }
+  else if (f || (e0.hw && h)) { const u = f + (e0.hw ? h : 0); if (f) k.fz = datum; k.st = Math.max(0, k.st - (u / ergebnisse.length > 0.3 ? 2 : 1)); }
+  else if (h || z) { /* Stufe bleibt */ }
+  else k.st = Math.min(4, k.st + 1);
+  // Gedächtnismodell: Stabilität wächst bei Erfolg umso stärker, je mehr vergessen war; Fehler senken sie nach dem Anteil falscher Verse; deutlicher Fehler: Kontrolle am Folgetag
   if (!L) {
-    const S0 = stabilitaet(k), R = k.n ? abruf(k.zul ? tageZwischen(k.zul, datum) : 0, S0) : 1, anteilF = f / Math.max(1, ergebnisse.length);
-    k.S = ab ? (k.n ? Math.max(1, S0 * 1.1) : 2)
-      : !k.n ? (f ? 1.5 : (h || z) ? 3 : TAKT.S0)   // Wiederholung von Auswendigem: ein sauberer erster Durchgang spricht für ein lange gefestigtes Gedächtnis
-      : f ? Math.max(1, S0 * (anteilF > 0.3 ? 0.25 : 0.4))
-      : (h || z) ? Math.max(1, S0 * 1.1)
-      : Math.min(365, S0 * (1.5 + 3 * (1 - R)));
-    k.S = Math.round(k.S * 100) / 100;
+    const alt = k.n && k.zul ? { n: k.n, S: stabilitaet(k), zul: tagNr(k.zul), kon: k.kon ? tagNr(k.kon) : null, lt: k.lt ?? null } : null;
+    const ne = LM.nachUebung(alt, tagNr(datum), ab ? { v: ergebnisse.length, f: 0, z: 1 } : { v: ergebnisse.length, f: f + (e0.hw ? h : 0), z: z + (e0.hw ? 0 : h) });
+    k.S = Math.round(ne.S * 100) / 100; k.kon = ne.kon != null ? nrTag(ne.kon) : null; if (ne.lt != null) k.lt = ne.lt;
   }
   k.n++; k.fe += f; k.zul = datum; if (!ab) k.lf = f;   // lf: Fehler im letzten Durchgang
   if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
@@ -977,7 +917,7 @@ export function letzteTage(n = 30) {
 export function behaltensquote(tage = 30) {
   let r = 0, n = 0;
   for (let i = 0; i < tage; i++) { const t = P.tage[plusTage(heute(), -i)]; if (t) { r += t.r || 0; n += (t.r || 0) + (t.f || 0) + (t.h || 0); } }
-  return { quote: n >= 10 ? 100 * r / n : null, n, ziel: P.einst.zielQuote ?? 90 };
+  return { quote: n >= 10 ? 100 * r / n : null, n, ziel: Math.round(100 * LM.PAR.rZiel) };
 }
 export function auswertung(tage = 30) {
   const arten = FEHLERARTEN.map(([w, l]) => ({ art: w, name: l, n: P.statistik?.arten?.[w] || 0 }));
@@ -1019,17 +959,17 @@ export function khatmaFortschritt() {
   const zeilen = r.reduce((s, id) => s + D.A[id].zeilen, 0), fertig = r.filter(id => erl.has(id)).reduce((s, id) => s + D.A[id].zeilen, 0);
   return { anteil: zeilen ? fertig / zeilen : 0, fertig: r.filter(id => erl.has(id)).length, gesamt: r.length };
 }
-// Dauer einer Ḫatma in Tagen; mit Regler: Zuschlag für das Festigen (Simulation: etwa 1,1 × Anteil)
-// Empfehlung für die Tagesmenge je Gebiet (N Abschnitte): mit TAKT-Mischung entfallen etwa 35 % der Plätze auf Neues, der erste Durchlauf dauert also etwa N / (0,35 n) Tage.
+// Dauer einer Ḫatma in Tagen bei gleichmäßigem Umlauf
+// Empfehlung für die Tagesmenge je Gebiet (N Abschnitte): mindestens die Hälfte der Plätze gehört der Erstprüfung, der erste Durchlauf dauert also höchstens etwa N / (0,5 n) Tage.
 // minimal: erster Durchlauf in etwa 18 Monaten, ideal: in etwa 9 Monaten (Simulation: dann sitzt nach einem Jahr fast alles).
 export function pensumEmpfehlung(N = reihe().length) {
-  const anteil = !P || P.einst.rhythmus === 'langzeit' ? 0.35 : 0.8;   // klassisch: fast alle Plätze führen durch den Zyklus
+  const anteil = LM.PAR.neuMin;   // mindestens die Hälfte der Plätze gehört der Erstprüfung, solange es Ungeprüftes gibt
   const tage = n => Math.round(N / (anteil * Math.max(0.1, n)));
   return { N, minimal: Math.max(1, Math.ceil(N / 190)), ideal: Math.max(1, Math.ceil(N / 95)), tage };
 }
-export function tageProKhatma(mitRegler = false) {
+export function tageProKhatma() {
   const woche = P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
-  return Math.ceil(reihe().length / Math.max(0.1, woche) * (mitRegler ? 1 + 1.1 * (SCHWAECHEN[P.einst.schwaechen] ?? 0) : 1));
+  return Math.ceil(reihe().length / Math.max(0.1, woche));
 }
 
 // ---------- Rückblick: eine Woche (Montag bis Sonntag) oder ein Kalendermonat in Zahlen ----------

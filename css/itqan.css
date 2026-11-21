@@ -1310,3 +1310,7 @@ html{scrollbar-gutter:stable}
 .vollbild.zieht .vb-pfeil{opacity:0;transition:none}
 /* Store-App: keine Anleitung zum Installieren (die App ist ja installiert) */
 .nativ a[href="#installieren"]{display:none!important}
+/* Erst ansehen: Versende und Stoppzeichen behalten ihre Farben */
+html[data-stopp] .vorschau .w.zu.ende{color:var(--sk-ende)!important;text-shadow:0 0 .3em var(--sk-glow)!important}
+html[data-stopp] .vorschau .w.zu.ende::after{display:flex!important}
+html[data-stopp] .vorschau .seite .w.zu .wq{color:var(--sk-stopp)!important;text-shadow:0 0 .6px var(--sk-stopp)!important}

@@ -15,3 +15,5 @@ export function hintergrundSperren(an) {
     document.documentElement.classList.remove('sperre'); removeEventListener('touchmove', beiTouch); removeEventListener('wheel', beiRad);
   }
 }
+// Sicherung: bleibt die Sperre nach einem Seitenwechsel hängen (Fenster ohne Schließen entfernt), wird sie hier gelöst
+export function hintergrundFreigeben() { if (!offen && !document.documentElement.classList.contains('sperre')) return; offen = 0; document.documentElement.classList.remove('sperre'); removeEventListener('touchmove', beiTouch); removeEventListener('wheel', beiRad); }

@@ -2,7 +2,8 @@
 import { D, ladeDaten, abschnittName, bereichText, zahl, prozent, esc, sureName, sureArabisch, juzVonSeite, juzVonVers, juzStart, ayaWoerter, schriftSeiten } from './daten.js';
 import * as Z from './zustand.js';
 import * as Lk from './lichtkarte.js';
-import { hintergrundSperren } from './sperre.js';
+import { hintergrundSperren, hintergrundFreigeben } from './sperre.js';
+import * as Forschung from './forschung.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
@@ -478,6 +479,8 @@ const herkunftMerk = {};
 function herkunft(platz) { if (vorigeRoute === 'uebungen') herkunftMerk[platz] = 'uebungen'; else if (vorigeRoute === 'heute') herkunftMerk[platz] = 'heute'; return herkunftMerk[platz] || 'heute'; }
 async function zeige() {
   blaseSchliessen();
+  if (!document.querySelector('.dialog, .lk-blatt-wrap')) hintergrundFreigeben();   // keine hängende Scroll-Sperre
+  { const nav = document.querySelector('.nav'); if (nav) requestAnimationFrame(() => { nav.style.transform = 'translate3d(0,1px,0)'; requestAnimationFrame(() => { nav.style.transform = ''; }); }); }   // untere Leiste nach Seitenwechsel neu setzen lassen
   const [name, ...arg] = (location.hash.slice(1) || 'heute').split('/');
   // Erstes Öffnen: zuerst die Einführung, dann das Profil
   if (!Z.P && name !== 'sprachwahl' && !spracheGewaehlt()) { location.replace('#sprachwahl'); return; }   // allererster Start: zuerst die Sprache
@@ -605,7 +608,7 @@ function einfuehrung() {
 // ---------- Start ----------
 function start() {
   navSetzen(null);
-  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort', hasanat: '1', rhythmus: 'langzeit' };
+  const s = { name: '', pensum: 3, reihenfolge: 'vorwaerts', zufall: 'einzeln', sel: alles(), thema: 'auto', modus: 'fort', hasanat: '1' };
   const tageText = () => {
     const ganz = s.modus === 'seite';
     const ids = ganz ? seitenZahl(s.sel) : (zuAbschnitten(s.sel) || D.A).length;
@@ -626,10 +629,6 @@ function start() {
     <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
-    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
-      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="an">${tx('einstellungen.rhythmus_langzeit')}</button></div>
-      ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
-    <div class="abschnitt"><label class="auswahl"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(s.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label><p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">${tx('start.bei_mehreren_abschnitten_am_tag')}</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">${tx('start.verstreute_stellen')}</button><button data-w="block">${tx('start.eine_stelle_am_stueck')}</button></div></div></div>
@@ -641,11 +640,10 @@ function start() {
   const ssb = app.querySelector('#start-schnapp'); if (ssb) ssb.onclick = () => app.querySelector('#start-schnapp-liste').classList.toggle('verdeckt');
   schnappschussBinden(app);
   const dauerZeigen = () => { app.querySelector('#dauer').innerHTML = tageText(); };
-  app.querySelector('#herkunft').onchange = ev => { s.herkunft = ev.target.value; };
   wahlZeichnen(app.querySelector('#auswahl'), s.sel, dauerZeigen, { leer: tx('auswahl.leer_start') });
   const p = d => { s.pensum = Math.min(30, Math.max(1, s.pensum + d)); app.querySelector('#pensum').textContent = s.pensum; app.querySelector('#dauer').innerHTML = tageText(); };
   app.querySelector('#minus').onclick = () => p(-1); app.querySelector('#plus').onclick = () => p(1);
-  for (const id of ['reihenfolge', 'zufall', 'thema', 'modus', 'hasanat', 'rhythmus']) app.querySelector('#' + id).onclick = e => {
+  for (const id of ['reihenfolge', 'zufall', 'thema', 'modus', 'hasanat']) app.querySelector('#' + id).onclick = e => {
     const w = e.target.closest('button')?.dataset.w; if (!w) return; s[id] = w;
     app.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('an', b.dataset.w === w));
     if (id === 'reihenfolge') app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall');
@@ -656,7 +654,7 @@ function start() {
     if (istLeer(s.sel)) { toast(tx('auswahl.mindestens_etwas')); return; }
     const bereich = zuAbschnitten(s.sel);
     Z.neuesProfil({ name: app.querySelector('#name').value.trim(), pensum: s.pensum, reihenfolge: s.reihenfolge, bereich: null, thema: s.thema, modus: s.modus });
-    Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0'; Z.P.einst.rhythmus = s.rhythmus; if (s.herkunft) Z.P.einst.herkunft = s.herkunft;
+    Z.P.einst.zufall = s.zufall; Z.P.einst.hasanat = s.hasanat !== '0';
     // Auswahl als Āya-Bereiche merken; die Abschnitte dazu bestimmt die gewählte Gliederung beim Start
     if (bereich) Z.P.einst.auswahl = zuBereichen(s.sel);
     Z.speichern();
@@ -702,7 +700,7 @@ function heute() {
   const aktiv = Z.ketteAktiv();
   const quote = t.r + t.f + t.h ? Math.round(100 * t.r / (t.r + t.f + t.h)) : null;
   const kf = Z.khatmaFortschritt();
-  const istFreitag = Z.wochentag(Z.heute()) === 4;
+  const istFreitag = Z.wochentag(Z.heute()) === 4 && new Date().getDay() === 5 && new Date().getHours() < 22;   // Freitag nach der Uhr, bis 22 Uhr
   // Ruhetag oder Pause: kein Wird, die Kette wartet
   const ps = t.ruhe === 'pause' ? Z.pauseJetzt() : null;
   const ruheHTML = t.ruhe ? `<div class="ruhe-karte">${ps ? `<b>${tx('heute.pause_bis', { bis: tagLang(ps.bis) })}</b><p>${tx('heute.kein_wird_keine_fehlerwiederholung', { a: P.kette.n ? tx('heute.deine_kette_von_tagen_wartet_und_laeuft', { n: P.kette.n }) : tx('heute.danach_geht_es_dort_weiter_wo_du') })}</p>`
@@ -743,6 +741,7 @@ function heute() {
   // Neu lernen: offene Lektionen (Ḥifẓ, Ḍabṭ) stehen unter dem Wird; ohne Lektion und ohne freien Abschnitt entfällt der Block
   const lekt = sicher('lektionen', () => Z.lernHeute().filter(l => D.A[l.id]), []), wartend = sicher('lektionen-warten', () => Z.lektionen().length - lekt.length, 0);
   const lernHTML = lekt.length || sicher('lernvorschlag', () => Z.lernVorschlag(), null) != null ? `<div class="titel-klein"><a href="#lernen" style="color:inherit">${tx('lernen.neu_lernen')}</a></div>${lekt.map(lektionKarte).join('')}
+    ${!lekt.length && !sicher('lernerlaubt', () => Z.lernErlaubt().ok, true) ? `<p class="unter" style="text-align:center">${tx('lernen.tempo_wartet')}</p>` : ''}
     <div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#lernen">${lekt.length ? (wartend > 0 ? tx('lernen.weitere_warten', { n: wartend }) : tx('lernen.alle_lektionen')) : tx('lernen.erste_lektion')}</a></div>` : '';
   const ring = t.ruhe ? '' : `<div class="ring"><svg width="78" height="78" viewBox="0 0 210 210" aria-hidden="true">
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
@@ -888,8 +887,9 @@ async function ueben(idText, quelle, fokusText) {
   const kontext = vorVi >= 0 && e.von[1] > 1 && (E.reihenfolge === 'zufall' || art === 'fehler' || (art === 'stelle' && (!ABF || ABF.ctx)) || L?.st >= 1);   // ab dem zweiten Schritt: Einsatz aus der Āya davor
   const kWoerter = kontext ? ayaWoerter(vorVi) : [];
   const kSeiten = [...new Set(kWoerter.map(x => x[5]))];
-  let dop = doppelseitig(), gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]), alleSeiten = gezeigt.flat();
-  const kBox = kontext && kSeiten.some(p => !alleSeiten.includes(p));
+  const davorSeiten = kontext ? kSeiten.filter(p => !e.seiten.includes(p)).sort((a, b) => a - b) : [], zeigeS = [...davorSeiten, ...e.seiten];   // die Seite mit der Āya davor wird mitgezeigt
+  let dop = doppelseitig(), gezeigt = dop ? doppelseiten(zeigeS) : zeigeS.map(x => [x]), alleSeiten = gezeigt.flat();
+  const kBox = false;
   document.body.classList.toggle('doppelt', dop);
   await Promise.all([schriftenLaden(alleSeiten), ...kWoerter.map(x => schrift(x[4]))]);
   const k = Z.karte(id);
@@ -972,18 +972,18 @@ async function ueben(idText, quelle, fokusText) {
     einbl.onclick = einblWeg;
   }
   const seitenEl = app.querySelector('#seiten');
-  const sOpt = { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet(), wahl: true };
+  const sOpt = { von: e.v[0], bis: e.v[1], zu, alt, klar: kontext ? new Set([vorVi]) : undefined, fst: Z.fehlerstellenSet(), wahl: true, get lage() { return !dop; } };
   seitenEl.classList.toggle('doppel', dop);
-  seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
+  seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : zeigeS.map(p => seiteHTML(p, sOpt)).join('');
   zeilenEinpassen(seitenEl);
   // Handy drehen: Doppelseite im Querformat, einzelne Seiten im Hochformat. Die Seiten werden neu gesetzt, der Stand der Übung bleibt.
   async function seitenNeu() {
     const d = doppelseitig(); if (d === dop || !seitenEl.isConnected || rec?.state === 'recording') return;
-    dop = d; gezeigt = dop ? doppelseiten(e.seiten) : e.seiten.map(x => [x]); alleSeiten = gezeigt.flat();
+    dop = d; gezeigt = dop ? doppelseiten(zeigeS) : zeigeS.map(x => [x]); alleSeiten = gezeigt.flat();
     const marken = [...seitenEl.querySelectorAll('.w.fmark')].map(s => [s.dataset.v, s.dataset.i, s.classList.contains('typ'), s.dataset.art]);
     await schriftenLaden(alleSeiten);
     document.body.classList.toggle('doppelt', dop); seitenEl.classList.toggle('doppel', dop);
-    seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : e.seiten.map(p => seiteHTML(p, sOpt)).join('');
+    seitenEl.innerHTML = dop ? gezeigt.map(g => paarHTML(g, sOpt)).join('') : zeigeS.map(p => seiteHTML(p, sOpt)).join('');
     zeilenEinpassen(seitenEl);
     for (const [vi, x] of status) spans(vi).forEach(s => { s.classList.remove('alt'); s.classList.add(x); });
     for (const [wv, wi, typ, art2] of marken) { const w = seitenEl.querySelector(`.w[data-v="${wv}"][data-i="${wi}"]`); if (w) { w.classList.add('fmark'); if (typ) { w.classList.add('typ'); w.dataset.art = art2; } } }
@@ -2254,7 +2254,8 @@ function lernenSeite(wahlText, ohneSprung = false) {
     <div class="titel-klein">${tx('lernen.pro_tag_titel')}</div>
     <div class="abschnitt" style="margin-top:0"><p class="unter">${tx('lernen.pro_tag_text')}</p>
       <div class="zaehler"><button id="lpt-minus" aria-label="${tx('start.weniger')}">−</button><b id="lpt" aria-live="polite">${Z.lernProTag()}</b><button id="lpt-plus" aria-label="${tx('start.mehr')}">+</button></div>
-      ${lekt.length > Z.lernProTag() ? `<p class="unter" style="text-align:center;margin-top:6px">${tx('lernen.weitere_warten', { n: lekt.length - Z.lernProTag() })}</p>` : ''}</div>
+      ${lekt.length > Z.lernProTag() ? `<p class="unter" style="text-align:center;margin-top:6px">${tx('lernen.weitere_warten', { n: lekt.length - Z.lernProTag() })}</p>` : ''}
+      <p class="unter" style="margin-top:10px">${tx('lernen.tempo_text')}</p></div>
     ${gemeistert ? `<p class="unter" style="margin-top:12px">${tx('lernen.gemeistert', { n: gemeistert })}</p>` : ''}
     ${lekt.length ? `<div class="titel-klein">${tx('lernen.dein_plan')}</div>${lekt.map(l => `${lektionKarte(l)}<div class="klein-zeile" style="justify-content:flex-end;gap:14px;margin:-4px 0 10px">${l.offen ? `<a class="textlink" href="#ueben/${l.id}/stelle/${l.stellen[0]}">${tx('lernen.stellen_ueben')}</a>` : ''}<button class="textlink" data-ab="${l.id}">${tx('lernen.abbrechen')}</button></div>`).join('')}` : ''}`;
   app.querySelectorAll('[data-ab]').forEach(b => b.onclick = async () => {
@@ -2668,11 +2669,6 @@ function fehlerstellenSeite() {
 
 // ---------- Einstellungen ----------
 const TAGE = [tx('tage.montag'), tx('tage.dienstag'), tx('tage.mittwoch'), tx('tage.donnerstag'), tx('tage.freitag'), tx('tage.samstag'), tx('tage.sonntag')];
-const SCHWACH_TEXT = {
-  get khatma() { return tx('schwach_text.nur_die_wiederholung_nach_fehlern_nach_1'); },
-  get ausgewogen() { return tx('schwach_text.schwache_abschnitte_kommen_zwischen_zwei'); },
-  get schwaechen() { return tx('schwach_text.schwache_abschnitte_kommen_etwa_doppelt'); }
-};
 // Pause: bis zu 30 Tage ohne Wird
 function pauseHTML() {
   const p = Z.pauseJetzt(), kuenftig = (Z.P.pausen || []).find(x => x.von > Z.heute());
@@ -2717,8 +2713,7 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.druckausgabe_des_mushaf')}</h3>
       <div class="wahl" id="ausgabe" style="margin-top:10px">${[['v1', tx('einstellungen.druck_1405')], ['v2', tx('einstellungen.druck_1421')]].map(([w, l]) => `<button data-w="${w}" class="${(E.ausgabe || 'v2') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
       <p class="unter" style="margin-top:8px">${tx('einstellungen.beide_madani_drucke_mit_ihren_eigenen')}</p>
-      <label class="auswahl" style="margin-top:14px"><span>${tx('einstellungen.herkunft')}</span><select id="herkunft">${[['madina', tx('einstellungen.herkunft_madina')], ['indopak', tx('einstellungen.herkunft_indopak')], ['tuerkisch', tx('einstellungen.herkunft_tuerkisch')], ['andere', tx('einstellungen.herkunft_andere')]].map(([w, l]) => `<option value="${w}"${(E.herkunft || 'madina') === w ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
-      <p class="unter" style="margin-top:6px">${tx('einstellungen.herkunft_text')}</p></div>
+    </div>
     <div class="abschnitt"><h3>${tx('einstellungen.was_du_wiederholst')}</h3><div id="auswahl"></div><div class="hinweisbox verdeckt" id="heute-frage" role="status"></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.laenge_der_abschnitte')}</h3>${modusWahl(E.modus || 'fort')}</div>
     <div class="abschnitt" id="pensum-block"><h3>${tx('einstellungen.abschnitte_pro_tag')}</h3><p class="unter">${tx('einstellungen.fuer_alle_tage_gleich_oder_pro_wochentag')}</p>
@@ -2733,14 +2728,6 @@ function einstellungen() {
     <div class="abschnitt"><h3>${tx('einstellungen.ablauf_titel')}</h3>
       <div class="wahl" id="ablauf" style="margin-top:10px"><button data-w="vers" class="${E.ablauf === 'ganz' ? '' : 'an'}">${tx('einstellungen.ablauf_vers')}</button><button data-w="ganz" class="${E.ablauf === 'ganz' ? 'an' : ''}">${tx('einstellungen.ablauf_ganz')}</button></div>
       ${optionsListe([tx('einstellungen.ablauf_text')])}</div>
-    <div class="abschnitt"><h3>${tx('einstellungen.rhythmus')}</h3>
-      <div class="wahl" id="rhythmus" style="margin-top:10px"><button data-w="khatma" class="${E.rhythmus === 'langzeit' ? '' : 'an'}">${tx('einstellungen.rhythmus_klassisch')}</button><button data-w="langzeit" class="${E.rhythmus === 'langzeit' ? 'an' : ''}">${tx('einstellungen.rhythmus_langzeit')}</button></div>
-      ${optionsListe([tx('einstellungen.rhythmus_text')])}</div>
-    <div class="abschnitt${E.rhythmus === 'langzeit' ? ' gedimmt' : ''}" id="schwach-block"><h3>${tx('einstellungen.schwache_abschnitte')}</h3><p class="unter schwach-hinweis${E.rhythmus === 'langzeit' ? '' : ' verdeckt'}">${tx('einstellungen.schwach_langzeit')}</p><p class="unter">${tx('einstellungen.abschnitte_in_denen_du_dich_zuletzt')}</p>
-      <div class="wahl" id="schwaechen" style="margin-top:10px">${[['khatma', tx('einstellungen.hatma_zuerst')], ['ausgewogen', tx('einstellungen.ausgewogen')], ['schwaechen', tx('einstellungen.schwaechen_zuerst')]].map(([w, l]) => `<button data-w="${w}" class="${(E.schwaechen || 'ausgewogen') === w ? 'an' : ''}">${l}</button>`).join('')}</div>
-      <p class="unter" style="margin-top:8px" id="schwach-text">${SCHWACH_TEXT[E.schwaechen || 'ausgewogen']}</p></div>
-    <div class="abschnitt"><h3>${tx('einstellungen.zielquote')}</h3><p class="unter">${tx('einstellungen.zielquote_text')}</p>
-      <div class="wahl" id="zielquote" style="margin-top:10px">${[90, 95, 98].map(w => `<button data-w="${w}" class="${(E.zielQuote ?? 90) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div></div>
     <div class="abschnitt" id="lesbarkeit"><h3>${tx('einstellungen.lesbarkeit')}</h3><p class="unter">${tx('einstellungen.seitengroesse_so_gross_erscheint_die')}</p>
       <div class="wahl" id="seitengroesse" role="group" aria-label="${tx('einstellungen.seitengroesse')}" style="margin-top:10px">${[100, 125, 150].map(w => `<button data-w="${w}" class="${(E.seitenGroesse || 100) === w ? 'an' : ''}">${prozent(w)}</button>`).join('')}</div>
       <p class="unter" style="margin-top:14px">${tx('einstellungen.schriftgroesse_texte_knoepfe_und')}</p>
@@ -2766,6 +2753,8 @@ function einstellungen() {
       <div class="wahl" id="autorec" style="margin-top:10px"><button data-w="1" class="${E.autoAufnahme ? 'an' : ''}">${tx('einstellungen.an')}</button><button data-w="0" class="${E.autoAufnahme ? '' : 'an'}">${tx('einstellungen.aus')}</button></div></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="${E.hasanat !== false ? 'an' : ''}">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0" class="${E.hasanat !== false ? '' : 'an'}">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('forschung.titel')}</h3><p class="unter">${tx('forschung.text')}</p>
+      <div class="wahl" id="forschung" style="margin-top:10px"><button data-w="1" class="${Forschung.an() ? 'an' : ''}">${tx('forschung.schalter_an')}</button><button data-w="0" class="${Forschung.an() ? '' : 'an'}">${tx('forschung.schalter_aus')}</button></div></div>
     </details>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_zeit')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
@@ -2815,14 +2804,13 @@ function einstellungen() {
   wahl('modus', w => { if (w === (E.modus || 'fort')) return; Z.schnappschuss('vor dem Gliederungswechsel'); E.modus = w; Z.speichern(); toast(tx('einstellungen.abschnitte_werden_umgestellt')); setTimeout(() => location.reload(), 600); });
   wahl('hilfe', w => { E.hilfe = w === '1'; });
   wahl('hasanat', w => { E.hasanat = w === '1'; });
-  wahl('zielquote', w => { E.zielQuote = +w; });
-  app.querySelector('#herkunft').onchange = ev => { E.herkunft = ev.target.value; Z.speichern(); };
+  app.querySelector('#forschung').onclick = async ev => {
+    const w = ev.target.dataset.w; if (w == null) return;
+    if (w === '1' && !Forschung.an()) { const ja = await dialog({ titel: tx('forschung.dialog_titel'), html: tx('forschung.dialog_text'), ja: tx('forschung.ja') }); if (!ja) return; Forschung.einschalten(); }
+    else if (w === '0' && Forschung.an()) { await Forschung.widerrufen(); toast(tx('forschung.widerrufen')); }
+    app.querySelectorAll('#forschung button').forEach(b => b.classList.toggle('an', (b.dataset.w === '1') === Forschung.an()));
+  };
   app.querySelector('#uebers-wahl').onchange = ev => { E.uebersetzung = ev.target.value; Z.speichern(); };
-  wahl('rhythmus', w => {
-    E.rhythmus = w; toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan'));
-    app.querySelector('#schwach-block').classList.toggle('gedimmt', w === 'langzeit'); app.querySelector('.schwach-hinweis').classList.toggle('verdeckt', w !== 'langzeit');
-  });
-  wahl('schwaechen', w => { E.schwaechen = w; app.querySelector('#schwach-text').textContent = SCHWACH_TEXT[w]; dauer(); toast(tx('einstellungen.gilt_ab_dem_naechsten_tagesplan')); });
   pauseBinden();
   wahl('sofort', w => { E.sofort = w === '1'; });
   wahl('abhoeren', w => { E.abhoeren = w === '1'; });
@@ -3001,6 +2989,7 @@ async function starten() {
   const tippfeld = el => !!el?.matches?.('textarea, [contenteditable=""], [contenteditable="true"], input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=file]):not([type=color])');
   const tippt = () => document.documentElement.classList.toggle('tippt', tippfeld(document.activeElement));
   document.addEventListener('focusin', tippt); document.addEventListener('focusout', () => setTimeout(tippt, 0));
+  Z.abschlussHakenSetzen(Forschung.eintragen); Forschung.starten();   // freiwilliges Lernprotokoll: nur nach Zustimmung
   if (!NATIV && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
   // Store-App: tägliche Mitteilung mit aktueller Sprache und Uhrzeit neu planen
   if (NATIV && Z.P && mitteilungAn()) mitteilungPlanen(erinnerungInhalt());

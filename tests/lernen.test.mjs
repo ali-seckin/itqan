@@ -30,7 +30,7 @@ test('Drei Schritte: ein fehlerfreier Durchgang zählt pro Tag einmal, nach dem 
   naechsterTag(); r = lauf(id);
   assert.equal(r.lern.ph, 2); assert.ok(r.ereignisse.some(x => x.typ === 'lernstufe' && x.ph === 2));
   assert.ok(Z.imBereich(id) && Z.reihe().includes(id), 'nach dem dritten Schritt in der Wiederholung');
-  assert.equal(Z.karte(id).st, 2); assert.equal(Z.stabilitaet(Z.karte(id)), 3);
+  assert.equal(Z.karte(id).st, 2); assert.equal(Z.stabilitaet(Z.karte(id)), Z.MODELL.sLern);
   assert.equal(Z.lektionen().length, 0); assert.equal(Z.lernFertig().length, 1);
 });
 
@@ -58,4 +58,13 @@ test('Protokoll: der Stand der Lektionen entsteht aus den Einträgen neu', () =>
   assert.ok(typen.includes('lb') && typen.filter(y => y === 'ab').length === 2);
   Z.lernAbbrechen(id); assert.equal(Z.P.log.at(-1).y, 'lx');
   assert.ok(live.includes('"ft":['));
+});
+
+test('Ḥifẓ-Tempo: bei viel Fälligem beginnen neue Lektionen nicht, angefangene laufen weiter', () => {
+  const id = lektion(), t = Z.tagesplan();
+  assert.ok(Z.lernErlaubt().ok); assert.ok(Z.lernHeute().some(l => l.id === id));
+  t.fl = 40;   // viel Fälliges wartet
+  assert.equal(Z.lernErlaubt().ok, false); assert.ok(!Z.lernHeute().some(l => l.id === id), 'eine noch nicht begonnene Lektion wartet');
+  lauf(id);
+  assert.ok(Z.lernHeute().some(l => l.id === id), 'eine angefangene Lektion läuft weiter');
 });

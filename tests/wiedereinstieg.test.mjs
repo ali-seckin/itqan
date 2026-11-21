@@ -33,13 +33,13 @@ test('Wiedereinstieg beenden füllt das übliche Pensum auf', () => {
   assert.equal(Z.tagesplan().plan.length, 4);
 });
 
-test('Gezögert zählt halb, senkt die Stufe nicht und kommt nach spätestens 3 Tagen wieder', () => {
+test('Gezögert zählt halb, senkt die Stufe nicht und gibt dem Abschnitt eine kleinere Anfangsstabilität', () => {
   frisch({ pensum: 1 });
   const id = Z.tagesplan().plan[0], e = D.A[id];
   const res = Z.abschnittAbschliessen(id, Array.from({ length: e.ayat }, (_, i) => i === 0 ? 'zoegern' : 'ok'));
   const k = Z.karte(id);
   assert.equal(k.st, 0);                                 // keine Stufe hinzu, keine verloren
-  assert.equal(k.fae, Z.plusTage(Z.heute(), 3));
+  assert.equal(k.S, Z.MODELL.sErstZoegern); assert.equal(k.kon, null);
   assert.equal(res.punkte, 10 * (e.ayat - 1) + 5);       // kein Fehlerfrei-Bonus
   assert.equal(res.f, 0);
 });

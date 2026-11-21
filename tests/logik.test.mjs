@@ -52,12 +52,12 @@ test('Punkte: 10 je Āya, 25 % fehlerfrei, 5 mit Hilfe', () => {
   assert.equal(r2.punkte, 10 * (n - 1) + 5);
 });
 
-test('Fehler: Stufe sinkt, Abschnitt kommt am nächsten Tag als Wiederholung', () => {
-  frisch({ pensum: 1 });
-  const id = Z.tagesplan().plan[0], n = D.A[id].ayat;
+test('Fehler: Stufe sinkt, bei deutlichem Fehler kommt der Abschnitt am nächsten Tag zur Kontrolle', () => {
+  frisch({ pensum: 4 });
+  const id = Z.tagesplan().plan[0], n = D.A[id].ayat, m = Math.ceil(n * 0.25);
   Z.P.karten[id] = { ...Z.karte(id), st: 3 };
-  Z.abschnittAbschliessen(id, ['fehler', ...Array(n - 1).fill('ok')]);
-  assert.equal(Z.karte(id).st, 2);
+  Z.abschnittAbschliessen(id, [...Array(m).fill('fehler'), ...Array(n - m).fill('ok')]);
+  assert.equal(Z.karte(id).st, Math.max(0, 3 - (m / n > 0.3 ? 2 : 1)));
   naechsterTag();
   const t = Z.tagesplan();
   assert.ok(t.plan.includes(id));
@@ -204,13 +204,13 @@ test('Abhören: Āyāt mit markiertem Wort sind Fehler, die übrigen richtig', (
   assert.deepEqual(Z.abhoerErgebnis([5, 6, 7, 8], new Set([6, 8])), ['ok', 'fehler', 'ok', 'fehler']);
 });
 
-test('Hilfe beim Aufdecken: Stufe sinkt, Abschnitt kommt am nächsten Tag wie nach einem Fehler', () => {
+test('Hilfe beim Aufdecken: Stufe sinkt, Abschnitt kommt bei deutlicher Hilfe am nächsten Tag zur Kontrolle', () => {
   frisch({ pensum: 1 });
-  const id = Z.tagesplan().plan[0], n = D.A[id].ayat;
+  const id = Z.tagesplan().plan[0], n = D.A[id].ayat, m = Math.ceil(n * 0.25);
   Z.P.karten[id] = { ...Z.karte(id), st: 3 };
-  const r = Z.abschnittAbschliessen(id, ['hilfe', ...Array(n - 1).fill('ok')]);
-  assert.equal(r.punkte, 10 * (n - 1) + 5, 'Punkte bleiben');
+  const r = Z.abschnittAbschliessen(id, [...Array(m).fill('hilfe'), ...Array(n - m).fill('ok')]);
+  assert.equal(r.punkte, 10 * (n - m) + 5 * m, 'Punkte bleiben');
   const k = Z.karte(id);
-  assert.equal(k.st, n > 3 ? 2 : 1);
-  assert.equal(k.fae, Z.plusTage(Z.heute(), 1));
+  assert.equal(k.st, Math.max(0, 3 - (m / n > 0.3 ? 2 : 1)));
+  assert.equal(k.kon, Z.plusTage(Z.heute(), 1));
 });

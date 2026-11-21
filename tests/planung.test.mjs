@@ -2,33 +2,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Z, D, frisch, naechsterTag, tagSetzen, wirdErfuellen } from './umgebung.mjs';
-import { simulieren } from './simulation.mjs';
-
-test('Regler: „Schwächen zuerst“ verlängert die Ḫatma höchstens um 10 %, schwache Abschnitte kommen mindestens doppelt so oft', () => {
-  const basis = simulieren('khatma'), schwach = simulieren('schwaechen');
-  assert.ok(schwach.khatma <= basis.khatma * 1.10, `Ḫatma ${schwach.khatma} statt ${basis.khatma}`);
-  assert.ok(schwach.regulaerSchwach >= 2 * basis.regulaerSchwach, `×${(schwach.regulaerSchwach / basis.regulaerSchwach).toFixed(2)}`);
-});
-
-test('Regler: Festigen holt einen schwachen Abschnitt nach einer Vierteljahresrunde zurück, nie einen fehlerfreien', () => {
-  frisch({ pensum: 5 });
-  Z.P.einst.schwaechen = 'schwaechen'; Z.P.zyklus.konto = 1;
-  const alt = Z.plusTage(Z.heute(), -60);
-  Z.P.karten[100] = { st: 1, n: 2, fe: 3, zul: alt, fz: alt, fae: null, fs: 0, fa: [], lf: 0 };   // schwach, lange her
-  Z.P.karten[101] = { st: 3, n: 3, fe: 0, zul: alt, fae: null, fs: 0, fa: [], lf: 0 };            // fehlerfrei
-  const t = Z.tagesplan();
-  assert.equal(t.art[100], 'festigen');
-  assert.equal(t.art[101], undefined);
-  assert.equal(t.plan.length, 5);
-});
-
-test('Regler: „Ḫatma zuerst“ plant kein Festigen ein', () => {
-  frisch({ pensum: 5 });
-  Z.P.einst.schwaechen = 'khatma'; Z.P.zyklus.konto = 3;
-  const alt = Z.plusTage(Z.heute(), -60);
-  Z.P.karten[100] = { st: 0, n: 2, fe: 4, zul: alt, fz: alt, fae: null, fs: 0, fa: [], lf: 0 };
-  assert.ok(!Object.values(Z.tagesplan().art).includes('festigen'));
-});
 
 test('Ruhetag: kein Wird, die Kette läuft über den Ruhetag weiter', () => {
   frisch({ datum: '2026-01-05', pensum: 3 });          // Montag

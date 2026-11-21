@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '1.98';
+export const VERSION = '1.99';
 
 // Adresse für „Rückmeldung senden“. Leer: die Rückmeldung wird über das Teilen-Menü oder als E-Mail ohne Empfänger verschickt.
 export const RUECKMELDUNG_AN = 'support@itqan.at';
@@ -11,6 +11,13 @@ export const RUECKMELDUNG_AN = 'support@itqan.at';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '1.99', datum: '2026-11-21', titel: tx('version.modell199_titel'), punkte: [
+    tx('version.modell199_1'),
+    tx('version.modell199_2'),
+    tx('version.modell199_3'),
+    tx('version.modell199_4'),
+    tx('version.modell199_5')
+  ] },
   { v: '1.98', datum: '2026-11-20', titel: tx('version.store98_titel'), punkte: [
     tx('version.store98_1')
   ] },

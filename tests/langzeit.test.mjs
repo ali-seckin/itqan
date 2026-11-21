@@ -1,4 +1,4 @@
-// Itqān · Rhythmus „Langzeit“: Stabilität, Fälligkeit, Auswahl
+// Itqān · Lernmodell: Stabilität, Fälligkeit, Auswahl
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { Z, D, frisch, naechsterTag, tagSetzenZurueck } from './umgebung.mjs';
@@ -10,7 +10,7 @@ test('Stabilität: erster Erfolg setzt den Anfangswert, später wächst sie, ein
   frisch({ pensum: 1 });
   const id = Z.tagesplan().plan[0];
   Z.abschnittAbschliessen(id, ok(id));
-  const S0 = Z.TAKT.S0; assert.equal(Z.karte(id).S, S0);
+  const S0 = Z.MODELL.sErstSauber; assert.equal(Z.karte(id).S, S0);
   naechsterTag(S0);                                 // genau nach S Tagen: R = 0,9
   Z.abschnittAbschliessen(id, ok(id), 'frei');
   const S2 = Z.karte(id).S; assert.ok(S2 > S0 * 1.5);
@@ -25,9 +25,8 @@ test('Abrufwahrscheinlichkeit: nach S Tagen 90 Prozent', () => {
   assert.ok(Z.abruf(0, 10) === 1 && Z.abruf(100, 10) < Z.abruf(10, 10));
 });
 
-test('Langzeit: ein sicherer Abschnitt kommt nicht am nächsten Tag wieder, ein fälliger vor einem ungeübten', () => {
-  frisch({ pensum: 2 });
-  Z.P.einst.rhythmus = 'langzeit';
+test('Lernmodell: ein wackeliger Abschnitt kommt vor einem stabilen dran', () => {
+  frisch({ pensum: 4 });
   const t1 = Z.tagesplan(); const [a, b] = t1.plan;
   Z.abschnittAbschliessen(a, ok(a)); Z.abschnittAbschliessen(b, ok(b));
   Z.karte(a); Z.P.karten[a].S = 100;                // a ist sehr stabil
@@ -36,10 +35,9 @@ test('Langzeit: ein sicherer Abschnitt kommt nicht am nächsten Tag wieder, ein 
   const t2 = Z.tagesplan();
   assert.ok(t2.plan.includes(b), 'der wackelige Abschnitt ist fällig');
   assert.ok(!t2.plan.includes(a), 'der stabile Abschnitt ist noch nicht dran');
-  assert.equal(t2.plan[0], b);                      // fällig vor ungeübt
 });
 
-test('Klassisch bleibt unverändert: der Plan folgt der Reihenfolge des Bereichs', () => {
+test('Frischer Start: die Erstprüfung folgt der Reihenfolge des Bereichs', () => {
   frisch({ pensum: 3 });
   const t = Z.tagesplan();
   assert.deepEqual(t.plan, Z.reihe().slice(0, 3));
