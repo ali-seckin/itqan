@@ -305,3 +305,49 @@ test('S10: Abmelden sendet vorher den Ausgang; wieder anmelden führt nicht in e
   const a = kern(); an('bbb', { profil: false }); await einloggen('ali@test.de'); await A.abgleichen();
   assert.equal(kern(), a, 'auch die Übung aus der abgemeldeten Zeit ist auf dem Konto');
 });
+
+// ---------- Nach-Audit Sicherheit N1 ----------
+test('N1 (Nach-Audit): vergiftete Einträge auf dem Konto halten den Abgleich nicht auf und erreichen das Profil nicht', async () => {
+  await verbunden(2);
+  const uid = zeile().user_id, n = zeile().sockel_n, d = Z.heute(), BILD = '<img src=x onerror=alert(1)>';
+  const gift = [
+    { y: 'ab', d: BILD, id: 3, q: BILD, e: 'ooo', p: 5 }, { y: 'lb', d, id: BILD }, { y: 'pl', d, t: { plan: [BILD], art: {}, fertig: [], punkte: BILD } },
+    { y: 'ab', d, id: 99999, e: 'ooo', q: 'frei', p: 5 }, { y: 'fm', d, w: [BILD], a: BILD }, { y: 'mu', d, k: BILD, ok: 1 }, { y: 'zz', d }
+  ].map((e, k) => ({ ...e, i: 'boese1-00000' + k, z: Date.now() + k }));
+  let seq = Math.max(0, ...srv.eintraege.map(e => e.seq));
+  for (const e of gift) srv.eintraege.push({ seq: ++seq + 1000, user_id: uid, i: e.i, sockel_n: n, z: e.z, y: e.y, daten: e });
+  // Gerät aaa: läuft weiter, auch über mehrere Durchläufe, und bleibt verbunden
+  for (let k = 0; k < 3; k++) { wirdErfuellen(); const r = await A.abgleichen(); assert.equal(r.art, 'ok', 'Durchlauf ' + k + ': ' + JSON.stringify(r)); naechsterTag(); }
+  assert.equal(A.status().zustand, 'verbunden'); assert.equal(A.status().fehler, '');
+  assert.ok(!JSON.stringify(Z.P).includes('<img'), 'Fremdtext im Profil von aaa');
+  assert.doesNotThrow(() => Z.profilPruefen(JSON.parse(JSON.stringify({ ...Z.P, log: [] }))));
+  const stand = kern();
+  // ein zweites Gerät holt denselben Kontostand: gleicher Stand, kein Fremdtext, kein Fehler
+  an('bbb', { profil: false }); await einloggen('ali@test.de');
+  const r = await A.abgleichen();
+  assert.equal(r.art, 'uebernommen'); assert.ok(r.aufgebaut);
+  assert.ok(!JSON.stringify(Z.P).includes('<img'), 'Fremdtext im Profil von bbb');
+  assert.doesNotThrow(() => Z.profilPruefen(JSON.parse(JSON.stringify({ ...Z.P, log: [] }))));
+  assert.equal(kern(), stand, 'beide Geräte stehen auf dem Stand der echten Einträge');
+  assert.ok(Z.tagesplan().plan.length > 0); wirdErfuellen();
+  assert.equal((await A.abgleichen()).art, 'ok');
+});
+
+// ---------- Nach-Audit Sicherheit N3 ----------
+test('N3 (Nach-Audit): nach „Profil löschen“ und neuem Profil meldet schon der erste Eintrag, dass eine Entscheidung aussteht (nicht erst der nächste Start)', async () => {
+  await verbunden(); const bild = serverBild(), ergebnisse = [];
+  A.beimProfilLoeschen(); Z.loeschen(); Z.neuesProfil({ name: 'Neu' });
+  assert.equal(A.status().zustand, 'unverbunden');
+  A.ergebnisHakenSetzen(r => ergebnisse.push(r), () => true); A.autoSetzen(true, 5);
+  try {
+    frei(5);                                                        // der erste Eintrag des neuen Profils
+    await mitFrist((async () => { while (!ergebnisse.length) await new Promise(r => setTimeout(r, 5)); })());
+    assert.equal(ergebnisse[0].art, 'konflikt');
+    assert.equal(A.status().zustand, 'konflikt');
+    assert.equal(serverBild(), bild, 'der Kontostand bleibt unberührt'); assert.equal(Z.P.name, 'Neu');
+    // ist die Lage bekannt, löst ein weiterer Eintrag keinen weiteren Abruf aus
+    const n = srv.anfragen.length; frei(6);
+    await new Promise(r => setTimeout(r, 60));
+    assert.equal(srv.anfragen.length, n); assert.equal(ergebnisse.length, 1);
+  } finally { A.autoSetzen(false); A.ergebnisHakenSetzen(null); }
+});

@@ -129,21 +129,33 @@ test('Profil löschen nimmt den Zwischenstand mit (Audit N9)', () => {
   assert.equal(localStorage.getItem(PROFIL), null);
 });
 
-test('Falsch gestellte Uhr: der Tagesverlauf bleibt, die Zeit des Geräts lässt sich zurückholen (Audit M4, S13)', () => {
+test('Falsch gestellte Uhr: kein echter Tag geht verloren, nach dem Zurückstellen läuft der Plan weiter (Audit M4, S13, Nach-Audit NB1)', () => {
   frisch({ pensum: 2 });
   for (let i = 0; i < 20; i++) { wirdErfuellen(); naechsterTag(); }
-  const vorher = Object.keys(Z.P.tage).length, echt = Z.jetzt().getTime();
+  const echte = Object.keys(Z.P.tage).sort();
+  const alleDa = wo => { for (const d of echte) assert.ok(Z.P.tage[d]?.fertig.length, wo + ': der echte Tag ' + d + ' fehlt'); };
   assert.equal(Z.uhrSprung(), 1);
   Z.uhrSetzen(() => new Date(2031, 2, 1, 12));
   assert.ok(Z.uhrSprung() > 1500, 'der Sprung ist vor dem Planen erkennbar');
   Z.tagesplan();                                     // die App wird nur geöffnet
-  assert.equal(Object.keys(Z.P.tage).length, vorher + 1, 'kein Tag gelöscht');
-  wirdErfuellen();                                   // selbst wenn geübt wird, gehen höchstens sieben Tage je Plan
+  assert.equal(Object.keys(Z.P.tage).length, echte.length + 1, 'kein Tag gelöscht');
+  wirdErfuellen();                                   // an dem falschen Tag wird sogar geübt, am Tag danach noch einmal geplant
   Z.uhrSetzen(() => new Date(2031, 2, 2, 12)); Z.tagesplan();
-  assert.ok(Object.keys(Z.P.tage).length >= vorher + 2 - 7);
+  assert.equal(Object.keys(Z.P.tage).length, echte.length + 2); alleDa('nach dem Planen in der Zukunft');
+  // Uhr zurück: an den folgenden echten Tagen gibt es jeden Tag einen Plan, geübt wird wie sonst, und alle echten Tage bleiben
   tagSetzenZurueck();
+  assert.ok(Z.uhrSprung() < -1500, 'auch der Sprung zurück ist erkennbar');
+  for (let i = 0; i < 6; i++) {
+    const t = Z.tagesplan();
+    assert.ok(t && Array.isArray(t.plan) && t.plan.length > 0, 'Tag ' + Z.heute() + ': tagesplan() liefert einen Plan');
+    assert.equal(Z.tagesplan(), t);
+    wirdErfuellen(); assert.ok(Z.P.tage[Z.heute()].fertig.length > 0);
+    alleDa('Tag ' + Z.heute()); naechsterTag();
+  }
+  assert.equal(Object.keys(Z.P.tage).length, echte.length + 2 + 6);
   assert.ok(Z.behaltensquote(30).n > 0);
   // die Zeit des Geräts steht in der Zukunft; kennt der Abgleich die Zeit des Servers, zieht er sie zurück
+  const echt = Z.jetzt().getTime();
   Z.unterscheidenMerken('1-2', true);
   assert.equal(new Date(Z.P.log.at(-1).z).getFullYear(), 2031);
   assert.equal(Z.geraetUhrKorrigieren(echt), true);

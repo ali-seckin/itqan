@@ -63,7 +63,7 @@ const kopie = x => x === undefined ? undefined : JSON.parse(JSON.stringify(x));
 let ladeFehler = null;
 export const ladeMeldung = () => ladeFehler;
 export function laden() {
-  let t = null; P = null; ladeFehler = null;
+  let t = null; P = null; ladeFehler = null; anderswoGeloescht = false;
   try { t = speicher.lesen(SCHLUESSEL); } catch (e) { ladeFehler = { art: 'speicher' }; }
   if (t) {
     try { const p = JSON.parse(t); if (p !== null) { if (!istObj(p) || p.format !== 'itqan') throw new Error('format'); P = ergaenzen(p); } }
@@ -133,11 +133,12 @@ function schemaUmstellen(p) {
 // erzwingen: bewusstes Ersetzen (neues Profil, Sicherung, Schnappschuss, Abgleich), ohne diese Prüfung.
 export function speichern(erzwingen = false) {
   if (fremd || !P) return false;    // ein fremdes Profil (Lehreransicht, Nachbau) wird nie gespeichert
-  if (erzwingen !== true) speicherAbgleichen();
+  if (erzwingen !== true) speicherAbgleichen(); else anderswoGeloescht = false;
   einstAbgleichen();
   return profilSchreiben();
 }
 function profilSchreiben() {
+  if (anderswoGeloescht) return false;    // in einem anderen Reiter gelöscht: dieser Reiter legt das Profil nicht wieder an (die Oberfläche lädt neu)
   const text = JSON.stringify(P);
   for (;;) {
     try { speicher.schreiben(SCHLUESSEL, text); break; }
@@ -152,7 +153,7 @@ function profilSchreiben() {
 // Jedes Schreiben des Profils setzt einen Stempel (im Geräteeintrag). Weicht der gespeicherte Stempel vom zuletzt gesehenen ab,
 // hat ein anderer Reiter geschrieben: sein Stand wird geholt, eigene noch nicht protokollierte Einstellungen werden darauf übertragen.
 const REITER = Math.random().toString(36).slice(2, 8);
-let stempel, stempelZahl = 0;    // undefined: noch nicht gelesen (Speicher gewechselt), der nächste Blick übernimmt, was dort steht
+let stempel, stempelZahl = 0, anderswoGeloescht = false;    // undefined: noch nicht gelesen (Speicher gewechselt), der nächste Blick übernimmt, was dort steht
 function geraetRoh() { try { const g = JSON.parse(speicher.lesen(GERAET) || 'null'); return istObj(g) ? g : null; } catch (e) { return null; } }
 const stempelGespeichert = () => geraetRoh()?.s ?? null;
 function stempelNeu() { stempel = REITER + '.' + (++stempelZahl).toString(36); geraetLesen(); geraetSichern(stempel); }
@@ -169,7 +170,7 @@ function speicherAbgleichen(leerAuch = false) {
   stempel = stempelGespeichert(); geraet = null;
   if (!neu) {
     if (leerAuch && !t && P) { P = null; schatten = null; return true; }
-    if (!leerAuch) melden(fremdeAenderungHaken, { art: 'geloescht' });
+    if (!leerAuch) { if (!t && P) anderswoGeloescht = true; melden(fremdeAenderungHaken, { art: 'geloescht' }); }
     return false;
   }
   const offen = [];
@@ -292,6 +293,7 @@ function einstAbgleichen() {
   for (const k of new Set([...Object.keys(schatten), ...Object.keys(neu)])) {
     if (schatten[k] === neu[k]) continue;
     const e = { ...marke(), y: 'ei', k, ...(k in neu ? { w: JSON.parse(neu[k]) } : {}) };
+    if (k === 'einst.bereich' || k === 'einst.auswahl') e.m = MODELL_STAND;   // ab 2.00 stehen gelernte Abschnitte selbst im Bestand (siehe anwendenRoh)
     if (k === 'einst.pensum') { e.d = heute(); if (schatten[k]) pensumMerken(JSON.parse(schatten[k]), e); }   // d: ab diesem Tag gilt das neue Pensum
     logAnhaengen(e); n++;
   }
@@ -338,6 +340,9 @@ function anwendenRoh(e, extra) {
       else {
         if (e.k === 'einst.pensum' && 'w' in e) pensumMerken(P.einst.pensum, e);
         if ('w' in e) P.einst[e.k.slice(6)] = kopie(e.w); else delete P.einst[e.k.slice(6)];
+        // Bestand von einem Gerät mit 1.99 oder älter (ohne m): dort stehen gelernte Abschnitte nie in der Liste, sie zählen aber immer dazu.
+        // Damit sie hier nicht aus dem Bestand fallen, werden die fertigen Lektionen wieder aufgenommen.
+        if ((e.k === 'einst.bereich' || e.k === 'einst.auswahl') && !e.m) for (const [id, L] of Object.entries(P.lern || {})) if (L?.ph === 2) bereichAufnehmen(+id);
       }
       return;
   }
@@ -347,14 +352,15 @@ const ordnung = (a, b) => a.z - b.z || (a.i < b.i ? -1 : a.i > b.i ? 1 : 0);
 // D muss zur Gliederung des Sockels passen.
 export function nachbau(sockel, eintraege) {
   const p = ergaenzen(kopie(sockel)); p.log = [];
-  const weg = new Set(eintraege.filter(e => e.y === 'rk').flatMap(e => e.ids || []));
-  const liste = eintraege.filter(e => !weg.has(e.i)).sort(ordnung);
+  const weg = new Set(eintraege.filter(e => e?.y === 'rk' && eintragGut(e)).flatMap(e => e.ids || []));
+  // Einträge kommen auch vom Konto: was nicht die erwartete Form hat oder einen unbekannten Abschnitt nennt, wird übersprungen (eintragGut)
+  const liste = eintraege.filter(e => eintragGut(e) && !weg.has(e.i)).sort(ordnung);
   return mitProfil(p, () => { lernUebernehmen(); for (const e of liste) anwenden(e); return p; });
 }
 // Zwei oder mehr Gerätestände mit demselben Sockel: Einträge vereinen (jede Kennung einmal), Stand neu aufbauen.
 export function zusammenfuehren(sockel, ...logs) {
   const alle = new Map();
-  for (const l of logs) for (const e of l) if (!alle.has(e.i)) alle.set(e.i, e);
+  for (const l of logs) for (const e of l) if (eintragGut(e) && !alle.has(e.i)) alle.set(e.i, e);
   const log = [...alle.values()].sort(ordnung);
   return { profil: nachbau(sockel, log), log };
 }
@@ -413,7 +419,7 @@ export function profilUeberblick(p) {
     kette: p.kette?.n || 0, khatma: p.zyklus?.khatma || 0, letzterTag: tage.at(-1) || null, fstellen: Object.keys(p.fstellen || {}).length };
 }
 // Mit dem Profil geht der Zwischenstand einer angefangenen Übung; die Schnappschüsse bleiben (Schutz vor Fehlgriffen)
-export function loeschen() { P = null; schatten = null; try { speicher.entfernen(SCHLUESSEL); speicher.entfernen(ZWISCHEN); } catch (e) {} stempelNeu(); }
+export function loeschen() { P = null; schatten = null; anderswoGeloescht = false; try { speicher.entfernen(SCHLUESSEL); speicher.entfernen(ZWISCHEN); } catch (e) {} stempelNeu(); }
 
 // ---------- Wechsel der Gliederung (neue Fassung oder Anfänger/Fortgeschritten) ----------
 // Der Fortschritt wird über die Āya-Bereiche übertragen: ein geteilter Abschnitt erbt den Stand des alten,
@@ -586,6 +592,14 @@ export function comebackBeenden() {
   eintrag('pa', { d, cbEnde: 1 });
   for (let i = P.tage[d].plan.length; i < pensumAm(d); i++) pensumHeuteAendern(1);
 }
+// Marke eines Platzes für „Heute“: die Art aus dem Plan (t.ma). Fehlt sie, weil der Abschnitt erst durch einen Umbau in den Plan kam
+// (Reihenfolge, Bereich, ein Abschnitt mehr, Wechsel der Abschnittslänge), heißt ein nie geprüfter Abschnitt „Erstprüfung“ und nicht „Runde“;
+// das gilt auch noch, nachdem er heute zum ersten Mal geprüft wurde.
+export function platzMarke(t, id, datum = heute()) {
+  const m = t?.ma?.[id]; if (m) return m;
+  const k = P.karten[id];
+  return !k?.n || (k.n === 1 && k.zul === datum && !!t?.fertig?.includes(id)) ? 'erst' : 'zyklus';
+}
 // Abschnitt, dessen Lektion gerade fertig wurde und der seither nicht geübt ist: sein erstes Wiedersehen ist keine Fehlerwiederholung
 const frischGelernt = id => { const L = P.lern?.[id]; return L?.ph === 2 && !!L.e && P.karten[id]?.zul === L.e; };
 export function tagesplan(datum = heute(), trotzdem = false) {
@@ -631,7 +645,7 @@ function planAnwenden(e) {
   P.tage[e.d] = neu;
   if (e.kn != null) P.zyklus.kn = e.kn;
   if (e.kz != null) P.zyklus.kz = e.kz;
-  if (!neu.ruhe) aufraeumen();
+  if (!neu.ruhe) aufraeumen(e.d);
 }
 // Tag für einen Abschluss, zu dem es keinen Plan gibt (Einträge aus einer älteren Generation)
 function tagSicher(d) {
@@ -861,14 +875,17 @@ export function fehlerstellenListe(n = 12) {
   return Object.entries(P.fstellen || {}).map(([s, f]) => ({ s, vi: +s.split('.')[0], i: +s.split('.')[1], ...f }))
     .sort((a, b) => b.n - a.n || (b.d || '').localeCompare(a.d || '')).slice(0, n);
 }
-// Alte Tage verdichten, Statistik behalten. Bezug ist der jüngste Tag mit Übung, nicht das Plandatum, und je Aufruf gehen höchstens
-// sieben Tage: eine falsch gestellte Uhr löscht so nicht den ganzen Verlauf.
-function aufraeumen() {
-  const tage = Object.keys(P.tage); if (tage.length < 2) return;
-  tage.sort(); let bezug = null, n = 0;
-  for (let i = tage.length - 1; i >= 0 && !bezug; i--) if (P.tage[tage[i]].fertig?.length) bezug = tage[i];
-  if (!bezug) return;
-  for (const d of tage) { if (n >= 7 || tageZwischen(d, bezug) <= 400) break; delete P.tage[d]; n++; }
+// Alte Tage verdichten, Statistik behalten. plantag: der Tag des eben angewendeten Plans.
+// Bezug ist der siebtjüngste Tag mit Übung, der nicht nach dem Plantag liegt: Tage in der Zukunft (falsch gestellte Uhr, fremder Eintrag
+// vom Konto) zählen nie als Bezug, und ein einzelner falscher Tag verschiebt ihn nicht. Gelöscht wird nur, was mehr als 400 Tage vor dem
+// Bezug liegt, höchstens sieben Tage je Aufruf und nie der Plantag selbst. Steht die Uhr vor allen Übungstagen, gibt es keinen Bezug.
+const BEZUG_TAGE = 7;
+function aufraeumen(plantag) {
+  if (!DATUM_M.test(plantag || '')) return;
+  const tage = Object.keys(P.tage).sort(), geuebt = tage.filter(d => d <= plantag && P.tage[d].fertig?.length);
+  const bezug = geuebt[geuebt.length - BEZUG_TAGE]; if (!bezug) return;
+  let n = 0;
+  for (const d of tage) { if (n >= 7 || d >= bezug || tageZwischen(d, bezug) <= 400) break; if (d === plantag) continue; delete P.tage[d]; n++; }
 }
 
 // ---------- Neu lernen: ein Lernplan in drei Schritten (Ḥifẓ, Ḍabṭ, Itqān), danach geht der Abschnitt in die Wiederholung ----------
@@ -944,6 +961,8 @@ function lernSchritt(L, k, id, datum, f, h, ereignisse) {
 export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   // Das Ergebnis muss zum Abschnitt passen: je Āya genau ein bekannter Wert. Sonst zählte ein leeres Array als fehlerfreier Durchgang.
   if (!D.A[id] || !Array.isArray(ergebnisse) || ergebnisse.length !== D.A[id].ayat || ergebnisse.some(x => !Object.hasOwn(ERG_KURZ, x))) throw new Error('ergebnis-ungueltig ' + id);   // Kennwort für Protokoll und Tests; die Oberfläche zeigt dazu ihren eigenen Text (ueben.abschluss_fehler)
+  // Hat ein anderer Reiter inzwischen geschrieben, gilt dessen Stand schon für Punkte und Wiederholung, nicht erst für den Eintrag
+  if (!fremd && speicherAbgleichen() && P.gliederung !== D.gliederung) throw new Error('Gliederung in einem anderen Fenster gewechselt');
   const datum = heute(), t = tagesplan(datum);
   const r = ergebnisse.filter(x => x === 'ok').length, h = ergebnisse.filter(x => x === 'hilfe').length, f = ergebnisse.filter(x => x === 'fehler').length, z = ergebnisse.filter(x => x === 'zoegern').length;
   if (quelle === 'lern' && !(P.lern?.[id]?.ph < 2)) quelle = 'frei';
@@ -1386,6 +1405,38 @@ function einstWertGut(k, w) {
 function einstEintragGut(e) {
   if (e.k === 'name') return !('w' in e) || e.w == null || nameGut(e.w);
   return typeof e.k === 'string' && /^einst\.\w{1,40}$/.test(e.k) && !VERBOTEN.includes(e.k.slice(6)) && (!('w' in e) || einstWertGut(e.k.slice(6), e.w));
+}
+// Ein Eintrag des Protokolls aus fremder Hand (Konto, anderes Gerät): Kennung, Zeit, bekannte Art und je Art die Felder in Typ und Wertebereich.
+// Abschnittsnummern müssen in der geladenen Gliederung vorkommen. Ein Eintrag, der nicht passt, wird beim Nachbau übersprungen; er hält nichts auf.
+const STELLE_M = /^\d{1,5}\.\d{1,3}$/, WORT_M = /^[a-z]{1,20}$/;
+const idGut = x => Number.isInteger(x) && x >= 0 && !!D.A?.[x];
+const idsGut = (x, max = 2000) => listeGut(x, idGut, max);
+const bereichV = x => x == null || (Array.isArray(x) && x.length === 2 && ganzGut(x[0], 0, 9999) && ganzGut(x[1], 0, 9999));
+// Datum eines Eintrags: ein Tag, den es gibt (kein 31. Februar, kein Monat 13), zwischen 1970 und 2199 (auch ein Gerät mit zurückgesetzter Uhr
+// schreibt gültige Einträge): die Tagesrechnung des Modells bleibt so immer eine Zahl
+const tagGutDatum = d => datumGut(d) && d >= '1970-01-01' && d <= '2199-12-31' && !isNaN(Date.parse(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
+const EINTRAG_ART = {
+  pl: e => tagGutDatum(e.d) && tagGut(e.t) && idsGut(e.t.plan) && idsGut(e.t.fertig) && Object.keys(e.t.art).every(id => idGut(+id))
+    && leerOder(e.t.ma, m => objGut(m, ([id, a]) => idGut(+id) && typeof a === 'string' && WORT_M.test(a), 2000)) && leerOder(e.kn, x => zahlGut(x)) && leerOder(e.kz, x => zahlGut(x)),
+  pa: e => tagGutDatum(e.d) && ['ers', 'raus'].every(f => leerOder(e[f], x => idsGut(x))) && ['plus', 'minus'].every(f => leerOder(e[f], x => idGut(x) || idsGut(x))),
+  ab: e => tagGutDatum(e.d) && idGut(e.id) && bereichV(e.v) && typeof e.e === 'string' && /^[a-z-]{0,400}$/.test(e.e) && leerOder(e.q, x => typeof x === 'string' && WORT_M.test(x))
+    && zahlGut(e.p, 0, 1e5) && leerOder(e.s, x => zahlGut(x, 0, 1e6)),
+  fm: e => tagGutDatum(e.d) && listeGut(e.w, x => typeof x === 'string' && STELLE_M.test(x), 2000) && e.w.length > 0 && leerOder(e.a, x => typeof x === 'string' && WORT_M.test(x)) && leerOder(e.m, x => ganzGut(x, 0, 9999)),
+  fl: e => typeof e.s === 'string' && STELLE_M.test(e.s),
+  fg: e => ganzGut(e.vi, 0, 9999),
+  mu: e => tagGutDatum(e.d) && typeof e.k === 'string' && PAAR_M.test(e.k),
+  ku: e => tagGutDatum(e.d) && typeof e.a === 'string' && WORT_M.test(e.a) && zahlGut(e.p, 0, KURZ_TAGESLIMIT),
+  pb: e => tagGutDatum(e.d) && ganzGut(e.n, 1, PAUSE_MAX),
+  pe: e => tagGutDatum(e.d),
+  on: e => tagGutDatum(e.d),
+  lb: e => tagGutDatum(e.d) && idGut(e.id) && bereichV(e.v),
+  lx: e => idGut(e.id) && bereichV(e.v),
+  rk: e => leerOder(e.ids, x => listeGut(x, y => textGut(y, 60), 5000)),
+  ei: e => einstEintragGut(e)
+};
+export function eintragGut(e) {
+  if (!istObj(e) || !textGut(e.i, 60) || !e.i || !zahlGut(e.z) || typeof e.y !== 'string' || !Object.hasOwn(EINTRAG_ART, e.y)) return false;
+  try { return harmlos(e.y === 'ei' && e.k === 'name' ? { ...e, w: 0 } : e) && !!EINTRAG_ART[e.y](e); } catch (x) { return false; }
 }
 const karteGut = k => istObj(k) && ganzGut(k.st, 0, 4) && ganzGut(k.n) && leerOder(k.fe, x => zahlGut(x)) && ['zul', 'kon', 'fae', 'fz', 'ah'].every(f => leerOder(k[f], datumGut))
   && leerOder(k.S, x => zahlGut(x, 0, 1e6)) && leerOder(k.fa, x => listeGut(x, y => ganzGut(y, 0, 9999), 400)) && ['lf', 'fs', 'lt', 'lap', 'z'].every(f => leerOder(k[f], x => zahlGut(x))) && harmlos(k);

@@ -66,5 +66,7 @@ test('app.js: Tastenkürzel nur ohne Zusatztaste, asynchrone Ansichten prüfen i
     const j = app.indexOf('\nasync function ', i + 10), k = app.indexOf('\nfunction ', i + 10), ende = Math.min(...[j, k].filter(x => x > 0));
     assert.ok(/ansichtGilt\(lauf0?\)/.test(app.slice(i, ende)), `${f} prüft nach dem Laden nicht, ob die Ansicht noch gilt`);
   }
-  assert.ok(!app.includes('caches.delete(k); } catch') && app.includes("k.startsWith('itqan-schale-')"), '„Neu laden“ löscht mehr als die Schale');
+  // Nach-Audit 2.00, Plattform N1: „Neu laden“ löscht keinen Vorrat und meldet den Worker nicht ab (sonst startet die App danach offline nicht mehr)
+  assert.ok(!app.includes('caches.delete') && !app.includes('.unregister('), '„Neu laden“ löscht einen Vorrat oder meldet den Worker ab');
+  assert.ok(/async function neuLadenFrisch\(\) \{[^}]*\.update\?\.\(\)[\s\S]{0,200}location\.reload\(\)/.test(app) && app.includes("querySelector('#fe-neu').onclick = neuLadenFrisch"), '„Neu laden“ prüft den Worker und lädt neu');
 });

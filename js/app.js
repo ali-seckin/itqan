@@ -6,7 +6,7 @@ import { hintergrundSperren, hintergrundFreigeben, ueberlagerung, eigenerRuecksc
 import * as Forschung from './forschung.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
-import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG } from './version.js';
+import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG, andereVersion } from './version.js';
 import * as Ab from './abgleich.js';
 import { fuehrung, gesehen as tourGesehen, merken as tourMerken, zuruecksetzen as tourZuruecksetzen } from './fuehrung.js';
 import * as S from './suche.js';
@@ -221,7 +221,8 @@ async function profilSichern() {
 }
 const datumKurz = d => d ? new Date(d.length === 10 ? d + 'T12:00' : d).toLocaleDateString(gebiet('datum'), { day: 'numeric', month: 'long', year: 'numeric' }) : tx('datumkurz.noch_nie');
 async function profilLaden() {
-  const [text] = await dateiWaehlen(); if (!text) return;
+  const dateien = await dateiWaehlen(); if (!dateien.length) return;   // Auswahl abgebrochen
+  const text = dateien[0];   // eine leere Datei ist keine Profildatei: dieselbe Meldung wie bei jeder anderen fremden Datei
   let r;
   try { r = await Z.importDatei(text); } catch (e) { toast(tx('profilladen.das_ist_keine_gueltige_itqan_profildatei')); return; }
   const u = Z.profilUeberblick(r.profil);
@@ -331,7 +332,7 @@ const GRUND_TEXT = { 'täglich': tx('grund_text.taeglich'), 'vor dem Gliederungs
 function schnappschussListe() {
   const l = Z.schnappschuesse();
   if (!l.length) return `<p class="leer">${tx('schnappschussliste.noch_keine_schnappschuesse')}</p>`;
-  return `<div class="schnapp-liste">${l.map(x => `<div class="schnapp"><div><b>${new Date(x.zeit).toLocaleString(gebiet('datum'), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</b><span>${esc(GRUND_TEXT[x.grund] || x.grund)} · ${tx('schnappschussliste.abschnitte_geuebt', { abschnitte: zahl(x.abschnitte), n: x.abschnitte })}</span></div><button class="knopf leise klein" data-zeit="${x.zeit}">${tx('schnappschussliste.zurueckholen')}</button></div>`).join('')}</div>`;
+  return `<div class="schnapp-liste">${l.map(x => `<div class="schnapp"><div><b>${new Date(x.zeit).toLocaleString(gebiet('datum'), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</b><span>${esc(GRUND_TEXT[x.grund] || x.grund)} · ${tx('schnappschussliste.abschnitte_geuebt', { abschnitte: zahl(x.abschnitte), n: x.abschnitte })}</span></div><button class="knopf leise klein" data-zeit="${esc(x.zeit)}">${tx('schnappschussliste.zurueckholen')}</button></div>`).join('')}</div>`;
 }
 function schnappschussBinden(wurzel) {
   wurzel.querySelectorAll('[data-zeit]').forEach(b => b.onclick = async () => {
@@ -380,7 +381,7 @@ async function vorratSpeichern() {
 function ketteFenster() {
   const n = Z.kettenTage(), kb = Z.kettenBonus(n), beste = Math.max(Z.P.kette.beste || 0, n);
   const stufen = Z.KETTEN_BONUS.map(([t, b]) => `<li class="${n >= t ? 'hat' : kb.naechst === t ? 'dran' : ''}"><span>${tx('heute.kette_stufe_tage', { n: t })}</span><b>+${prozent(b)}</b><em>${n >= t ? '✓' : kb.naechst === t ? tx('heute.kette_noch', { n: t - n }) : ''}</em></li>`).join('');
-  dialog({ titel: tx('heute.kette_fenster_titel'), ja: tx('lichtkarte.zu'), nein: '', html: `<div class="kf-kopf">${lampeKlein}<b>${n}</b><span>${tx('heute.tage_kette')}</span></div>
+  dialog({ titel: tx('heute.kette_fenster_titel'), ja: tx('lichtkarte.zu'), nein: '', html: `<div class="kf-kopf">${lampeKlein}<b>${n}</b><span>${tx('heute.tage_kette', { n })}</span></div>
     <p class="kf-bonus">${kb.p ? tx('heute.kette_jetzt', { p: kb.p }) : tx('heute.kettenbonus_keiner')}</p>
     <ul class="kf-stufen">${stufen}</ul>
     <p class="unter" style="margin-top:10px">${tx('heute.kette_hinweis')} ${tx('heute.kette_beste', { n: beste })}</p>` });
@@ -482,6 +483,13 @@ function fehlerMerken(e, wo) {
 const letzterFehler = () => { try { return localStorage.getItem(FEHLER_KEY) || ''; } catch (e) { return ''; } };
 // Teil einer Ansicht, dessen Ausfall nicht die ganze Ansicht kosten darf
 const sicher = (wo, f, ersatz = '') => { try { return f(); } catch (e) { fehlerMerken(e, wo); return ersatz; } };
+// „Neu laden“ nach einem Fehler: den Worker nach einer neuen Fassung sehen lassen (höchstens drei Sekunden) und die Seite neu laden.
+// Kein Vorrat wird gelöscht: Mit Netz fragt der Worker ohnehin bei jeder Programmdatei zuerst das Netz, ohne Netz ist der Vorrat das Einzige,
+// womit die App startet. Ein geleerter Vorrat würde erst mit der nächsten Veröffentlichung wieder gefüllt (Nach-Audit 2.00, Plattform N1).
+async function neuLadenFrisch() {
+  try { await Promise.race([Promise.resolve(navigator.serviceWorker?.getRegistration?.()).then(r => r?.update?.()), new Promise(f => setTimeout(f, 3000))]); } catch (x) { /* dann eben nur neu laden */ }
+  location.reload();
+}
 function fehlerAnsicht(e, name) {
   const z = fehlerMerken(e, name);
   navSetzen(['heute', 'karte', 'mushaf', 'uebungen', 'profil'].includes(name) ? name : 'heute');
@@ -489,17 +497,7 @@ function fehlerAnsicht(e, name) {
     <p class="unter" style="word-break:break-word;user-select:text;-webkit-user-select:text;font-size:.8em">${esc(z)}</p>
     <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="fe-neu">${tx('app.fehler_neu_laden')}</button><button class="knopf leise klein" id="fe-melden">${tx('app.fehler_melden')}</button>${sicher('fe-schnapp', () => Z.schnappschuesse().length, 0) ? `<button class="knopf leise klein" id="fe-schnapp">${tx('start.schnappschuss_zurueckholen')}</button>` : ''}</div>
     <div id="fe-schnapp-liste" class="verdeckt" style="margin-top:12px"></div></div>`;
-  // Neu laden holt die Programmdateien frisch: mit Netz wird nur der Vorrat der Schale geleert und der Worker neu geprüft.
-  // Die gespeicherten Muṣḥaf-Seiten (itqan-seiten-v1) und das Profil bleiben immer unberührt; ohne Netz wird nur neu geladen.
-  app.querySelector('#fe-neu').onclick = async () => {
-    try {
-      if (navigator.onLine !== false && 'caches' in window) {
-        for (const k of await caches.keys()) if (k.startsWith('itqan-schale-')) await caches.delete(k);
-        await (await navigator.serviceWorker?.getRegistration?.())?.update?.();
-      }
-    } catch (x) { /* dann eben nur neu laden */ }
-    location.reload();
-  };
+  app.querySelector('#fe-neu').onclick = neuLadenFrisch;
   const fs = app.querySelector('#fe-schnapp');   // auch bei einem kaputten Stand bleibt der Weg zu den Schnappschüssen offen
   if (fs) fs.onclick = () => { const l = app.querySelector('#fe-schnapp-liste'); l.innerHTML = sicher('fe-liste', schnappschussListe); schnappschussBinden(l); l.classList.remove('verdeckt'); };
   app.querySelector('#fe-melden').onclick = () => { location.hash = '#rueckmeldung'; };
@@ -568,12 +566,19 @@ function uhrAnsicht() {
   app.querySelector('#uhr-ja').onclick = () => { try { localStorage.setItem(UHR_KEY, new Date().toDateString()); } catch (e) { /* dann fragt die App beim nächsten Start noch einmal */ } zeige(); };
 }
 // Was warten musste, solange geübt wurde: Hinweis auf eine neue Version, Einbau fremder Einträge vom Konto
-let neueVersionGezeigt = false, nachholZeit = 0;
+let neueVersionGezeigt = false, neueVersionPruefung = null, nachholZeit = 0;
+// Der Worker hat gewechselt (start.js vermerkt das am Wurzelelement). Hingewiesen wird nur, wenn wirklich eine andere Fassung bereitliegt,
+// als diese Seite ausführt: Nach einem gewöhnlichen Update hat die Seite die neue Fassung schon aus dem Netz geladen, dann gibt es nichts neu zu laden.
+const neueVersionWartet = () => neueVersionPruefung ??= fetch('js/version.js', { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(andereVersion).catch(() => false);
 function hinweiseNachholen() {
   if (inUebung()) return;
   if (document.documentElement.dataset.neueVersion && !neueVersionGezeigt) {
     neueVersionGezeigt = true;
-    leiste('neue-version', tx('app.neue_version'), [{ text: tx('app.fehler_neu_laden'), tun: () => location.reload() }, { text: tx('app.spaeter') }]);
+    neueVersionWartet().then(ja => {
+      if (!ja) { delete document.documentElement.dataset.neueVersion; neueVersionGezeigt = false; neueVersionPruefung = null; return; }
+      if (inUebung()) { neueVersionGezeigt = false; return; }   // inzwischen wird geübt: der Hinweis folgt nach der Übung
+      leiste('neue-version', tx('app.neue_version'), [{ text: tx('app.fehler_neu_laden'), tun: () => location.reload() }, { text: tx('app.spaeter') }]);
+    });
   }
   if (Z.P && Date.now() - nachholZeit > 5000 && sicher('wartet', () => Ab.status().wartet, false) && ansichtRuhig()) { nachholZeit = Date.now(); setTimeout(() => abgleichStill(true), 400); }
 }
@@ -843,7 +848,7 @@ function heute() {
   const markeVon = (id, e, fertig) => {
     const art = t.art[id];
     const zwh = Z.zwischenstandLaden(id, art === 'bonus' ? 'bonus' : ''), angefangen = !fertig && zwh?.erg?.length ? `<span class="marke-art angefangen">${tx('heute.angefangen')} · ${zwh.erg.length}/${e.ayat}</span>` : '';
-    return angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${MARKE[t.ma?.[id]] || tx('heute.runde')}</span>` : '');
+    return angefangen + (art === 'fehler' ? `<span class="marke-art fehler">${tx('allg.wiederholung_nach_fehler')}</span>` : art === 'qadaa' ? `<span class="marke-art qadaa">${tx('heute.qada')}</span>` : art === 'festigen' ? `<span class="marke-art festigen">${tx('allg.festigen')}</span>` : art === 'bonus' ? `<span class="marke-art bonus">${tx('allg.bonus')}</span>` : art === 'zyklus' ? `<span class="marke-art umlauf">${MARKE[Z.platzMarke(t, id)] || tx('heute.runde')}</span>` : '');
   };
   const karteVoll = (id, i) => { const e = D.A[id], fertig = t.fertig.includes(id); return `<a class="karte jetzt${fertig ? ' fertig' : ''}" href="#ueben/${id}" data-id="${id}" style="text-decoration:none;color:inherit">
       <div class="nr">${fertig ? '✓' : i + 1}</div><div class="t"><b>${esc(e.titel)}</b><span>${abschnittMarke(e)} · ${bereichText(e)} · ${tx('allg.zeilen', { zeilen: e.zeilen })} ${markeVon(id, e, fertig)}</span></div>${stufePunkte(Z.karte(id).st)}</a>
@@ -880,7 +885,7 @@ function heute() {
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="12"/>
       <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/></svg>
       <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span></div></div>`;
-  const stand = t.ruhe ? '' : `<div class="stand-zahlen"><div><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette')}</span></div>${Z.P.einst.hasanat === false ? '' : `<div><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}<div><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>`;
+  const stand = t.ruhe ? '' : `<div class="stand-zahlen"><div><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette', { n: aktiv ? P.kette.n : 0 })}</span></div>${Z.P.einst.hasanat === false ? '' : `<div><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}<div><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>`;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
       <button type="button" class="pille kette-pille" id="kette-info" title="${tx('heute.tage_in_folge')}" aria-label="${tx('heute.kette_tage_in_folge_zum_profil', { a: aktiv ? P.kette.n : 0 })}">${lampeKlein}${aktiv ? P.kette.n : 0}</button></div>
@@ -1038,6 +1043,7 @@ async function ueben(idText, quelle, fokusText) {
   let blockEnde = 0, blockAnz = 1, autoSchluessel = '', autoGesperrt = false;   // mehrere Āyāt auf einmal aufdecken (Einstellung) und automatische Aufnahme
   // liste: die Āyāt der laufenden Runde (Hauptrunde oder Sofortkorrektur); verlauf: bewertete Āyāt zum Zurücknehmen
   let liste = ayat, phase = 'haupt', korr = [], verlauf = [], fsVorher = null, abhoeren = false;
+  let tippSperre = 0;   // nach „Abschnitt abschließen“ kurz kein Aufdecken: der zweite Tipp eines Doppeltipps träfe sonst den Knopf der Sofortkorrektur an derselben Stelle
   let ganz = E.ablauf === 'ganz' && art !== 'stelle' && !ABF && !L, zg = new Set();   // Ablauf „ganzer Abschnitt am Stück“ (Einstellungen)
   // Übungszeit für die Auswertung: zählt nur, solange die Seite sichtbar ist; fortgesetzte Übungen werden nicht gemessen
   let zeitAktiv = 0, zeitSeit = document.hidden ? null : Date.now(), zeitGanz = true;
@@ -1308,7 +1314,7 @@ async function ueben(idText, quelle, fokusText) {
       if (E.abhoeren !== false && start && art !== 'stelle') links.push(`<button class="textlink mini leiser" id="abhoeren">${tx('ueben.jemand_hoert_ab')}</button>`);
       const satz = L?.st >= 1 && start ? tx('lernen.dabt_hinweis') : phase === 'korrektur' ? tx('ueben.sofortkorrektur_diese_aya_noch_einmal') : alt.has(vi) ? tx('ueben.hier_warst_du_zuletzt_unsicher') : ti ? tx('ueben.weiter_aus_dem_gedaechtnis') : tx('ueben.rezitiere_aus_dem_gedaechtnis');
       H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : satz) + (links.length ? '<br>' + links.join('') : '');
-      app.querySelector('#auf').onclick = aufdecken;
+      app.querySelector('#auf').onclick = () => { if (Date.now() < tippSperre) return; aufdecken(); };
       const tb = app.querySelector('#teil'); if (tb) tb.onclick = teilAufdecken;
       // Hilfe Wort für Wort: jedes Tippen deckt das nächste verdeckte Wort auf, die Āya zählt dann als „mit Hilfe“
       const hf = app.querySelector('#hilfe-frage'); if (hf) hf.onclick = () => { hilfeFrei = true; zeichne(); };
@@ -1450,6 +1456,7 @@ async function ueben(idText, quelle, fokusText) {
       Z.ganzErgebnis(ayat, new Set(marken.map(s => +s.dataset.v)), zg).forEach((x, i) => { erg[i] = x; });
       merken(marken);
       ganzAufraeumen(); ganzLoeschen(); abhoeren = false; ganz = false; aufnahmeVerwerfen();
+      tippSperre = Date.now() + 700;
       pos = ayat.length; rundeFertig();
     };
   }
@@ -1598,7 +1605,7 @@ async function ueben(idText, quelle, fokusText) {
     app.innerHTML = `<div class="feier">${qandil()}
       <h2>${res.f || res.stufe < res.vorher ? tx('ueben.abschnitt_beendet') : res.h ? tx('ueben.gut_gemacht') : tx('ueben.fehlerfrei_ma_saa_llah')}</h2>
       <p>${esc(e.titel)}<br><span class="unter">${abschnittName(e)} · ${tx('ueben.stufe', { a: Z.STUFEN[res.stufe], b: res.stufe > res.vorher ? ' ↑' : res.stufe < res.vorher ? ' ↓' : '' })}</span></p>
-      <div class="ernte"><div><b>${res.r}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt')}</span></div>${res.wiederholung ? '' : `<div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>`}
+      <div class="ernte"><div><b>${res.r}/${ayat.length}</b><span>${tx('ueben.ayat_gekonnt', { n: ayat.length })}</span></div>${res.wiederholung ? '' : `<div><b data-hoch="${res.punkte}" data-vor="+">+${zahl(res.punkte)}</b><span>${tx('allg.itqan_punkte')}</span></div>`}
         ${E.hasanat === false ? '' : `<div style="grid-column:1/-1"><b data-hoch="${res.hasanat}" data-vor="+">+${zahl(res.hasanat)}</b><span>${tx('allg.hasanat')}</span></div>`}</div>
       ${E.hasanat === false ? '' : `<p class="niyya">${tx('ueben.jeder_buchstabe_zehnfach_bei')}</p>`}
       ${res.wiederholung ? `<div class="hinweisbox">${tx('ueben.zweiter_durchgang')}</div>` : `<div class="aufschl">${res.teile.map(([a, b]) => `<div><span>${a}</span><span>+${zahl(b)}</span></div>`).join('')}</div>`}
@@ -1658,8 +1665,8 @@ function fertig() {
   app.innerHTML = `<div class="feier">${qandil()}
     <div class="ar" lang="ar">اللَّهُمَّ بَارِكْ</div><h2>${tx('fertig.allahumma_barik')}</h2>
     <p>${tx('fertig.dein_wird_fuer_heute_ist_vollbracht_die', { n: P.kette.n })}</p>
-    <div class="ernte"><div><b>${quote}</b><span>${tx('fertig.ayat_gekonnt')}</span></div><div><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>${tx('fertig.itqan_punkte_heute')}</span></div>
-      ${P.einst.hasanat === false ? '' : `<div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div>`}<div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette')}</span></div></div>
+    <div class="ernte"><div><b>${quote}</b><span>${tx('fertig.ayat_gekonnt', { n: t.r + t.f + t.h })}</span></div><div><b data-hoch="${t.punkte}" data-vor="+">+${zahl(t.punkte)}</b><span>${tx('fertig.itqan_punkte_heute')}</span></div>
+      ${P.einst.hasanat === false ? '' : `<div><b data-hoch="${t.hasanat}" data-vor="+">+${zahl(t.hasanat)}</b><span>${tx('fertig.hasanat_heute')}</span></div>`}<div><b>${P.kette.n}</b><span>${tx('fertig.tage_kette', { n: P.kette.n })}</span></div></div>
     ${P.einst.hasanat === false ? '' : `<p class="niyya">${tx('fertig.hasanat_nach_dem_hadit_jeder_buchstabe')}</p>`}
     ${extra}
     ${bonusId != null ? `<div class="angebot"><b>${tx('fertig.noch_kraft_fuer_mehr')}</b><p>${tx('fertig.ein_bonusabschnitt_bringt_dir_heute_50', { abschnittName: abschnittName(D.A[bonusId]), titel: alsHtml(esc(D.A[bonusId].titel)) })}</p><button id="bonus">${tx('fertig.bonusabschnitt_beginnen')}</button></div>` : ''}
@@ -2366,7 +2373,7 @@ function hilfeSeite(ziel) {
     <div class="abschnitt"><p>${tx('hilfeseite.jeder_knopf_hat_einen_namen_jede_auswahl')}</p>
       <p style="margin-top:10px">${tx('hilfeseite.jede_mushaf_seite_gibt_es_auch_als_text')}</p></div>
     <p class="lesbar-probe">${tx('hilfeseite.deine_frage_ist_nicht_dabei_schreib_uns')}</p>`;
-  const zu = z => { const el = app.querySelector('#hf-' + z); if (!el) return; el.scrollIntoView({ block: 'start', behavior: ruhig() ? 'auto' : 'smooth' }); el.focus({ preventScroll: true }); };
+  const zu = z => { const el = document.getElementById('hf-' + z); if (!el || !app.contains(el)) return; el.scrollIntoView({ block: 'start', behavior: ruhig() ? 'auto' : 'smooth' }); el.focus({ preventScroll: true }); };
   app.querySelector('.hf-sprung').onclick = ev => { const z = ev.target.dataset.z; if (z) zu(z); };
   const filter = app.querySelector('#hf-filter'), eintraege = [...app.querySelectorAll('#hf-liste > div')], leer = app.querySelector('#hf-leer');
   filter.oninput = () => {
@@ -3175,7 +3182,7 @@ function einstellungen() {
 }
 
 // ---------- Lehreransicht ----------
-function schuelerLaden() { try { return JSON.parse(localStorage.getItem('itqan-schueler') || '[]'); } catch (e) { return []; } }
+function schuelerLaden() { try { const l = JSON.parse(localStorage.getItem('itqan-schueler') || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
 function schuelerSpeichern(l) { try { localStorage.setItem('itqan-schueler', JSON.stringify(l)); } catch (e) { toast(tx('schuelerspeichern.speicher_voll')); } }
 async function lehrer() {
   const lauf = zeigeNr;
@@ -3215,7 +3222,7 @@ async function lehrer() {
     for (const t of texte) {
       try {
         const r = await Z.importDatei(t);
-        const i = l.findIndex(x => x.profil.erstellt === r.profil.erstellt && x.profil.name === r.profil.name);
+        const i = l.findIndex(x => x?.profil?.erstellt === r.profil.erstellt && x.profil.name === r.profil.name);
         if (i >= 0) l[i] = r; else l.push(r); n++;
       } catch (e) {}
     }
@@ -3249,7 +3256,12 @@ async function starten() {
       if (JSON.stringify([E.bereich, E.auswahl]) !== vor) Z.speichern();
     }
   }
-  catch (e) { app.innerHTML = `<div class="lade">${tx('app.die_daten_konnten_nicht_geladen_werden')}</div>`; return; }
+  catch (e) {
+    fehlerMerken(e, 'daten');
+    app.innerHTML = `<div class="lade"><div style="text-align:center;padding:0 20px"><p>${tx('app.die_daten_konnten_nicht_geladen_werden')}</p><button type="button" class="knopf haupt klein" id="df-neu" style="margin-top:14px">${tx('app.fehler_neu_laden')}</button></div></div>`;
+    app.querySelector('#df-neu').onclick = neuLadenFrisch;
+    return;
+  }
   Z.tagesSchnappschuss();
   await zeige();
   Ab.starten();

@@ -66,20 +66,28 @@ jobs:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@v5
-      # Rauchprobe nach der Veröffentlichung: die Schale im Netz ist die aus diesem Stand, Tests sind nicht abrufbar.
-      # Meldet nur (der Stand ist dann schon veröffentlicht, und das Netz des Hosters braucht manchmal einige Sekunden)
+      # Rauchprobe nach der Veröffentlichung: die Schale und die Version im Netz sind die aus diesem Stand, die Startdateien kommen an,
+      # Tests sind nicht abrufbar. Schlägt sie fehl, endet der Lauf rot (kein stilles Grün): Der Stand ist dann zwar schon veröffentlicht,
+      # aber der Fehlschlag steht sichtbar im Lauf und in der Benachrichtigung. Das Netz des Hosters braucht manchmal einige Sekunden,
+      # darum bis zu zwei Minuten Geduld.
       - name: Rauchprobe
-        continue-on-error: true
         env:
           ADRESSE: ${{ steps.deployment.outputs.page_url }}
         run: |
           schale=$(grep -o 'itqan-schale-v[0-9]*' sw.js | head -1)
-          for i in 1 2 3 4 5 6; do
+          version=$(grep -o "export const VERSION = '[^']*'" js/version.js | head -1)
+          basis="${ADRESSE%/}"
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
             sleep 10
-            if curl -fsS "${ADRESSE%/}/sw.js" | grep -q "$schale"; then
-              code=$(curl -s -o /dev/null -w '%{http_code}' "${ADRESSE%/}/tests/PRUEFLISTE.md")
+            # erst vollständig holen, dann suchen: ein grep, das mitten im Strom aufhört, ließe curl unter pipefail scheitern
+            if curl -fsS -o netz_sw.js "$basis/sw.js" && curl -fsS -o netz_version.js "$basis/js/version.js" && grep -q "$schale" netz_sw.js && grep -qF "$version" netz_version.js; then
+              for f in index.html js/start.js js/app.js css/itqan.css daten/verse.json; do
+                code=$(curl -s -o /dev/null -w '%{http_code}' "$basis/$f")
+                if [ "$code" != "200" ]; then echo "::error::$f antwortet mit $code"; exit 1; fi
+              done
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$basis/tests/PRUEFLISTE.md")
               if [ "$code" = "200" ]; then echo "::error::tests/ ist öffentlich abrufbar"; exit 1; fi
-              echo "Im Netz: $schale, tests/ antwortet mit $code"; exit 0
+              echo "Im Netz: $schale, $version, Startdateien 200, tests/ antwortet mit $code"; exit 0
             fi
           done
-          echo "::error::Im Netz steht nicht $schale"; exit 1
+          echo "::error::Im Netz steht nicht $schale mit $version"; exit 1

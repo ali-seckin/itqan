@@ -1334,3 +1334,12 @@ html{scrollbar-gutter:stable}
 html[data-stopp] .vorschau .w.zu.ende{color:var(--sk-ende)!important;text-shadow:0 0 .3em var(--sk-glow)!important}
 html[data-stopp] .vorschau .w.zu.ende::after{display:flex!important}
 html[data-stopp] .vorschau .seite .w.zu .wq{color:var(--sk-stopp)!important;text-shadow:0 0 .6px var(--sk-stopp)!important}
+/* Sehr schmale Bildschirme (320 px), auch mit großer Schrift (Audit B-18): die Beschriftungen der unteren Leiste, der Titel neben der
+   Kettenpille und die Seitenzahl an den Blätterknöpfen bleiben vollständig lesbar */
+@media (max-width:359px){
+.nav a{flex:1 1 0;min-width:0;padding:4px 1px;font-size:13px;text-align:center}
+[data-ansicht=heute] .kopfzeile .marke{font-size:min(var(--s-seite),34px)}
+html[lang=fr] [data-ansicht=heute] .kopfzeile .marke{font-size:27px;gap:8px}
+html[lang=fr] [data-ansicht=heute] .kopfzeile .marke-zeichen{width:38px;height:38px}
+.mushaf-leiste .knopf{font-size:min(var(--s-text),16px);padding-left:4px;padding-right:4px}
+}

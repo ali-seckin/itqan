@@ -23,6 +23,7 @@ const kopie = x => JSON.parse(JSON.stringify(x));
 const gleich = (a, b) => !!a && !!b && a.n === b.n && a.z === b.z && a.g === b.g;
 const meta = sp => ({ n: sp.sockel_n, z: sp.sockel_z, g: sp.sockel_g });
 const dedupe = liste => [...new Map(liste.map(e => [e.i, e])).values()];
+// Grobe Form beim Abholen (unabhängig von der geladenen Gliederung). Die genaue Prüfung je Art folgt beim Einbau: aufbauen, Z.eintragGut.
 const gueltig = e => !!e && typeof e === 'object' && typeof e.i === 'string' && typeof e.y === 'string';
 class StandFehler extends Error {}
 class ZwischenzeitFehler extends Error {}
@@ -59,7 +60,11 @@ function planen() {
 }
 export function starten() {
   Z.eintragHakenSetzen(e => {
-    const s = zustand(); if (!s) return;
+    const s = zustand();
+    // Angemeldet, aber nicht verbunden (etwa nach „Profil löschen“ und neuem Profil): ein stiller Lauf stellt fest, ob eine Entscheidung aussteht,
+    // und die Oberfläche sagt es gleich, nicht erst beim nächsten Start. Nur solange noch keine Lage (Konflikt, Fehler) bekannt ist:
+    // der Kontostand wird so nicht nach jedem Eintrag abgerufen.
+    if (!s) { if (K.sitzung() && !lies(LAGE)) planen(); return; }
     s.ausgang.push(kopie(e)); sichern(); planen();
   });
   K.abmeldenNachholen();
@@ -193,13 +198,16 @@ async function aufbauen(art) {
   const s = zustand(), sockel = lies(KOPIE);
   if (!sockel) throw new K.ServerFehler(0, 'sockel-missing');
   let liste = s.listeFehlt ? (await eintraegeHolen(s.sockel.n, 0)).map(x => x.daten).filter(gueltig) : lies(LISTE, []);
-  const alle = dedupe([...liste, ...s.ausgang]);
+  let alle = dedupe([...liste, ...s.ausgang]);
   if (sockel.gliederung !== D.gliederung) {
     // Die Daten dieses Geräts gehören zu einer anderen Gliederung als der Stand des Kontos: Stand ohne Einträge übernehmen,
     // der Aufbau folgt beim nächsten Start, wenn die passende Gliederung geladen ist.
     Z.standUebernehmen(sockel, []); s.neuAufbau = true; sichern();
     return { art, neuLaden: true };
   }
+  // Einträge vom Konto werden geprüft, bevor sie in den Stand kommen (Form, Wertebereich, bekannter Abschnitt der geladenen Gliederung).
+  // Was nicht passt, wird übersprungen und hält den Abgleich nicht auf; Fremdtext erreicht das Profil so nie.
+  alle = alle.filter(Z.eintragGut);
   const p = Z.nachbau(sockel, alle);
   const alt = Z.P?.einst || {};
   for (const k of GERAETE_EINST) if (k in alt) p.einst[k] = alt[k];

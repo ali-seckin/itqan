@@ -1,5 +1,6 @@
 // Itqān · Tests zum Service Worker: sw.js läuft unverändert in einer abgeschirmten Umgebung mit Attrappen für caches und fetch.
 // Geprüft wird das Verhalten bei Erfolg, Störung des Servers (5xx), Netzfehler, hängendem Netz und Seitenaufrufen (Audit 1.99: H10, P03, P07, P16, S16).
+// Nach-Audit 2.00 (Plattform N3 bis N6): der Vorrat bleibt eine geschlossene Fassung, das Zeitlimit zählt je Start einmal, 404 mit Vorrat, HTML statt Datei.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -17,7 +18,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
 class Antwort {
   constructor(body, status = 200, typ = 'text/plain', art = 'basic') {
     this.body = body; this.status = status; this.ok = status >= 200 && status < 300; this.typ = typ; this.type = art;
-    this.headers = new Map(status === 200 ? [['etag', 'W/"' + String(body).length + '-' + String(body).slice(0, 60) + '"']] : []);
+    this.headers = new Map([...(status === 200 ? [['etag', 'W/"' + String(body).length + '-' + String(body).slice(0, 60) + '"']] : []), ['content-type', typ]]);
   }
   clone() { return Object.assign(new Antwort(this.body, this.status, this.typ, this.type), { headers: this.headers }); }
   async text() { return String(this.body); }
@@ -26,7 +27,8 @@ const typVon = p => p.endsWith('.js') ? 'application/javascript' : p.endsWith('.
 
 // Eine frische Umgebung: Netz mit einstellbarem Verhalten, Speicher als Map je Cache
 function umgebung() {
-  const u = { netz: 'an', anfragen: [], abgebrochen: 0, schreiben: 0, lager: new Map(), hoerer: {}, stand: '' };
+  // je: Verhalten einzelner Pfade, geht vor netz: 'haengt' | 'aus' | '503' | '404' | 'html' (Status 200 mit einer HTML-Seite) | { verzug: ms } (antwortet verspätet)
+  const u = { netz: 'an', anfragen: [], abgebrochen: 0, schreiben: 0, lager: new Map(), hoerer: {}, stand: '', je: {} };
   const abs = x => new URL(typeof x === 'string' ? x : x.url, URSPRUNG + '/').href;
   const ohneSuche = x => { const y = new URL(x); y.search = ''; return y.href; };
   const datei = url => {
@@ -36,12 +38,16 @@ function umgebung() {
   };
   const holen = (x, opt = {}) => new Promise((gut, schlecht) => {
     const url = abs(x); u.anfragen.push(url);
-    if (u.netz === 'aus') return schlecht(new TypeError('Failed to fetch'));
-    if (u.netz === '503') return gut(new Antwort('<html>503</html>', 503, 'text/html'));
-    if (u.netz === 'umleitung') return gut(new Antwort('', 0, '', 'opaqueredirect'));
-    if (u.netz === 'haengt' || u.netz === 'langsam') {   // „haengt“ antwortet nie, „langsam“ erst nach dem Zeitlimit
+    const eigen = u.je[new URL(url).pathname], art = typeof eigen === 'string' ? eigen : u.netz;
+    if (eigen?.verzug) { setTimeout(() => gut(datei(url)), eigen.verzug / TEILER); return; }
+    if (art === 'aus') return schlecht(new TypeError('Failed to fetch'));
+    if (art === '503') return gut(new Antwort('<html>503</html>', 503, 'text/html'));
+    if (art === '404') return gut(new Antwort('<html>404</html>', 404, 'text/html'));
+    if (art === 'html') return gut(new Antwort('<html>Bitte anmelden</html>', 200, 'text/html; charset=utf-8'));
+    if (art === 'umleitung') return gut(new Antwort('', 0, '', 'opaqueredirect'));
+    if (art === 'haengt' || art === 'langsam') {   // „haengt“ antwortet nie, „langsam“ erst nach dem Zeitlimit
       opt.signal?.addEventListener('abort', () => { u.abgebrochen++; schlecht(new DOMException('abgebrochen', 'AbortError')); });
-      if (u.netz === 'langsam') setTimeout(() => gut(datei(url)), LIMIT / TEILER * 3);
+      if (art === 'langsam') setTimeout(() => gut(datei(url)), LIMIT / TEILER * 3);
       return;
     }
     gut(datei(url));
@@ -66,10 +72,12 @@ function umgebung() {
     vm.runInNewContext(code, { ...kontext });
     let p; await u.hoerer.install({ waitUntil: x => { p = x; } }); await p; await u.hoerer.activate({ waitUntil: x => { p = x; } }); await p;
   };
-  // Eine Anfrage durch den Worker schicken. Ergebnis: Antwort, 'vorbei' (nicht abgefangen) oder der Fehler
-  u.frage = async (pfad, mode = 'cors', method = 'GET') => {
+  // Eine Anfrage durch den Worker schicken. Ergebnis: Antwort, 'vorbei' (nicht abgefangen) oder der Fehler.
+  // seite: Kennung der geladenen Seite (Client). Ein Seitenaufruf trägt sie als resultingClientId, alles Weitere als clientId; ohne Angabe ist jede Anfrage ein eigener Start.
+  let laufend = 0;
+  u.frage = async (pfad, mode = 'cors', method = 'GET', seite = 'einzel-' + (++laufend)) => {
     let p; const offen = [];
-    u.hoerer.fetch({ request: { url: pfad.startsWith('http') ? pfad : URSPRUNG + pfad, method, mode }, respondWith: x => { p = x; }, waitUntil: x => offen.push(x) });
+    u.hoerer.fetch({ request: { url: pfad.startsWith('http') ? pfad : URSPRUNG + pfad, method, mode }, clientId: mode === 'navigate' ? '' : seite, resultingClientId: mode === 'navigate' ? seite : '', respondWith: x => { p = x; }, waitUntil: x => offen.push(x) });
     if (!p) return 'vorbei';
     const r = await p; await Promise.all(offen);
     return r;
@@ -95,8 +103,8 @@ test('Netz in Ordnung: Antwort aus dem Netz, im Vorrat nur ein Eintrag je Datei,
   assert.equal(r.status, 200);
   await u.frage('/css/itqan.css?v=141'); await u.frage('/?sprache=en', 'navigate'); await u.frage('/index.html?umzug');
   assert.equal(u.schale().size, vorher, 'Suchteile legen keine weiteren Einträge an');
-  assert.equal((await u.frage('/js/app.js')).body, 'INHALT:/js/app.js neu');
-  assert.equal(u.schale().get(URSPRUNG + '/js/app.js').body, 'INHALT:/js/app.js neu', 'die neue Fassung ersetzt die alte im Vorrat');
+  assert.equal((await u.frage('/js/app.js')).body, 'INHALT:/js/app.js neu', 'mit Netz kommt die neue Fassung an');
+  assert.equal(u.schale().get(URSPRUNG + '/js/app.js').body, 'INHALT:/js/app.js', 'der Vorrat bleibt die installierte Fassung: einzelne Dateien werden nie ersetzt');
 });
 
 test('Unveränderte Datei (gleiches ETag) wird nicht erneut in den Vorrat geschrieben', async () => {
@@ -209,4 +217,128 @@ test('Fremde Adressen und alles außer GET fasst der Worker nicht an', async () 
   const u = umgebung(); await u.einrichten();
   assert.equal(await u.frage('https://cmhhkibcfzjdftitxxpy.supabase.co/rest/v1/profile'), 'vorbei');
   assert.equal(await u.frage('/js/app.js', 'cors', 'POST'), 'vorbei');
+});
+
+// ---------- Nach-Audit 2.00: Plattform N3 bis N6 ----------
+const START = ['/js/start.js', '/js/huelle.js', '/js/sprache.js', '/js/sprache/de.js', '/js/app.js', '/js/zustand.js', '/js/abgleich.js', '/js/konto.js', '/daten/verse.json', '/daten/titel/de.json'];
+const alleAlt = u => { for (const [k, v] of u.schale()) if (!k.includes('/css/') && !k.includes('/schriften/')) assert.ok(!String(v.body).endsWith(' neu'), 'neue Datei im alten Vorrat: ' + k); };
+const offlineStart = async (u, seite) => { u.netz = 'aus'; u.je = {}; const r = [await u.frage('/', 'navigate', 'GET', seite)]; for (const p of START) r.push(await u.frage(p, 'cors', 'GET', seite)); return r; };
+
+test('N3: Update, ein Modul hängt: der Vorrat bleibt die alte Fassung ohne ein einziges neues Modul, offline startet danach die alte Fassung geschlossen', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = 'haengt';                  // im Netz liegt eine neue Fassung, ein Modul antwortet nicht
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's1')).body, 'INHALT:/index.html neu');
+  assert.equal((await u.frage('/js/abgleich.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/abgleich.js neu');
+  // dieser Start hat schon Neues bekommen: das hängende Modul wird nicht nach dem Zeitlimit durch das alte ersetzt (keine Mischung aus Langsamkeit)
+  let fertig = false; const haengt = u.frage('/js/konto.js', 'cors', 'GET', 's1').then(r => { fertig = true; return r; });
+  await warte(LIMIT / TEILER * 3);
+  assert.equal(fertig, false, 'das alte konto.js darf nicht neben dem neuen abgleich.js ausgeliefert werden');
+  alleAlt(u);
+  assert.equal(u.schale().get(URSPRUNG + '/index.html').body, 'INHALT:/index.html');
+  // danach ohne Netz: alles aus einer Fassung
+  for (const r of await offlineStart(u, 's2')) { assert.equal(r.status, 200); assert.ok(!String(r.body).endsWith(' neu')); }
+  void haengt;
+});
+
+test('N3: hängt beim Update zuerst ein Modul, läuft der ganze Start aus dem Vorrat: auch Dateien, die das Netz neu liefern würde oder gerade liefert', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = 'haengt'; u.je['/js/zustand.js'] = { verzug: LIMIT * 0.8 };
+  const erste = u.frage('/js/konto.js', 'cors', 'GET', 's1');          // hängt
+  await warte(LIMIT / TEILER * 0.5);
+  const unterwegs = u.frage('/js/zustand.js', 'cors', 'GET', 's1');    // ist unterwegs, wenn das Zeitlimit der ersten abläuft, und käme danach neu an
+  assert.equal((await erste).body, 'INHALT:/js/konto.js');
+  assert.equal((await unterwegs).body, 'INHALT:/js/zustand.js', 'die verspätete neue Datei wird nicht mehr untergemischt');
+  const n = u.anfragen.length;
+  assert.equal((await u.frage('/js/abgleich.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/abgleich.js');
+  assert.equal(u.anfragen.length, n, 'ohne neue Anfrage ans Netz');
+  alleAlt(u);
+  // ein neuer Seitenaufruf beginnt frisch: mit gutem Netz kommt die neue Fassung geschlossen
+  u.je = {};
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's2')).body, 'INHALT:/index.html neu');
+  for (const p of START) assert.equal((await u.frage(p, 'cors', 'GET', 's2')).body, 'INHALT:' + p + ' neu');
+  alleAlt(u);
+});
+
+test('N3: bricht das Netz mitten im Update ab (Netzfehler), kommt der Rest aus dem Vorrat und der Vorrat bleibt unverändert', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu';
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's1')).body, 'INHALT:/index.html neu');
+  u.netz = 'aus';
+  assert.equal((await u.frage('/js/app.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/app.js');
+  alleAlt(u);
+  for (const r of await offlineStart(u, 's2')) assert.ok(r.status === 200 && !String(r.body).endsWith(' neu'));
+});
+
+test('N5: Netz hängt bei vollem Vorrat: das Zeitlimit läuft je Start einmal, alle weiteren Ladestufen kommen sofort aus dem Vorrat', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.netz = 'haengt';
+  let t = Date.now();
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's1')).body, 'INHALT:/index.html');
+  assert.ok(Date.now() - t >= LIMIT / TEILER * 0.8, 'die erste Anfrage wartet das Zeitlimit ab');
+  const n = u.anfragen.length; t = Date.now();
+  for (const p of START) assert.equal((await u.frage(p, 'cors', 'GET', 's1')).body, 'INHALT:' + p);   // nacheinander, wie die Ladestufen der App
+  assert.ok(Date.now() - t < LIMIT / TEILER * 0.8, `zehn weitere Dateien zusammen schneller als ein Zeitlimit (${Date.now() - t} ms)`);
+  assert.equal(u.anfragen.length, n, 'keine weitere Anfrage ans hängende Netz');
+  // was nicht im Vorrat liegt, wird weiter im Netz versucht (und endet dort)
+  u.netz = 'aus';
+  assert.equal((await u.frage('/js/gibtsnicht.js', 'cors', 'GET', 's1')).type, 'error');
+  // der nächste Seitenaufruf (Neu laden) versucht das Netz wieder
+  u.netz = 'an'; u.stand = ' neu';
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's1b')).body, 'INHALT:/index.html neu');
+  assert.equal((await u.frage('/js/app.js', 'cors', 'GET', 's1b')).body, 'INHALT:/js/app.js neu');
+});
+
+test('N5: gleichzeitige Anfragen eines Starts bei hängendem Netz sind zusammen nach einem Zeitlimit beantwortet', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.netz = 'haengt';
+  const t = Date.now();
+  const r = await Promise.all(START.map(p => u.frage(p, 'cors', 'GET', 's1')));
+  r.forEach((x, i) => assert.equal(x.body, 'INHALT:' + START[i]));
+  assert.ok(Date.now() - t < LIMIT / TEILER * 5);
+});
+
+test('N6: 404 für eine Datei, die im Vorrat liegt: der Vorrat antwortet; ohne Vorrat geht das 404 durch', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.je['/js/zustand.js'] = '404'; u.je['/'] = '404';
+  const r = await u.frage('/js/zustand.js', 'cors', 'GET', 's1');
+  assert.equal(r.status, 200); assert.equal(r.body, 'INHALT:/js/zustand.js'); assert.equal(r.typ, 'application/javascript');
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's2')).body, 'INHALT:/index.html', 'auch die Startseite');
+  assert.equal((await u.frage('/js/gibtsnicht.js', 'cors', 'GET', 's1')).status, 404);
+  assert.equal((await u.frage('/irgendwas', 'navigate', 'GET', 's3')).status, 404, 'ein unbekannter Seitenpfad wird bei 404 nicht durch die Startseite ersetzt');
+});
+
+test('N6: Status 200 mit HTML statt der Datei: nie als Skript, JSON oder Schrift in den Vorrat, der Vorrat antwortet', async () => {
+  const u = umgebung(); await u.einrichten();
+  for (const p of ['/js/zustand.js', '/daten/verse.json', '/schriften/uthmanic_hafs.woff2', '/css/itqan.css']) {
+    u.je[p] = 'html';
+    const vorher = u.schale().get(URSPRUNG + p).body, r = await u.frage(p);
+    assert.equal(r.body, vorher, p + ': die gespeicherte Datei kommt'); assert.ok(!/html/.test(r.typ), p);
+    assert.equal(u.schale().get(URSPRUNG + p).body, vorher, p + ': der Eintrag im Vorrat bleibt');
+  }
+  // fehlt die Datei im Vorrat, wird die Ersatzseite durchgereicht, aber nicht gespeichert
+  u.schale().delete(URSPRUNG + '/daten/text.json'); u.je['/daten/text.json'] = 'html';
+  assert.match((await u.frage('/daten/text.json')).typ, /html/);
+  assert.ok(!u.schale().has(URSPRUNG + '/daten/text.json'));
+  // Seitenschriften und Übersetzungen (eigener Speicher): ebenso
+  u.je['/schriften/v2/p7.woff2'] = 'html'; await u.frage('/schriften/v2/p7.woff2');
+  assert.ok(!u.lager.get('itqan-seiten-v1')?.has(URSPRUNG + '/schriften/v2/p7.woff2'));
+  // eine echte HTML-Seite bleibt erlaubt
+  assert.equal((await u.frage('/index.html', 'navigate')).typ, 'text/html');
+});
+
+test('N6: die Installation scheitert, wenn statt einer Datei eine HTML-Seite kommt; der bisherige Vorrat bleibt', async () => {
+  const u = umgebung();
+  await u.einrichten(QUELLE.replace(schaleName, 'itqan-schale-v1'));
+  u.je['/js/app.js'] = 'html';
+  await assert.rejects(u.einrichten());
+  assert.equal(u.lager.get('itqan-schale-v1').get(URSPRUNG + '/js/app.js').body, 'INHALT:/js/app.js', 'die alte Schale ist unberührt');
+  assert.ok(!/html/.test(u.lager.get(schaleName)?.get(URSPRUNG + '/js/app.js')?.typ || ''));
+});
+
+test('Lücke im Vorrat: eine fehlende Datei wird nachgetragen, eine vorhandene nie überschrieben', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.schale().delete(URSPRUNG + '/daten/text.json'); u.stand = ' neu';
+  await u.frage('/daten/text.json'); await u.frage('/daten/verse.json');
+  assert.equal(u.schale().get(URSPRUNG + '/daten/text.json').body, 'INHALT:/daten/text.json neu');
+  assert.equal(u.schale().get(URSPRUNG + '/daten/verse.json').body, 'INHALT:/daten/verse.json');
 });

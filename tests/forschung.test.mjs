@@ -97,3 +97,24 @@ test('S15: die zufällige Nummer kommt auch ohne randomUUID aus dem sicheren Zuf
   assert.equal(benutzt, 1);
   assert.match(pid(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
+
+// ---------- Nach-Audit Sicherheit N2 ----------
+test('N2 (Nach-Audit): lehnt der Server jeden Stapel ab (Grenze, Notbremse), bleibt es bei wenigen Anfragen und die Schlange bleibt fast vollständig', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i })));
+  srv.stoeren('POST /rest/v1/forschung', { status: 400, json: { code: 'P0001', message: 'Grenze erreicht' }, mal: 1000 });
+  const vorher = srv.anrufe('POST /rest/v1/forschung');
+  assert.equal(await F.senden(), false);
+  const anfragen = srv.anrufe('POST /rest/v1/forschung') - vorher;
+  assert.ok(anfragen <= 20, 'höchstens 20 Anfragen je Lauf, es waren ' + anfragen);
+  assert.ok(F.warteschlange().length >= 190, 'die Daten bleiben für später: ' + F.warteschlange().length);
+  assert.equal(srv.forschung.length, 0);
+});
+test('N2 (Nach-Audit): eine einzelne unzustellbare Zeile unter 200 wird weiterhin in einem Lauf gefunden, alle anderen kommen an', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i, ...(i === 137 ? { v: 500 } : {}) })));
+  const vorher = srv.anrufe('POST /rest/v1/forschung');
+  assert.equal(await F.senden(), true);
+  assert.ok(srv.anrufe('POST /rest/v1/forschung') - vorher <= 20);
+  assert.equal(srv.forschung.length, 199); assert.equal(F.warteschlange().length, 0);
+});

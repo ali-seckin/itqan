@@ -50,13 +50,19 @@ async function stapel(teil) {
 }
 // Zeilen zustellen. Lehnt der Server einen Stapel ab, wird er geteilt, bis die unzustellbaren Zeilen einzeln feststehen:
 // die werden verworfen, damit sie die Schlange nicht für immer blockieren. Liefert die Zahl der vorn erledigten Zeilen.
-async function zustellen(teil) {
+// etat: Anfragen, die dieser Sendelauf noch stellen darf. Ist er verbraucht, endet der Lauf, der Rest bleibt in der Schlange.
+// So findet ein Lauf eine einzelne unzustellbare Zeile unter 200 (1 + 2 · 8 Anfragen); lehnt der Server aber alles ab (Tagesgrenze,
+// Notbremse), bleibt es bei wenigen Anfragen und wenigen verworfenen Zeilen statt fast 400 Anfragen und einer leeren Schlange.
+const ANFRAGEN_JE_LAUF = 20;
+async function zustellen(teil, etat) {
+  if (etat.n <= 0) return 0;
+  etat.n--;
   const e = await stapel(teil);
   if (e === 'ok') return teil.length;
   if (e === 'spaeter') return 0;
   if (teil.length === 1) return 1;
-  const mitte = teil.length >> 1, links = await zustellen(teil.slice(0, mitte));
-  return links < mitte ? links : mitte + await zustellen(teil.slice(mitte));
+  const mitte = teil.length >> 1, links = await zustellen(teil.slice(0, mitte), etat);
+  return links < mitte ? links : mitte + await zustellen(teil.slice(mitte), etat);
 }
 let sendet = false;
 export async function senden() {
@@ -65,7 +71,7 @@ export async function senden() {
   sendet = true;
   try {
     const teil = q.slice(0, 200), pid = lesen(K, null)?.pid;
-    const fertig = await zustellen(teil);
+    const fertig = await zustellen(teil, { n: ANFRAGEN_JE_LAUF });
     if (lesen(K, null)?.pid !== pid) return false;                  // inzwischen widerrufen oder zurückgesetzt: nichts mehr anfassen
     if (fertig) schreiben(Q, lesen(Q, []).slice(fertig));
     if (fertig === teil.length && lesen(Q, []).length) planen([1000, 5000]);
