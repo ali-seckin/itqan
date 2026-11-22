@@ -28,7 +28,7 @@ const typVon = p => p.endsWith('.js') ? 'application/javascript' : p.endsWith('.
 // Eine frische Umgebung: Netz mit einstellbarem Verhalten, Speicher als Map je Cache
 function umgebung() {
   // je: Verhalten einzelner Pfade, geht vor netz: 'haengt' | 'aus' | '503' | '404' | 'html' (Status 200 mit einer HTML-Seite) | { verzug: ms } (antwortet verspätet)
-  const u = { netz: 'an', anfragen: [], abgebrochen: 0, schreiben: 0, lager: new Map(), hoerer: {}, stand: '', je: {} };
+  const u = { netz: 'an', anfragen: [], abgebrochen: 0, schreiben: 0, lager: new Map(), hoerer: {}, stand: '', je: {}, neuGeladen: [] };
   const abs = x => new URL(typeof x === 'string' ? x : x.url, URSPRUNG + '/').href;
   const ohneSuche = x => { const y = new URL(x); y.search = ''; return y.href; };
   const datei = url => {
@@ -64,7 +64,7 @@ function umgebung() {
     open: async n => cacheObj(n), keys: async () => [...u.lager.keys()], delete: async n => u.lager.delete(n),
     match: async (req, opt) => { for (const n of u.lager.keys()) { const r = await cacheObj(n).match(req, opt); if (r) return r; } return undefined; }
   };
-  const self = { addEventListener: (t, f) => { u.hoerer[t] = f; }, skipWaiting: () => {}, clients: { claim: async () => {} } };
+  const self = { addEventListener: (t, f) => { u.hoerer[t] = f; }, skipWaiting: () => {}, clients: { claim: async () => {}, get: async id => ({ url: URSPRUNG + '/', navigate: async url => { u.neuGeladen.push([id, url]); } }) } };
   const kontext = { self, caches, fetch: holen, location: new URL(URSPRUNG + '/sw.js'), URL, Promise, Set, console, Error, AbortController,
     Response: { error: () => new Antwort(null, 0, '', 'error') }, setTimeout: (f, ms) => setTimeout(f, ms / TEILER), clearTimeout };
   // Worker einrichten (install + activate), wahlweise mit anderem Namen der Schale
@@ -259,14 +259,106 @@ test('N3: hängt beim Update zuerst ein Modul, läuft der ganze Start aus dem Vo
   alleAlt(u);
 });
 
-test('N3: bricht das Netz mitten im Update ab (Netzfehler), kommt der Rest aus dem Vorrat und der Vorrat bleibt unverändert', async () => {
+// Nach-Audit 2.00, B1: Hat ein Start schon Neues bekommen und versagt das Netz bei einer weiteren Datei, wird nie mit dem Alten gemischt:
+// der Start wird verworfen, die Seite neu geladen und dann ganz aus der alten Fassung beantwortet (Startseite und alle Module).
+const startAlt = async (u, seite) => { const r = [await u.frage('/', 'navigate', 'GET', seite)]; for (const p of START) r.push(await u.frage(p, 'cors', 'GET', seite)); return r; };
+const geschlossenAlt = (r, was) => r.forEach(x => { assert.equal(x.status, 200, was); assert.ok(!String(x.body).endsWith(' neu'), was + ': ' + x.body); });
+
+test('B1: bricht das Netz mitten im Update ab (Netzfehler), wird nicht gemischt: der Start wird verworfen, der nächste läuft ganz aus dem alten Vorrat', async () => {
   const u = umgebung(); await u.einrichten();
   u.stand = ' neu';
   assert.equal((await u.frage('/', 'navigate', 'GET', 's1')).body, 'INHALT:/index.html neu');
   u.netz = 'aus';
-  assert.equal((await u.frage('/js/app.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/app.js');
+  assert.equal((await u.frage('/js/app.js', 'cors', 'GET', 's1')).type, 'error', 'das alte app.js wird nicht neben die neue Startseite gelegt');
+  assert.deepEqual(u.neuGeladen.map(x => x[0]), ['s1'], 'die Seite wird neu geladen');
+  assert.equal((await u.frage('/js/konto.js', 'cors', 'GET', 's1')).type, 'error', 'auch der Rest dieses Starts bleibt ungemischt');
   alleAlt(u);
-  for (const r of await offlineStart(u, 's2')) assert.ok(r.status === 200 && !String(r.body).endsWith(' neu'));
+  geschlossenAlt(await startAlt(u, 's2'), 'ohne Netz');
+  u.netz = 'an'; const n = u.anfragen.length;
+  geschlossenAlt(await startAlt(u, 's3'), 'mit Netz, aber im Rückfall');
+  assert.equal(u.anfragen.length, n, 'der Rückfall fragt das Netz nicht erneut');
+});
+
+test('B1: ein Modul antwortet beim Update mit 503: Rückfall auf die vollständige alte Fassung, online und ohne Notansicht-Schleife', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = '503';
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's1')).body, 'INHALT:/index.html neu');
+  assert.equal((await u.frage('/js/abgleich.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/abgleich.js neu');
+  const r = await u.frage('/js/konto.js', 'cors', 'GET', 's1');
+  assert.equal(r.status, 503, 'das Modul wird nicht durch das alte ersetzt');
+  assert.deepEqual(u.neuGeladen.map(x => x[0]), ['s1']);
+  // der neu geladene Start (Netz online, konto.js weiter 503): alles aus dem alten Vorrat, einschließlich der Startseite
+  const n = u.anfragen.length;
+  geschlossenAlt(await startAlt(u, 's2'), 'Rückfall');
+  assert.equal(u.anfragen.length, n);
+  // jeder weitere Start ebenso: keine Schleife, der Vorrat bleibt unverändert
+  geschlossenAlt(await startAlt(u, 's3'), 'weiterer Start');
+  assert.equal(u.neuGeladen.length, 1, 'nur ein Neuladen');
+  alleAlt(u);
+});
+
+test('B1: ein Modul bricht beim Update die Verbindung ab (Netzfehler nur für diese Datei): ebenso Rückfall', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = 'aus';
+  await u.frage('/', 'navigate', 'GET', 's1'); await u.frage('/js/abgleich.js', 'cors', 'GET', 's1');
+  assert.equal((await u.frage('/js/konto.js', 'cors', 'GET', 's1')).type, 'error');
+  assert.equal(u.neuGeladen.length, 1);
+  geschlossenAlt(await startAlt(u, 's2'), 'Rückfall');
+});
+
+test('B1: Ersatzseite (200 mit HTML) statt einer Moduldatei mitten im Update: ebenso Rückfall, nichts davon im Vorrat', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = 'html';
+  await u.frage('/', 'navigate', 'GET', 's1'); await u.frage('/js/abgleich.js', 'cors', 'GET', 's1');
+  await u.frage('/js/konto.js', 'cors', 'GET', 's1');
+  assert.equal(u.neuGeladen.length, 1);
+  geschlossenAlt(await startAlt(u, 's2'), 'Rückfall'); alleAlt(u);
+});
+
+test('B1: 503 bei einem noch ganz alten Start: wie bisher aus dem Vorrat, kein Neuladen, kein Rückfall', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.je['/js/konto.js'] = '503';
+  assert.equal((await u.frage('/js/konto.js', 'cors', 'GET', 's1')).body, 'INHALT:/js/konto.js');
+  assert.equal(u.neuGeladen.length, 0);
+  u.stand = ' neu'; u.je = {};
+  assert.equal((await u.frage('/', 'navigate', 'GET', 's2')).body, 'INHALT:/index.html neu', 'ohne Rückfall kommt die neue Fassung aus dem Netz');
+});
+
+test('B1: normales Update bei gutem Netz: alles neu aus dem Netz, kein Neuladen, kein Rückfall', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu';
+  const r = await startAlt(u, 's1');
+  r.forEach((x, i) => assert.ok(String(x.body).endsWith(' neu'), String(i)));
+  assert.equal(u.neuGeladen.length, 0);
+  alleAlt(u);
+});
+
+test('B1: Erstinstallation ohne Vorrat und 503: es gibt nichts zum Zurückfallen, die Antwort geht durch, kein Neuladen', async () => {
+  const u = umgebung(); const kontext = {
+    self: { addEventListener: (t, f) => { u.hoerer[t] = f; }, skipWaiting() {}, clients: { claim: async () => {}, get: async id => ({ url: URSPRUNG + '/', navigate: async () => { u.neuGeladen.push(id); } }) } },
+    caches: { open: async () => ({ put: async () => {}, match: async () => undefined }), keys: async () => [], delete: async () => true, match: async () => undefined },
+    fetch: async () => new Antwort('<html>503</html>', 503, 'text/html'), location: new URL(URSPRUNG + '/sw.js'), URL, Promise, Set, console, Error, AbortController,
+    Response: { error: () => new Antwort(null, 0, '', 'error') }, setTimeout, clearTimeout };
+  vm.runInNewContext(QUELLE, kontext);
+  let p; u.hoerer.fetch({ request: { url: URSPRUNG + '/js/app.js', method: 'GET', mode: 'cors' }, clientId: 'x', resultingClientId: '', respondWith: x => { p = x; }, waitUntil: () => {} });
+  assert.equal((await p).status, 503);
+  assert.equal(u.neuGeladen.length, 0);
+});
+
+test('B1: Offline-Start nach dem Update-Versuch mit 503: die alte Fassung startet geschlossen', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = '503';
+  await u.frage('/', 'navigate', 'GET', 's1'); await u.frage('/js/konto.js', 'cors', 'GET', 's1');
+  for (const r of await offlineStart(u, 's2')) { assert.equal(r.status, 200); assert.ok(!String(r.body).endsWith(' neu')); }
+});
+
+test('B1: hängende Datei mitten im Update: keine Mischung (es wird gewartet), kein Rückfall wegen bloßer Langsamkeit', async () => {
+  const u = umgebung(); await u.einrichten();
+  u.stand = ' neu'; u.je['/js/konto.js'] = 'haengt';
+  await u.frage('/', 'navigate', 'GET', 's1');
+  let fertig = false; u.frage('/js/konto.js', 'cors', 'GET', 's1').then(() => { fertig = true; });
+  await warte(LIMIT / TEILER * 3);
+  assert.equal(fertig, false); assert.equal(u.neuGeladen.length, 0); alleAlt(u);
 });
 
 test('N5: Netz hängt bei vollem Vorrat: das Zeitlimit läuft je Start einmal, alle weiteren Ladestufen kommen sofort aus dem Vorrat', async () => {

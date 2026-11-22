@@ -341,7 +341,8 @@ test('N3 (Nach-Audit): nach „Profil löschen“ und neuem Profil meldet schon 
   A.ergebnisHakenSetzen(r => ergebnisse.push(r), () => true); A.autoSetzen(true, 5);
   try {
     frei(5);                                                        // der erste Eintrag des neuen Profils
-    await mitFrist((async () => { while (!ergebnisse.length) await new Promise(r => setTimeout(r, 5)); })());
+    let wartet = true;                                              // die Schleife endet mit der Frist, auch wenn der Test rot wird
+    try { await mitFrist((async () => { while (wartet && !ergebnisse.length) await new Promise(r => setTimeout(r, 5)); })()); } finally { wartet = false; }
     assert.equal(ergebnisse[0].art, 'konflikt');
     assert.equal(A.status().zustand, 'konflikt');
     assert.equal(serverBild(), bild, 'der Kontostand bleibt unberührt'); assert.equal(Z.P.name, 'Neu');
@@ -350,4 +351,19 @@ test('N3 (Nach-Audit): nach „Profil löschen“ und neuem Profil meldet schon 
     await new Promise(r => setTimeout(r, 60));
     assert.equal(srv.anfragen.length, n); assert.equal(ergebnisse.length, 1);
   } finally { A.autoSetzen(false); A.ergebnisHakenSetzen(null); }
+});
+
+test('Speicher voll beim Ablegen der Kopie des Sockels: der Abgleich holt ihn vom Konto, nichts geht verloren (Neon-Review)', async () => {
+  await verbunden(); const stand = kern(), bild = serverBild();
+  an('bbb', { profil: false }); await einloggen('ali@test.de');
+  const ls = geraete.bbb.ls, orig = ls.setItem.bind(ls);
+  ls.setItem = (k, v) => { if (k === 'itqan-abgleich-sockel') throw new DOMException('voll', 'QuotaExceededError'); return orig(k, v); };
+  const r = await A.abgleichen();
+  assert.equal(r.art, 'uebernommen'); assert.ok(r.aufgebaut, 'der Stand wird trotzdem aufgebaut');
+  assert.equal(kern(), stand, 'derselbe Stand wie auf dem ersten Gerät');
+  assert.equal(ls.getItem('itqan-abgleich-sockel'), null, 'es liegt keine halbe Kopie im Speicher');
+  assert.equal(serverBild(), bild, 'der Server blieb unberührt');
+  const r2 = await A.abgleichen();                                   // ein weiterer Durchlauf kommt ohne Kopie zurecht
+  assert.notEqual(r2.art, 'fehler', JSON.stringify(r2));
+  assert.equal(kern(), stand);
 });

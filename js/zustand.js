@@ -21,8 +21,11 @@ export const kettenTage = () => ketteAktiv() ? P.kette.n : 0;
 // für reine Datumsangaben passt beides zusammen, die Sommerzeit spielt keine Rolle.
 const tagNr = d => tageZwischen('2000-01-01', d), nrTag = n => plusTage('2000-01-01', n);
 // Haken nach jedem abgeschlossenen Abschnitt (freiwilliges Lernprotokoll, forschung.js)
-let abschlussHaken = null;
+let abschlussHaken = null, spiegelHaken = null;
 export const abschlussHakenSetzen = f => { abschlussHaken = f; };
+// Spiegel (Store-App): wird mit dem Profil als JSON gerufen, nach jedem erfolgreichen Schreiben, und mit null, wenn das Profil gelöscht wird
+export const spiegelHakenSetzen = f => { spiegelHaken = f; };
+export const PROFIL_SCHLUESSEL = 'itqan-profil-v1';
 export let P = null;
 // Haken für die Oberfläche. Speicherfehler: fn({ art: 'profil' | 'schnappschuss' | 'zwischenstand', fehler }), das Schreiben ist gescheitert.
 // Fremde Änderung: fn({ art: 'nachgeladen' | 'geloescht', gliederung }), ein anderer Reiter hat den Stand geändert.
@@ -147,6 +150,7 @@ function profilSchreiben() {
       console.warn('Speichern fehlgeschlagen', e); melden(speicherFehlerHaken, { art: 'profil', fehler: e }); return false;
     }
   }
+  melden(spiegelHaken, text);
   stempelNeu(); return true;
 }
 // ---------- Mehrere Reiter ----------
@@ -419,7 +423,7 @@ export function profilUeberblick(p) {
     kette: p.kette?.n || 0, khatma: p.zyklus?.khatma || 0, letzterTag: tage.at(-1) || null, fstellen: Object.keys(p.fstellen || {}).length };
 }
 // Mit dem Profil geht der Zwischenstand einer angefangenen Übung; die Schnappschüsse bleiben (Schutz vor Fehlgriffen)
-export function loeschen() { P = null; schatten = null; anderswoGeloescht = false; try { speicher.entfernen(SCHLUESSEL); speicher.entfernen(ZWISCHEN); } catch (e) {} stempelNeu(); }
+export function loeschen() { P = null; schatten = null; anderswoGeloescht = false; try { speicher.entfernen(SCHLUESSEL); speicher.entfernen(ZWISCHEN); } catch (e) {} melden(spiegelHaken, null); stempelNeu(); }
 
 // ---------- Wechsel der Gliederung (neue Fassung oder Anfänger/Fortgeschritten) ----------
 // Der Fortschritt wird über die Āya-Bereiche übertragen: ein geteilter Abschnitt erbt den Stand des alten,
@@ -723,7 +727,8 @@ export function heuteZyklus() {
 }
 export function heuteNeuAufbauen() {
   const d = heute(), t = P.tage[d]; if (!t || t.ruhe || t.voll) return 0;   // ist das Wird erfüllt, gilt die neue Reihenfolge erst ab morgen
-  const zy = t.plan.filter(id => t.art[id] === 'zyklus'); if (!zy.length) return 0;
+  // Was heute schon geübt ist, bleibt und zählt weiter; ersetzt werden nur die offenen Plätze aus dem Zyklus
+  const zy = t.plan.filter(id => t.art[id] === 'zyklus' && !t.fertig.includes(id)); if (!zy.length) return 0;
   const ers = naechsteImZyklus(zy.length, new Set(t.plan.filter(id => !zy.includes(id))), d, Math.ceil(zy.length / 2));
   if (!ers.length) return 0;
   eintrag('pa', { d, ers, raus: zy }); return ers.length;
@@ -879,10 +884,19 @@ export function fehlerstellenListe(n = 12) {
 // Bezug ist der siebtjüngste Tag mit Übung, der nicht nach dem Plantag liegt: Tage in der Zukunft (falsch gestellte Uhr, fremder Eintrag
 // vom Konto) zählen nie als Bezug, und ein einzelner falscher Tag verschiebt ihn nicht. Gelöscht wird nur, was mehr als 400 Tage vor dem
 // Bezug liegt, höchstens sieben Tage je Aufruf und nie der Plantag selbst. Steht die Uhr vor allen Übungstagen, gibt es keinen Bezug.
-const BEZUG_TAGE = 7;
+// Ein Sprung von mehr als 400 Tagen zwischen zwei Übungstagen trennt die Tage in Abschnitte. Ein letzter Abschnitt mit weniger als
+// BEZUG_ABSCHNITT Übungstagen ist nicht belegt (falsch gestellte Uhr, Gerät mit falscher Zeit am Konto) und liefert keinen Bezug: der Bezug
+// kommt dann aus dem Abschnitt davor. Wer nach einer langen Pause zurückkehrt, verdichtet so erst nach BEZUG_ABSCHNITT Übungstagen.
+// Tage mehr als zwei Tage nach dem echten heutigen Tag der Uhr zählen ebenfalls nie.
+const BEZUG_TAGE = 7, BEZUG_ABSCHNITT = 30;
 function aufraeumen(plantag) {
   if (!DATUM_M.test(plantag || '')) return;
-  const tage = Object.keys(P.tage).sort(), geuebt = tage.filter(d => d <= plantag && P.tage[d].fertig?.length);
+  const tage = Object.keys(P.tage).sort(), grenze = plusTage(heute(), 2);
+  let geuebt = tage.filter(d => d <= plantag && d <= grenze && P.tage[d].fertig?.length);
+  for (let s; geuebt.length; geuebt = geuebt.slice(0, s)) {
+    s = geuebt.length - 1; while (s > 0 && tageZwischen(geuebt[s - 1], geuebt[s]) <= 400) s--;
+    if (s === 0 || geuebt.length - s >= BEZUG_ABSCHNITT) break;
+  }
   const bezug = geuebt[geuebt.length - BEZUG_TAGE]; if (!bezug) return;
   let n = 0;
   for (const d of tage) { if (n >= 7 || d >= bezug || tageZwischen(d, bezug) <= 400) break; if (d === plantag) continue; delete P.tage[d]; n++; }
@@ -982,7 +996,7 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
   // Der Eintrag hält fest, was geübt wurde und welche Punkte dafür angezeigt wurden (p)
   // hw: seit 1.17 zählt eine Āya mit Hilfe für Stufe und Wiederholung wie ein Fehler (ältere Einträge ohne hw bleiben bei der alten Regel)
   const erg = eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: ergebnisse.map(x => ERG_KURZ[x] || '-').join(''), q: art, ...(dauer > 0 ? { s: Math.round(dauer) } : {}), p: punkte, ...(h ? { hw: 1 } : {}), m: MODELL_STAND });
-  try { abschlussHaken?.({ id, art, v: ergebnisse.length, f, h, z, vorher: vorherStand, datum, pensum: t.plan.length, gliederung: D.gliederung }); } catch (e) {}
+  try { abschlussHaken?.({ id, art, v: ergebnisse.length, f, h, z, vorher: vorherStand, datum, pensum: t.plan.length, gliederung: D.gliederung, profil: P.erstellt || '' }); } catch (e) {}
   return { punkte, teile, hasanat: erg.hasanat, r, f, h: h + z, ereignisse: erg.ereignisse, stufe: erg.stufe, vorher: erg.vorher, lern: erg.lern, wiederholung: wdh };
 }
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };

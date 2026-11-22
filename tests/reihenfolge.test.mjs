@@ -5,18 +5,20 @@ import { Z, D, frisch, tagSetzenZurueck, wirdErfuellen, naechsterTag } from './u
 
 after(() => { Z.logGrenze(0); tagSetzenZurueck(); });
 
-test('Reihenfolge wechseln: Plan von heute wird sofort neu aufgebaut, Punkte bleiben, Zähler beginnt neu', () => {
+test('Reihenfolge wechseln: offene Plätze von heute werden sofort neu aufgebaut, Erledigtes und Punkte bleiben', () => {
   frisch({ pensum: 3 });
   const t = Z.tagesplan(), erster = t.plan[0];
   Z.abschnittAbschliessen(erster, Array.from({ length: D.A[erster].ayat }, () => 'ok'));
   const punkte = Z.tagesplan().punkte;
   assert.equal(Z.heuteZyklus().fertig, 1);
   Z.P.einst.reihenfolge = 'rueckwaerts';
-  assert.equal(Z.heuteNeuAufbauen(), 3);
+  assert.equal(Z.heuteNeuAufbauen(), 2);                         // nur die zwei offenen Plätze werden ersetzt
   const n = Z.tagesplan();
-  assert.equal(n.plan.length, 3); assert.equal(n.fertig.length, 0); assert.equal(n.punkte, punkte);
-  assert.ok(!n.plan.includes(erster)); assert.ok(n.plan.every(id => Z.karte(id).n === 0));
-  assert.ok(Math.min(...n.plan) > 100);   // von hinten
+  assert.equal(n.plan.length, 3); assert.deepEqual(n.fertig, [erster]); assert.equal(n.punkte, punkte);
+  assert.ok(n.plan.includes(erster), 'der erledigte Abschnitt bleibt im Plan');
+  const neu = n.plan.filter(id => id !== erster);
+  assert.ok(neu.every(id => Z.karte(id).n === 0));
+  assert.ok(Math.min(...neu) > 100);   // von hinten
 });
 
 test('Ganzer Abschnitt am Stück: Fehler gehen vor Zögern, gezögert wird je Vers gewählt', () => {

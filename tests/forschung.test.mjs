@@ -99,16 +99,75 @@ test('S15: die zufällige Nummer kommt auch ohne randomUUID aus dem sicheren Zuf
 });
 
 // ---------- Nach-Audit Sicherheit N2 ----------
-test('N2 (Nach-Audit): lehnt der Server jeden Stapel ab (Grenze, Notbremse), bleibt es bei wenigen Anfragen und die Schlange bleibt fast vollständig', async () => {
+test('N2/B3: meldet der Server eine Grenze (400, P0001, forschung_grenze), geht keine Zeile verloren und es bleibt bei einer Anfrage', async () => {
   const srv = welt(); F.einschalten(); const p = pid();
   schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i })));
-  srv.stoeren('POST /rest/v1/forschung', { status: 400, json: { code: 'P0001', message: 'Grenze erreicht' }, mal: 1000 });
+  srv.stoeren('POST /rest/v1/forschung', { status: 400, json: { code: 'P0001', message: 'forschung_grenze: zu viele Zeilen für diesen Tag' }, mal: 1000 });
   const vorher = srv.anrufe('POST /rest/v1/forschung');
   assert.equal(await F.senden(), false);
-  const anfragen = srv.anrufe('POST /rest/v1/forschung') - vorher;
-  assert.ok(anfragen <= 20, 'höchstens 20 Anfragen je Lauf, es waren ' + anfragen);
-  assert.ok(F.warteschlange().length >= 190, 'die Daten bleiben für später: ' + F.warteschlange().length);
+  assert.equal(srv.anrufe('POST /rest/v1/forschung') - vorher, 1, 'eine Grenze wird nicht durch Teilen ausgelotet');
+  assert.equal(F.warteschlange().length, 200, 'alle Zeilen bleiben für später');
   assert.equal(srv.forschung.length, 0);
+});
+test('B3: nach einer Grenze wartet das Gerät (keine Anfrage bei jeder Übung); später und nach Aufhebung der Grenze kommen alle 200 an', async () => {
+  const srv = welt(); F.einschalten(); const p = pid(); F.zeitenSetzen({ grenze: 60e3 });
+  try {
+    schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i })));
+    srv.stoeren('POST /rest/v1/forschung', { status: 400, json: { code: 'P0001', message: 'forschung_grenze: die Tabelle ist voll' }, mal: 1 });
+    assert.equal(await F.senden(), false); assert.equal(F.warteschlange().length, 200);
+    const n = srv.anrufe('POST /rest/v1/forschung');
+    for (let i = 0; i < 5; i++) assert.equal(await F.senden(), false);
+    assert.equal(srv.anrufe('POST /rest/v1/forschung'), n, 'in der Wartezeit keine weitere Anfrage');
+    F.zeitenSetzen({ grenze: 0 });
+    F.einschalten(); await F.widerrufen(); F.einschalten();       // neue Zustimmung: Wartezeit beginnt von vorn
+    const p2 = pid(); schlange(Array.from({ length: 200 }, (_, i) => zeile(p2, { s: i })));
+    assert.equal(await F.senden(), true); assert.equal(srv.forschung.length, 200); assert.equal(F.warteschlange().length, 0);
+  } finally { F.zeitenSetzen({ grenze: 60 * 60e3 }); }
+});
+test('B3: ist die Grenze nur kurz erreicht, holt ein späterer Lauf nach (ohne Verlust, ohne Dopplung)', async () => {
+  const srv = welt(); F.einschalten(); const p = pid(); F.zeitenSetzen({ grenze: 0 });
+  try {
+    schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i })));
+    srv.stoeren('POST /rest/v1/forschung', { status: 400, json: { code: 'P0001', message: 'forschung_grenze: zu viele Zeilen für diese Nummer' }, mal: 2 });
+    assert.equal(await F.senden(), false); assert.equal(F.warteschlange().length, 200);
+    assert.equal(await F.senden(), false); assert.equal(F.warteschlange().length, 200);
+    assert.equal(await F.senden(), true);
+    assert.equal(srv.forschung.length, 200); assert.deepEqual(srv.forschung.map(z => z.s), Array.from({ length: 200 }, (_, i) => i)); assert.equal(F.warteschlange().length, 0);
+  } finally { F.zeitenSetzen({ grenze: 60 * 60e3 }); }
+});
+test('B3: eine Grenze mitten im Lauf (nach verworfener ungültiger Zeile) lässt den Rest in der Schlange', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 8 }, (_, i) => zeile(p, { s: i, ...(i === 1 ? { f: 9 } : {}) })));   // Zeile 1: f + z + h > v
+  // 1. Anfrage (alle 8): 23514. 2. (Zeilen 0 bis 3): 23514. 3. (0, 1): 23514. 4. (0): ok. 5. (1): 23514, verworfen. 6. (2, 3): Grenze
+  let k = 0; const echt = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { if (++k === 6) return { ok: false, status: 400, text: async () => JSON.stringify({ code: 'P0001', message: 'forschung_grenze: x' }) }; return echt(u, o); };
+  try { assert.equal(await F.senden(), false); } finally { globalThis.fetch = echt; }
+  assert.deepEqual(srv.forschung.map(z => z.s), [0]);
+  assert.deepEqual(F.warteschlange().map(z => z.s), [2, 3, 4, 5, 6, 7], 'Zeile 1 verworfen, Zeile 0 gesendet, der Rest bleibt');
+});
+test('B3: ungültige Zeilen (23514, forschung_summe) werden gezielt verworfen, alle gültigen kommen an', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 200 }, (_, i) => zeile(p, { s: i, ...([5, 77, 199].includes(i) ? { f: 9, v: 5 } : {}) })));
+  for (let i = 0; i < 5 && F.warteschlange().length; i++) await F.senden();   // je Lauf höchstens 20 Anfragen: drei verstreute Zeilen brauchen zwei Läufe
+  assert.equal(srv.forschung.length, 197); assert.ok(![5, 77, 199].some(i => srv.forschung.some(z => z.s === i)));
+  assert.equal(F.warteschlange().length, 0);
+});
+test('B3: 5xx, 429 und Netzfehler behalten alle Zeilen', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 50 }, (_, i) => zeile(p, { s: i })));
+  srv.offline = true; assert.equal(await F.senden(), false); srv.offline = false;
+  for (const status of [500, 503, 429]) { srv.stoeren('POST /rest/v1/forschung', { status }); assert.equal(await F.senden(), false); }
+  assert.equal(F.warteschlange().length, 50); assert.equal(srv.forschung.length, 0);
+  assert.equal(await F.senden(), true); assert.equal(srv.forschung.length, 50);
+});
+test('B3: je Anfrage höchstens 200 Zeilen und eine Nummer; höchstens 400 Zeilen je Tag t bei einer Zeile je Übung (Schlange 3000 gedeckelt)', async () => {
+  const srv = welt(); F.einschalten(); const p = pid();
+  schlange(Array.from({ length: 450 }, (_, i) => zeile(p, { s: i, t: 5 })));
+  const echt = globalThis.fetch, groessen = [], pids = [];
+  globalThis.fetch = async (u, o) => { const l = JSON.parse(o.body); groessen.push(l.length); pids.push(new Set(l.map(z => z.pid)).size); return echt(u, o); };
+  try { assert.equal(await F.senden(), true); } finally { globalThis.fetch = echt; }
+  assert.ok(groessen.every(n => n <= 200) && pids.every(n => n === 1), JSON.stringify(groessen));
+  assert.equal(F.warteschlange().length, 250);
 });
 test('N2 (Nach-Audit): eine einzelne unzustellbare Zeile unter 200 wird weiterhin in einem Lauf gefunden, alle anderen kommen an', async () => {
   const srv = welt(); F.einschalten(); const p = pid();

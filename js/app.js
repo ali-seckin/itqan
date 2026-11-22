@@ -17,7 +17,7 @@ import * as RB from './rueckblick.js';
 import { UEBERSETZUNGEN, uebersetzungLaden } from './uebersetzung.js';
 import { fragen, glossar, tasten as hilfeTasten } from './hilfe.js';
 import { tx, alsHtml, gebiet, SPRACHEN, spracheMerken, durchlaufSetzen, spracheGewaehlt, geraeteSprache } from './sprache.js';
-import { NATIV, mitteilungMoeglich, mitteilungAn, mitteilungSchalten, mitteilungPlanen, mitteilungPruefen, kalenderDatei } from './nativ.js';
+import { NATIV, mitteilungMoeglich, mitteilungAn, mitteilungSchalten, mitteilungPlanen, mitteilungPruefen, kalenderDatei, profilSpiegeln, profilSpiegelHolen } from './nativ.js';
 const komma = () => gebiet('komma') ?? ', ';
 
 const app = document.getElementById('app');
@@ -120,7 +120,7 @@ async function herunterladen(name, inhalt, typ) {
     catch (e) { if (e.name === 'AbortError') return false; }   // sonst (nicht erlaubt, nicht möglich): der Weg über den Verweis
   }
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([inhalt], { type: typ })); a.download = name;
-  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000);
   return 'geladen';
 }
 function dateiWaehlen(mehrere = false) {
@@ -270,6 +270,12 @@ function installieren() {
 }
 
 // ---------- Was ist neu ----------
+// Datenschutzerklärung und Impressum stehen auf itqan.at (Deutsch und Englisch). In der Hülle öffnet der Link im Browser des Geräts.
+function rechtsLinks() {
+  const de = (document.documentElement.lang || 'de').startsWith('de'), basis = de ? 'https://itqan.at/' : 'https://itqan.at/en/';
+  const a = (seite, text) => `<a href="${basis}${seite}" target="_blank" rel="noopener">${esc(text)}</a>`;
+  return a(de ? 'datenschutz.html' : 'privacy.html', tx('recht.datenschutz')) + ' · ' + a(de ? 'impressum.html' : 'legal-notice.html', tx('recht.impressum'));
+}
 const VERSION_KEY = 'itqan-version-gesehen';
 function neuigkeitenHTML(liste) {
   return liste.map(n => `<div class="neu-eintrag"><div class="neu-kopf"><b>${tx('neuigkeitenhtml.version', { v: n.v })}</b><span>${datumKurz(n.datum)}</span></div><h4>${esc(n.titel)}</h4><ul>${n.punkte.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('');
@@ -804,7 +810,8 @@ const abschnittFett = e => e.nr ? `<strong class="ab-fett">${esc(sureName(e.von[
 const STAND_TEXT = { nie: tx('stand_text.noch_nie_wiederholt'), neu: tx('allg.neu'), aufbau: tx('stand_text.im_aufbau'), gefestigt: tx('allg.gefestigt'), sicher: tx('allg.sicher'), mutqan: tx('allg.mutqan'), fehler: tx('stand_text.fehler_im_letzten_durchgang') };
 function abschnittMarke(e) {
   const st = Z.abschnittStand(e.id);
-  if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}</strong>`;
+  // Ganze Seiten: zwei Seiten derselben Sūra sind sonst nicht zu unterscheiden, darum steht die Seitenzahl dabei
+  if (!e.nr) return `<strong class="ab-name" title="${STAND_TEXT[st]}">${abschnittName(e)}${D.modus === 'seite' && e.seiten?.length === 1 ? ` <span class="ab-seite">${tx('sucheseite.s', { vi: e.seiten[0] })}</span>` : ''}</strong>`;
   return `<strong class="ab-name">${sureName(e.von[0])} <span class="ab-nr st-${st}" title="${STAND_TEXT[st]}">${e.nr}</span><span class="nur-leser">${komma()}${STAND_TEXT[st]}</span></strong>`;
 }
 
@@ -1206,11 +1213,13 @@ async function ueben(idText, quelle, fokusText) {
   let tourAktiv = false;
   function tourPruefen() {
     if (tourAktiv || vorschau || abhoeren || ganz || phase !== 'haupt' || pos >= liste.length) return;
-    const name = markieren ? 'ueben-3' : offen ? 'ueben-2' : pos === 0 && ti === 0 ? 'ueben-1' : null;
+    const lage = () => markieren ? 'ueben-3' : offen ? 'ueben-2' : pos === 0 && ti === 0 ? 'ueben-1' : null;
+    const name = lage(), start = pos;
     if (!name || tourGesehen(name)) return;
     tourAktiv = true;
     const los = () => {
       if (!seitenEl.isConnected) { tourAktiv = false; return; }
+      if (lage() !== name || pos !== start) { tourAktiv = false; return; }   // schon weiter bewertet: nicht bei der nächsten, verdeckten Āya erklären und nicht als gesehen merken
       if (document.querySelector('#einbl')) return setTimeout(los, 250);   // erst wenn die Einblendung weg ist
       tourMerken(name);
       fuehrung(TOUR[name]()).then(() => { tourAktiv = false; });
@@ -2253,8 +2262,9 @@ function kontoSeite() {
   const enter = (feld, knopf) => { feld.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); knopf.click(); } }; };
 
   async function abgleichen(wahl) {
-    const hatteProfil = !!Z.P;
+    const hatteProfil = !!Z.P, erstellt0 = Z.P?.erstellt;
     const r = await Ab.abgleichen({ wahl });
+    if (Z.P?.erstellt !== erstellt0) Forschung.zuruecksetzen();   // ein anderes Profil vom Konto: das Lernprotokoll des alten endet (wie beim Laden einer Sicherung)
     kontoZustand = sicher('konto-zustand', () => Ab.status().zustand, '');
     if (!ansichtGilt(lauf0)) { if (r.neuLaden) location.reload(); return; }
     if (r.art === 'konflikt') return konflikt(r);
@@ -2333,7 +2343,7 @@ function kontoSeite() {
         <div class="feld" style="margin-top:12px"><input type="email" id="k-mail" autocomplete="email" inputmode="email" placeholder="${tx('konto.email')}" aria-label="${tx('konto.email')}" value="${esc(email)}"></div>
         <div class="reihe" style="margin-top:12px"><button class="knopf haupt" id="k-senden">${tx('konto.code_senden')}</button></div>
         <p class="unter" id="k-meldung" role="alert" style="margin-top:10px"></p>
-        <p class="unter" style="font-size:.85em">${tx('konto.datenschutz')}</p></div>`;
+        <p class="unter" style="font-size:.85em">${tx('konto.datenschutz')}<br>${rechtsLinks()}</p></div>`;
       const feld = app.querySelector('#k-mail'), knopf = app.querySelector('#k-senden'); enter(feld, knopf);
       knopf.onclick = () => lauf(knopf, async () => {
         email = feld.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return meldung(tx('konto.fehler_mail'), true);
@@ -2999,6 +3009,7 @@ function einstellungen() {
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="${E.hasanat !== false ? 'an' : ''}">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0" class="${E.hasanat !== false ? '' : 'an'}">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
     <div class="abschnitt"><h3>${tx('forschung.titel')}</h3><p class="unter">${tx('forschung.text')}</p>
       <div class="wahl" id="forschung" style="margin-top:10px"><button data-w="1" class="${Forschung.an() ? 'an' : ''}">${tx('forschung.schalter_an')}</button><button data-w="0" class="${Forschung.an() ? '' : 'an'}">${tx('forschung.schalter_aus')}</button></div></div>
+    <div class="abschnitt"><h3>${tx('recht.titel')}</h3><p class="unter">${rechtsLinks()}</p></div>
     </details>
     <details class="einst-gruppe"><summary>${tx('einstellungen.gruppe_zeit')}</summary>
     <div class="abschnitt"><h3>${tx('einstellungen.pause')}</h3>${pauseHTML()}</div>
@@ -3037,7 +3048,7 @@ function einstellungen() {
   app.querySelector('#reihenfolge').onclick = async ev => {
     const w = ev.target.closest('button')?.dataset.w; if (w == null || w === E.reihenfolge) return;
     const zy = Z.heuteZyklus();
-    if (!zy.voll && zy.fertig && !await dialog({ titel: tx('einstellungen.reihenfolge_dialog_titel'), html: `<p>${tx('einstellungen.reihenfolge_dialog_text', { n: zy.n })}</p>`, ja: tx('einstellungen.reihenfolge_dialog_ja'), gefahr: true })) return;
+    if (!zy.voll && zy.fertig && !await dialog({ titel: tx('einstellungen.reihenfolge_dialog_titel'), html: `<p>${tx('einstellungen.reihenfolge_dialog_text')}</p>`, ja: tx('einstellungen.reihenfolge_dialog_ja'), gefahr: true })) return;
     E.reihenfolge = w; app.querySelectorAll('#reihenfolge button').forEach(b => b.classList.toggle('an', b.dataset.w === w));
     app.querySelector('#zufallwahl').classList.toggle('verdeckt', w !== 'zufall'); dauer();
     Z.heuteNeuAufbauen(); Z.speichern(); toast(zy.voll ? tx('einstellungen.reihenfolge_ab_morgen') : tx('einstellungen.reihenfolge_sofort'));
@@ -3050,7 +3061,7 @@ function einstellungen() {
   wahl('hasanat', w => { E.hasanat = w === '1'; });
   app.querySelector('#forschung').onclick = async ev => {
     const w = ev.target.dataset.w; if (w == null) return;
-    if (w === '1' && !Forschung.an()) { const ja = await dialog({ titel: tx('forschung.dialog_titel'), html: tx('forschung.dialog_text'), ja: tx('forschung.ja') }); if (!ja) return; Forschung.einschalten(); }
+    if (w === '1' && !Forschung.an()) { const ja = await dialog({ titel: tx('forschung.dialog_titel'), html: tx('forschung.dialog_text'), ja: tx('forschung.ja') }); if (!ja) return; Forschung.einschalten(Z.P?.erstellt); }
     else if (w === '0' && Forschung.an()) { await Forschung.widerrufen(); toast(tx('forschung.widerrufen')); }
     app.querySelectorAll('#forschung button').forEach(b => b.classList.toggle('an', (b.dataset.w === '1') === Forschung.an()));
   };
@@ -3234,7 +3245,8 @@ async function lehrer() {
 
 // ---------- Start der App ----------
 async function starten() {
-  Z.laden(); themaAnwenden();
+  await profilSpiegelHolen(Z.PROFIL_SCHLUESSEL);   // Store-App: hat das Betriebssystem den Speicher geleert, kommt das Profil aus der Datei zurück
+  Z.laden(); themaAnwenden(); Z.spiegelHakenSetzen(profilSpiegeln);
   // Haken der Logik: gescheitertes Speichern bleibt nicht stumm, Änderungen aus einem anderen Fenster kommen an
   Z.speicherFehlerHakenSetzen(speicherFehlerZeigen);
   Z.fremdeAenderungHakenSetzen(fremdeAenderung);

@@ -1,5 +1,5 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v160';
+const SCHALE = 'itqan-schale-v161';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/nativ.js', 'js/lernmodell.js', 'js/forschung.js', 'js/sprache.js', 'js/sprache/de.js', 'js/sprache/ar.js', 'js/sprache/en.js', 'js/sprache/es.js', 'js/sprache/fr.js', 'js/sprache/tr.js', 'js/sprache/ur.js', 'js/app.js', 'js/uebersetzung.js', 'js/daten.js', 'js/zustand.js', 'js/abfragen.js', 'js/auswahl.js', 'js/lichtkarte.js', 'js/sperre.js', 'js/mushaf.js', 'js/ziffern.js', 'js/abgleich.js', 'js/konto.js', 'js/server.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/abschnitte_seite_v1.json', 'daten/abschnitte_seite_v2.json',
@@ -36,13 +36,26 @@ async function ablegen(schluessel, r) {
 //   'vorrat'  Bei einer Datei dieses Starts hat das Netz geschwiegen oder versagt, sie kam aus dem Vorrat. Alle weiteren Dateien dieses Starts
 //             kommen sofort aus dem Vorrat: kein zweites Warten (das Zeitlimit zählt je Start einmal) und keine Mischung mit Neuerem aus dem Netz.
 //   'neu'     Dieser Start hat schon eine Datei bekommen, die neuer ist als die im Vorrat (Update). Dann antwortet der Vorrat nicht mehr wegen
-//             bloßer Langsamkeit, das Netz darf zu Ende liefern; nur wenn es ganz versagt, bleibt der Vorrat der Ausweg.
+//             bloßer Langsamkeit, das Netz darf zu Ende liefern. Versagt das Netz bei einer weiteren Datei ganz (Abbruch, 5xx, Ersatzseite),
+//             wird nie eine alte Datei neben die neuen gelegt, sondern der Start verworfen: Lage 'zurueck' und Rückfall (siehe unten).
+//   'zurueck' Dieser Start wird gerade verworfen: seine weiteren Anfragen scheitern, kein Modul läuft mehr aus gemischten Fassungen.
 // Die erste Lage eines Starts gilt bis zum nächsten Seitenaufruf („Neu laden“ beginnt frisch).
+// Rückfall: Danach beantwortet der Vorrat jeden Seitenaufruf ganz aus der installierten Fassung (Startseite und alle Module, 'vorrat'), und die
+// Seite wird sofort neu geladen. So läuft entweder die vollständige neue oder die vollständige alte Fassung, nie eine Mischung. Die neue Fassung
+// kommt, sobald ihre Installation gelingt (der Browser versucht sie bei jedem Seitenaufruf neu) oder nach Ablauf der Frist wieder aus dem Netz.
+const RUECKFALL = 10 * 60 * 1000;
+let rueckfall = -Infinity;
 const lage = new Map();
 function merken(id, wert) {
   if (!id || lage.has(id)) return;
   if (lage.size >= 40) lage.delete(lage.keys().next().value);
   lage.set(id, wert);
+}
+async function verwerfen(e, id) {
+  if (!(await caches.match('index.html').catch(() => undefined))) return false;     // ohne ganzen Vorrat gibt es nichts, worauf man zurückfallen könnte
+  rueckfall = Date.now(); lage.set(id, 'zurueck');
+  e.waitUntil((async () => { const c = await self.clients.get(e.clientId); if (c) await c.navigate(c.url); })().catch(() => {}));
+  return true;
 }
 const marke = r => (r?.headers?.get?.('etag') || '').replace(/^W\//, '');
 self.addEventListener('fetch', e => {
@@ -59,6 +72,8 @@ self.addEventListener('fetch', e => {
   const genau = () => caches.match(e.request, { ignoreSearch: true }).catch(() => undefined);
   const vorrat = async () => (await genau()) || (seite ? caches.match('index.html').catch(() => undefined) : undefined);
   e.respondWith((async () => {
+    if (seite && Date.now() - rueckfall < RUECKFALL) { const a = await vorrat(); if (a) { merken(id, 'vorrat'); return a; } }
+    if (lage.get(id) === 'zurueck') return Response.error();
     if (lage.get(id) === 'vorrat') { const a = await genau(); if (a) return a; }
     const abbruch = new AbortController();
     const netz = fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin', redirect: seite ? 'manual' : 'follow', signal: abbruch.signal }).then(r => r, () => null);
@@ -76,6 +91,8 @@ self.addEventListener('fetch', e => {
       if (marke(r) && marke(a) && marke(r) !== marke(a)) merken(id, 'neu');
       return r;
     }
+    // Hat dieser Start schon Neues bekommen und versagt das Netz jetzt (Abbruch, 5xx, Ersatzseite statt Datei): nicht mit dem Alten mischen, sondern Rückfall
+    if (!seite && lage.get(id) === 'neu' && (!r || r.status >= 500 || (r.status === 200 && fremd(url.pathname, r))) && await verwerfen(e, id)) return r || Response.error();
     // Netzfehler oder Störung des Servers (5xx): aus dem Vorrat; die Startseite ersetzt dabei nur Seitenaufrufe, nie Skripte, Daten oder Bilder.
     // Andere Fehlantworten (404, Ersatzseite statt Datei): die Datei aus dem Vorrat, wenn sie dort liegt, sonst geht die Antwort unverändert durch.
     const a = !r || r.status >= 500 ? await vorrat() : await genau();

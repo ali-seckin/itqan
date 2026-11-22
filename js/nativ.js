@@ -7,6 +7,39 @@ const PL = NATIV ? (C.Plugins || {}) : {};
 const LN = PL.LocalNotifications, SB = PL.StatusBar;
 export const mitteilungMoeglich = !!LN;
 
+// Spiegel des Profils im Dateispeicher der Store-App: Die Web-Ansicht kann ihren localStorage bei Platznot leeren (iOS), eine Datei im
+// App-Ordner bleibt. Gespiegelt wird nur das Profil (keine Anmeldedaten). Im Browser ohne Wirkung.
+const FS = PL.Filesystem, SPIEGEL = 'itqan-profil-spiegel.json';
+let spiegelUhr = null, spiegelText = null;
+async function spiegelDatei(text) {
+  try {
+    if (text == null) await FS.deleteFile({ path: SPIEGEL, directory: 'DATA' });
+    else await FS.writeFile({ path: SPIEGEL, data: text, directory: 'DATA', encoding: 'utf8' });
+    return true;
+  } catch (e) { return false; }
+}
+// text: das Profil als JSON; null, wenn das Profil bewusst gelöscht wurde (dann darf es nicht wiederkommen)
+export function profilSpiegeln(text) {
+  if (!FS) return;
+  spiegelText = text;
+  if (text == null) { clearTimeout(spiegelUhr); spiegelUhr = null; spiegelDatei(null); return; }
+  if (spiegelUhr) return;                                              // gesammelt: höchstens alle 2,5 s eine Datei schreiben
+  spiegelUhr = setTimeout(() => { spiegelUhr = null; spiegelDatei(spiegelText); }, 2500); spiegelUhr.unref?.();
+}
+export function spiegelSofort() { if (!FS || !spiegelUhr) return Promise.resolve(false); clearTimeout(spiegelUhr); spiegelUhr = null; return spiegelDatei(spiegelText); }
+if (FS && typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden) spiegelSofort(); });
+// Beim Start vor dem Laden des Profils: ist der Speicher der Web-Ansicht leer, die Datei aber da, kommt das Profil aus der Datei zurück.
+export async function profilSpiegelHolen(schluessel) {
+  if (!FS) return false;
+  try {
+    if (localStorage.getItem(schluessel)) return false;
+    const r = await FS.readFile({ path: SPIEGEL, directory: 'DATA', encoding: 'utf8' });
+    const text = typeof r?.data === 'string' ? r.data : '';
+    const p = JSON.parse(text); if (!p || p.format !== 'itqan') return false;
+    localStorage.setItem(schluessel, text); return true;
+  } catch (e) { return false; }
+}
+
 // pro Gerät, nicht im Profil: die Erlaubnis gehört zum Gerät
 // Kennungen: 1 = täglich (alle sieben Tage sind Wird-Tage), 11 bis 17 = je Wochentag, 21 bis 34 = einzelne Tage nach einer Pause
 const SCHLUESSEL = 'itqan-mitteilung', ID = 1, ID_TAG = 10, ID_DANACH = 20, DANACH_MAX = 14;

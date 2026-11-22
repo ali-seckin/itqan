@@ -29,11 +29,13 @@ class StandFehler extends Error {}
 class ZwischenzeitFehler extends Error {}
 export class AnmeldungAltFehler extends Error {}
 
-let sync;   // { uid, sockel: {n,z,g}, cursor, ausgang: [Einträge], offen, neuAufbau, listeFehlt, wartetGen, letzter }
+let sync;   // { uid, sockel: {n,z,g}, cursor, ausgang: [Einträge], offen, neuAufbau, listeFehlt, kopieFehlt, wartetGen, letzter }
 let wartetLos = false;   // ein Stand des Kontos wartet auf den Einbau, das Gerät ist aber noch nicht verbunden
 const zustand = () => sync === undefined ? (sync = lies(SYNC)) : sync;
 const sichern = () => { if (sync) schreib(SYNC, sync); else weg(SYNC); };
 function lokalLoeschen() { sync = null; wartetLos = false; for (const k of [SYNC, KOPIE, LISTE, VERSUCH, LAGE, GELOESCHT]) weg(k); }
+// Der Sockel des Kontos liegt als Kopie auf dem Gerät (für den Neuaufbau). Passt er nicht in den Speicher, wird er beim Aufbau vom Konto geholt.
+function kopieSchreiben(s, stand) { if (schreib(KOPIE, stand)) s.kopieFehlt = false; else { s.kopieFehlt = true; weg(KOPIE); } }
 function listeSchreiben(s, liste) { if (!schreib(LISTE, liste)) { s.listeFehlt = true; weg(LISTE); } }   // kein Platz: die alte Liste gibt ihren Platz frei, der Aufbau holt sie vom Server
 export function geraetWechsel() { sync = undefined; wartetLos = false; rpcSockel = rpcRaeumen = null; }   // nur für Tests: der Speicher wurde ausgetauscht
 // Die Oberfläche ruft das bei „Profil löschen“ (zusammen mit Z.loeschen()): Die Verbindung dieses Geräts zum Stand des Kontos
@@ -129,7 +131,7 @@ function ungefragtVerboten(stand) {
   return (srv.abschnitte > 0 && !lok.abschnitte) || (stand?.erstellt || '') !== (Z.P.erstellt || '');
 }
 function verbinden(ks, sockel, ausgang, cursor = 0) {
-  sync = { uid: ks.uid, sockel: kopie(sockel), cursor, ausgang, offen: 0, neuAufbau: false, listeFehlt: false, letzter: Date.now() };
+  sync = { uid: ks.uid, sockel: kopie(sockel), cursor, ausgang, offen: 0, neuAufbau: false, listeFehlt: false, kopieFehlt: false, letzter: Date.now() };
   wartetLos = false; weg(GELOESCHT); weg(VERSUCH);
   return sync;
 }
@@ -155,7 +157,7 @@ async function hochladen(ks, sp, { ausdruecklich = false } = {}) {
     throw e;
   }
   verbinden(ks, neu, kopie(Z.P.log || []));                         // was während des Hochladens geübt wurde, steht nicht im Sockel: in den Ausgang
-  schreib(KOPIE, p); schreib(LISTE, []); sichern();
+  kopieSchreiben(sync, p); schreib(LISTE, []); sichern();
   await serverAufraeumen();
   return { art: sp ? 'ersetzt' : 'umzug' };
 }
@@ -165,7 +167,7 @@ async function nachziehen(ks, srv, neue) {
   const voll = await serverProfil(true);
   if (!voll || !gleich(meta(voll), srv)) return false;
   verbinden(ks, srv, kopie(neue));
-  schreib(KOPIE, voll.stand); schreib(LISTE, []); sichern();
+  kopieSchreiben(sync, voll.stand); schreib(LISTE, []); sichern();
   if (!gleich(Z.P.sockel, srv)) { Z.P.sockel = kopie(srv); Z.P.log = kopie(neue); Z.speichern(); }
   return true;
 }
@@ -188,14 +190,17 @@ async function vomServer(ks, sp, { mitnehmen = false, darf = () => true } = {}) 
   if (Z.P) Z.schnappschuss('vor dem Abgleich');
   const mit = eigene.length ? Z.umziehen(eigene, sp.stand).uebernommen : [];
   const neu = verbinden(ks, meta(sp), mit, geholt.length ? geholt[geholt.length - 1].seq : 0);
-  schreib(KOPIE, sp.stand);
+  kopieSchreiben(neu, sp.stand);
   listeSchreiben(neu, geholt.map(x => x.daten).filter(gueltig));
   sichern();
   return aufbauen('uebernommen');
 }
 // Stand aus Sockel und allen Einträgen neu bauen
 async function aufbauen(art) {
-  const s = zustand(), sockel = lies(KOPIE);
+  const s = zustand();
+  let sockel = s.kopieFehlt ? null : lies(KOPIE);
+  // Keine Kopie auf dem Gerät (Speicher voll): den Sockel vom Konto holen, aber nur den, zu dem die Einträge gehören
+  if (!sockel && s.kopieFehlt) { const voll = await serverProfil(true); if (voll && gleich(meta(voll), s.sockel)) sockel = voll.stand; }
   if (!sockel) throw new K.ServerFehler(0, 'sockel-missing');
   let liste = s.listeFehlt ? (await eintraegeHolen(s.sockel.n, 0)).map(x => x.daten).filter(gueltig) : lies(LISTE, []);
   let alle = dedupe([...liste, ...s.ausgang]);

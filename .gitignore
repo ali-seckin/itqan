@@ -1,0 +1,9 @@
+# Signierschlüssel und Zugangsdaten gehören nie ins Repository
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+# Probeläufe ohne Test, bleiben lokal
+tests/_heute_fuzz*.mjs
+node_modules/
