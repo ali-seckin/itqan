@@ -22,7 +22,9 @@ export const PAR = {
   kontrolleZusatz: true, // im Umlauf kommen diese Plätze zum Pensum hinzu: innerhalb des Pensums kosten sie dort den Durchlauf (Simulation Basis 11000, Pensum 1 und 2: 2,3 und 1,7 Punkte)
   sMin: 1, sMax: 3650,
   sLern: 0.6,        // Anfangsstabilität nach abgeschlossener Lektion: erstes Wiedersehen am Folgetag
-  sErstSauber: 25, sErstZoegern: 12, sErstFehler: 3,   // erste Prüfung eines schon gelernten Abschnitts: Start aus dem Ergebnis
+  sErstSauber: 25, sErstZoegern: 12, sErstFehler: 3,   // erste Prüfung eines schon gelernten Abschnitts: Start aus dem Ergebnis (25 sauber, 12 bei Zögern, 3 bei lauter Fehlern)
+  erstGamma: 0.5, erstVMax: 12,   // stetiger Übergang zwischen diesen drei Werten (geometrisch), Gewicht = (Anteil der Verse mit Fehler, mit Zögern) hoch erstGamma. Ab erstVMax Versen zählt der Anteil an erstVMax Versen: ein Fehler in einem langen Abschnitt wiegt wie in einem von zwölf. 0 ergibt die alte Stufenregel (Einträge bis Stand 2)
+  fassung: 'm2',     // Fassung des Modells: m1 bis 2.01 (Stufe bei der Erstprüfung), m2 mit dem stetigen Start. Ein Wechsel ist eine Modelländerung (neuer Sockel beim Abgleich, siehe FASSUNG in zustand.js)
   neuMin: 0.5, neuMax: 0.9, druckStart: 1, druckEnde: 5,  // Anteil der Erstprüfung nach Rückstau (Rückstau = Fälliges / Pensum)
   zAnteil: 0.25,     // Anteil der Plätze für den am längsten nicht besuchten Abschnitt
   umlaufAb: 365,     // reicht das Pensum nicht für einen Durchlauf in so vielen Tagen (Abschnitte / Pensum größer), läuft der Plan als Umlauf: erst alles Ungeprüfte, dann der älteste zuerst.
@@ -35,13 +37,24 @@ export const faktor = d => Math.pow(0.9, -1 / d) - 1;
 export const abruf = (t, S, d = PAR.d) => S > 0 ? Math.pow(1 + faktor(d) * Math.max(0, t) / S, -d) : 0;
 export const intervall = (S, r = PAR.rZiel, d = PAR.d) => S / faktor(d) * (Math.pow(r, -1 / d) - 1);
 
+// Stabilität bei der ersten Prüfung eines schon gelernten Abschnitts: stetig in den Anteilen der Verse mit Fehler (a) und mit Zögern (b),
+// ln S = ln 25 + a (ln 3 - ln 25) + (1 - a) b (ln 12 - ln 25), a und b als Anteil hoch erstGamma. Ein Fehler in jedem Vers ergibt 3, Zögern in jedem Vers 12, sauber 25.
+// Bei erstGamma 0 gilt die alte Stufenregel: ein einziger Fehler setzt S auf rund 3.
+export function erstStabilitaet({ v, f, z }, par = PAR) {
+  const V = Math.max(1, v), anteilF = Math.min(1, f / V), VE = Math.max(1, Math.min(V, par.erstVMax));
+  if (!f && !z) return par.sErstSauber;
+  if (!(par.erstGamma > 0)) return f ? Math.max(par.sMin, par.sErstFehler * (1 - anteilF)) : z ? par.sErstZoegern : par.sErstSauber;
+  const a = Math.pow(Math.min(1, f / VE), par.erstGamma), b = Math.pow(Math.min(1, z / VE), par.erstGamma), L = Math.log(par.sErstSauber);
+  return Math.max(par.sMin, Math.exp(L + a * (Math.log(par.sErstFehler) - L) + (1 - a) * b * (Math.log(par.sErstZoegern) - L)));
+}
+
 // Ergebnis eines Durchgangs: v Verse, f Fehler (inklusive Hilfe), z Gezögert. k: bisheriger Zustand (oder null)
 export function nachUebung(k, tag, { v, f, z }, par = PAR) {
   const n = k?.n || 0, neu = { ...(k || {}), n: n + 1, zul: tag };
   const anteilF = f / Math.max(1, v), lapse = f > 0 && par.kontrolleAb > 0 && anteilF >= par.kontrolleAb;
   neu.kon = lapse ? tag + 1 : null;
   if (!n) {
-    neu.S = f ? Math.max(par.sMin, par.sErstFehler * (1 - Math.min(1, anteilF))) : z ? par.sErstZoegern : par.sErstSauber;
+    neu.S = erstStabilitaet({ v, f, z }, par);
     neu.lap = f ? 1 : 0; if (f) neu.lt = tag;
     return neu;
   }

@@ -42,11 +42,12 @@ export function schrift(p) {
 export const schriftenLaden = seiten => Promise.all([...new Set(seiten.flatMap(schriftSeiten))].map(schrift));
 // Zeilen, die breiter als die Seite sind, passend verkleinern (Sicherheitsnetz, bei den Originaldrucken selten nötig)
 export function zeilenEinpassen(el) {
-  for (const z of el.querySelectorAll('.mz')) {
-    if (!z.querySelector('.w')) continue;
-    z.style.fontSize = '';
-    if (z.scrollWidth > z.clientWidth + 1) z.style.fontSize = `calc(5.9cqw * ${(z.clientWidth / z.scrollWidth - 0.004).toFixed(3)})`;
-  }
+  // In drei Schritten (zurücksetzen, alle messen, alle setzen): Abwechselndes Schreiben und Messen je Zeile erzwingt je Zeile eine neue Berechnung des Layouts
+  // und dehnt das Aufbauen einer Seite (vor dem Blättern) um viele Zehntelsekunden. Jede Zeile hat ihre eigene Breite, die Ergebnisse bleiben gleich.
+  const zeilen = [...el.querySelectorAll('.mz')].filter(z => z.querySelector('.w'));
+  for (const z of zeilen) z.style.fontSize = '';
+  const mass = zeilen.map(z => z.scrollWidth > z.clientWidth + 1 ? z.clientWidth / z.scrollWidth : 0);
+  zeilen.forEach((z, i) => { if (mass[i]) z.style.fontSize = `calc(5.9cqw * ${(mass[i] - 0.004).toFixed(3)})`; });
 }
 
 // Abschnittsgrenzen als feine gestrichelte Stufenlinie: über dem Beginn des neuen Abschnitts,

@@ -8,7 +8,17 @@ var FRIST_FEHLER = 4000, FRIST_STILLE = 20000;
 // Steht noch das Ladebild aus index.html? (Die App ersetzt den Inhalt von #app, sobald sie läuft.)
 function laedtNoch() { return !!dok.querySelector('#app .lade-logo'); }
 
+// Fehlermeldung (js/fehler.js): Fehler, die vor dem Laden dieser Datei auftreten, sammelt window.itqanFehlerVor; danach gilt das Ereignis.
+// fehler.js zeigt ein ruhiges Band und lässt die Nutzerin den Fehler melden. Hier geschieht nichts davon, nur die Weitergabe.
+var vorFehler = []; window.itqanFehlerVor = vorFehler;
+function fehlerWeitergeben(e, wo) {
+  try {
+    if (window.itqanFehlerVor) { if (vorFehler.length < 5) vorFehler.push([e, wo]); }
+    else dispatchEvent(new CustomEvent('itqan-fehler', { detail: { e: e, wo: wo } }));
+  } catch (x) { /* dann bleibt es beim gespeicherten Text */ }
+}
 function fehlerMerken(e, wo) {
+  fehlerWeitergeben(e, wo);
   try {
     var kette = e && e.stack ? String(e.stack).split('\n').slice(0, 4).join(' / ') : '';
     var zeile = (new Date().toISOString().slice(0, 19) + ' ' + wo + ': ' + (e && e.name) + ': ' + (e && e.message) + ' | ' + kette).slice(0, 700);
@@ -33,6 +43,8 @@ function notansicht(art, beimKnopf) {
   if (!ladebild) ladebild = app.querySelector('.lade');
   while (app.firstChild) app.removeChild(app.firstChild);
   app.appendChild(kasten);
+  // Läuft die App nicht an: ein Knopf „Fehler melden“, sobald fehler.js geladen ist und ein Fehler vorliegt
+  if (art === 'laden' || art === 'langsam') import('./fehler.js').then(function (m) { m.notKnopf(kasten); }).catch(function () { /* ohne dieses Modul bleibt der Hinweis allein */ });
 }
 
 // Globale Fänger: jeden unbehandelten Fehler festhalten. Steht danach immer noch das Ladebild, hilft die Notansicht weiter.

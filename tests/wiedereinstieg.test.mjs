@@ -39,7 +39,7 @@ test('Gezögert zählt halb, senkt die Stufe nicht und gibt dem Abschnitt eine k
   const res = Z.abschnittAbschliessen(id, Array.from({ length: e.ayat }, (_, i) => i === 0 ? 'zoegern' : 'ok'));
   const k = Z.karte(id);
   assert.equal(k.st, 0);                                 // keine Stufe hinzu, keine verloren
-  assert.equal(k.S, Z.MODELL.sErstZoegern); assert.equal(k.kon, null);
+  assert.ok(k.S < Z.MODELL.sErstSauber && k.S >= Z.MODELL.sErstZoegern, `S ${k.S}: kleiner als sauber, nicht kleiner als bei Zögern in jedem Vers`); assert.equal(k.kon, null);   // seit Stand 3 stetig im Anteil gezögerter Āyāt
   assert.equal(res.punkte, 10 * (e.ayat - 1) + 5);       // kein Fehlerfrei-Bonus
   assert.equal(res.f, 0);
 });

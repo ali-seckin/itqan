@@ -82,16 +82,21 @@ test('Pause beenden: was am Pausentag frei geübt wurde, bleibt im Tag stehen (A
   assert.equal(t.punkte, r.punkte); assert.ok(t.fertig.includes(7));
 });
 
-test('Ruhetag, Pause, leerer Bestand: freies Üben erfüllt keinen Wird und zählt die Kette nicht (Audit Abl. 8)', () => {
+test('Ruhetag zählt mit, Pause und leerer Bestand nicht: freies Üben (Audit Abl. 8, Entscheidung 22.11.2026)', () => {
   frisch({ datum: '2026-01-05', pensum: 3 });           // Montag
   Z.P.einst.pensum[1] = 0;                              // Dienstag Ruhetag
   wirdErfuellen(); assert.equal(Z.P.kette.n, 1);
   naechsterTag();
   assert.equal(Z.tagesplan().ruhe, 'ruhetag');
   const r = Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'frei');
-  assert.ok(!r.ereignisse.some(x => x.typ === 'wird'));
-  assert.equal(Z.P.kette.n, 1); assert.equal(Z.P.tage[Z.heute()].voll, false);
-  naechsterTag(); wirdErfuellen(); assert.equal(Z.P.kette.n, 2, 'die Kette läuft über den Ruhetag weiter');
+  assert.ok(r.ereignisse.some(x => x.typ === 'wird'), 'freies Üben am Ruhetag erfüllt den Wird');
+  assert.equal(Z.P.kette.n, 2); assert.equal(Z.P.tage[Z.heute()].voll, true);
+  naechsterTag(); wirdErfuellen(); assert.equal(Z.P.kette.n, 3, 'der nächste Wird-Tag setzt die Kette fort');
+  // Pause: kein Wird durch freies Üben, die Kette wartet
+  frisch({ datum: '2026-01-05', pensum: 3 });
+  wirdErfuellen(); naechsterTag(); Z.pauseBeginnen(3); assert.equal(Z.tagesplan().ruhe, 'pause');
+  const rp = Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'frei');
+  assert.ok(!rp.ereignisse.some(x => x.typ === 'wird')); assert.equal(Z.P.kette.n, 1);
   // leerer Bestand: kein Plan, kein Wird, keine Ḫatma (Audit N9)
   frisch({ datum: '2026-01-05', pensum: 3 });
   Z.P.einst.bereich = []; Z.speichern();
@@ -99,6 +104,11 @@ test('Ruhetag, Pause, leerer Bestand: freies Üben erfüllt keinen Wird und zäh
   const b = Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'bonus');
   assert.ok(!b.ereignisse.some(x => x.typ === 'wird' || x.typ === 'khatma'));
   assert.equal(Z.P.kette.n, 0); assert.equal(Z.P.zyklus.khatma, 0);
+  // leerer Bestand an einem Ruhetag: auch dann kein Wird
+  frisch({ datum: '2026-01-05', pensum: 3 });
+  Z.P.einst.pensum[0] = 0; Z.P.einst.bereich = []; Z.speichern();
+  assert.equal(Z.tagesplan().ruhe, 'ruhetag');
+  assert.ok(!Z.abschnittAbschliessen(9, Array(D.A[9].ayat).fill('ok'), 'frei').ereignisse.some(x => x.typ === 'wird'));
 });
 
 test('Ruhetage wirken ab dem Tag der Änderung, nicht rückwirkend auf Kette und Rückblick (Audit Abl. 22)', () => {

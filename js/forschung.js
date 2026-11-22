@@ -4,7 +4,7 @@
 import { SERVER } from './server.js';
 import * as LM from './lernmodell.js';
 
-const K = 'itqan-forschung', Q = 'itqan-forschung-q', L = 'itqan-forschung-loeschen', GRENZE = 3000, MODELL = 'm1';
+const K = 'itqan-forschung', Q = 'itqan-forschung-q', L = 'itqan-forschung-loeschen', GRENZE = 3000, MODELL = 'm2';
 // Die Felder einer gesendeten Zeile. Dieselbe Liste steht im Datenschutztext (werkzeuge/website/rechtstexte.py) und im
 // Zustimmungsdialog: wer hier etwas ändert, ändert es auch dort (tests/forschung.test.mjs prüft die Zeile gegen diese Liste).
 export const FELDER = ['pid', 't', 's', 'o', 'g', 'st', 'r', 'v', 'f', 'z', 'h', 'a', 'n', 'm'];

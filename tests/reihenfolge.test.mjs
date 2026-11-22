@@ -43,7 +43,7 @@ test('Abhaken: zählt für Plan und Zyklus, aber ohne Punkte, Hasanat und Stufen
   assert.ok(r); assert.equal(Z.abschnittAbhaken(a), null);       // nur einmal
   const t = Z.tagesplan(), k = Z.karte(a);
   assert.ok(t.fertig.includes(a)); assert.equal(t.punkte, 0); assert.equal(t.hasanat, 0);
-  assert.equal(k.st, vorher.st); assert.equal(k.n, 1); assert.ok(Z.P.zyklus.erledigt.includes(a));
+  assert.equal(k.st, vorher.st); assert.equal(k.n, 0, 'nie geprüft bleibt nie geprüft'); assert.equal(k.S, undefined); assert.ok(Z.P.zyklus.erledigt.includes(a));
   assert.deepEqual(Z.heuteAbhakbar(), [b]);
   Z.abschnittAbhaken(b); assert.equal(Z.tagesplan().voll, true);
 });

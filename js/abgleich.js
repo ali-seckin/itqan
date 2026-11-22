@@ -144,14 +144,14 @@ async function hochladen(ks, sp, { ausdruecklich = false } = {}) {
   }
   const daten = JSON.stringify({ ...Z.P, log: [] });
   if (!Z.schnappschuesse().some(x => x.grund === 'vor dem Konto' && x.daten === daten)) Z.schnappschuss('vor dem Konto');
-  const vor = { sockel: kopie(Z.P.sockel), log: kopie(Z.P.log || []) };
+  const vor = { sockel: kopie(Z.P.sockel), log: kopie(Z.P.log || []), modell: Z.P.modell };
   Z.sockelNeu(sp ? sp.sockel_n : 0);
   const p = kopie({ ...Z.P, log: [] }), neu = kopie(p.sockel);
   // Vormerken: geht nur die Antwort verloren, erkennt der nächste Lauf den eigenen Sockel auf dem Server wieder
   schreib(VERSUCH, { uid: ks.uid, sockel: neu, von: vor.sockel, bis: vor.log.length ? vor.log[vor.log.length - 1].i : null });
   try { await sockelSetzen(ks, p, sp); }
   catch (e) {
-    if (Z.P && gleich(Z.P.sockel, neu)) { Z.P.sockel = vor.sockel; Z.P.log = [...vor.log, ...(Z.P.log || [])]; Z.speichern(); }
+    if (Z.P && gleich(Z.P.sockel, neu)) { Z.P.sockel = vor.sockel; Z.P.log = [...vor.log, ...(Z.P.log || [])]; if (vor.modell === undefined) delete Z.P.modell; else Z.P.modell = vor.modell; Z.speichern(); }
     if (!(e instanceof K.NetzFehler)) weg(VERSUCH);                // der Server hat abgelehnt: dort liegt der neue Sockel sicher nicht
     if (e instanceof ZwischenzeitFehler) { const jetzt = await serverProfil(true); return jetzt ? konfliktErgebnis(jetzt) : { art: 'fehler', text: 'konflikt' }; }
     throw e;
@@ -314,7 +314,14 @@ async function durchlauf({ wahl, neuAufbauen = true, darfAufbauen, still = false
     if (lokalNeu && (!serverNeu || Z.sockelNeuer(Z.P.sockel, srv))) return await hochladen(ks, sp);   // eigene neue Generation (Gliederung, Sicherung geladen)
     if (lokalNeu) return await konfliktOderWahl(ks, sp);
     if (serverNeu) return await vomServer(ks, sp, { mitnehmen: true, darf });
-    return await normal(ks, darf);
+    const r = await normal(ks, darf);
+    // Neue Fassung des Lernmodells: der Sockel stammt aus einer älteren. Sobald alles Fremde eingebaut ist, beginnt dieses Gerät eine neue Generation,
+    // damit Einträge der alten Fassung nie nach den neuen Regeln neu gerechnet werden. Kommt ihm ein anderes Gerät zuvor, wartet es bis zum nächsten Lauf.
+    if (r.art === 'ok' && !r.wartet && Z.modellAelter()) {
+      const h = await hochladen(ks, sp);
+      return h.art === 'konflikt' ? r : h;
+    }
+    return r;
   } catch (e) {
     if (e instanceof K.AbgemeldetFehler) return { art: 'abgemeldet' };
     if (e instanceof K.NetzFehler) return { art: 'offline' };

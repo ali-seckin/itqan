@@ -281,6 +281,7 @@ function sockelWechsel(stand) {
   const g = geraetLesen(); g.z = Math.max(uhr().getTime(), g.z);
   const z = Date.parse(stand ?? '');
   P.sockel = { n: (P.sockel?.n || 0) + 1, z: z > 0 && z < g.z ? z : g.z, g: g.g }; P.log = [];
+  P.modell = FASSUNG;   // ein neuer Sockel ist ein Abbild des Stands, alles danach wird nach den Regeln dieser Fassung gerechnet
   schattenNeu(); geraetSichern();
 }
 // Eigener neuer Sockel aus dem jetzigen Stand (Umzug auf ein Konto). mindestens: die Generation muss höher sein als diese.
@@ -671,7 +672,14 @@ export const abruf = (tage, S) => LM.abruf(tage, S);
 export const MODELL = LM.PAR;   // Zahlen des Modells (Tests und Anzeige)
 // Stand der Regeln, nach denen ein Abschluss gewertet wird; jeder Abschluss trägt ihn (m). Ein späterer Wechsel der Regeln kann daran erkennen,
 // welche Einträge er nicht nachrechnen darf. Einträge ohne m stammen aus 1.99 oder älter.
-export const MODELL_STAND = 2;
+// Stand 3 (ab 2.02): Abhaken lässt bei nie geprüften Abschnitten kein S und keine Erstprüfung zurück, freies Üben am Ruhetag erfüllt den Wird
+// (und Stand 3 trägt den stetigen Start bei der Erstprüfung, PAR.erstGamma). Einträge mit kleinerem m werden nach den alten Regeln nachgerechnet.
+export const MODELL_STAND = 3;
+// Fassung des Lernmodells (PAR.fassung): 'm1' bis 2.01, 'm2' ab dem stetigen Start bei der Erstprüfung. Das Profil trägt die Fassung, nach der sein Sockel angelegt wurde (modell, fehlt: 'm1').
+// Bei einer neueren Fassung beginnt das Gerät mit Konto eine neue Generation (abgleich.js), damit Einträge der alten Fassung nie nach den neuen Regeln neu gerechnet werden.
+export const FASSUNG = LM.PAR.fassung;
+const fassungNr = f => { const n = /^m(\d{1,3})$/.exec(f ?? 'm1'); return n ? +n[1] : 1; };
+export const modellAelter = () => !!P && !fremd && fassungNr(P.modell) < fassungNr(FASSUNG);
 // Abschnitte mit Stand für das Modell (nur geprüfte, Lektionen in Arbeit bleiben außen vor)
 function modellKarten() {
   const m = {};
@@ -1002,10 +1010,11 @@ export function abschnittAbschliessen(id, ergebnisse, quelle, dauer) {
 const ERG_KURZ = { ok: 'o', hilfe: 'h', fehler: 'f', zoegern: 'z' };
 // Nachträglich abhaken: außerhalb der App geübt (Gebet, unterwegs). Zählt für Tagesplan und Zyklus, ohne Punkte, Hasanat und Stufenänderung
 // kb: Eine offene Kontrolle nach einem Fehler bleibt stehen (Audit N4): Abhaken erfüllt den Wird, die Prüfung in der App kommt trotzdem. Ältere Einträge ohne kb bleiben bei der alten Regel.
+// Ein nie in der App geprüfter Abschnitt bleibt ungeprüft (m ab 3): kein S, kein Durchgang, die Erstprüfung kommt noch. Für den Wird und den Zyklus zählt das Abhaken trotzdem.
 const ABHAKBAR = ['zyklus', 'qadaa', 'festigen', 'fehler'];   // alles, was zum Wird zählt; Bonus und freies Üben stehen nicht im Plan (festigen: nur noch in älteren Plänen)
 export function abschnittAbhaken(id) {
   const datum = heute(), t = tagesplan(datum); if (t.fertig.includes(id) || !ABHAKBAR.includes(t.art[id])) return null;
-  return eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: 'a'.repeat(D.A[id].ayat), q: t.art[id], p: 0, kb: 1 });
+  return eintrag('ab', { d: datum, id, v: [...D.A[id].v], e: 'a'.repeat(D.A[id].ayat), q: t.art[id], p: 0, kb: 1, m: MODELL_STAND });
 }
 export function heuteAbhakbar() {
   const t = P.tage[heute()]; if (!t || t.ruhe) return [];
@@ -1031,12 +1040,14 @@ function abschlussAnwenden(e0) {
   else if (!wdh) k.st = Math.min(4, k.st + 1);   // Aufstieg höchstens einmal je Abschnitt und Tag; ein Fehler senkt weiterhin
   // Gedächtnismodell: Stabilität wächst bei Erfolg umso stärker, je mehr vergessen war; Fehler senken sie nach dem Anteil falscher Verse; deutlicher Fehler: Kontrolle am Folgetag
   const konBleibt = ab && e0.kb === 1 && k.kon != null;   // abgehakt bei offener Kontrolle: Modell und letzter Übungstag bleiben, wie sie sind
-  if (!L && !konBleibt) {
+  const nieGeprueft = ab && e0.kb === 1 && (e0.m || 0) >= 3 && !k.n && !L;   // abgehakt, in der App noch nie geprüft: kein S, kein Durchgang, die Erstprüfung bleibt offen
+  if (!L && !konBleibt && !nieGeprueft) {
     const alt = k.n && k.zul ? { n: k.n, S: stabilitaet(k), zul: tagNr(k.zul), kon: k.kon ? tagNr(k.kon) : null, lt: k.lt ?? null } : null;
-    const ne = LM.nachUebung(alt, tagNr(datum), ab ? { v: ergebnisse.length, f: 0, z: 1 } : { v: ergebnisse.length, f: f + (e0.hw ? h : 0), z: z + (e0.hw ? 0 : h) });
+    const ne = LM.nachUebung(alt, tagNr(datum), ab ? { v: ergebnisse.length, f: 0, z: 1 } : { v: ergebnisse.length, f: f + (e0.hw ? h : 0), z: z + (e0.hw ? 0 : h) }, (e0.m || 0) >= 3 ? LM.PAR : { ...LM.PAR, erstGamma: 0 });
     k.S = Math.round(ne.S * 100) / 100; k.kon = ne.kon != null ? nrTag(ne.kon) : null; if (ne.lt != null) k.lt = ne.lt;
   }
-  k.n++; k.fe += f; if (!konBleibt) k.zul = datum;
+  if (!nieGeprueft) k.n++;
+  k.fe += f; if (!konBleibt) k.zul = datum;
   if (dauer > 0) { k.z = Math.round(dauer); t.zeit = (t.zeit || 0) + k.z; t.zn = (t.zn || 0) + 1; t.za = (t.za || 0) + ergebnisse.length; }
   if (ab) k.ah = datum;
   else {   // lf: Fehler im letzten Durchgang, fa: seine Āyāt. Ein zweiter Durchgang am selben Tag kann beides nur verschlechtern.
@@ -1063,9 +1074,11 @@ function abschlussAnwenden(e0) {
       ereignisse.push({ typ: 'khatma', n: P.zyklus.khatma });
     }
   }
-  // Wird erfüllt → Kette. An einem Ruhetag, in der Pause und bei leerem Plan gibt es keinen Wird, den freies Üben erfüllen könnte.
+  // Wird erfüllt → Kette. In der Pause und bei leerem Plan gibt es keinen Wird, den freies Üben erfüllen könnte.
+  // An einem Ruhetag zählt freies Üben als Wird (Entscheidung 22.11.2026, ab m 3; frühere Einträge ohne diese Regel bleiben, wie sie waren).
   const pflicht = t.plan.filter(x => t.art[x] !== 'bonus');
-  if (art !== 'lern' && !t.voll && ((!t.ohne && !t.ruhe && pflicht.length > 0 && pflicht.every(x => t.fertig.includes(x))) || e0.w)) {
+  const ruhetagFrei = t.ruhe === 'ruhetag' && !t.plan.length && (e0.m || 0) >= 3 && reihe().length > 0;
+  if (art !== 'lern' && !t.voll && ((!t.ohne && (ruhetagFrei || (!t.ruhe && pflicht.length > 0 && pflicht.every(x => t.fertig.includes(x))))) || e0.w)) {
     t.voll = true;
     const vorBonus = kettenBonus(ketteAktiv(datum) ? P.kette.n : 0).p;
     const z = P.kette.zuletzt, w1 = vorigerWirdTag(datum);
@@ -1487,8 +1500,9 @@ function profilFehler(p) {
   if (!leerOder(p.log, x => listeGut(x, e => istObj(e) && (e.y === 'ei' && e.k === 'name' ? einstEintragGut(e) && harmlos({ ...e, w: 0 }) : harmlos(e)), 5000))) return 'log';
   if (!leerOder(p.rangBeste, x => istObj(x) && ganzGut(x.r, 0, 100) && leerOder(x.d, datumGut) && harmlos(x))) return 'rangBeste';
   if (!leerOder(p.umgestellt, datumGut)) return 'umgestellt';
+  if (!leerOder(p.modell, x => typeof x === 'string' && /^m\d{1,3}$/.test(x))) return 'modell';
   if (!leerOder(p.pensumVor, x => listeGut(x, y => istObj(y) && datumGut(y.bis) && einstWertGut('pensum', y.p), 20))) return 'pensumVor';
-  const eigens = ['format', 'version', 'schema', 'name', 'erstellt', 'gliederung', 'einst', 'karten', 'tage', 'zyklus', 'kette', 'summe', 'meilen', 'meilenD', 'fstellen', 'pausen', 'lern', 'verlauf', 'mutash', 'statistik', 'sockel', 'log', 'rangBeste', 'umgestellt', 'pensumVor'];
+  const eigens = ['format', 'version', 'schema', 'name', 'erstellt', 'gliederung', 'einst', 'karten', 'tage', 'zyklus', 'kette', 'summe', 'meilen', 'meilenD', 'fstellen', 'pausen', 'lern', 'verlauf', 'mutash', 'statistik', 'sockel', 'log', 'rangBeste', 'umgestellt', 'pensumVor', 'modell'];
   for (const [k, w] of Object.entries(p)) if (!eigens.includes(k) && !(textGut(k, 40) && harmlos(w))) return k;
   return null;
 }

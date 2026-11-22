@@ -4,6 +4,7 @@ import * as Z from './zustand.js';
 import * as Lk from './lichtkarte.js';
 import { hintergrundSperren, hintergrundFreigeben, ueberlagerung, eigenerRueckschritt } from './sperre.js';
 import * as Forschung from './forschung.js';
+import * as Fehler from './fehler.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG, andereVersion } from './version.js';
@@ -466,10 +467,10 @@ function zeileSeite() {
   window.scrollTo(0, 0);
 }
 // ---------- Router ----------
-const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, fertig, karte: lichtkarte, mushaf, profil, mehr: () => { location.replace('#profil'); }, uebungen: uebungsMenue, konto: kontoSeite, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite };
+const ROUTEN = { sprachwahl, heute, abhaken: abhakenSeite, kurz: kurzSeite, lernen: lernenSeite, ueben, amstueck: amstueckWahl, fertig, karte: lichtkarte, mushaf, profil, mehr: () => { location.replace('#profil'); }, uebungen: uebungsMenue, konto: kontoSeite, einstellungen, lehrer, start, raenge, einfuehrung, fortschritt: fortschrittSeite, auswertung: auswertungSeite, suche: sucheSeite, aehnlich: aehnlichSeite, vergleich: vergleichSeite, fehlerstellen: fehlerstellenSeite, ornamente: ornamenteSeite, installieren, neu: neuigkeitenSeite, rueckmeldung, rueckblick: rueckblickSeite, hilfe: hilfeSeite, evidenz: evidenzSeite };
 // Seitentitel je Ansicht: Bildschirmleser sagen ihn beim Wechsel an
-const TITEL = { mehr: tx('allg.profil'), uebungen: tx('allg.ueben'), abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), konto: tx('konto.titel'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
-  lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar') };
+const TITEL = { mehr: tx('allg.profil'), uebungen: tx('allg.ueben'), abhaken: tx('abhaken.titel'), kurz: tx('kurz.titel'), sprachwahl: tx('sprachwahl.titel'), heute: tx('titel.heute'), ueben: tx('allg.ueben'), amstueck: tx('amstueck.titel'), fertig: tx('titel.abschluss'), karte: tx('allg.lichtkarte'), mushaf: tx('allg.mushaf'), profil: tx('allg.profil'), konto: tx('konto.titel'), einstellungen: tx('allg.einstellungen'), lehrer: tx('titel.lehrer'), start: tx('titel.profil_anlegen'), raenge: tx('titel.raenge'), einfuehrung: tx('titel.einfuehrung'),
+  lernen: tx('lernen.neu_lernen'), fortschritt: tx('allg.fortschritt'), auswertung: tx('allg.auswertung'), suche: tx('titel.suche'), aehnlich: tx('titel.mutasabihat'), vergleich: tx('titel.vergleich'), fehlerstellen: tx('allg.fehlerstellen'), ornamente: tx('allg.ornamente'), installieren: tx('titel.installieren'), neu: tx('allg.was_ist_neu'), rueckmeldung: tx('titel.rueckmeldung'), rueckblick: tx('allg.rueckblick'), hilfe: tx('titel.hilfe_und_glossar'), evidenz: tx('evidenz.titel') };
 // Was gewählt ist, erfährt auch der Bildschirmleser: aria-pressed folgt der Klasse "an"
 const GEDRUECKT = '.wahl button, .juzwahl button, .arten button';
 new MutationObserver(() => {
@@ -484,6 +485,7 @@ function fehlerMerken(e, wo) {
   const z = `${new Date().toISOString().slice(0, 19)} ${wo}: ${e?.name}: ${e?.message} | ${String(e?.stack || '').split('\n').slice(0, 4).join(' / ')}`.slice(0, 700);
   try { localStorage.setItem(FEHLER_KEY, z); } catch (x) {}
   console.error(wo, e);
+  Fehler.erfassen(e, wo);   // ruhiges Band mit „Fehler melden“ (js/fehler.js)
   return z;
 }
 const letzterFehler = () => { try { return localStorage.getItem(FEHLER_KEY) || ''; } catch (e) { return ''; } };
@@ -506,7 +508,7 @@ function fehlerAnsicht(e, name) {
   app.querySelector('#fe-neu').onclick = neuLadenFrisch;
   const fs = app.querySelector('#fe-schnapp');   // auch bei einem kaputten Stand bleibt der Weg zu den Schnappschüssen offen
   if (fs) fs.onclick = () => { const l = app.querySelector('#fe-schnapp-liste'); l.innerHTML = sicher('fe-liste', schnappschussListe); schnappschussBinden(l); l.classList.remove('verdeckt'); };
-  app.querySelector('#fe-melden').onclick = () => { location.hash = '#rueckmeldung'; };
+  app.querySelector('#fe-melden').onclick = () => { Fehler.melden(); };
 }
 // Menüseiten: das Zeichen des Reiters steht vor der Überschrift (wie das Itqān-Zeichen auf Heute)
 function menueZeichen(name) {
@@ -564,7 +566,7 @@ async function neuZeichnen() {
 }
 // Falsch gestellte Uhr: liegt das Datum weit nach dem letzten Übungstag, wird einmal gefragt, bevor ein Tagesplan entsteht
 const UHR_KEY = 'itqan-uhr-ok';
-const uhrFrage = name => !['konto', 'rueckmeldung', 'hilfe', 'neu', 'einstellungen', 'sprachwahl', 'einfuehrung', 'start'].includes(name) && sicher('uhr', () => Z.uhrSprung(), 0) > 60 && sicher('uhr-ok', () => localStorage.getItem(UHR_KEY), null) !== new Date().toDateString();
+const uhrFrage = name => !['konto', 'rueckmeldung', 'hilfe', 'evidenz', 'neu', 'einstellungen', 'sprachwahl', 'einfuehrung', 'start'].includes(name) && sicher('uhr', () => Z.uhrSprung(), 0) > 60 && sicher('uhr-ok', () => localStorage.getItem(UHR_KEY), null) !== new Date().toDateString();
 function uhrAnsicht() {
   navSetzen(null);
   app.innerHTML = `<div class="abschnitt" style="margin-top:28px"><h3>${tx('app.uhr_titel')}</h3><p class="unter">${tx('app.uhr_text', { datum: new Date().toLocaleDateString(gebiet('datum'), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) })}</p>
@@ -758,12 +760,12 @@ function start() {
       <p class="unter" style="text-align:center" id="dauer"></p></div>
     <div class="abschnitt"><h3>${tx('einstellungen.hasanat_titel')}</h3><p class="unter">${tx('einstellungen.hasanat_text')}</p>
       <div class="wahl" id="hasanat" style="margin-top:10px"><button data-w="1" class="an">${tx('einstellungen.hasanat_zeigen')}</button><button data-w="0">${tx('einstellungen.hasanat_ausblenden')}</button></div></div>
-    <details class="start-mehr"><summary>${tx('start.weitere_einstellungen')}</summary><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
+    <div class="start-mehr"><h3 class="start-mehr-titel">${tx('start.weitere_einstellungen')}</h3><p class="unter" style="margin:8px 0">${tx('start.weitere_text')}</p>
     <div class="abschnitt"><h3>${tx('start.wie_lang_sollen_die_abschnitte_sein')}</h3>${modusWahl('fort', false)}</div>
     <div class="abschnitt"><h3>${tx('start.in_welcher_reihenfolge')}</h3><div class="wahl reihenfolge-wahl" id="reihenfolge"><button data-w="vorwaerts" class="an">${tx('start.vorwaerts')}<small>${tx('start.bsp_vorwaerts')}</small></button><button data-w="rueckwaerts">${tx('start.rueckwaerts')}<small>${tx('start.bsp_rueckwaerts')}</small></button><button data-w="zufall">${tx('start.zufaellig')}</button></div>
       <div id="zufallwahl" class="verdeckt" style="margin-top:12px"><p class="unter">${tx('start.bei_mehreren_abschnitten_am_tag')}</p><div class="wahl" id="zufall" style="margin-top:8px"><button data-w="einzeln" class="an">${tx('start.verstreute_stellen')}</button><button data-w="block">${tx('start.eine_stelle_am_stueck')}</button></div></div></div>
     <div class="abschnitt"><h3>${tx('start.erscheinungsbild')}</h3><div class="wahl" id="thema"><button data-w="hell">${tx('start.hell')}</button><button data-w="dunkel">${tx('start.dunkel')}</button><button data-w="auto" class="an">${tx('start.wie_geraet')}</button></div></div>
-    </details>
+    </div>
     <button class="knopf haupt" id="los" style="margin-top:18px">${tx('start.bismillah_beginnen')}</button>`;
   app.querySelector('#start-laden').onclick = profilLaden;
   if (defekt) {
@@ -848,9 +850,9 @@ function heute() {
   // Ruhetag oder Pause: kein Wird, die Kette wartet
   const ps = t.ruhe === 'pause' ? Z.pauseJetzt() : null;
   const ruheHTML = t.ruhe ? `<div class="ruhe-karte">${ps ? `<b>${tx('heute.pause_bis', { bis: tagLang(ps.bis) })}</b><p>${tx('heute.kein_wird_keine_fehlerwiederholung', { a: alsHtml(P.kette.n ? tx('heute.deine_kette_von_tagen_wartet_und_laeuft', { n: P.kette.n }) : tx('heute.danach_geht_es_dort_weiter_wo_du')) })}</p>`
-      : `<b>${tx('heute.heute_ist_ruhetag')}</b><p>${tx('heute.dein_wird_ruht_heute', { a: alsHtml(P.kette.n ? tx('heute.deine_kette_laeuft_am_naechsten_wird_tag') : '') })}</p>`}
+      : t.voll ? `<b>${tx('heute.ruhetag_geuebt')}</b>` : `<b>${tx('heute.heute_ist_ruhetag')}</b><p>${tx('heute.dein_wird_ruht_heute', { a: alsHtml(P.kette.n ? tx('heute.deine_kette_laeuft_am_naechsten_wird_tag') : '') })}</p>`}
     <div class="reihe" style="margin-top:12px"><button class="knopf haupt klein" id="trotzdem">${tx('heute.trotzdem_ueben')}</button>${ps ? `<button class="knopf leise klein" id="pause-ende">${tx('heute.pause_beenden')}</button>` : ''}</div></div>` : '';
-  let unter = nurLernen ? tx('heute.nur_neu_lernen') : t.ruhe ? (ps ? tx('heute.du_machst_gerade_eine_pause') : tx('heute.heute_ist_dein_ruhetag')) : t.voll ? tx('heute.dein_wird_fuer_heute_ist_vollbracht') : tx('heute.dein_wird_fuer_heute_noch_abschnitte', { a: pflicht.length - erledigt });
+  let unter = nurLernen ? tx('heute.nur_neu_lernen') : t.ruhe ? (ps ? tx('heute.du_machst_gerade_eine_pause') : t.voll ? tx('heute.dein_wird_fuer_heute_ist_vollbracht') : tx('heute.heute_ist_dein_ruhetag')) : t.voll ? tx('heute.dein_wird_fuer_heute_ist_vollbracht') : tx('heute.dein_wird_fuer_heute_noch_abschnitte', { a: pflicht.length - erledigt });
   // Die nächste Runde groß mit Starten-Knopf, die weiteren kompakt, Erledigtes zuletzt
   const markeVon = (id, e, fertig) => {
     const art = t.art[id];
@@ -900,6 +902,7 @@ function heute() {
     ${t.voll && bonusId != null ? `<div class="angebot"><b>${tx('heute.allahumma_barik_noch_kraft_fuer_mehr')}</b><p>${tx('heute.ein_bonusabschnitt_bringt_dir_50_mehr', { abschnittName: alsHtml(abschnittFett(D.A[bonusId])), titel: alsHtml(esc(D.A[bonusId].titel)) })}</p><button id="bonus">${tx('heute.bonusabschnitt_beginnen')}</button></div>` : ''}
     ${kontoHinweis}
     ${nurLernen ? '' : t.ruhe ? ruheHTML : `<div class="titel-klein">${tx('heute.heute_dran')}</div><div id="plan-liste">${karten}</div>`}
+    ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
     ${!t.ruhe && Z.heuteAbhakbar().length ? `<div class="klein-zeile" style="justify-content:center"><a class="textlink" href="#abhaken">${tx('heute.abhaken_link')}</a></div>` : ''}
     ${lernHTML}
     ${comebackHTML}
@@ -910,7 +913,6 @@ function heute() {
       <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="jetzt-sichern">${tx('heute.jetzt_sichern')}</button><button class="knopf leise klein" id="sichern-spaeter">${tx('heute.morgen_erinnern')}</button></div></div>` : ''}
     ${installKarte ? `<div class="hinweisbox install-hinweis">${tx('heute.itqan_als_app_nutzen_auf_dem_home')}
       <div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#installieren" style="text-decoration:none">${tx('heute.so_gehts')}</a><button class="knopf leise klein" id="install-weg">${tx('heute.nicht_mehr_zeigen')}</button></div></div>` : ''}
-    ${sicher('kettenbonus', () => { const kb = Z.kettenBonus(aktiv ? P.kette.n : 0); return `<p class="kette-bonus">${!kb.p ? tx('heute.kettenbonus_keiner') : kb.naechst ? tx('heute.kettenbonus', { p: kb.p, n: kb.naechst }) : tx('heute.kettenbonus_max', { p: kb.p })}</p>`; })}
     ${istFreitag ? sicher('freitag', () => `<div class="titel-klein">${tx('heute.gumua_mubaraka')} · ${tx('heute.deine_woche')}</div><div class="abschnitt" style="margin-top:0">
       <p>${tx('heute.der_ayat_sicher', { a: sicherAnteil(wSum) })} · ${tx('heute.von_7_tagen_erfuellt', { v: wSum.v })} · ${tx('heute.itqan_punkte', { p: zahl(wSum.p) })}</p>
       ${(() => { const bq = Z.behaltensquote(30); return bq.quote == null ? '' : `<p class="unter">${tx('heute.behaltensquote', { a: prozent(Math.round(bq.quote)) })}</p>`; })()}
@@ -977,7 +979,13 @@ let wachSperre = null, wachWunsch = false;
 async function wachHalten(an) {
   wachWunsch = an;
   try {
-    if (an) { if (!wachSperre && navigator.wakeLock) { wachSperre = await navigator.wakeLock.request('screen'); wachSperre.addEventListener('release', () => { wachSperre = null; }); } }
+    if (an) {
+      if (!wachSperre && navigator.wakeLock) {
+        const sperre = await navigator.wakeLock.request('screen');
+        if (!wachWunsch || wachSperre) { await sperre.release(); return; }   // inzwischen nicht mehr gewünscht (Übung verlassen) oder schon eine Sperre da: nicht bis zum Sankt Nimmerleinstag wachhalten
+        wachSperre = sperre; sperre.addEventListener('release', () => { if (wachSperre === sperre) wachSperre = null; });
+      }
+    }
     else if (wachSperre) { const s = wachSperre; wachSperre = null; await s.release(); }
   } catch (e) { /* nicht erlaubt oder Akku sparen */ }
 }
@@ -1009,9 +1017,20 @@ function doppelseiteSkizze(e) {
 // bei arabischer, urdischer oder anderer Schrift gilt die Lage der Taste (R, F, S, W, Z wie auf einer englischen Tastatur)
 const buchstabe = ev => { const k = ev.key || ''; if (/^[a-z]$/i.test(k)) return k.toLowerCase(); const m = /^Key([A-Z])$/.exec(ev.code || ''); return k.length === 1 && m ? m[1].toLowerCase() : ''; };
 const zurueckPfeil = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+// Am Stück üben und die gemeinsame Mikrofon-Verwaltung stehen in js/amstueck.js, das erst beim ersten Gebrauch geladen wird (steht im Offline-Vorrat)
+let asModul = null;
+const asLaden = () => asModul ??= import('./amstueck.js').catch(e => { asModul = null; throw e; });
+async function amstueckWahl() { const nr = zeigeNr, AS = await asLaden(); if (ansichtGilt(nr)) AS.wahl(asHelfer()); }
+// Was die Ansicht „Am Stück üben“ von hier braucht
+const asHelfer = () => ({ app, zurueckPfeil, zeigeNr: () => zeigeNr, ansichtGilt, navSetzen, toast, ruhig, wachHalten, dialog, doppelseitig, doppelseiten, paarHTML, seiteHolen, punktePop, hochzaehlen, qandil, ornBand, rangBand,
+  stellenWahl, abschnittOptionen, buchstabe, uebersetzungSprache, uebersetzungZeigen, blaseSchliessen, zeige, aufraeumen: f => { uebenAufraeumen = f; }, ereignisseSetzen: l => { letzteEreignisse = l; } });
 async function ueben(idText, quelle, fokusText) {
   uebenAufraeumen?.(); uebenAufraeumen = null;   // „Noch einmal üben“ baut die Übung ohne Wechsel der Adresse neu auf
   const lauf = zeigeNr;
+  const AS = await asLaden();
+  if (!ansichtGilt(lauf)) return;
+  if (idText === 'amstueck') return AS.lauf(asHelfer(), quelle, fokusText);   // Am Stück üben: eigene Ansicht (#ueben/amstueck/<Abschnitt>[/weiter])
+  AS.Mikro.alleFrei();   // nichts, was eine frühere Übung am Mikrofon offen ließ, stört die neue
   navSetzen(null);
   const id = +idText; let e = D.A[id]; if (!e) { location.hash = '#heute'; return; }
   // Fehlerstelle üben: nur diese eine Āya, mit der Āya davor als Orientierung
@@ -1056,25 +1075,42 @@ async function ueben(idText, quelle, fokusText) {
   let zeitAktiv = 0, zeitSeit = document.hidden ? null : Date.now(), zeitGanz = true;
   const zeitTick = () => { if (document.hidden) { if (zeitSeit) zeitAktiv += Date.now() - zeitSeit; zeitSeit = null; } else if (!zeitSeit) zeitSeit = Date.now(); };
   const zeitSekunden = () => { zeitTick(); return Math.min(3600, (zeitAktiv + (zeitSeit ? Date.now() - zeitSeit : 0)) / 1000); };
+  // Behandler für den nächsten Adresswechsel: uebenAufraeumen nimmt die übrigen wieder weg, sonst blieben sie nach einer beendeten Übung hängen
+  const beiWechsel = [], einmalBeiWechsel = f => { beiWechsel.push(f); addEventListener('hashchange', f, { once: true }); };
   document.addEventListener('visibilitychange', zeitTick);
-  addEventListener('hashchange', () => document.removeEventListener('visibilitychange', zeitTick), { once: true });
+  einmalBeiWechsel(() => document.removeEventListener('visibilitychange', zeitTick));
   // Aufnahme nur im Arbeitsspeicher: nach der Bewertung der Āya wird sie verworfen, nichts wird gespeichert
   const AUFNAHME = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   // Jede Aufnahme hat ihren eigenen Rekorder und ihre eigenen Daten. Eine Aufnahme, deren Āya schon bewertet ist
   // oder die von einer neuen abgelöst wurde, wird verworfen (Nummer passt nicht mehr).
-  let mikro = null, rec = null, aufnahme = null, spieler = null, aufnahmeNr = 0, startet = false, verlassen = false;
-  // iPhone: Nach dem Abspielen schaltet Safari das Mikrofon oft stumm, dann liefert es nur noch leere Aufnahmen
-  const mikroLebt = () => !!mikro && mikro.getAudioTracks().some(t => t.readyState === 'live' && !t.muted);
+  let mikro = null, rec = null, aufnahme = null, spieler = null, aufnahmeNr = 0, startet = false, startZeit = 0, startNr = 0, verlassen = false;
+  // Das Mikrofon holt jede Übung über die gemeinsame Verwaltung (AS.Mikro, js/amstueck.js): nie zwei Anfragen zugleich, eine Ruhezeit nach dem Freigeben,
+  // ein zweiter Versuch bei NotReadableError und eine Frist, damit eine Anfrage ohne Antwort den Aufnahmeknopf nicht für immer sperrt
+  const mikroBesitzer = AS.Mikro.besitzer();
+  const wartetAus = () => app.querySelector('#mikro')?.classList.remove('wartet');
   async function aufnahmeStart(auto = false) {
-    if (startet || rec?.state === 'recording') return;
-    startet = true; aufnahmeVerwerfen();   // eine neue Aufnahme ersetzt die vorige
-    try { if (!mikroLebt()) { mikro?.getTracks().forEach(t => t.stop()); mikro = await navigator.mediaDevices.getUserMedia({ audio: true }); } }
-    catch (e) { startet = false; mikro = null; if (verlassen) return; if (auto) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } else toast(tx('ueben.ohne_zugriff_auf_das_mikrofon_geht_keine')); return; }
+    if (rec?.state === 'recording') return;
+    if (startet && Date.now() - startZeit < 1500) return;   // gleich nach dem ersten Tippen: Doppeltipp. Hängt die Anfrage länger, beginnt ein neues Tippen von vorn
+    aufnahmeVerwerfen();   // eine neue Aufnahme ersetzt die vorige und bricht eine hängende Anfrage ab
+    startet = true; startZeit = Date.now(); const meinStart = ++startNr;
+    app.querySelector('#mikro')?.classList.add('wartet');
+    try { mikro = await AS.Mikro.holen(mikroBesitzer); }
+    catch (e) {
+      if (meinStart !== startNr) return;   // inzwischen abgelöst (neue Aufnahme, Āya bewertet, Übung verlassen): nichts mehr zu tun
+      startet = false; mikro = null; wartetAus();
+      if (verlassen || e?.name === 'Abgebrochen') return;
+      const verweigert = e?.name === 'NotAllowedError' || e?.name === 'SecurityError';
+      if (auto) { if (verweigert) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } }   // eine vorübergehende Störung sperrt die Automatik nicht: bei der nächsten Āya versucht sie es wieder
+      else toast(verweigert ? tx('ueben.ohne_zugriff_auf_das_mikrofon_geht_keine') : tx('ueben.die_aufnahme_liess_sich_nicht_starten'));
+      return;
+    }
     // inzwischen aufgedeckt, im Abhören oder die Übung verlassen (auch wenn die Erlaubnis erst jetzt kam): keine Aufnahme, Mikrofon sofort frei
-    if (verlassen || offen || abhoeren || vorschau || pos >= ayat.length || !seitenEl.isConnected) { startet = false; mikroFrei(); return; }
+    if (verlassen || offen || abhoeren || vorschau || pos >= ayat.length || !seitenEl.isConnected) { startet = false; wartetAus(); mikroFrei(); return; }
     const nr = ++aufnahmeNr, daten = [];
     let r;
-    try { r = new MediaRecorder(mikro); } catch (e) { startet = false; if (auto) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } else toast(tx('ueben.die_aufnahme_liess_sich_nicht_starten')); return; }
+    try { r = new MediaRecorder(mikro); } catch (e) { startet = false; wartetAus(); mikroFrei(); if (auto) { autoGesperrt = true; toast(tx('ueben.auto_aufnahme_aus')); } else toast(tx('ueben.die_aufnahme_liess_sich_nicht_starten')); return; }
+    // Bricht der Rekorder von selbst ab (Mikrofon weg, Gerät sperrt), darf der Knopf nicht auf „läuft“ stehen bleiben
+    r.onerror = () => { if (nr !== aufnahmeNr) return; if (rec === r) rec = null; mikroFrei(); zeichne(); };
     r.ondataavailable = ev => { if (ev.data?.size) daten.push(ev.data); };
     r.onstop = () => {
       if (nr !== aufnahmeNr) return;
@@ -1098,16 +1134,18 @@ async function ueben(idText, quelle, fokusText) {
   }
   function aufnahmeWeg() { spieler?.pause(); spieler = null; if (aufnahme) URL.revokeObjectURL(aufnahme); aufnahme = null; }
   // laufende und fertige Aufnahme verwerfen (nach der Bewertung oder vor einer neuen Aufnahme)
-  function aufnahmeVerwerfen() { aufnahmeNr++; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); mikroFrei(); }
+  function aufnahmeVerwerfen() { aufnahmeNr++; startNr++; startet = false; if (rec?.state === 'recording') rec.stop(); rec = null; aufnahmeWeg(); mikroFrei(); wartetAus(); }
+  // Immer nach dem tatsächlichen Stand, nicht nach dem beim Zeichnen des Knopfs: sonst bliebe ein Knopf tot, dessen Aufnahme von selbst endete
+  const aufnahmeKnopf = () => { if (rec?.state === 'recording') aufnahmeStopp(); else aufnahmeStart(); };
   // Das Mikrofon ist nur während einer Aufnahme offen. Sonst zeigt das iPhone beim App-Wechsel eine laufende Aufnahme an.
-  function mikroFrei() { mikro?.getTracks().forEach(t => t.stop()); mikro = null; }
-  function mikroAus() { verlassen = true; aufnahmeVerwerfen(); document.removeEventListener('visibilitychange', imHintergrund); }
+  function mikroFrei() { mikro?.getTracks().forEach(t => t.stop()); mikro = null; AS.Mikro.abgeben(mikroBesitzer); }
+  function mikroAus() { verlassen = true; aufnahmeVerwerfen(); AS.Mikro.beenden(mikroBesitzer); document.removeEventListener('visibilitychange', imHintergrund); }
   // App wechselt in den Hintergrund: laufende Aufnahme beenden (sie bleibt zum Anhören) und Mikrofon freigeben
   function imHintergrund() { if (!document.hidden) return; if (rec?.state === 'recording') aufnahmeStopp(); else mikroFrei(); }
   document.addEventListener('visibilitychange', imHintergrund);
-  addEventListener('hashchange', mikroAus, { once: true });
+  einmalBeiWechsel(mikroAus);
   wachHalten(true);   // Bildschirm bleibt beim Üben an, sonst bricht eine Aufnahme ab, wenn sich das Gerät sperrt
-  addEventListener('hashchange', () => { if (!location.hash.startsWith('#ueben')) wachHalten(false); }, { once: true });
+  einmalBeiWechsel(() => { if (!location.hash.startsWith('#ueben')) wachHalten(false); });
   const zusatz = art === 'bonus' ? ` · ${tx('allg.bonus')}` : art === 'fehler' ? ` · ${tx('allg.wiederholung_nach_fehler')}` : art === 'festigen' ? ` · ${tx('allg.festigen')}` : '';
   app.innerHTML = `<div class="ueb-kopf"><button class="zurueck" id="zurueck" aria-label="${tx('allg.zurueck')}">${zurueckPfeil}</button>
       <div class="info">${ABF ? `<b>${abfrageTitel()}</b>${['uebergang', 'mitte'].includes(ABF.art) ? ` · ${e.von[0]}:${e.von[1]}` : ''}` : art === 'stelle' ? `<b>${tx('ueben.fehlerstelle')}</b> · ${e.von[0]}:${e.von[1]}` : `${bereichText(e)}${e.nr ? ` · <span class="ab-nr" role="img" aria-label="${tx('allg.abschnitt')} ${e.nr}">${e.nr}</span>` : ''} · ${tx('ueben.ayat', { ayat: e.ayat })} · ${tx('allg.zeilen', { zeilen: e.zeilen })}`} · ${tx('ueben.s')} ${e.seiten.map(p => `${p}<button class="seitenlage klein" data-lage="${p}" aria-label="${tx('ueben.seite_seite', { p, a: alsHtml(p % 2 ? tx('allg.rechte') : tx('allg.linke')) })}">${p % 2 ? tx('ueben.r') : tx('ueben.l')}</button>`).join('<i class="s-trenn"></i>')}</div></div>
@@ -1313,7 +1351,7 @@ async function ueben(idText, quelle, fokusText) {
       grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
       const nimmt = rec?.state === 'recording';
       K.innerHTML = `${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : nB > 1 && !hilfe ? tx('ueben.ayat_aufdecken', { a: D.V[vi][1], b: D.V[liste[pos + nB - 1]][1] }) : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}`;
-      const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
+      const mb = app.querySelector('#mikro'); if (mb) mb.onclick = aufnahmeKnopf;
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
       const hilfeVersteckt = !L && k.st >= 3 && !hilfeFrei && !hilfe && !ti;   // ab „sicher“ erst nach „Hilfe?“ (Hilfen zurücknehmen, wenn das Können wächst)
       if (E.hilfe && !(L?.st >= 1) && hilfeVersteckt) links.push(`<button class="textlink mini leiser" id="hilfe-frage">${tx('ueben.hilfe_frage')}</button>`);
@@ -1426,7 +1464,7 @@ async function ueben(idText, quelle, fokusText) {
     const nimmt = rec?.state === 'recording', ansehen = E.vorueben && k.st <= 1 && !hilfe;
     K.innerHTML = `<button class="knopf haupt" id="g-auf">${tx('ueben.ganz_aufdecken')}</button>${ganzAufnahmeTaste()}`;
     H.innerHTML = (nimmt ? tx('ueben.aufnahme_laeuft_beim_aufdecken_endet_sie') : tx('ueben.ganz_hinweis')) + (ansehen && !nimmt ? `<br><button class="textlink mini" id="ansehen">${tx('ueben.erst_ansehen')}</button>` : '');
-    const mb = app.querySelector('#mikro'); if (mb) mb.onclick = () => nimmt ? aufnahmeStopp() : aufnahmeStart();
+    const mb = app.querySelector('#mikro'); if (mb) mb.onclick = aufnahmeKnopf;
     app.querySelector('#g-auf').onclick = ganzAufdecken;
     const ab = app.querySelector('#ansehen'); if (ab) ab.onclick = () => { vorschau = true; seitenEl.classList.add('vorschau'); zeichne(); };
     sichtbar(spans(ayat[0])[0]);
@@ -1568,7 +1606,7 @@ async function ueben(idText, quelle, fokusText) {
     else if (offen && !hilfe && bst === 'z') bewerte('zoegern');
   };
   addEventListener('keydown', tasten);
-  uebenAufraeumen = () => { mikroAus(); document.removeEventListener('visibilitychange', zeitTick); removeEventListener('keydown', tasten); removeEventListener('resize', drehen); };
+  uebenAufraeumen = () => { mikroAus(); beiWechsel.forEach(f => removeEventListener('hashchange', f)); document.removeEventListener('visibilitychange', zeitTick); removeEventListener('keydown', tasten); removeEventListener('resize', drehen); };
   function abfrageAbschluss() {
     mikroAus(); removeEventListener('keydown', tasten); wachHalten(false);
     document.querySelector('.steuerung')?.remove();
@@ -1798,6 +1836,10 @@ async function mushaf(pText, aText) {
     const rand = parseFloat(getComputedStyle(ro.querySelector('.seite') || ro).marginTop) || 0;
     nr.style.cssText = `position:absolute;margin:0;left:${ro.offsetLeft}px;top:${ro.offsetTop - rand}px;width:${ro.offsetWidth}px`;
     seiteEl.style.overflowX = 'clip'; seiteEl.appendChild(nr);
+    // Feinabgleich (auch Doppelseite): Die neue Seite wird nach der tatsächlichen Lage der alten Seite ausgerichtet, nicht nach ganzzahligen Versätzen oder dem Seitenrand.
+    // So steht sie von der ersten Bewegung an dort, wo nach dem Neuaufbau die echte Seite steht (kein Hochspringen im dunklen Modus, kein Halbpixel-Rasten).
+    { const a = ro.querySelector('.seite'), b = nr.querySelector('.seite');
+      if (a && b) { const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); nr.style.left = (parseFloat(nr.style.left) + A.left - B.left) + 'px'; nr.style.top = (parseFloat(nr.style.top) + A.top - B.top) + 'px'; } }
     zeilenEinpassen(nr); grenzenZeichnen(nr); seitenText(nr);
     if (nr.offsetHeight > ro.offsetHeight) seiteEl.style.minHeight = nr.offsetHeight + ro.offsetTop + 'px';   // nur wenn die neue Seite höher ist
     const W = innerWidth, opt2 = { duration: 300, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
@@ -1868,15 +1910,16 @@ async function vollbild(start) {
   const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
   const farben = x => { if (D.modus === 'seite') return { lage: !quer() }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: !quer(), ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
-  let zaehler = 0;
+  let zaehler = 0, vorladen = null;
   async function zeige(neu, richtung = 0) {
     if (neu < 1 || neu > 604) return;
-    const mein = ++zaehler; Z0.s = 1; Z0.x = 0; Z0.y = 0; v.classList.remove('gezoomt');
+    const mein = ++zaehler;
     const doppel = quer();
     // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
     const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
     const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
     blaseSchliessen(); p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
+    Z0.s = 1; Z0.x = 0; Z0.y = 0; v.classList.remove('gezoomt');   // erst jetzt, wo die neue Seite da ist: Bis dahin steht noch die alte (vielleicht vergrößerte) Seite, Zustand und Anzeige bleiben gleich
     const neuEl = document.createElement('div'); neuEl.className = 'vb-seiten' + (doppel ? ' doppel' : ''); neuEl.innerHTML = seiten.map(x => seiteHTML(x, farben(x))).join('');
     while (buehne.children.length > 1) buehne.firstElementChild.remove();   // Rest einer unterbrochenen Animation
     const alt = buehne.lastElementChild;
@@ -1889,7 +1932,8 @@ async function vollbild(start) {
     zeilenEinpassen(neuEl); grenzenZeichnen(neuEl); seitenText(neuEl);
     if (richtung && alt && alt !== neuEl) gleiten(alt, neuEl, richtung);
     const nach = Math.max(...seiten), vor = Math.min(...seiten);
-    if (nach < 604) schriftenLaden([nach + 1]); if (vor > 1) schriftenLaden([vor - 1]);
+    // Die Nachbarseiten erst nach dem Gleiten vorladen: Schriftdatei holen, entpacken und anmelden belegt sonst mitten in der Bewegung den Hauptstrang (Ruckeln)
+    clearTimeout(vorladen); vorladen = setTimeout(() => { const dz = doppel ? 2 : 1; schriftenLaden([...Array(dz)].map((_, i) => nach + 1 + i).filter(x => x <= 604)); schriftenLaden([...Array(dz)].map((_, i) => vor - dz + i).filter(x => x >= 1)); }, richtung ? 450 : 0);   // Doppelseite: das ganze nächste und vorige Paar, sonst lädt die zweite Seite erst beim Blättern
     pfeileZeigen();
   }
   // Blättern wie in einem E-Book: die alte Seite gleitet seitlich hinaus, die neue von der Gegenseite herein (ohne Hell-Dunkel-Wechsel)
@@ -1897,7 +1941,8 @@ async function vollbild(start) {
   const gleiten = (alt, neuEl, richtung) => {
     const W = innerWidth, ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches, opt = { duration: ruhig ? 0 : 280, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
     alt.style.transform = ''; alt.style.transition = '';
-    neuEl.animate([{ transform: `translateX(${-richtung * W + fingerX}px)` }, { transform: 'translateX(0)' }], opt);
+    // fill nur 'backwards': Mit 'both' bliebe die Endstellung der Animation für immer auf der Seite und überdeckte den Zoom (Inline-Transform), nach dem Blättern wäre kein Zoom mehr sichtbar
+    neuEl.animate([{ transform: `translateX(${-richtung * W + fingerX}px)` }, { transform: 'translateX(0)' }], { ...opt, fill: 'backwards' });
     const a = alt.animate([{ transform: `translateX(${fingerX}px)` }, { transform: `translateX(${richtung * W}px)` }], opt);
     a.onfinish = a.oncancel = () => alt.remove();
     setTimeout(() => { if (alt.isConnected) alt.remove(); }, 450);   // falls die Animation nie meldet (verdecktes Fenster)
@@ -1920,6 +1965,7 @@ async function vollbild(start) {
     s = Math.min(4, Math.max(1, s)); if (s < 1.02) { s = 1; x = 0; y = 0; }
     const gx = (s - 1) * bw / 2, gy = (s - 1) * bh / 2;
     Z0.s = s; Z0.x = Math.max(-gx, Math.min(gx, x)); Z0.y = Math.max(-gy, Math.min(gy, y));
+    if (s > 1) el.getAnimations?.().forEach(a => a.finish());   // läuft noch das Gleiten, ist die Seite sofort an ihrem Platz (sonst überdeckt die Animation den Zoom)
     el.style.transform = s === 1 ? '' : `translate(${Z0.x}px, ${Z0.y}px) scale(${s})`;
     v.classList.toggle('gezoomt', s > 1);
   };
@@ -2057,7 +2103,7 @@ async function vollbild(start) {
   const ende = ueberlagerung(v, grund => {
     removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); lageMQ.removeEventListener('change', anpassen); document.removeEventListener('fullscreenchange', beiVollbild);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    clearTimeout(tippZeit); clearTimeout(verz); clearTimeout(warte);
+    clearTimeout(tippZeit); clearTimeout(verz); clearTimeout(warte); clearTimeout(vorladen);
     blaseSchliessen(); v.remove(); document.body.classList.remove('im-vollbild');
     if (grund === 'zurueck') nachziehen();
   }, { hinter: [app, nav], escape: () => morphZu(), fokus: () => v.querySelector('.vb-zu') });
@@ -2135,7 +2181,7 @@ function profil() {
     <div class="reihe" style="margin-top:10px"><button class="knopf haupt klein" id="sichern">${tx('profil.profil_sichern')}</button><button class="knopf leise klein" id="laden">${tx('profil.profil_laden')}</button></div>
       </div></details>
     <details class="profil-gruppe"><summary><i class="gr-zeichen">${IK('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7"/><path d="M12 17h.01"/>')}</i><span><b>${tx('profil.gruppe_hilfe')}</b><small>${tx('profil.gruppe_hilfe_t')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#hilfe"><div class="t"><b>${tx('profil.hilfe_und_glossar')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#einfuehrung"><div class="t"><b>${tx('profil.einfuehrung_ansehen')}</b></div><span class="pfeil">›</span></a><button type="button" class="karte" id="tour-neu"><div class="t"><b>${tx('profil.erklaerung_beim_ueben_wieder_zeigen')}</b></div><span class="pfeil">›</span></button><a class="karte" href="#rueckmeldung"><div class="t"><b>${tx('profil.rueckmeldung_senden')}</b></div><span class="pfeil">›</span></a></div></div></details>
+      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#hilfe"><div class="t"><b>${tx('profil.hilfe_und_glossar')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#evidenz"><div class="t"><b>${tx('evidenz.eintrag')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#einfuehrung"><div class="t"><b>${tx('profil.einfuehrung_ansehen')}</b></div><span class="pfeil">›</span></a><button type="button" class="karte" id="tour-neu"><div class="t"><b>${tx('profil.erklaerung_beim_ueben_wieder_zeigen')}</b></div><span class="pfeil">›</span></button><a class="karte" href="#rueckmeldung"><div class="t"><b>${tx('profil.rueckmeldung_senden')}</b></div><span class="pfeil">›</span></a>${Fehler.letzte() ? `<button type="button" class="karte" id="fehler-letzter"><div class="t"><b>${tx('fehlermeldung.letzter_fehler_ansehen')}</b></div><span class="pfeil">›</span></button>` : ''}</div></div></details>
     <details class="profil-gruppe"><summary><i class="gr-zeichen">${IK('<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>')}</i><span><b>${tx('profil.gruppe_mehr')}</b><small>${UEBERGANG.installieren && !NATIV ? tx('profil.gruppe_mehr_t') : tx('profil.gruppe_mehr_t_ohne')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren && !NATIV ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
@@ -2173,6 +2219,7 @@ function profil() {
   diaBinden();
   app.querySelector('#laden').onclick = profilLaden;
   app.querySelector('#tour-neu').onclick = () => { tourZuruecksetzen(); toast(tx('profil.beim_naechsten_ueben_erscheint_die')); };
+  const flk = app.querySelector('#fehler-letzter'); if (flk) flk.onclick = () => Fehler.melden();
   menueZeichen('profil');
 }
 
@@ -2183,7 +2230,8 @@ const ZEICHEN = {
   ziel: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/></svg>',
   flagge: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4M6 5h11l-2.5 3.5L17 12H6"/></svg>',
   paar: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="11" height="11" rx="2"/><rect x="9" y="9" width="11" height="11" rx="2"/></svg>',
-  lupe: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>'
+  lupe: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>',
+  strom: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15c2.4 0 3-6 6-6s3.6 6 6 6 3.2-3.2 5.5-6"/><path d="M17.5 6.5h3.5v3.5"/></svg>'
 };
 function uebungsMenue() {
   navSetzen('uebungen');
@@ -2193,6 +2241,7 @@ function uebungsMenue() {
   const kachel = (href, zeichen, titel, text) => `<a class="kachel" href="${href}"><span class="uebung-zeichen">${ZEICHEN[zeichen]}</span><b>${titel}</b><span class="k">${text}</span></a>`;
   app.innerHTML = `<div class="marke">${tx('allg.ueben')}<small>${tx('uebmenue.unter')}</small></div>
     <a class="uebung-hero" href="#kurz"><span class="uebung-zeichen">${ZEICHEN.blitz}</span><div class="t"><b>${tx('kurz.titel')}</b><span>${tx('kurz.untertitel')}</span></div><span class="pfeil">›</span></a>
+    <a class="uebung-hero as-hero" href="#amstueck"><span class="uebung-zeichen">${ZEICHEN.strom}</span><div class="t"><b>${tx('amstueck.titel')}</b><span>${tx('amstueck.untertitel')}</span></div><span class="pfeil" aria-hidden="true">›</span></a>
     <div class="titel-klein">${tx('uebmenue.gezielt')}</div>
     <div class="kacheln">${kachel('#lernen', 'neu', tx('lernen.neu_lernen'), tx('lernen.profil_text'))}${kachel('#fehlerstellen', 'ziel', tx('allg.fehlerstellen'), tx('profil.markierte_stellen_zum_gezielten_ueben', { n: fehl }))}</div>
     ${schwach && D.A[schwach.id] ? `<a class="karte uebung-reihe" href="#ueben/${schwach.id}/frei" style="text-decoration:none;color:inherit"><span class="uebung-zeichen klein">${ZEICHEN.flagge}</span><div class="t"><b>${tx('uebmenue.schwach_titel')}</b><span>${abschnittMarke(D.A[schwach.id])} · ${esc(D.A[schwach.id].titel)}</span></div><span class="pfeil">›</span></a>` : ''}
@@ -2392,6 +2441,13 @@ function hilfeSeite(ziel) {
     leer.classList.toggle('verdeckt', n > 0);
   };
   if (ziel) setTimeout(() => zu(ziel), 60);
+}
+
+// ---------- Evidenz und Grenzen (Text und Zahlen: evidenz.js) ----------
+async function evidenzSeite() {   // erst bei Bedarf geladen: die Seite gehört nicht zum Startpfad
+  const { evidenzHTML } = await import('./evidenz.js');
+  navSetzen('profil');
+  app.innerHTML = evidenzHTML(zurueckPfeil);
 }
 
 // ---------- Ornamente und Meilensteine ----------
@@ -2944,7 +3000,7 @@ function pensumInfo() {
   const em = Z.pensumEmpfehlung(), proTag = Z.P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
   // Dauer nach dem Lernmodell als Spanne: von fehlerfrei bis zu dem Fall, dass viel Fälliges dazwischenkommt
   const sp = sicher('spanne', () => Z.khatmaSpanne(), null) || { von: Z.tageProKhatma(), bis: 0 };
-  return `${sp.bis > sp.von ? tx('einstellungen.hatma_spanne', { von: sp.von, bis: sp.bis }) : tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: sp.von })}<br>${tx('einstellungen.empfehlung_1', { n: em.N, min: em.minimal, gold: em.ideal })} ${tx('einstellungen.empfehlung_2', { t: em.tage(proTag) })}`;
+  return `${sp.bis > sp.von ? tx('einstellungen.hatma_spanne', { von: sp.von, bis: sp.bis }) : tx('einstellungen.eine_hatma_dauert_damit_etwa_tage', { tageProKhatma: sp.von })}<br>${tx('einstellungen.empfehlung_1', { n: em.N, min: em.minimal, gold: em.ideal })} ${sp.bis > sp.von ? tx('einstellungen.empfehlung_2') : ''}`;
 }
 let einstVerlassen = null;
 function einstellungen() {
