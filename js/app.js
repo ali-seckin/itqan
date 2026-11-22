@@ -5,6 +5,7 @@ import * as Lk from './lichtkarte.js';
 import { hintergrundSperren, hintergrundFreigeben, ueberlagerung, eigenerRueckschritt } from './sperre.js';
 import * as Forschung from './forschung.js';
 import * as Fehler from './fehler.js';
+import { Stapel, paarVon, einheitVon, doppelEntscheid } from './blaettern.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
 import { VERSION, NEUIGKEITEN, RUECKMELDUNG_AN, UEBERGANG, andereVersion } from './version.js';
@@ -607,7 +608,8 @@ async function zeige() {
   const f = ROUTEN[name] || heute;
   if (name !== 'rueckmeldung') vorherigeAnsicht = location.hash || '#heute';
   document.body.dataset.ansicht = ROUTEN[name] ? name : 'heute';
-  document.body.classList.remove('doppelt');
+  if (!(name === 'mushaf' && blaetterNahtlos)) document.body.classList.remove('doppelt');
+  if (name !== 'mushaf') { mStapel?.zerstoeren(); mStapel = null; }
   if (name !== 'ueben') wachHalten(false);
   tagStand = Z.P ? Z.heute() : '';
   const y = scrollBehalten; scrollBehalten = null;
@@ -955,8 +957,9 @@ function qadaaTag() {
 // Überall, wo der Muṣḥaf erscheint, zeigen PC und Tablet die aufgeschlagene Doppelseite (ungerade Seite rechts, gerade links).
 // Als Handy gilt ein Gerät, dessen kürzere Bildschirmseite unter 600 px liegt; es bleibt einseitig.
 // Doppelseite wie im Buch: auf Tablet und PC breit genug, am Handy im Querformat
-const doppelseitig = () => (Math.min(screen.width, screen.height) >= 600 && innerWidth >= 700) || (innerWidth > innerHeight && innerWidth >= 600);
-const paarVon = p => (p % 2 ? [p, p + 1] : [p - 1, p]).filter(x => x >= 1 && x <= 604);
+// (Entscheidung und Paarbildung stehen in js/blaettern.js)
+let doppelMerk = null;
+const doppelseitig = () => doppelMerk = doppelEntscheid({ breite: innerWidth, hoehe: innerHeight, schirmKurz: Math.min(screen.width, screen.height) }, doppelMerk);
 // Seiten zu ganzen Doppelseiten ergänzen und paarweise gruppieren
 function doppelseiten(seiten) {
   const paare = new Map();
@@ -990,11 +993,20 @@ async function wachHalten(an) {
   } catch (e) { /* nicht erlaubt oder Akku sparen */ }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && wachWunsch && !wachSperre) wachHalten(true); });
-let warDoppelt = null;
-addEventListener('resize', () => {
-  const d = doppelseitig(); if (warDoppelt === null) { warDoppelt = d; return; }
-  if (d !== warDoppelt) { warDoppelt = d; if (document.body.dataset.ansicht === 'mushaf' && !document.body.classList.contains('im-vollbild')) zeige(); }
-});
+// Drehen, Fenstergröße, Zoom: Einzel- oder Doppelseite wird bei jedem Anlass neu bewertet, auch bei der allerersten Drehung und ohne Zoom.
+// Entscheidend ist nur, ob sich die Betriebsart ändert; dann wird die Ansicht in einem Zug neu gesetzt (die alte bleibt bis dahin stehen).
+// Mehrere Prüfungen kurz nach dem Anlass fangen Geräte ab, die ihre Maße erst nach dem Ereignis melden (iPhone beim Drehen).
+function ansichtPruefen() {
+  const w = document.documentElement.clientWidth + 'px'; if (document.documentElement.style.getPropertyValue('--vw') !== w) document.documentElement.style.setProperty('--vw', w);   // Breite ohne Bildlaufleiste
+  if (document.body.dataset.ansicht !== 'mushaf' || document.body.classList.contains('im-vollbild') || !document.querySelector('.blatt-feld')) return;
+  if (doppelseitig() === document.body.classList.contains('doppelt')) return;
+  blaetterNahtlos = true; scrollBehalten = scrollY; zeige();
+}
+let pruefZeiten = [];
+const ansichtAnlass = () => { ansichtPruefen(); pruefZeiten.forEach(clearTimeout); pruefZeiten = [150, 500].map(ms => setTimeout(ansichtPruefen, ms)); };
+addEventListener('resize', ansichtAnlass); addEventListener('orientationchange', ansichtAnlass);
+matchMedia('(orientation: landscape)').addEventListener?.('change', ansichtAnlass); visualViewport?.addEventListener?.('resize', ansichtAnlass);
+ansichtPruefen();
 
 // Kleine Doppelseite für die Einblendung: Zeilen des Abschnitts markiert, ungerade Seite rechts
 function doppelseiteSkizze(e) {
@@ -1783,104 +1795,126 @@ function seitenOptionen(p) {
   return h;
 }
 const vollbildIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
-let blaetterNahtlos = false;   // gesetzt nach dem Gleiten: die Ansicht wird ohne Ladehinweis neu aufgebaut
+let blaetterNahtlos = false;   // gesetzt vor dem Umbau beim Drehen: die Ansicht wird ohne Ladehinweis neu aufgebaut
+let mStapel = null;            // die Blätter der Muṣḥaf-Ansicht (js/blaettern.js)
 async function mushaf(pText, aText) {
   const lauf = zeigeNr;
   navSetzen('mushaf');
-  const p = Math.min(604, Math.max(1, +pText || gemerkteSeite())), dop = doppelseitig();
+  mStapel?.zerstoeren(); mStapel = null;
+  let p = Math.min(604, Math.max(1, +pText || gemerkteSeite())); const dop = doppelseitig();
   seiteMerken(p);
-  const seiten = dop ? paarVon(p) : [p];
-  document.body.classList.toggle('doppelt', dop);
-  const naechste = Math.min(604, seiten[seiten.length - 1] + 1), vorige = Math.max(1, seiten[0] - 1);
-  const knopfText = x => dop ? `${tx('allg.seiten')} ${paarVon(x).join(` ${tx('mushaf.und')} `)}` : `${tx('mushaf.seite_3')} ${x}`;
-  if (!blaetterNahtlos) app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`;   // nach dem Gleiten steht die neue Seite schon da
-  blaetterNahtlos = false;
+  let seiten = einheitVon(p, dop);
+  const nahtlos = blaetterNahtlos; blaetterNahtlos = false;
+  // Beim Drehen bleibt die alte Ansicht stehen, bis die neue fertig ist: kein Ladehinweis, keine halb umgestellte Ansicht
+  if (!nahtlos) { document.body.classList.toggle('doppelt', dop); app.innerHTML = `<div class="lade">${tx('mushaf.seite_wird_geladen')}</div>`; }
   await schriftenLaden(seiten);
   if (!ansichtGilt(lauf)) return;
-  const abschnitte = D.A.filter(e => e.seiten.some(x => seiten.includes(x)));
+  document.body.classList.toggle('doppelt', dop);
+  let abschnitte = [];
   const nrVon = vi => abschnitte.findIndex(e => vi >= e.v[0] && vi <= e.v[1]);
-  const t = Z.tagesplan();
-  const s = D.V[D.L[seiten[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
   // Ganze Seiten: keine Tönung und keine Grenzlinien, die Seite ist die Einheit
   const ganz = D.modus === 'seite';
   const optFuer = ss => { const ab = D.A.filter(e => e.seiten.some(x => ss.includes(x))); return ganz ? { fst: Z.fehlerstellenSet(), lage: !dop } : { lage: !dop, ton: vi => { const i = ab.findIndex(e => vi >= e.v[0] && vi <= e.v[1]); return i < 0 ? null : ab[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true }; };
-  const opt = ganz ? { fst: Z.fehlerstellenSet(), lage: !dop } : { lage: !dop, ton: vi => { const i = nrVon(vi); return i < 0 ? null : abschnitte[i].id % 4; }, fst: Z.fehlerstellenSet(), grenzen: true };
-  app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${seiten.length > 1 ? `${tx('allg.seiten')} ${seiten.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p })} · ${sureName(s)} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(p) })}</small></div>
-      <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${tx('mushaf.seite_2', { a: alsHtml(p % 2 ? tx('allg.rechte') : tx('allg.linke')) })}">${p % 2 ? tx('mushaf.r') : tx('mushaf.l')}</button></div></div>
-    <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
-    <div class="reihe blaettern mushaf-leiste"><button class="knopf leise klein" id="vor">‹ ${knopfText(naechste)}</button><button type="button" class="knopf leise klein" id="sprung-auf" aria-expanded="false" aria-controls="sprung-panel">${tx('mushaf.springen')} ▾</button><button class="knopf leise klein" id="zur">${knopfText(vorige)} ›</button></div>
-    <div class="sprung-panel verdeckt" id="sprung-panel"><label class="auswahl"><span>${tx('mushaf.seite_3')}</span><select id="nr" class="seitenwahl">${seitenOptionen(p)}</select></label>${stellenWahl(s, true)}</div>
-    <div id="seite" class="${dop ? 'doppel' : ''}"><div class="roller">${dop ? paarHTML(seiten, opt) : seiteHTML(p, opt)}</div><button class="vollbild-knopf" id="vollbild" aria-label="${tx('mushaf.seite_im_vollbild_zeigen')}">${vollbildIcon}</button></div>
-    <div class="titel-klein">${tx('mushaf.abschnitte_auf', { a: alsHtml(seiten.length > 1 ? tx('mushaf.diesen_seiten') : tx('mushaf.dieser_seite')) })}</div>
+  const knopfText = x => dop ? `${tx('allg.seiten')} ${paarVon(x).join(` ${tx('mushaf.und')} `)}` : `${tx('mushaf.seite_3')} ${x}`;
+  const sureVon = ss => D.V[D.L[ss[0] - 1].find(z => z.w)?.w[0][1] ?? 0][0];
+  const unterzeile = (ss, pp) => `${ss.length > 1 ? `${tx('allg.seiten')} ${ss.join(` ${tx('mushaf.und')} `)}` : tx('mushaf.seite', { p: pp })} · ${sureName(sureVon(ss))} · ${tx('mushaf.guz', { juzVonSeite: juzVonSeite(pp) })}`;
+  const lageLabel = pp => tx('mushaf.seite_2', { a: alsHtml(pp % 2 ? tx('allg.rechte') : tx('allg.linke')) });
+  const lageZeichen = pp => pp % 2 ? tx('mushaf.r') : tx('mushaf.l');
+  const abschnittHTML = ss => {
+    abschnitte = D.A.filter(e => e.seiten.some(x => ss.includes(x)));
+    const t = Z.tagesplan();
+    return `<div class="titel-klein">${tx('mushaf.abschnitte_auf', { a: alsHtml(ss.length > 1 ? tx('mushaf.diesen_seiten') : tx('mushaf.dieser_seite')) })}</div>
     ${abschnitte.map((e, i) => {
       const dran = t.plan.includes(e.id) && !t.fertig.includes(e.id);
       return `<div class="karte${ganz ? '' : ` tonk${e.id % 4}`}" data-a="${i}">${ganz ? '' : '<i class="farbe"></i>'}<div class="t"><b>${esc(e.titel)}</b><span>${e.nr ? `${sureName(e.von[0])} <b class="nr-fett">${e.nr}</b>` : abschnittName(e)} · ${bereichText(e)} · ${Z.STUFEN[Z.karte(e.id).st]}${dran ? ` <span class="marke-art bonus">${tx('mushaf.heute_dran')}</span>` : ''}</span></div><a class="knopf leise klein" style="width:auto;text-decoration:none" href="#ueben/${e.id}/frei">${tx('allg.ueben')}</a></div>`;
     }).join('')}`;
-  menueZeichen('mushaf');   // Buch-Zeichen des Reiters vor der Überschrift, die Überschrift selbst bleibt klein
-  const seiteEl = app.querySelector('#seite');
-  zeilenEinpassen(seiteEl); grenzenZeichnen(seiteEl);
-  seitenText(seiteEl); seiteHolen(seiteEl.querySelector('.roller'), seiteEl.querySelector(`.seite[data-p="${p}"]`));
-  // Blättern wie in einem E-Book: die alte Seite gleitet hinaus, die nächste schiebt sich gleichzeitig nahtlos herein; danach wird die Ansicht regulär neu aufgebaut
-  let blaettert = false;
-  const blaettern = async ziel => {
-    if (seiten.includes(ziel) || blaettert) return; blaettert = true; scrollBehalten = scrollY;
-    const r = ziel > seiten[seiten.length - 1] ? 1 : -1, ro = seiteEl.querySelector('.roller'), ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let gegangen = false; const geh = () => { if (gegangen) return; gegangen = true; blaetterNahtlos = !ruhig; location.replace('#mushaf/' + ziel); };
-    if (ruhig || !ro || !ro.animate) { geh(); return; }
-    const neu = dop ? paarVon(ziel) : [ziel];
-    try { await schriftenLaden(neu); } catch (e) { geh(); return; }
-    if (!seiteEl.isConnected) return;
-    const nr = document.createElement('div'); nr.className = ro.className; nr.setAttribute('aria-hidden', 'true');
-    nr.innerHTML = dop ? paarHTML(neu, optFuer(neu)) : seiteHTML(ziel, optFuer(neu));
-    // genau über der alten Seite: Ein absolut gesetzter Rahmen lässt den oberen Seitenrand (4 px) nicht mehr durchschlagen wie der echte Rahmen, das wird ausgeglichen
-    const rand = parseFloat(getComputedStyle(ro.querySelector('.seite') || ro).marginTop) || 0;
-    nr.style.cssText = `position:absolute;margin:0;left:${ro.offsetLeft}px;top:${ro.offsetTop - rand}px;width:${ro.offsetWidth}px`;
-    seiteEl.style.overflowX = 'clip'; seiteEl.appendChild(nr);
-    // Feinabgleich (auch Doppelseite): Die neue Seite wird nach der tatsächlichen Lage der alten Seite ausgerichtet, nicht nach ganzzahligen Versätzen oder dem Seitenrand.
-    // So steht sie von der ersten Bewegung an dort, wo nach dem Neuaufbau die echte Seite steht (kein Hochspringen im dunklen Modus, kein Halbpixel-Rasten).
-    { const a = ro.querySelector('.seite'), b = nr.querySelector('.seite');
-      if (a && b) { const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); nr.style.left = (parseFloat(nr.style.left) + A.left - B.left) + 'px'; nr.style.top = (parseFloat(nr.style.top) + A.top - B.top) + 'px'; } }
-    zeilenEinpassen(nr); grenzenZeichnen(nr); seitenText(nr);
-    if (nr.offsetHeight > ro.offsetHeight) seiteEl.style.minHeight = nr.offsetHeight + ro.offsetTop + 'px';   // nur wenn die neue Seite höher ist
-    const W = innerWidth, opt2 = { duration: 300, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
-    nr.animate([{ transform: `translateX(${-r * W}px)` }, { transform: 'translateX(0)' }], opt2);
-    ro.animate([{ transform: 'none' }, { transform: `translateX(${r * W}px)` }], opt2).onfinish = geh;
-    setTimeout(geh, 450);
   };
-  app.querySelector('#vor').onclick = () => blaettern(naechste);
-  app.querySelector('#zur').onclick = () => blaettern(vorige);
+  let sJetzt = sureVon(seiten);
+  app.innerHTML = `<div class="kopfzeile"><div class="marke">${tx('allg.mushaf')}<small>${unterzeile(seiten, p)}</small></div>
+      <div class="reihe-k"><a class="seitenlage such-knopf" href="#suche" aria-label="${tx('mushaf.im_quran_suchen')}">${lupe}</a><button class="seitenlage" id="lage" aria-label="${lageLabel(p)}">${lageZeichen(p)}</button></div></div>
+    <div class="hinweisbox lageinfo verdeckt" id="lageinfo">${lageInfo(p)}</div>
+    <div class="reihe blaettern mushaf-leiste"><button class="knopf leise klein" id="vor">‹ ${knopfText(Math.min(604, seiten[seiten.length - 1] + 1))}</button><button type="button" class="knopf leise klein" id="sprung-auf" aria-expanded="false" aria-controls="sprung-panel">${tx('mushaf.springen')} ▾</button><button class="knopf leise klein" id="zur">${knopfText(Math.max(1, seiten[0] - 1))} ›</button></div>
+    <div class="sprung-panel verdeckt" id="sprung-panel"><label class="auswahl"><span>${tx('mushaf.seite_3')}</span><select id="nr" class="seitenwahl">${seitenOptionen(p)}</select></label>${stellenWahl(sJetzt, true)}</div>
+    <div class="blatt-feld"><div id="seite" class="blatt blatt-jetzt${dop ? ' doppel' : ''}"><div class="roller">${dop ? paarHTML(seiten, optFuer(seiten)) : seiteHTML(p, optFuer(seiten))}</div><button class="vollbild-knopf" id="vollbild" aria-label="${tx('mushaf.seite_im_vollbild_zeigen')}">${vollbildIcon}</button></div></div>
+    <div id="abschnitte">${abschnittHTML(seiten)}</div>`;
+  menueZeichen('mushaf');   // Buch-Zeichen des Reiters vor der Überschrift, die Überschrift selbst bleibt klein
+  const feld = app.querySelector('.blatt-feld'), blatt0 = app.querySelector('#seite');
+  zeilenEinpassen(blatt0); grenzenZeichnen(blatt0);
+  seitenText(blatt0); seiteHolen(blatt0.querySelector('.roller'), blatt0.querySelector(`.seite[data-p="${p}"]`));
+  // Blättern: ein Pfad für Knöpfe, Tasten und Wischen. Die Nachbarblätter stehen fertig im DOM (js/blaettern.js), die Bewegung läuft nur mit transform.
+  let breiteW = app.clientWidth;   // Weg der Bewegung: nur bei Größenänderung neu gelesen, nie beim Blättern
+  const gr = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { if (!feld.isConnected) { gr.disconnect(); return; } breiteW = app.clientWidth; }) : null; gr?.observe(app);
+  // Nach der Landung: Überschrift, Knöpfe und Auswahl zeigen die neue Seite; Abschnittsliste und Auswahl der Sūra folgen gleich danach
+  const kopfSetzen = () => {
+    const q = (sel, f) => { const e = app.querySelector(sel); if (e) f(e); };
+    q('.kopfzeile .marke small', e => { e.innerHTML = unterzeile(seiten, p); });
+    q('#lage', e => { e.setAttribute('aria-label', lageLabel(p)); e.innerHTML = lageZeichen(p); });
+    q('#lageinfo', e => { e.innerHTML = lageInfo(p); });
+    q('#vor', e => { e.innerHTML = `‹ ${knopfText(Math.min(604, seiten[seiten.length - 1] + 1))}`; });
+    q('#zur', e => { e.innerHTML = `${knopfText(Math.max(1, seiten[0] - 1))} ›`; });
+    q('#nr', e => { e.value = String(p); });
+  };
+  const untenSetzen = () => {
+    if (!feld.isConnected || mStapel !== stapel) return;
+    app.querySelector('#abschnitte').innerHTML = abschnittHTML(seiten);
+    const sNeu = sureVon(seiten);
+    if (sNeu !== sJetzt) { sJetzt = sNeu; const alt = app.querySelector('.stellenwahl'); if (alt) { alt.outerHTML = stellenWahl(sNeu, true); stellenWahlBinden(); } }
+  };
+  const stapel = mStapel = new Stapel({
+    feld, id: 'seite', seite: p, doppel: dop, aktuell: blatt0,
+    breite: () => breiteW, ruhig: () => matchMedia('(prefers-reduced-motion: reduce)').matches,
+    bauen: async ss => {
+      await schriftenLaden(ss);
+      const el = document.createElement('div'); el.className = 'blatt' + (dop ? ' doppel' : '');
+      el.innerHTML = `<div class="roller">${dop ? paarHTML(ss, optFuer(ss)) : seiteHTML(ss[0], optFuer(ss))}</div>`;
+      return el;
+    },
+    einsetzen: el => { zeilenEinpassen(el); grenzenZeichnen(el); seitenText(el); },
+    beiStart: () => { blaseSchliessen(); },
+    beiBefoerdert: (ss, el, r) => {
+      seiten = ss; p = r < 0 ? ss[ss.length - 1] : ss[0];
+      seiteMerken(p); try { history.replaceState(history.state, '', '#mushaf/' + p); } catch (e) { /* ohne Verlauf geht es auch */ }
+      const knopf = app.querySelector('#vollbild'); if (knopf && knopf.parentNode !== el) el.appendChild(knopf);
+      kopfSetzen(); seiteHolen(el.querySelector('.roller'), el.querySelector(`.seite[data-p="${p}"]`));
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(untenSetzen, { timeout: 400 }); else setTimeout(untenSetzen, 120);   // Abschnittsliste im Leerlauf, nicht im Bild der Landung
+    },
+  });
+  app.querySelector('#vor').onclick = () => stapel.blaettern(1);
+  app.querySelector('#zur').onclick = () => stapel.blaettern(-1);
   app.querySelector('#nr').onchange = ev => location.replace('#mushaf/' + ev.target.value);
   app.querySelector('#lage').onclick = () => app.querySelector('#lageinfo').classList.toggle('verdeckt');
   app.querySelector('#sprung-auf').onclick = ev => { const zu = app.querySelector('#sprung-panel').classList.toggle('verdeckt'); ev.currentTarget.setAttribute('aria-expanded', String(!zu)); };
   app.querySelector('#vollbild').onclick = ev => { ev.stopPropagation(); vollbild(p); };
-  // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige.
+  // Blättern durch Wischen: nach rechts = nächste Seite (wie im Muṣḥaf), nach links = vorige. Die Seite und ihr Nachbar folgen dem Finger.
   // Die Richtung wird gleich zu Beginn der Bewegung festgelegt, zugunsten des Blätterns: Nur eine deutlich senkrechte Bewegung
   // (steiler als etwa 58 Grad) scrollt die Seite; sonst blättert die Bewegung, und die Seite scrollt dabei nicht mit.
-  let sx = null, sy = null, richt = null;   // richt: null offen, 'h' waagerecht, 'v' senkrecht
-  const vergroessert = () => { const ro = seiteEl.querySelector('.roller'); return ro.scrollWidth > ro.clientWidth + 1; };   // vergrößerte Seite: Wischen schiebt die Seite, geblättert wird mit den Knöpfen darüber
-  seiteEl.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; richt = null; }, { passive: true });
-  seiteEl.addEventListener('touchmove', e => {
+  let sx = null, sy = null, richt = null, tx0 = 0, tz0 = 0, tempoX = 0;   // richt: null offen, 'h' waagerecht, 'v' senkrecht; tempoX: Fingertempo in px/ms
+  const vergroessert = () => { const r = stapel.jetzt.querySelector('.roller'); return r.scrollWidth > r.clientWidth + 1; };   // vergrößerte Seite: Wischen schiebt die Seite, geblättert wird mit den Knöpfen darüber
+  feld.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; richt = null; tx0 = sx; tz0 = e.timeStamp; tempoX = 0; }, { passive: true });
+  feld.addEventListener('touchmove', e => {
     if (sx == null || vergroessert()) return;
     const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
     if (richt == null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) richt = Math.abs(dy) > 1.6 * Math.abs(dx) ? 'v' : 'h';
-    if (richt === 'h' && e.cancelable) e.preventDefault();
+    if (richt === 'h') { if (e.cancelable) e.preventDefault(); stapel.ziehen(dx); }
+    const x = e.touches[0].clientX, dt = e.timeStamp - tz0; if (dt > 0) tempoX = 0.7 * tempoX + 0.3 * (x - tx0) / dt; tx0 = x; tz0 = e.timeStamp;
   }, { passive: false });
-  seiteEl.addEventListener('touchend', e => {
+  feld.addEventListener('touchend', e => {
     if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; const r = richt; sx = null; richt = null;
     if (vergroessert()) return;
-    if (r === 'h' && Math.abs(dx) > 55) blaettern(dx > 0 ? naechste : vorige);
+    if (r === 'h') stapel.loslassen(Math.abs(dx) > 55 || (Math.abs(tempoX) > 0.5 && Math.abs(dx) > 20 && tempoX * dx > 0), dx > 0 ? 1 : -1, Math.abs(tempoX));   // auch ein kurzer, schneller Wisch blättert
   });
+  feld.addEventListener('touchcancel', () => { sx = null; richt = null; stapel.loslassen(false); });
   // Tastatur am PC: Pfeil links = weiter (wie im Buch), Pfeil rechts = zurück
   const tasten = ev => {
-    if (!seiteEl.isConnected) { removeEventListener('keydown', tasten); return; }
+    if (!feld.isConnected) { removeEventListener('keydown', tasten); return; }
     if (document.body.classList.contains('im-vollbild') || ev.target.closest?.('select,input,textarea') || document.querySelector('.dialog') || ev.ctrlKey || ev.metaKey || ev.altKey || ev.repeat) return;
-    if (ev.key === 'ArrowLeft') blaettern(naechste); else if (ev.key === 'ArrowRight') blaettern(vorige);
+    if (ev.key === 'ArrowLeft') stapel.blaettern(1); else if (ev.key === 'ArrowRight') stapel.blaettern(-1);
   };
   addEventListener('keydown', tasten);
   stellenWahlBinden();
   const blitz = k => { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); k.classList.remove('blitz'); void k.offsetWidth; k.classList.add('blitz'); };
   // Tippen auf die Seite zeigt den passenden Abschnitt unten
-  seiteEl.onclick = async ev => {
+  feld.onclick = async ev => {
     const w = ev.target.closest('.w'); if (!w) return;
     if (await uebersetzungZeigen(+w.dataset.v)) return;   // Übersetzung an: Blase statt Sprung
     const k = app.querySelector(`.karte[data-a="${nrVon(+w.dataset.v)}"]`); if (k) blitz(k);
@@ -1889,12 +1923,10 @@ async function mushaf(pText, aText) {
   // „v<Āya-Index>“: eine einzelne Āya aus der Āya-Auswahl; sonst Abschnitts-Nummer
   const ziel = aText == null ? null : /^v\d+$/.test(aText) ? { v: [+aText.slice(1), +aText.slice(1)] } : D.A[+aText];
   if (ziel) {
-    const ws = [...seiteEl.querySelectorAll('.w')].filter(w => +w.dataset.v >= ziel.v[0] && +w.dataset.v <= ziel.v[1]);
+    const ws = [...blatt0.querySelectorAll('.w')].filter(w => +w.dataset.v >= ziel.v[0] && +w.dataset.v <= ziel.v[1]);
     ws.forEach(w => w.classList.add('angesprungen')); setTimeout(() => ws.forEach(w => w.classList.remove('angesprungen')), 2600);
     ws[0]?.scrollIntoView({ block: 'center' });
   }
-  if (naechste > seiten[seiten.length - 1]) schriftenLaden(dop ? paarVon(naechste) : [naechste]);
-  if (vorige < seiten[0]) schriftenLaden(dop ? paarVon(vorige) : [vorige]);
 }
 
 // ---------- Vollbild: nur die Seite, Blättern nach rechts und links ----------
@@ -1910,69 +1942,72 @@ async function vollbild(start) {
   const quer = () => innerWidth > innerHeight || doppelseitig();   // quer am Handy, PC und Tablet immer
   // Abschnitte farbig wie in der Muṣḥaf-Ansicht
   const farben = x => { if (D.modus === 'seite') return { lage: !quer() }; const ab = D.A.filter(e => e.seiten.includes(x)); return { grenzen: true, lage: !quer(), ton: vi => { const e = ab.find(e => vi >= e.v[0] && vi <= e.v[1]); return e ? e.id % 4 : null; } }; };
-  let zaehler = 0, vorladen = null;
-  async function zeige(neu, richtung = 0) {
-    if (neu < 1 || neu > 604) return;
-    const mein = ++zaehler;
-    const doppel = quer();
-    // Querformat: Doppelseite wie im Buch, ungerade Seite rechts, gerade links
-    const erste = doppel ? (neu % 2 ? neu : neu - 1) : neu;
-    const seiten = doppel ? [erste, erste + 1].filter(x => x <= 604) : [erste];
-    blaseSchliessen(); p = erste; seiteMerken(p); if (!zieht) reglerSetzen(p); await schriftenLaden(seiten); if (mein !== zaehler) return;   // eine neuere Anfrage hat Vorrang
-    Z0.s = 1; Z0.x = 0; Z0.y = 0; v.classList.remove('gezoomt');   // erst jetzt, wo die neue Seite da ist: Bis dahin steht noch die alte (vielleicht vergrößerte) Seite, Zustand und Anzeige bleiben gleich
-    const neuEl = document.createElement('div'); neuEl.className = 'vb-seiten' + (doppel ? ' doppel' : ''); neuEl.innerHTML = seiten.map(x => seiteHTML(x, farben(x))).join('');
-    while (buehne.children.length > 1) buehne.firstElementChild.remove();   // Rest einer unterbrochenen Animation
-    const alt = buehne.lastElementChild;
-    if (richtung && alt) buehne.appendChild(neuEl); else buehne.replaceChildren(neuEl);
-    const ss = [...neuEl.querySelectorAll('.seite')];
-    const breite = doppel ? Math.floor((innerWidth - 28) / 2) : Math.min(innerWidth, 900), hoehe = innerHeight - 60;   // unten bleibt Platz für den Regler
-    ss.forEach(s => s.style.width = breite + 'px');
-    const h = Math.max(...ss.map(s => s.offsetHeight));
-    if (h > hoehe) ss.forEach(s => s.style.width = Math.floor(breite * hoehe / h) + 'px');
-    zeilenEinpassen(neuEl); grenzenZeichnen(neuEl); seitenText(neuEl);
-    if (richtung && alt && alt !== neuEl) gleiten(alt, neuEl, richtung);
-    const nach = Math.max(...seiten), vor = Math.min(...seiten);
-    // Die Nachbarseiten erst nach dem Gleiten vorladen: Schriftdatei holen, entpacken und anmelden belegt sonst mitten in der Bewegung den Hauptstrang (Ruckeln)
-    clearTimeout(vorladen); vorladen = setTimeout(() => { const dz = doppel ? 2 : 1; schriftenLaden([...Array(dz)].map((_, i) => nach + 1 + i).filter(x => x <= 604)); schriftenLaden([...Array(dz)].map((_, i) => vor - dz + i).filter(x => x >= 1)); }, richtung ? 450 : 0);   // Doppelseite: das ganze nächste und vorige Paar, sonst lädt die zweite Seite erst beim Blättern
-    pfeileZeigen();
-  }
-  // Blättern wie in einem E-Book: die alte Seite gleitet seitlich hinaus, die neue von der Gegenseite herein (ohne Hell-Dunkel-Wechsel)
-  let fingerX = 0;
-  const gleiten = (alt, neuEl, richtung) => {
-    const W = innerWidth, ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches, opt = { duration: ruhig ? 0 : 280, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'both' };
-    alt.style.transform = ''; alt.style.transition = '';
-    // fill nur 'backwards': Mit 'both' bliebe die Endstellung der Animation für immer auf der Seite und überdeckte den Zoom (Inline-Transform), nach dem Blättern wäre kein Zoom mehr sichtbar
-    neuEl.animate([{ transform: `translateX(${-richtung * W + fingerX}px)` }, { transform: 'translateX(0)' }], { ...opt, fill: 'backwards' });
-    const a = alt.animate([{ transform: `translateX(${fingerX}px)` }, { transform: `translateX(${richtung * W}px)` }], opt);
-    a.onfinish = a.oncancel = () => alt.remove();
-    setTimeout(() => { if (alt.isConnected) alt.remove(); }, 450);   // falls die Animation nie meldet (verdecktes Fenster)
-    fingerX = 0;
+  // Blättern: ein Pfad für Pfeile, Tasten, Wischen und Regler (js/blaettern.js). Die Nachbarblätter stehen fertig im DOM, die Bewegung läuft nur mit transform.
+  let doppel = quer(), stapel = null, masseMerk = '', breiteW = innerWidth;
+  const aktuell = () => stapel?.jetzt;
+  // Größe der Seiten: eine Messung je Fenstergröße (an einer Probeseite), nie beim Blättern. Querformat: Doppelseite wie im Buch.
+  const groesse = () => {
+    const bw = buehne.clientWidth || innerWidth, bh = buehne.clientHeight || innerHeight;
+    const breite = doppel ? Math.floor((bw - 28) / 2) : Math.min(bw, 900), hoehe = bh - 60;   // unten bleibt Platz für den Regler
+    buehne.style.setProperty('--vb-sb', breite + 'px');
+    const probe = document.createElement('div'); probe.className = 'blatt blatt-nb vb-seiten' + (doppel ? ' doppel' : ''); probe.innerHTML = seiteHTML(3, {});
+    buehne.appendChild(probe); const h = probe.querySelector('.seite').offsetHeight; probe.remove();
+    if (h > hoehe) buehne.style.setProperty('--vb-sb', Math.floor(breite * hoehe / h) + 'px');
+    breiteW = bw; masseMerk = `${bw}x${bh}x${doppel}`;
+  };
+  const blattBauen = async ss => {
+    await schriftenLaden(ss);
+    const el = document.createElement('div'); el.className = 'blatt vb-seiten' + (doppel ? ' doppel' : '');
+    el.innerHTML = ss.map(x => seiteHTML(x, farben(x))).join('');
+    return el;
+  };
+  const einsetzen = el => { zeilenEinpassen(el); grenzenZeichnen(el); seitenText(el); };
+  // Die aufgeschlagene Seite: Merken, Regler, Blase und Zoom
+  const seiteGilt = ss => { p = ss[0]; seiteMerken(p); if (!zieht) reglerSetzen(p); blaseSchliessen(); pfeileZeigen(); };
+  const zeigeStart = async () => {
+    doppel = quer(); groesse();
+    const ss = einheitVon(p, doppel), el = await blattBauen(ss);
+    if (!v.isConnected) return;
+    buehne.replaceChildren(el); einsetzen(el);
+    stapel = new Stapel({ feld: buehne, seite: p, doppel, aktuell: el, bauen: blattBauen, einsetzen, breite: () => breiteW,
+      ruhig: () => matchMedia('(prefers-reduced-motion: reduce)').matches,
+      beiStart: (cur, ziel) => { Z0.s = 1; Z0.x = 0; Z0.y = 0; cur.style.transform = ''; v.classList.remove('gezoomt'); seiteGilt(ziel); },   // der Zoom endet mit dem Blättern
+      beiBefoerdert: (ss, el2, r) => { if (!r) { Z0.s = 1; Z0.x = 0; Z0.y = 0; v.classList.remove('gezoomt'); seiteGilt(ss); } } });
+    seiteGilt(ss);
+  };
+  // Sprung (Regler): ohne Bewegung zur Seite
+  const zeige = neu => { if (neu >= 1 && neu <= 604) stapel?.springen(neu); };
+  // Drehen oder Größenänderung: nur bei geänderter Größe oder Betriebsart die Seiten neu setzen (Einzelseite hoch, Doppelseite quer)
+  const neuAnordnen = () => {
+    if (!stapel || !v.isConnected) return;
+    const m = `${buehne.clientWidth}x${buehne.clientHeight}x${quer()}`; if (m === masseMerk) return;
+    doppel = quer(); groesse(); stapel.springen(p, doppel);
   };
   // Die Blätterpfeile erscheinen nur kurz beim Blättern (und am PC bei Mausbewegung) und blenden nach einer Sekunde aus; sie bleiben antippbar
   let pfeilZeit = null;
   function pfeileZeigen() { v.classList.add('pfeile'); clearTimeout(pfeilZeit); pfeilZeit = setTimeout(() => v.classList.remove('pfeile'), 1100); }
   v.addEventListener('mousemove', pfeileZeigen);
   // im Muṣḥaf liegt die nächste Seite links: nach rechts wischen oder links tippen = weiter
-  const weiter = () => zeige(p + (quer() ? 2 : 1), 1), zurueck = () => zeige(p - (quer() ? 2 : 1), -1);
+  const weiter = () => stapel?.blaettern(1), zurueck = () => stapel?.blaettern(-1);
   v.querySelector('.vb-pfeil.links').onclick = weiter;
   v.querySelector('.vb-pfeil.rechts').onclick = zurueck;
   // Zoom: zwei Finger vergrößern, ein Finger schiebt die vergrößerte Seite, Doppeltipp zoomt hinein und heraus (am PC Strg und Mausrad, Doppelklick).
   // Bei Maßstab 1 wischt ein Finger wie bisher die Seiten um.
   const Z0 = { s: 1, x: 0, y: 0 };
   const zoomSetzen = (s, x, y) => {
-    const el = buehne.lastElementChild; if (!el) return;
+    if (s > 1.02) stapel?.sofort();   // läuft noch das Blättern, ist die Seite sofort an ihrem Platz (sonst überdeckt die Animation den Zoom)
+    const el = aktuell(); if (!el) return;
     const r = el.getBoundingClientRect(), bw = r.width / Z0.s, bh = r.height / Z0.s;   // Grundgröße ohne Maßstab
     s = Math.min(4, Math.max(1, s)); if (s < 1.02) { s = 1; x = 0; y = 0; }
     const gx = (s - 1) * bw / 2, gy = (s - 1) * bh / 2;
     Z0.s = s; Z0.x = Math.max(-gx, Math.min(gx, x)); Z0.y = Math.max(-gy, Math.min(gy, y));
-    if (s > 1) el.getAnimations?.().forEach(a => a.finish());   // läuft noch das Gleiten, ist die Seite sofort an ihrem Platz (sonst überdeckt die Animation den Zoom)
     el.style.transform = s === 1 ? '' : `translate(${Z0.x}px, ${Z0.y}px) scale(${s})`;
     v.classList.toggle('gezoomt', s > 1);
   };
   const mitteVon = () => [innerWidth / 2, innerHeight / 2];
   const zoomAuf = (ns, px, py) => { const c = mitteVon(), f = ns / Z0.s; zoomSetzen(ns, (px - c[0]) - f * (px - c[0] - Z0.x), (py - c[1]) - f * (py - c[1] - Z0.y)); };
   const dopptipp = (px, py) => { if (Z0.s > 1) zoomSetzen(1, 0, 0); else zoomAuf(2.4, px, py); };
-  let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0, senkrecht = null;
+  let x0 = null, y0 = null, pinch = null, pan = null, letzterTipp = 0, senkrecht = null, fx = 0, fz = 0, tempoX = 0;   // tempoX: Fingertempo waagerecht in px/ms
   // Nach oben oder unten wischen (Shared-Element-Übergang wie auf dem iPhone): Die Seite folgt zuerst dem Finger und wandert dann
   // fließend an ihren Platz in der normalen Ansicht dahinter. Hintergrund und Bedienelemente blenden dabei aus. Beim Loslassen läuft die
   // Bewegung mit auslaufendem Tempo zu Ende (schnelles Wischen genügt) oder die Seite federt zurück.
@@ -1985,25 +2020,25 @@ async function vollbild(start) {
     requestAnimationFrame(schritt);
   });
   const morphZiel = () => {
-    const q = buehne.lastElementChild, z = document.querySelector('#app #seite .paar') || document.querySelector('#app #seite .seite');
+    const q = aktuell(), z = document.querySelector('#app #seite .paar') || document.querySelector('#app #seite .seite');
     if (!q || !z) return { tx: 0, ty: 0, s: 0.92 };
     const a = q.getBoundingClientRect(), b = z.getBoundingClientRect(); if (!a.width || !b.width) return { tx: 0, ty: 0, s: 0.92 };
     const lim = innerHeight * 0.7;
     return { tx: Math.max(-lim, Math.min(lim, b.left + b.width / 2 - a.left - a.width / 2)), ty: Math.max(-lim, Math.min(lim, b.top + b.height / 2 - a.top - a.height / 2)), s: Math.max(0.5, Math.min(1.2, b.width / a.width, b.height / a.height)) };
   };
   const zeichne = () => {   // zugX/zugY: Versatz des Fingers, zugB: Weg zum Ziel von 0 bis 1
-    const q = buehne.lastElementChild; if (!q) return; mz ||= morphZiel();
+    const q = aktuell(); if (!q) return; mz ||= morphZiel();
     const b = zugB, x = (1 - b) * zugX + b * mz.tx, y = (1 - b) * zugY + b * mz.ty, s = 1 + b * (mz.s - 1);
     q.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
     v.style.setProperty('--vb-bg', String(Math.max(0, 1 - b * 1.15))); v.style.setProperty('--vb-ui', String(Math.max(0, 1 - b * 3.5)));
   };
-  const zugStart = () => { zugX = zugY = zugB = 0; tempo = 0; mz = null; v.classList.add('zieht'); const q = buehne.lastElementChild; if (q) q.style.transition = ''; };
+  const zugStart = () => { zugX = zugY = zugB = 0; tempo = 0; mz = null; v.classList.add('zieht'); const q = aktuell(); if (q) q.style.transition = ''; };
   const zug = (dx, dy, zeit) => {
     if (letzteZeit) { const dt = zeit - letzteZeit; if (dt > 0) tempo = 0.7 * tempo + 0.3 * ((dy - letzterY) / dt); }
     letzterY = dy; letzteZeit = zeit;
     zugX = dx * 0.6; zugY = dy; zugB = 0.85 * glatt(Math.min(1, Math.abs(dy) / 260)); zeichne();
   };
-  const zugEnde = () => { v.classList.remove('zieht'); v.style.removeProperty('--vb-bg'); v.style.removeProperty('--vb-ui'); const q = buehne.lastElementChild; if (q) q.style.transform = ''; zugX = zugY = zugB = 0; mz = null; };
+  const zugEnde = () => { v.classList.remove('zieht'); v.style.removeProperty('--vb-bg'); v.style.removeProperty('--vb-ui'); const q = aktuell(); if (q) q.style.transform = ''; zugX = zugY = zugB = 0; mz = null; };
   const zugAus = () => {   // zurückfedern
     const b0 = zugB, x0_ = zugX, y0_ = zugY; letzteZeit = 0;
     lauf(260, k => { zugB = b0 * (1 - k); zugX = x0_ * (1 - k); zugY = y0_ * (1 - k); zeichne(); }).then(zugEnde);
@@ -2022,7 +2057,7 @@ async function vollbild(start) {
   v.addEventListener('touchstart', e => {
     if (e.target.closest('.vb-regler,.vb-zu,.vb-pfeil')) { x0 = null; return; }
     if (e.touches.length === 2) { pinch = { d: abstand(e.touches), s: Z0.s, m: mitteZwei(e.touches), x: Z0.x, y: Z0.y }; x0 = null; pan = null; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pinch = null; senkrecht = null;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pinch = null; senkrecht = null; fx = x0; fz = e.timeStamp; tempoX = 0;
     v.style.transition = ''; pan = Z0.s > 1 ? { x: x0, y: y0, zx: Z0.x, zy: Z0.y } : null;
   }, { passive: true });
   v.addEventListener('touchmove', e => {
@@ -2035,7 +2070,7 @@ async function vollbild(start) {
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
       if (senkrecht == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) { senkrecht = Math.abs(dy) > 1.3 * Math.abs(dx); letzteZeit = 0; if (senkrecht) zugStart(); }
       if (senkrecht) zug(dx, dy, e.timeStamp);
-      else if (senkrecht === false) { fingerX = dx; const el = buehne.lastElementChild; if (el) { el.style.transition = ''; el.style.transform = `translateX(${dx}px)`; } }
+      else if (senkrecht === false) { stapel?.ziehen(dx); const dt = e.timeStamp - fz; if (dt > 0) tempoX = 0.7 * tempoX + 0.3 * (e.touches[0].clientX - fx) / dt; fx = e.touches[0].clientX; fz = e.timeStamp; }   // die Seite und ihr Nachbar folgen dem Finger
     }
   }, { passive: false });
   v.addEventListener('touchend', e => {
@@ -2048,17 +2083,15 @@ async function vollbild(start) {
       return;
     }
     const waag = senkrecht === false; senkrecht = null;
-    const zurueckFedern = () => { fingerX = 0; const el = buehne.lastElementChild; if (el) { el.style.transition = 'transform .2s ease'; el.style.transform = ''; } };
+    const zurueckFedern = () => stapel?.loslassen(false);
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {   // Tipp: zwei kurz hintereinander zoomen
       if (Date.now() - letzterTipp < 320) { letzterTipp = 0; dopptipp(px, py); } else letzterTipp = Date.now();
       return;
     }
-    if (Z0.s === 1 && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
-      const schritt = quer() ? 2 : 1, ziel = dx > 0 ? p + schritt : p - schritt;
-      if (ziel >= 1 && ziel <= 604) dx > 0 ? weiter() : zurueck(); else zurueckFedern();   // an den Enden des Buches federt die Seite zurück
-    } else if (waag) zurueckFedern();
+    if (Z0.s === 1 && (Math.abs(dx) > 45 || (Math.abs(tempoX) > 0.5 && Math.abs(dx) > 20 && tempoX * dx > 0)) && Math.abs(dx) > Math.abs(dy)) stapel?.loslassen(true, dx > 0 ? 1 : -1, Math.abs(tempoX));   // an den Enden des Buches federt die Seite zurück; ein kurzer, schneller Wisch blättert auch
+    else if (waag) zurueckFedern();
   });
-  v.addEventListener('touchcancel', () => { x0 = null; pan = null; pinch = null; if (senkrecht) zugAus(); else if (senkrecht === false && fingerX) { fingerX = 0; const el = buehne.lastElementChild; if (el) { el.style.transition = 'transform .2s ease'; el.style.transform = ''; } } senkrecht = null; });
+  v.addEventListener('touchcancel', () => { x0 = null; pan = null; pinch = null; if (senkrecht) zugAus(); else if (senkrecht === false) stapel?.loslassen(false); senkrecht = null; });
   // Tippen auf eine Āya zeigt ihre Übersetzung; kurz warten, damit ein Doppeltipp (Zoom) keine Blase öffnet
   let tippZeit = null;
   v.addEventListener('click', ev => {
@@ -2093,24 +2126,25 @@ async function vollbild(start) {
   const tasten = e => { if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('.dialog')) return; if (e.key === 'ArrowLeft') weiter(); else if (e.key === 'ArrowRight') zurueck(); };
   addEventListener('keydown', tasten);
   // Drehen des Handys: neu aufbauen (einzeln hoch, Doppelseite quer)
-  let warte = null; const anpassen = () => { clearTimeout(warte); warte = setTimeout(() => zeige(p), 120); };
+  let warte = null; const anpassen = () => { clearTimeout(warte); warte = setTimeout(neuAnordnen, 120); };
   const lageMQ = matchMedia('(orientation: landscape)');
-  addEventListener('resize', anpassen); lageMQ.addEventListener('change', anpassen);
+  addEventListener('resize', anpassen); addEventListener('orientationchange', anpassen); lageMQ.addEventListener('change', anpassen);
   // Die aufgeschlagene Seite gilt nach dem Schließen auch für die Ansicht darunter (nur solange dort noch der Muṣḥaf steht)
   const nachziehen = () => { if (p !== start && ansichtName() === 'mushaf') location.replace('#mushaf/' + p); };
   const beiVollbild = () => { if (!document.fullscreenElement && v.isConnected) schliessen(); };
   // Zurück-Taste und Wechsel der Ansicht schließen das Vollbild, der Fokus bleibt darin (gemeinsame Hilfe für Überlagerungen)
   const ende = ueberlagerung(v, grund => {
-    removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); lageMQ.removeEventListener('change', anpassen); document.removeEventListener('fullscreenchange', beiVollbild);
+    removeEventListener('keydown', tasten); removeEventListener('resize', anpassen); removeEventListener('orientationchange', anpassen); lageMQ.removeEventListener('change', anpassen); stapel?.zerstoeren(); document.removeEventListener('fullscreenchange', beiVollbild);
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    clearTimeout(tippZeit); clearTimeout(verz); clearTimeout(warte); clearTimeout(vorladen);
+    clearTimeout(tippZeit); clearTimeout(verz); clearTimeout(warte);
     blaseSchliessen(); v.remove(); document.body.classList.remove('im-vollbild');
+    setTimeout(ansichtPruefen, 0);   // im Vollbild gedreht: die Ansicht dahinter folgt jetzt
     if (grund === 'zurueck') nachziehen();
   }, { hinter: [app, nav], escape: () => morphZu(), fokus: () => v.querySelector('.vb-zu') });
   function schliessen() { ende(nachziehen); }
   v.querySelector('.vb-zu').onclick = morphZu;
   document.addEventListener('fullscreenchange', beiVollbild);
-  await zeige(p);
+  await zeigeStart();
 }
 
 // ---------- Ränge ----------
@@ -2997,6 +3031,7 @@ function pauseBinden() {
 const optionen = (werte, wahl, text = x => x) => werte.map(x => `<option value="${x}"${x === wahl ? ' selected' : ''}>${text(x)}</option>`).join('');
 // Hinweis unter den Abschnitten pro Tag: Dauer eines Durchlaufs und Empfehlung für das gewählte Gebiet
 function pensumInfo() {
+  durchlaufSetzen(!!Z.P?.einst.bereich);   // der Hinweis baut sich auch nach einer neuen Auswahl neu auf, ohne Wechsel der Adresse: Ḫatma nur bei allen 30 Aǧzāʾ, sonst Durchlauf
   const em = Z.pensumEmpfehlung(), proTag = Z.P.einst.pensum.reduce((a, b) => a + b, 0) / 7;
   // Dauer nach dem Lernmodell als Spanne: von fehlerfrei bis zu dem Fall, dass viel Fälliges dazwischenkommt
   const sp = sicher('spanne', () => Z.khatmaSpanne(), null) || { von: Z.tageProKhatma(), bis: 0 };

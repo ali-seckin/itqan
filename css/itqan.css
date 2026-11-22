@@ -456,7 +456,7 @@ html.tippt .nav{visibility:hidden;pointer-events:none}
 .tonk0 .farbe{background:rgba(217,154,78,.8)}.tonk1 .farbe{background:rgba(111,160,120,.8)}.tonk2 .farbe{background:rgba(90,140,200,.75)}.tonk3 .farbe{background:rgba(190,100,130,.7)}
 .karte.blitz{animation:blitz 1.3s ease}
 @keyframes blitz{25%{box-shadow:0 0 0 2px var(--akzent),0 8px 24px var(--glow)}}
-[data-ansicht=mushaf] #seite{margin:0 -12px}
+[data-ansicht=mushaf] .blatt-feld .blatt{margin:0 -12px}
 .mz{position:relative}
 .gz{position:absolute;pointer-events:none;border:0 dashed rgba(110,72,30,.5)}
 
@@ -509,8 +509,7 @@ html.tippt .nav{visibility:hidden;pointer-events:none}
 .w.angesprungen::before{animation:angesprungen 2.6s ease}
 @keyframes angesprungen{0%,60%{background-color:rgba(217,154,78,.55)}}
 /* Vollbild */
-#seite{position:relative}
-[data-ansicht=mushaf] #seite .seite{padding-bottom:calc(1.4cqw + 16px)}
+[data-ansicht=mushaf] .blatt-feld .blatt .seite{padding-bottom:calc(1.4cqw + 16px)}
 .vollbild-knopf{position:absolute;right:16px;bottom:8px;width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,72,30,.25);background:rgba(255,250,240,.75);color:#7a5a2e;display:grid;place-items:center;opacity:.85;padding:0}
 .vollbild-knopf:hover,.vollbild-knopf:focus-visible{opacity:1}
 body.im-vollbild{overflow:hidden}
@@ -520,6 +519,7 @@ body.im-vollbild{overflow:hidden}
 .vb-buehne > *{grid-area:1/1}
 .vb-buehne .seite{margin:0;border-radius:4px;flex:none}
 .vb-seiten{display:flex;justify-content:center;align-items:center}
+.vb-seiten .seite{width:var(--vb-sb,min(100vw,900px))}
 .vb-seiten.doppel{flex-direction:row-reverse;gap:4px}
 .vb-seiten.doppel .seite.rechts{border-radius:2px 6px 6px 2px;box-shadow:inset 10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
 .vb-seiten.doppel .seite.links{border-radius:6px 2px 2px 6px;box-shadow:inset -10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
@@ -532,7 +532,6 @@ body.im-vollbild{overflow:hidden}
 .vb-regler:active .vb-griff,.vb-regler:focus-visible .vb-griff{scale:1.3}
 .vb-vorschau{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 58px);z-index:4;min-width:160px;padding:10px 16px;border-radius:14px;background:rgba(36,36,40,.94);color:#fff;font-size:var(--s-text);line-height:1.5;text-align:end;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .vb-vorschau[hidden]{display:none}
-.vb-seiten{will-change:transform}
 .vb-pfeil.links{left:calc(env(safe-area-inset-left,0px) + 2px)}
 .vb-pfeil.rechts{right:calc(env(safe-area-inset-right,0px) + 2px)}
 .licht-seiten button.gewaehlt{outline:2px solid var(--text);outline-offset:1px;position:relative;z-index:1}
@@ -709,8 +708,8 @@ select option,select optgroup{background-color:var(--liste);color:var(--text)}
 .feier.mit-fehlern .qandil{animation-duration:6s}
 
 /* Doppelseite auf PC und Tablet: ungerade Seite rechts, gerade links, Bundsteg in der Mitte */
-body.doppelt #app{max-width:1500px;--sb:min(calc((min(100vw, 1500px) - 60px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
-body.doppelt[data-ansicht=mushaf] #app>:not(#seite){max-width:760px;margin-left:auto!important;margin-right:auto!important}
+body.doppelt #app{max-width:1500px;--sb:min(calc((min(var(--vw, 100vw), 1500px) - 60px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
+body.doppelt[data-ansicht=mushaf] #app>:not(.blatt-feld){max-width:760px;margin-left:auto!important;margin-right:auto!important}
 body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lageinfo,body.doppelt[data-ansicht=ueben] .kontext{max-width:900px;margin-left:auto;margin-right:auto}
 .paar{display:flex;flex-direction:row-reverse;justify-content:center;align-items:stretch;gap:3px}
 /* Die ungerade Seite steht immer rechts. row-reverse leistet das nur bei Schreibrichtung ltr; bei rtl (Arabisch, Urdu) läuft die Achse schon von rechts (Audit H12, B-04) */
@@ -720,8 +719,7 @@ body.doppelt[data-ansicht=ueben] .ueb-kopf,body.doppelt[data-ansicht=ueben] .lag
 .paar .seite.links{border-radius:6px 2px 2px 6px;box-shadow:inset -10px 0 14px -10px rgba(110,72,30,.35),var(--schatten)}
 [data-modus=dunkel] .paar .seite{outline-offset:2px;margin:3px}
 .seiten.doppel{gap:26px}
-#seite.doppel{margin:0 auto;width:max-content}
-[data-ansicht=mushaf] #seite.doppel .seite{padding-bottom:calc(1.4cqw + 16px)}
+[data-ansicht=mushaf] .blatt-feld .blatt.doppel{margin:0 auto;width:max-content}
 
 /* Ornamente */
 .ornament{display:block;width:100%;height:auto;overflow:visible}
@@ -1060,8 +1058,8 @@ html[data-gross] .roller>.seite{width:calc((100% - 8px) * var(--sm,1));flex:none
 html[data-gross][data-modus=dunkel] .roller>.seite{width:calc((100% - 16px) * var(--sm,1))}
 html[data-gross] .roller>.paar{width:max-content;min-width:100%}
 html[data-gross] .roller>.paar .seite{width:calc(var(--sb) * var(--sm,1))}
-html[data-gross] #seite.doppel{width:auto;max-width:100%}
-html[data-gross] #seite>.roller{margin-bottom:0;padding-bottom:6px}
+html[data-gross] .blatt-feld .blatt.doppel{width:auto;max-width:100%}
+html[data-gross] .blatt-feld .blatt>.roller{margin-bottom:0;padding-bottom:6px}
 /* Weniger Bewegung: was nur einmal hereingleitet, steht sofort da (bei 30 s blieb es unsichtbar) */
 @media (prefers-reduced-motion:reduce){.tut-schritt,.tb-ar,.tb-zurueck span,.tb-liste div{animation:none!important}html{scroll-behavior:auto}}
 /* Endlos pulsierende Zeichen stehen dann ruhig in ihrem deutlichen Zustand (Audit B-25) */
@@ -1100,7 +1098,7 @@ body.doppelt .feier{max-width:calc(2 * var(--sb) + 20px);margin-left:auto;margin
 /* Seitengröße: Höhe des Fensters, aber nie unter 500 px. Beim Browser-Zoom schrumpft die Fensterhöhe, die Untergrenze bleibt, also wachsen die Seiten schrittweise mit. */
 /* Breite Fenster (PC, Tablet) und Handy quer: die Leiste liegt waagerecht und wächst beim Zoomen in die Breite, nicht in die Höhe */
 @media (orientation:landscape) and (max-height:520px), (min-width:700px){
-  html body.doppelt #app{--sb:min(calc((100vw - 64px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
+  html body.doppelt #app{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));--sb:min(calc((var(--vw, 100vw) - max(18px,env(safe-area-inset-left,0px)) - max(18px,env(safe-area-inset-right,0px)) - 28px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
   .ab-platz{height:96px}
   .steuerung{padding:6px calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 14px)}
   .steuerung .innen{max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"arten arten" "fort knoepfe" "hinweis knoepfe";column-gap:16px;row-gap:2px;align-items:center}
@@ -1409,3 +1407,22 @@ html[lang=fr] [data-ansicht=heute] .kopfzeile .marke-zeichen{width:38px;height:3
 .vb-regler{transition:opacity .28s ease,visibility 0s}
 .vollbild.gezoomt .vb-regler,.vollbild.gezoomt .vb-vorschau{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s ease,visibility 0s .28s}
 @media (prefers-reduced-motion:reduce){.vb-regler,.vollbild.gezoomt .vb-regler{transition:none}}
+
+/* Blättern 2.03: eine Pipeline für alle Ansichten (js/blaettern.js). Drei Blätter stehen im DOM (vorige, aktuelle, nächste Einheit), das Nachbarblatt ist fertig
+   gerendert und unsichtbar. Geblättert wird nur mit transform auf dem Compositor; der goldene Rahmen gehört zur Seite selbst und bewegt sich mit. */
+.blatt-feld{position:relative}
+.blatt{position:relative}
+.blatt-nb{visibility:hidden;pointer-events:none}
+.blatt-nb.blatt-gleitet{visibility:visible}
+/* Muṣḥaf-Ansicht: Nachbarblätter liegen unsichtbar genau unter dem aktuellen Blatt (gleiche Breite, gleiche Mitte), außerhalb des Textflusses */
+.blatt-feld .blatt-nb{position:absolute;top:0;left:0;right:0}
+.blatt-feld .blatt-nb.doppel{margin:0 auto;width:max-content}
+html[data-gross] .blatt-feld .blatt-nb.doppel{width:auto;max-width:100%}
+html[data-gross] .blatt-feld .blatt-nb{top:6px}   /* die Bildlaufleiste der vergrößerten Seite sitzt 6 px über dem Blatt (negativer Rand der Rolle) */
+/* Die Seitenränder der Ansicht schneiden nichts ab: Blätter gleiten bis an den Rand des Fensters, der goldene Rahmen steht immer vollständig */
+[data-ansicht=mushaf] #app{overflow-x:clip}
+/* Vollbild: alle Blätter liegen übereinander in einer Zelle, Größe aus --vb-sb */
+.vb-buehne .blatt{margin:0}
+/* Jede Seite hält ihren Inhalt für sich: Rendering und Bewegung berühren das übrige Dokument nicht */
+.seite{contain:layout paint style}
+@media (prefers-reduced-motion:reduce){.blatt-feld .blatt,.vb-buehne .blatt{transition:none}}

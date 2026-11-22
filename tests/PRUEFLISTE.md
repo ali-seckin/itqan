@@ -117,3 +117,7 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 88. Handy quer, Doppelseite im Vollbild: Blättern läuft ruhig; im Nicht-Vollbild (Handy quer und PC) rastet die Ansicht beim Umblättern nicht mehr nach.
 89. Einen Fehler auslösen (zum Beispiel über die Entwickler-Konsole `throw`): das Band „Etwas ist schiefgelaufen“ erscheint (nicht in einer Übung), „Fehler melden“ zeigt vorab alle Felder, ohne Netz bleibt die Meldung lokal und „Meldung kopieren“ geht.
 90. Profil › Hilfe und Anleitungen › „Evidenz und Grenzen“ öffnet die Seite in der gewählten Sprache; Heute am Ruhetag: nach freiem Üben steht „Dein Wird ist erfüllt“.
+91. Muṣḥaf (Einzel- und Doppelseite, Vollbild und normal, Handy und PC): Blättern per Wischen, Tasten, Randpfeilen und Seitenregler läuft ruhig; ein schnelles zweites Blättern beschleunigt oder kehrt um, ohne Sprung; mitten im Blättern stehen die goldenen Rahmen beider Seiten (dunkles Design), am Ende ploppt nichts auf.
+92. Handy hochkant im Muṣḥaf, dann quer drehen (ohne Zoomen): die Doppelseite erscheint sofort, links und rechts gleicher Rand (auch mit Notch); wieder hochkant: eine Seite.
+93. Vollbild: Doppeltipp zoomt, danach Blättern setzt den Zoom zurück; während des Blätterns zoomen bricht die Bewegung sauber ab; der Seitenregler blendet beim Zoomen aus.
+94. Einstellungen: bei einer Teilauswahl der Aǧzāʾ steht „Ein Durchlauf dauert damit etwa …“, bei allen 30 „Eine Ḫatma …“; die Zeile ändert sich sofort nach dem Ändern der Auswahl.

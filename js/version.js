@@ -1,6 +1,6 @@
 import { tx } from './sprache.js';
 // Itqān · Versionsnummer und „Was ist neu“. Bei jeder Veröffentlichung: VERSION erhöhen und oben einen Eintrag ergänzen.
-export const VERSION = '2.02';
+export const VERSION = '2.03';
 // Nennt der Text einer frisch geholten js/version.js eine andere Version als die, die diese Seite gerade ausführt? Davon hängt der Hinweis
 // „Neue Version bereit“ ab. Alles andere (Fehlerseite, leere Antwort) gilt als „nichts Neues“.
 export function andereVersion(text) { const m = /export const VERSION = '([^']+)'/.exec(String(text ?? '')); return !!m && m[1] !== VERSION; }
@@ -14,6 +14,12 @@ export const RUECKMELDUNG_AN = 'support@itqan.at';
 export const UEBERGANG = { sicherungErinnern: true, installieren: true };
 
 export const NEUIGKEITEN = [
+  { v: '2.03', datum: '2026-11-23', titel: tx('version.blaettern203_titel'), punkte: [
+    tx('version.blaettern203_1'),
+    tx('version.blaettern203_2'),
+    tx('version.blaettern203_3'),
+    tx('version.blaettern203_4')
+  ] },
   { v: '2.02', datum: '2026-11-22', titel: tx('version.neu202_titel'), punkte: [
     tx('version.neu202_1'),
     tx('version.neu202_2'),
