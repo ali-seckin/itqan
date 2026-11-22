@@ -14,7 +14,9 @@ const SPRACHEN = ['de', 'en', 'tr', 'ar', 'fr', 'es', 'ur'];
 const lies = p => readFileSync(join(APP, p), 'utf8');
 
 // Quelle der Zahlen
-const quelle = readFileSync(join(WURZEL, 'werkzeuge', 'lernmodell', 'final_ergebnis_9000.md'), 'utf8');
+// Die Datei liegt außerhalb des App-Repos (werkzeuge/): in der Veröffentlichung auf GitHub fehlt sie, dann entfällt nur der Zahlenvergleich
+const QUELLE = join(WURZEL, 'werkzeuge', 'lernmodell', 'final_ergebnis_9000.md');
+const quelle = existsSync(QUELLE) ? readFileSync(QUELLE, 'utf8') : null;
 const zahlenIn = zeile => [...zeile.matchAll(/(-?\d+\.\d)(?= ±)/g)].map(m => +m[1]);
 const bereich = abschnitt => { const i = quelle.indexOf(abschnitt); assert.ok(i >= 0, abschnitt); return quelle.slice(i); };
 const zeileMit = (text, anfang) => text.split('\n').find(z => z.startsWith(anfang));
@@ -27,7 +29,7 @@ const { evidenzHTML, ZAHLEN } = await import('../js/evidenz.js');
 const sprachDatei = {};
 for (const c of SPRACHEN) sprachDatei[c] = (await import(`../js/sprache/${c}.js`)).default;
 
-test('Zahlen der Seite stimmen mit der Endprüfung der Simulation überein', () => {
+test('Zahlen der Seite stimmen mit der Endprüfung der Simulation überein', { skip: !quelle && 'ohne werkzeuge/lernmodell (nur im Projektordner)' }, () => {
   assert.equal(+quelle.match(/= (\d+),/)[1], ZAHLEN.welten, 'Zahl der Testwelten');
   const paar = bereich('## Gepaarter Unterschied');
   const kl = zahlenIn(zeileMit(paar, '| Klassisch |')), lz = zahlenIn(zeileMit(paar, '| Langzeit (alt) |'));
