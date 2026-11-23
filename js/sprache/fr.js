@@ -1692,6 +1692,16 @@ export default {
     ende_offen: 'Entamé : {name}. Ta progression est enregistrée, tu peux la reprendre aujourd’hui au verset {a} sur {n}.',
     ende_weiter: 'Continuer l’exercice',
   },
+  rangfeier: {
+    titel: 'Nouveau rang',
+    ueberspringen: 'Passer',
+    ansehen: 'Revoir l’animation',
+  },
+  uebenleiste: {
+    tipp_hinweis: 'Touche un verset pour voir sa traduction.',
+    aya_uebersetzung: 'Verset {a}, traduction',
+    pause: 'Mettre la lecture en pause',
+  },
   sprachwahl: {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
@@ -1764,6 +1774,11 @@ export default {
     blaettern203_4: 'Dans les réglages, une sélection partielle des Aǧzāʾ affiche désormais « achèvement » au lieu de « Ḫatma ».',
     sprung204_titel: 'Pages tournées sans décalage',
     sprung204_1: 'En tournant les pages du Mushaf, la page ne saute plus légèrement vers le haut à la fin, même pour les pages à long titre.',
+    neu205_titel: 'Traduction à l’aperçu, célébration de rang et plus',
+    neu205_1: 'Regarder d’abord : touche un verset et sa traduction apparaît.',
+    neu205_2: 'Quand tu atteins un nouveau rang, une animation de déblocage sobre s’affiche une fois. Tu peux la revoir sur la page des rangs.',
+    neu205_3: 'Exercice en paysage : enregistrer, lire et pause restent toujours au même endroit, et l’indicateur du verset est fixe.',
+    neu205_4: 'Les sections bonus comptent dans l’anneau d’Aujourd’hui : 3/3 devient 4/3 et plus.',
     lichtkarte92_titel: 'Carte de lumière, pages, couleurs',
     lichtkarte92_1: 'Dans la feuille de page de la carte de lumière, les sections avec des points d’erreur ouverts sont désormais marquées en rouge. Tourner les pages dans le Mushaf fait glisser la page suivante sans rupture, même hors plein écran. Le choix de couleur des signes de pause a un nouvel ordre. La fermeture du plein écran est plus fluide : la page glisse jusqu’à sa place.',
     blaettern91_titel: 'Pages qui glissent, fenêtre du graphique',

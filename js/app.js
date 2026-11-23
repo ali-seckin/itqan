@@ -144,6 +144,19 @@ function navSetzen(aktiv) {
   nav.querySelectorAll('a').forEach(a => { const an = a.dataset.r === aktiv; a.classList.toggle('an', an); if (an) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
 }
 
+// Freischaltung eines neuen Ranges (js/rangfeier.js, beim ersten Gebrauch geladen): erscheint nach dem Hochzählen der Zahlen, je Rang genau einmal
+// (Merker rangGesehen im Profil, gesetzt bevor sie erscheint). Das Band mit dem Rang bleibt danach auf der Seite stehen.
+let rfModul = null;
+const rfLaden = () => rfModul ??= import('./rangfeier.js').catch(e => { rfModul = null; throw e; });
+async function rangFeier(ereignisse) {
+  if (!Array.isArray(ereignisse) || !ereignisse.some(x => x.typ === 'rang')) return;
+  try {
+    const RF = await rfLaden();
+    await new Promise(r => setTimeout(r, ruhig() ? 350 : 1150));
+    if (!app.querySelector('.rang-band')) return;   // die Seite ist inzwischen eine andere
+    await RF.feiern(ereignisse, { P: Z.P, speichern: () => Z.speichern(), zeigen: r => RF.zeigen(r) });
+  } catch (e) { console.warn('Rangfeier', e); }   // ohne die Überlagerung bleibt das Band, nichts geht verloren
+}
 const rangBand = r => `<div class="band rang-band"><span class="ar" lang="ar">${Z.RAENGE[r].ar}</span><span>${tx('rangband.neuer_rang_was_das_bedeutet', { n: Z.RAENGE[r].n, de: Z.RAENGE[r].de })}</span></div>`;
 
 // ---------- Dialog (statt confirm): Titel, Inhalt, zwei Knöpfe; liefert true oder false ----------
@@ -837,6 +850,7 @@ function heute() {
   const t = Z.tagesplan(), P = Z.P;
   const pflicht = t.plan.filter(id => t.art[id] !== 'bonus');
   const erledigt = pflicht.filter(id => t.fertig.includes(id)).length;
+  const bonusFertig = t.plan.filter(id => t.art[id] === 'bonus' && t.fertig.includes(id)).length;   // jeder geübte Bonusabschnitt zählt im Ring über das Wird hinaus: 4/3, 5/3 ...
   const nurLernen = Array.isArray(P.einst.bereich) && !P.einst.bereich.length;   // kein Bestand: es gibt keinen Wird, nur Neu lernen
   const kz = sicher('konto-zustand', () => Ab.status().zustand, '');
   const kontoHinweis = kz === 'konflikt' ? `<div class="hinweisbox"><b>${tx('konto.braucht_entscheidung')}</b><div class="reihe" style="margin-top:10px"><a class="knopf haupt klein" href="#konto" style="text-decoration:none">${tx('konto.jetzt_entscheiden')}</a></div></div>` : kz === 'fehler' ? `<div class="hinweisbox">${tx('konto.stockt')}</div>` : '';
@@ -895,7 +909,7 @@ function heute() {
       <defs><linearGradient id="verlauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--akzent)"/><stop offset="1" stop-color="var(--akzent2)"/></linearGradient></defs>
       <circle cx="105" cy="105" r="88" fill="none" stroke="var(--rand)" stroke-width="12"/>
       <circle class="fort" cx="105" cy="105" r="88" fill="none" stroke="url(#verlauf)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${U}" stroke-dashoffset="${U}"/></svg>
-      <div class="mitte"><span class="gross" aria-label="${tx('heute.von', { erledigt, n: pflicht.length })}">${erledigt}<span>/${pflicht.length}</span></span></div></div>`;
+      <div class="mitte"><span class="gross${bonusFertig ? ' ueber' : ''}" aria-label="${tx('heute.von', { erledigt: erledigt + bonusFertig, n: pflicht.length })}">${erledigt + bonusFertig}<span>/${pflicht.length}</span></span></div></div>`;
   const stand = t.ruhe ? '' : `<div class="stand-zahlen"><div><b>${aktiv ? P.kette.n : 0}</b><span>${tx('heute.tage_kette', { n: aktiv ? P.kette.n : 0 })}</span></div>${Z.P.einst.hasanat === false ? '' : `<div><b>${zahl(t.hasanat)}</b><span>${tx('heute.hasanat_heute')}</span></div>`}<div><b>${quote == null ? '·' : prozent(quote)}</b><span>${tx('allg.ayat_sicher')}</span></div></div>`;
   app.innerHTML = `
     <div class="kopfzeile"><div class="marke">${tx('titel.heute')}<small>${sicher('datum', datumText)}</small></div>
@@ -1034,8 +1048,11 @@ let asModul = null;
 const asLaden = () => asModul ??= import('./amstueck.js').catch(e => { asModul = null; throw e; });
 async function amstueckWahl() { const nr = zeigeNr, AS = await asLaden(); if (ansichtGilt(nr)) AS.wahl(asHelfer()); }
 // Was die Ansicht „Am Stück üben“ von hier braucht
-const asHelfer = () => ({ app, zurueckPfeil, zeigeNr: () => zeigeNr, ansichtGilt, navSetzen, toast, ruhig, wachHalten, dialog, doppelseitig, doppelseiten, paarHTML, seiteHolen, punktePop, hochzaehlen, qandil, ornBand, rangBand,
+const asHelfer = () => ({ app, zurueckPfeil, zeigeNr: () => zeigeNr, ansichtGilt, navSetzen, toast, ruhig, wachHalten, dialog, doppelseitig, doppelseiten, paarHTML, seiteHolen, punktePop, hochzaehlen, qandil, ornBand, rangBand, rangFeier,
   stellenWahl, abschnittOptionen, buchstabe, uebersetzungSprache, uebersetzungZeigen, blaseSchliessen, zeige, aufraeumen: f => { uebenAufraeumen = f; }, ereignisseSetzen: l => { letzteEreignisse = l; } });
+// Symbole der runden Knöpfe der Übungsleiste (Aufnahme, Stopp, Wiedergabe, Pause): gezeichnet statt als Schriftzeichen, damit sie in jeder Schrift gleich groß sind und die Leiste sich beim Wechsel nicht verschiebt
+const IKONEN = { auf: '<circle cx="12" cy="12" r="6.5"/>', stopp: '<rect x="6.5" y="6.5" width="11" height="11" rx="2.2"/>', play: '<path d="M8.5 5.5v13l10.5-6.5z"/>', pause: '<rect x="6.8" y="5.5" width="3.7" height="13" rx="1"/><rect x="13.5" y="5.5" width="3.7" height="13" rx="1"/>' };
+const ikon = n => `<svg class="ikon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">${IKONEN[n]}</svg>`;
 async function ueben(idText, quelle, fokusText) {
   uebenAufraeumen?.(); uebenAufraeumen = null;   // „Noch einmal üben“ baut die Übung ohne Wechsel der Adresse neu auf
   const lauf = zeigeNr;
@@ -1280,25 +1297,29 @@ async function ueben(idText, quelle, fokusText) {
   // ---------- Fehlerwort mit Tastatur und Bildschirmleser ----------
   // Nach „Fehler“ sind die Wörter der Āya Knöpfe mit ihrem Wortlaut, beim Abhören alle Wörter des Abschnitts.
   // Ein Wort ist mit Tab erreichbar, die Pfeiltasten gehen von Wort zu Wort (links und unten = weiter im Text).
-  const wahlWoerter = () => !seitenEl.isConnected ? [] : abhoeren ? [...seitenEl.querySelectorAll('.w.in')] : markieren ? spans(liste[pos]) : [];
+  const wahlWoerter = () => !seitenEl.isConnected ? [] : vorschau ? (uebersetzungSprache() ? ayat.map(vi => spans(vi)[0]).filter(Boolean) : []) : abhoeren ? [...seitenEl.querySelectorAll('.w.in')] : markieren ? spans(liste[pos]) : [];
   function wahlSetzen() {
     const ws = wahlWoerter(), drin = new Set(ws);
     let fokusWeg = false;
     for (const w of seitenEl.querySelectorAll('.w[role=button]')) if (!drin.has(w)) {
       if (w === document.activeElement) fokusWeg = true;
-      for (const a of ['role', 'tabindex', 'aria-pressed', 'aria-label', 'lang']) w.removeAttribute(a);
+      for (const a of ['role', 'tabindex', 'aria-pressed', 'aria-expanded', 'aria-label', 'lang']) w.removeAttribute(a);
       w.setAttribute('aria-hidden', 'true'); delete w.dataset.wl;
     }
     for (const w of ws) {
       if (w.getAttribute('role') !== 'button') { w.setAttribute('role', 'button'); w.removeAttribute('aria-hidden'); w.tabIndex = -1; }
-      if (!w.dataset.wl) {
+      if (w.dataset.wl && (w.dataset.wl === 'v') !== vorschau) { delete w.dataset.wl; w.removeAttribute('lang'); }   // Beschriftung der Āya (Erst ansehen) und des Wortes (Markieren) wechseln
+      if (!w.dataset.wl && vorschau) { w.setAttribute('aria-label', tx('uebenleiste.aya_uebersetzung', { a: D.V[+w.dataset.v][1] })); w.dataset.wl = 'v'; }
+      else if (!w.dataset.wl) {
         const vi = +w.dataset.v, t = wortText(vi, +w.dataset.i);
         if (t) { w.setAttribute('aria-label', t); w.lang = 'ar'; w.dataset.wl = '1'; }
         else w.setAttribute('aria-label', t === null ? tx('ueben.endzeichen_der_aya', { a: D.V[vi][1] }) : tx('ueben.wort_nr', { n: +w.dataset.i + 1 }));
         if (t === null) w.dataset.wl = '1';
       }
-      w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false');
+      if (vorschau) { w.removeAttribute('aria-pressed'); if (!w.hasAttribute('aria-expanded')) w.setAttribute('aria-expanded', 'false'); }
+      else { w.removeAttribute('aria-expanded'); w.setAttribute('aria-pressed', w.classList.contains('fmark') ? 'true' : 'false'); }
     }
+    vorschauSync();
     if (ws.length && !ws.some(w => w.tabIndex === 0)) ws[0].tabIndex = 0;
     if (fokusWeg) app.querySelector('#auf, #weiter, #r')?.focus();
   }
@@ -1319,9 +1340,39 @@ async function ueben(idText, quelle, fokusText) {
     else return;
     ev.preventDefault(); ev.stopPropagation(); wortFokus(z);
   });
-  seitenEl.addEventListener('click', ev => {   // aufgedeckte Āya antippen: Übersetzung
-    if (!offen || markieren || abhoeren || vorschau) return;
-    const w = ev.target.closest('.w'); if (w && !w.classList.contains('zu')) uebersetzungZeigen(+w.dataset.v);
+  // Erst ansehen: Ein Tipp auf eine Āya zeigt ihre Übersetzung in der Karte über der Leiste (die Āya ist hervorgehoben), ein zweiter Tipp auf dieselbe Āya, das Kreuz, Esc oder ein Tipp daneben blendet sie aus
+  let vorschauLaedt = false;
+  function vorschauSync() {   // Ansage für den Bildschirmleser und aria-expanded der Āya-Knöpfe folgen dem Stand der Karte
+    const an = !!document.querySelector('.uebs-blase');
+    if (!an && ansage.dataset.t) { ansage.textContent = ''; delete ansage.dataset.t; ansage.lang = 'ar'; ansage.dir = 'rtl'; }
+    for (const w of seitenEl.querySelectorAll('.w[role=button][aria-expanded]')) w.setAttribute('aria-expanded', an && w.classList.contains('uebs') ? 'true' : 'false');
+  }
+  async function vorschauTipp(vi, w) {
+    if (document.querySelector('.uebs-blase') && document.querySelector('.w.uebs')?.dataset.v === String(vi)) { blaseSchliessen(); vorschauSync(); return; }
+    if (vorschauLaedt) return;
+    vorschauLaedt = true;
+    try {
+      if (!(await uebersetzungZeigen(vi))) return;
+      const blase = document.querySelector('.uebs-blase'); if (!blase) return;
+      if (!vorschau || !seitenEl.isConnected) { blaseSchliessen(); return; }   // inzwischen geprüft oder verlassen
+      blase.setAttribute('aria-live', 'off'); blase.classList.add('uebs-vorschau');   // vorgelesen wird über die feste Ansage-Region: eine Region, die erst mit ihrem Inhalt erscheint, bleibt oft stumm
+      const t = blase.querySelector('.uebs-text');
+      ansage.lang = t.lang; ansage.dir = t.dir || 'ltr'; ansage.dataset.t = '1'; ansage.textContent = `${blase.querySelector('.uebs-kopf').textContent}. ${t.textContent}`;
+      blase.querySelector('.uebs-zu').addEventListener('click', vorschauSync);
+      vorschauSync();
+      const r = w.getBoundingClientRect(), kt = blase.getBoundingClientRect().top;   // die angetippte Āya soll nicht unter der Karte liegen
+      if (r.bottom > kt - 8) scrollBy({ top: r.bottom - kt + 16, behavior: ruhig() ? 'auto' : 'smooth' });
+    } finally { vorschauLaedt = false; }
+  }
+  const vorschauNachklang = () => { if (!seitenEl.isConnected) { document.removeEventListener('click', vorschauNachklang); removeEventListener('keydown', vorschauNachklang); return; } vorschauSync(); };
+  document.addEventListener('click', vorschauNachklang); addEventListener('keydown', vorschauNachklang);   // nach dem Schließen durch Tipp daneben oder Esc (die gemeinsamen Behandler laufen zuerst)
+  seitenEl.addEventListener('focusin', ev => { if (!vorschau) return; const w = ev.target.closest?.('.w[role=button]'); if (w) spans(+w.dataset.v).forEach(x => x.classList.add('vfokus')); });
+  seitenEl.addEventListener('focusout', () => seitenEl.querySelectorAll('.w.vfokus').forEach(x => x.classList.remove('vfokus')));
+  seitenEl.addEventListener('click', ev => {   // aufgedeckte Āya antippen: Übersetzung (beim Üben nach dem Aufdecken, in „Erst ansehen“ jede Āya)
+    const w = ev.target.closest('.w');
+    if (vorschau) { if (w) vorschauTipp(+w.dataset.v, w); return; }
+    if (!offen || markieren || abhoeren) return;
+    if (w && !w.classList.contains('zu')) uebersetzungZeigen(+w.dataset.v);
   });
   // Wortlaute nachtragen, sobald der Text geladen ist
   textFuerLeser().then(() => { if (seitenEl.isConnected) wahlSetzen(); });
@@ -1340,8 +1391,9 @@ async function ueben(idText, quelle, fokusText) {
     Zl.textContent = phase === 'korrektur' ? tx('ueben.korrektur_von', { a: pos + 1, n: liste.length }) : tx('ueben.aya_von', { a: pos + 1, n: ayat.length });
     if (vorschau) {
       K.innerHTML = `<button class="knopf haupt" id="pruefen">${tx('ueben.jetzt_pruefen')}</button>`;
-      H.textContent = tx('ueben.lies_den_abschnitt_in_ruhe_dann_pruefe');
-      app.querySelector('#pruefen').onclick = () => { vorschau = false; seitenEl.classList.remove('vorschau'); zeichne(); sichtbar(spans(ayat[0])[0]); };
+      const tippbar = !!uebersetzungSprache(); seitenEl.classList.toggle('tippbar', tippbar);
+      H.textContent = tx('ueben.lies_den_abschnitt_in_ruhe_dann_pruefe') + (tippbar ? ' ' + tx('uebenleiste.tipp_hinweis') : '');
+      app.querySelector('#pruefen').onclick = () => { blaseSchliessen(); vorschau = false; seitenEl.classList.remove('vorschau', 'tippbar'); zeichne(); sichtbar(spans(ayat[0])[0]); };
       return;
     }
     if (ganz && phase === 'haupt') return ganzSprechen();
@@ -1362,7 +1414,7 @@ async function ueben(idText, quelle, fokusText) {
       const grenze = nB === 1 && ti < teile.length - 1 ? teile[ti][teile[ti].length - 1] : null;
       grenze?.querySelector('.wq:not(.la)')?.classList.add('ziel');
       const nimmt = rec?.state === 'recording';
-      K.innerHTML = `${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : nB > 1 && !hilfe ? tx('ueben.ayat_aufdecken', { a: D.V[vi][1], b: D.V[liste[pos + nB - 1]][1] }) : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : ''}`;
+      K.innerHTML = `${grenze ? `<button class="knopf leise" id="teil">${tx('ueben.bis_zum_zeichen')}</button>` : ''}<button class="knopf haupt" id="auf">${ti ? tx('ueben.rest_aufdecken') : nB > 1 && !hilfe ? tx('ueben.ayat_aufdecken', { a: D.V[vi][1], b: D.V[liste[pos + nB - 1]][1] }) : tx('ueben.aya_aufdecken', { a: D.V[vi][1] })}</button>${AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${ikon(nimmt ? 'stopp' : 'auf')}</button>` : ''}`;
       const mb = app.querySelector('#mikro'); if (mb) mb.onclick = aufnahmeKnopf;
       const links = [], start = phase === 'haupt' && pos === 0 && ti === 0 && !hilfe;
       const hilfeVersteckt = !L && k.st >= 3 && !hilfeFrei && !hilfe && !ti;   // ab „sicher“ erst nach „Hilfe?“ (Hilfen zurücknehmen, wenn das Können wächst)
@@ -1389,20 +1441,22 @@ async function ueben(idText, quelle, fokusText) {
       sichtbar(teile[ti]?.[0]);
       autoAufnahme();
     } else {
-      K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}`;
+      K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : ''}`;
       if (blockAnz > 1 && blockEnde > pos) spans(vi).forEach(x => x.classList.add('dran'));
       H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : blockAnz > 1 && blockEnde > pos ? tx('ueben.block_frage', { a: D.V[vi][1] }) : tx('ueben.warst_du_sicher_und_fehlerfrei');
       if (uebersetzungSprache() && !hilfe) { const ub = document.createElement('button'); ub.type = 'button'; ub.className = 'textlink mini'; ub.id = 'uebers'; ub.textContent = tx('uebers.link'); H.append(document.createElement('br'), ub); ub.onclick = () => uebersetzungZeigen(vi); }
       const hb2 = app.querySelector('#hoeren'); if (hb2) hb2.onclick = () => {
-        if (spieler && !spieler.paused) { spieler.pause(); hb2.textContent = '▶'; return; }
-        spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hb2.textContent = '❚❚';
-        spieler.onended = () => { hb2.textContent = '▶'; };
+        if (spieler && !spieler.paused) { spieler.pause(); hoerenZeichen(hb2, false); return; }
+        spieler ??= new Audio(aufnahme); spieler.currentTime = 0; spieler.play().catch(() => {}); hoerenZeichen(hb2, true);
+        spieler.onended = () => { hoerenZeichen(hb2, false); };
       };
       app.querySelector('#r').onclick = () => bewerte(hilfe ? 'hilfe' : 'ok');
       app.querySelector('#f').onclick = () => bewerte('fehler');
       const zb = app.querySelector('#z'); if (zb) zb.onclick = () => bewerte('zoegern');
     }
   }
+  // Wiedergabeknopf: Zeichen und Beschriftung wechseln zwischen Abspielen und Pause, die Größe bleibt gleich
+  function hoerenZeichen(b, spielt) { b.innerHTML = ikon(spielt ? 'pause' : 'play'); b.setAttribute('aria-label', spielt ? tx('uebenleiste.pause') : tx('ueben.aufnahme_anhoeren')); b.dataset.spielt = spielt ? '1' : '0'; }
   function aufdecken() {
     aufnahmeStopp();
     const vi = liste[pos]; zu.delete(vi);
@@ -1463,12 +1517,12 @@ async function ueben(idText, quelle, fokusText) {
   // ---------- Ablauf „ganzer Abschnitt am Stück“: erst alles sprechen (und aufnehmen), dann aufdecken, anhören, Fehler und Zögerstellen markieren ----------
   const ganzAufnahmeTaste = () => {
     const nimmt = rec?.state === 'recording';
-    return AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${nimmt ? '■' : '●'}</button>` : '';
+    return AUFNAHME ? `<button class="knopf leise rund ${nimmt ? 'nimmt' : ''}" id="mikro" aria-label="${nimmt ? tx('ueben.aufnahme_beenden') : tx('ueben.eigene_rezitation_aufnehmen')}">${ikon(nimmt ? 'stopp' : 'auf')}</button>` : '';
   };
   const ganzHoeren = hb => {
-    if (spieler && !spieler.paused) { spieler.pause(); hb.textContent = '▶'; return; }
-    spieler ??= new Audio(aufnahme); spieler.play().catch(() => {}); hb.textContent = '❚❚';
-    spieler.onended = () => { hb.textContent = '▶'; };
+    if (spieler && !spieler.paused) { spieler.pause(); hoerenZeichen(hb, false); return; }
+    spieler ??= new Audio(aufnahme); spieler.play().catch(() => {}); hoerenZeichen(hb, true);
+    spieler.onended = () => { hoerenZeichen(hb, false); };
   };
   function ganzSprechen() {
     Zl.textContent = tx('ueben.ayat_2', { n: ayat.length });
@@ -1502,7 +1556,7 @@ async function ueben(idText, quelle, fokusText) {
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
     A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('') + `<button data-a="zg">${tx('ueben.ganz_gezoegert')}</button>`;
-    K.innerHTML = `<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">▶</button>` : ''}`;
+    K.innerHTML = `<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : ''}`;
     H.innerHTML = aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
     const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
     app.querySelector('#g-neu').onclick = () => {
@@ -1679,6 +1733,7 @@ async function ueben(idText, quelle, fokusText) {
     const n = app.querySelector('#naechster'); if (n) n.onclick = () => location.replace(`#ueben/${naechster}`);
     const u = app.querySelector('#uebersicht'); if (u) u.onclick = () => { if (location.hash === zielNach) zeige(); else location.replace(zielNach); };
     window.scrollTo(0, 0); hochzaehlen(app);
+    rangFeier(res.ereignisse);
     // Zwillings-Übung (Mutašābihāt): nach einem sicheren Abschnitt, wenn es eine ähnliche Stelle gibt
     if (!res.lern && res.stufe >= 2) AF.zwillingZu(e.v[0], e.v[1]).then(z => { const kn = app.querySelector('#abschl-knoepfe'); if (z && kn) kn.insertAdjacentHTML('beforeend', `<a class="knopf leise" href="#vergleich/${z.key}/ueben" style="text-decoration:none">${tx('ueben.zwillinge_knopf', { a: NL.stelleKurz(z.a), b: NL.stelleKurz(z.b) })}</a>`); });
   }
@@ -2167,7 +2222,9 @@ function raenge() {
     <p class="unter">${tx('raenge.ab_rang_7_gilt_nur_der_ganze_quran_bei')}</p>
     ${Z.RAENGE.map((R, i) => `<div class="rangstufe ${i === r ? 'jetzt' : i < r ? 'erreicht' : ''}">
       <div class="kopf"><span class="nr">${i + 1}</span><span class="ar" lang="ar">${R.ar}</span><div><b>${R.n}</b><span>${R.de}</span></div></div>
-      <p>${R.hifz}</p>${i ? bedListe(i, z) : ''}</div>`).join('')}`;
+      <p>${R.hifz}</p>${i && i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${i ? bedListe(i, z) : ''}</div>`).join('')}`;
+  // erreichte Ränge: die Freischaltung noch einmal ansehen (ohne Merker, ohne Folgen)
+  app.querySelectorAll('.rang-ansehen').forEach(b => { b.onclick = async () => { try { const RF = await rfLaden(); await RF.zeigen(+b.dataset.rang); } catch (e) { console.warn('Rangfeier', e); } }; });
 }
 
 // ---------- Profil ----------

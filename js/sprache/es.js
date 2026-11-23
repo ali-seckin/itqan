@@ -1692,6 +1692,16 @@ export default {
     ende_offen: 'Empezado: {name}. Tu avance está guardado: hoy puedes seguir desde la aleya {a} de {n}.',
     ende_weiter: 'Seguir practicando',
   },
+  rangfeier: {
+    titel: 'Nuevo rango',
+    ueberspringen: 'Omitir',
+    ansehen: 'Ver la animación',
+  },
+  uebenleiste: {
+    tipp_hinweis: 'Toca una aleya para ver su traducción.',
+    aya_uebersetzung: 'Aleya {a}, traducción',
+    pause: 'Pausar la reproducción',
+  },
   sprachwahl: {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
@@ -1764,6 +1774,11 @@ export default {
     blaettern203_4: 'En los ajustes, una selección parcial de Aǧzāʾ ahora dice «finalización» en lugar de «Ḫatma».',
     sprung204_titel: 'Pasar páginas sin desajuste',
     sprung204_1: 'Al pasar las páginas del Mushaf, la página ya no salta un poco hacia arriba al final, tampoco en las páginas con título largo.',
+    neu205_titel: 'Traducción al mirar, celebración de rango y más',
+    neu205_1: 'Mirar primero: toca una aleya y aparece su traducción.',
+    neu205_2: 'Cuando alcanzas un nuevo rango, aparece una vez una animación de desbloqueo serena. Puedes verla de nuevo en la página de rangos.',
+    neu205_3: 'Práctica en horizontal: grabar, reproducir y pausa siempre están en el mismo sitio, y el indicador de la aleya queda fijo.',
+    neu205_4: 'Las secciones de bonificación cuentan en el anillo de Hoy: 3/3 pasa a 4/3 y más.',
     lichtkarte92_titel: 'Mapa de luz, páginas, colores',
     lichtkarte92_1: 'En la hoja de página del mapa de luz, las secciones con puntos de error abiertos aparecen ahora marcadas en rojo. Al pasar de página en el Mushaf, la siguiente entra sin saltos, también sin pantalla completa. La elección de color de los signos de pausa tiene un nuevo orden. Cerrar la pantalla completa es más fluido: la página se desliza hasta su lugar.',
     blaettern91_titel: 'Páginas que se deslizan, ventana del gráfico',

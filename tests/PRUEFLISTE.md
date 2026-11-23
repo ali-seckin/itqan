@@ -122,3 +122,7 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 93. Vollbild: Doppeltipp zoomt, danach Blättern setzt den Zoom zurück; während des Blätterns zoomen bricht die Bewegung sauber ab; der Seitenregler blendet beim Zoomen aus.
 94. Einstellungen: bei einer Teilauswahl der Aǧzāʾ steht „Ein Durchlauf dauert damit etwa …“, bei allen 30 „Eine Ḫatma …“; die Zeile ändert sich sofort nach dem Ändern der Auswahl.
 95. Muṣḥaf einseitig (Handy hochkant, hell und dunkel, ohne Vollbild): beim Blättern bleibt die Seite am Ende der Bewegung genau an ihrem Platz, kein Hochrutschen; auch von Seite 603 zu 604 (Titel mit zwei Zeilen) springt nichts.
+96. Üben › „Erst ansehen“: Tipp auf eine Āya zeigt ihre Übersetzung (dezente Hervorhebung), zweiter Tipp, Kreuz, Esc oder Tipp daneben blendet sie aus, Tipp auf eine andere wechselt; Wischen und Zoom funktionieren weiter.
+97. Üben im Querformat (Handy und PC): Aufnahme, Play und Pause sitzen in allen Zuständen exakt am selben Platz; die Punkte-Anzeige mit „Āya n von m“ steht links und bewegt sich beim Wechsel zwischen „Āya aufdecken“ und „Bewerten“ nicht; in Arabisch spiegelt sich die Anordnung.
+98. Rang erreichen (Profil so vorbereiten oder üben): einmalige Freischaltanimation nach dem Hochzählen der Punkte, überspringbar, kommt nach Neuladen nicht wieder; Profil › Ränge: „Animation ansehen“ zeigt sie nochmals; bei „Bewegung reduzieren“ nur Einblenden.
+99. Heute: nach Bonusabschnitten steht im Ring 4/3, 5/3 und so weiter, die Zahl ist golden.

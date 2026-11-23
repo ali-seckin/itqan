@@ -1692,6 +1692,16 @@ export default {
     ende_offen: 'Başlanan: {name}. Durumun kaydedildi, bugün {a}. ayetten (toplam {n}) devam edebilirsin.',
     ende_weiter: 'Çalışmaya devam et',
   },
+  rangfeier: {
+    titel: 'Yeni rütbe',
+    ueberspringen: 'Atla',
+    ansehen: 'Animasyonu izle',
+  },
+  uebenleiste: {
+    tipp_hinweis: 'Çevirisini görmek için bir ayete dokun.',
+    aya_uebersetzung: 'Ayet {a}, çeviri',
+    pause: 'Oynatmayı duraklat',
+  },
   sprachwahl: {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
@@ -1764,6 +1774,11 @@ export default {
     blaettern203_4: 'Ayarlar’da Aǧzāʾ kısmen seçildiğinde artık “Ḫatma” yerine “tamamlama” yazar.',
     sprung204_titel: 'Kayma olmadan sayfa çevirme',
     sprung204_1: 'Muṣḥaf’ta sayfa çevirirken sayfa sonunda artık hafifçe yukarı kaymaz, başlığı uzun sayfalarda da.',
+    neu205_titel: 'Önizlemede çeviri, rütbe kutlaması ve daha fazlası',
+    neu205_1: 'Önce bak: Bir ayete dokun, çevirisi görünür.',
+    neu205_2: 'Yeni bir rütbeye ulaştığında bir kez sakin bir açılış animasyonu görünür. Rütbeler sayfasında tekrar izleyebilirsin.',
+    neu205_3: 'Yatay modda alıştırma: Kayıt, oynat ve duraklat düğmeleri hep aynı yerde kalır, ayet göstergesi sabit olarak solda durur.',
+    neu205_4: 'Bonus bölümler Bugün’deki halkada da sayılır: 3/3 olan 4/3 olur ve daha fazlası.',
     lichtkarte92_titel: 'Işık haritası, sayfa çevirme, renkler',
     lichtkarte92_1: 'Işık haritasının sayfa panelinde açık hata yeri olan bölümler artık kırmızı işaretli. Mushaf’ta sayfa çevirmek, tam ekran olmadan da bir sonraki sayfayı kesintisiz içeri kaydırır. Durak işareti renk seçiminin sırası değişti. Tam ekranı kapatmak daha akıcı: sayfa yerine yumuşakça kayar.',
     blaettern91_titel: 'Kayarak sayfa çevirme, grafik penceresi',

@@ -1500,9 +1500,10 @@ function profilFehler(p) {
   if (!leerOder(p.log, x => listeGut(x, e => istObj(e) && (e.y === 'ei' && e.k === 'name' ? einstEintragGut(e) && harmlos({ ...e, w: 0 }) : harmlos(e)), 5000))) return 'log';
   if (!leerOder(p.rangBeste, x => istObj(x) && ganzGut(x.r, 0, 100) && leerOder(x.d, datumGut) && harmlos(x))) return 'rangBeste';
   if (!leerOder(p.umgestellt, datumGut)) return 'umgestellt';
+  if (!leerOder(p.rangGesehen, x => ganzGut(x, 0, 100))) return 'rangGesehen';   // höchster Rang, dessen Freischaltung gezeigt wurde (js/rangfeier.js); darf fehlen
   if (!leerOder(p.modell, x => typeof x === 'string' && /^m\d{1,3}$/.test(x))) return 'modell';
   if (!leerOder(p.pensumVor, x => listeGut(x, y => istObj(y) && datumGut(y.bis) && einstWertGut('pensum', y.p), 20))) return 'pensumVor';
-  const eigens = ['format', 'version', 'schema', 'name', 'erstellt', 'gliederung', 'einst', 'karten', 'tage', 'zyklus', 'kette', 'summe', 'meilen', 'meilenD', 'fstellen', 'pausen', 'lern', 'verlauf', 'mutash', 'statistik', 'sockel', 'log', 'rangBeste', 'umgestellt', 'pensumVor', 'modell'];
+  const eigens = ['format', 'version', 'schema', 'name', 'erstellt', 'gliederung', 'einst', 'karten', 'tage', 'zyklus', 'kette', 'summe', 'meilen', 'meilenD', 'fstellen', 'pausen', 'lern', 'verlauf', 'mutash', 'statistik', 'sockel', 'log', 'rangBeste', 'rangGesehen', 'umgestellt', 'pensumVor', 'modell'];
   for (const [k, w] of Object.entries(p)) if (!eigens.includes(k) && !(textGut(k, 40) && harmlos(w))) return k;
   return null;
 }

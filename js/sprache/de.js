@@ -1688,6 +1688,16 @@ export default {
     ende_offen: 'Angefangen: {name}. Dein Stand ist gespeichert, heute kannst du bei Āya {a} von {n} weitermachen.',
     ende_weiter: 'Weiter üben',
   },
+  rangfeier: {
+    titel: 'Neuer Rang',
+    ueberspringen: 'Überspringen',
+    ansehen: 'Animation ansehen',
+  },
+  uebenleiste: {
+    tipp_hinweis: 'Tippe auf eine Āya, um ihre Übersetzung zu sehen.',
+    aya_uebersetzung: 'Āya {a}, Übersetzung',
+    pause: 'Wiedergabe anhalten',
+  },
   sprachwahl: {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
@@ -1760,6 +1770,11 @@ export default {
     blaettern203_4: 'In den Einstellungen steht bei einer Teilauswahl der Aǧzāʾ jetzt „Durchlauf“ statt „Ḫatma“.',
     sprung204_titel: 'Blättern ohne Verschieben',
     sprung204_1: 'Beim Blättern im Muṣḥaf springt die Seite am Ende nicht mehr minimal nach oben, auch nicht bei Seiten mit langem Titel.',
+    neu205_titel: 'Übersetzung beim Ansehen, Rangfeier und mehr',
+    neu205_1: 'Erst ansehen: Tippe auf eine Āya, und ihre Übersetzung erscheint.',
+    neu205_2: 'Erreichst du einen neuen Rang, erscheint einmalig eine ruhige Freischaltanimation. Auf der Seite der Ränge kannst du sie dir nochmals ansehen.',
+    neu205_3: 'Üben im Querformat: Aufnahme, Wiedergabe und Pause bleiben immer an derselben Stelle, und die Āya-Anzeige steht fest links.',
+    neu205_4: 'Bonusabschnitte zählen im Ring auf Heute mit: aus 3/3 wird 4/3 und mehr.',
     lichtkarte92_titel: 'Lichtkarte, Blättern, Farbwahl',
     lichtkarte92_1: 'Im Seitenblatt der Lichtkarte sind Abschnitte mit offenen Fehlerstellen jetzt rot gekennzeichnet. Das Blättern im Muṣḥaf schiebt die nächste Seite nahtlos herein, auch ohne Vollbild. Die Farbwahl der Stoppzeichen hat eine neue Reihenfolge. Das Schließen des Vollbilds ist geschmeidiger: Die Seite wandert fließend an ihren Platz.',
     blaettern91_titel: 'Blättern mit Gleiten, Diagrammfenster',

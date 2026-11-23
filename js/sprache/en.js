@@ -1692,6 +1692,16 @@ export default {
     ende_offen: 'Started: {name}. Your progress is saved, so today you can carry on from Ayah {a} of {n}.',
     ende_weiter: 'Keep practising',
   },
+  rangfeier: {
+    titel: 'New rank',
+    ueberspringen: 'Skip',
+    ansehen: 'Watch the animation',
+  },
+  uebenleiste: {
+    tipp_hinweis: 'Tap an ayah to see its translation.',
+    aya_uebersetzung: 'Ayah {a}, translation',
+    pause: 'Pause playback',
+  },
   sprachwahl: {
     titel: 'Sprache · Language · Dil · اللغة · Langue · Idioma · زبان',
   },
@@ -1764,6 +1774,11 @@ export default {
     blaettern203_4: 'In Settings, a partial selection of Aǧzāʾ now says “completion” instead of “Ḫatma”.',
     sprung204_titel: 'Page turning without a shift',
     sprung204_1: 'When turning pages in the Mushaf, the page no longer jumps slightly upward at the end, not even on pages with a long title.',
+    neu205_titel: 'Translation on preview, rank unlock and more',
+    neu205_1: 'Look first: tap an Ayah and its translation appears.',
+    neu205_2: 'When you reach a new rank, a calm unlock animation appears once. You can watch it again on the ranks page.',
+    neu205_3: 'Practice in landscape: record, play and pause always stay in the same place, and the Ayah indicator is fixed on the left.',
+    neu205_4: 'Bonus sections count in the ring on Today: 3/3 becomes 4/3 and more.',
     lichtkarte92_titel: 'Light map, page turns, colours',
     lichtkarte92_1: 'In the light map’s page sheet, sections with open trouble spots are now marked in red. Turning pages in the Mushaf slides the next page in seamlessly, even without full screen. The stop sign colour choice has a new order. Closing full screen is smoother: the page glides to its place.',
     blaettern91_titel: 'Sliding page turns, chart popup',

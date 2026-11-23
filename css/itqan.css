@@ -1101,15 +1101,15 @@ body.doppelt .feier{max-width:calc(2 * var(--sb) + 20px);margin-left:auto;margin
   html body.doppelt #app{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));--sb:min(calc((var(--vw, 100vw) - max(18px,env(safe-area-inset-left,0px)) - max(18px,env(safe-area-inset-right,0px)) - 28px) / 2), max(calc((100dvh - 150px) * .7), 500px))}
   .ab-platz{height:96px}
   .steuerung{padding:6px calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 14px)}
-  .steuerung .innen{max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"arten arten" "fort knoepfe" "hinweis knoepfe";column-gap:16px;row-gap:2px;align-items:center}
+  .steuerung .innen{--kb:clamp(96px,13.4vw,132px);max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) calc(var(--kb) * 3 + 30px + 44px);grid-template-areas:"arten arten" "fort knoepfe" "hinweis knoepfe";column-gap:16px;row-gap:2px;align-items:start}
   .steuerung .arten{grid-area:arten;margin-bottom:4px}
   .steuerung .fort-zeile{grid-area:fort}
-  .steuerung #knoepfe{grid-area:knoepfe;flex-wrap:nowrap}
+  .steuerung #knoepfe{grid-area:knoepfe}
   .steuerung .zeile2{grid-area:hinweis;margin:0}
   .steuerung .punkte{margin:0}
   .steuerung .fort-zeile{margin:0}
   .steuerung #hinweis .textlink{padding:2px 0;font-size:12.5px}
-  .steuerung #knoepfe .knopf{width:auto;min-width:130px;min-height:44px;padding:0 18px;font-size:var(--s-klein)}
+  .steuerung #knoepfe .knopf{width:auto;min-width:0;min-height:44px;padding:0 8px;font-size:var(--s-klein);line-height:1.15;overflow-wrap:anywhere}
   .steuerung #knoepfe .knopf.rund{min-width:0;flex:0 0 44px;padding:0}
   .steuerung #hinweis{font-size:12.5px;line-height:1.3}
 }
@@ -1434,3 +1434,99 @@ html[data-gross] .blatt-feld .blatt-nb{top:6px}   /* die Bildlaufleiste der verg
 /* Der Untertitel (Seite, Sūra, Ǧuzʾ) hat auf schmalen Bildschirmen immer Platz für zwei Zeilen: sonst wird der Kopf erst am Ende der Bewegung höher, wenn der neue Titel länger ist,
    und die Seite rutscht dabei nach unten (zum Beispiel von Seite 603 zu 604: 18 px). */
 @media (max-width:520px){[data-ansicht=mushaf] .marke small{min-height:2.4em}}
+/* Ring auf Heute: mit Bonusabschnitten steht mehr als das Wird da (4/3), die Zahl leuchtet golden */
+.stand-karte .mitte .gross.ueber{color:var(--akzentT,#D4AF6A)}
+/* Rangfeier 2.05 */
+/* Freischaltung eines neuen Ranges (js/rangfeier.js): Vollbild, immer dunkel und golden, nur transform und opacity außer dem Zeichnen der Linien */
+.rf{--rf-gold:#D4AF6A;--rf-gold2:#E9CF95;--rf-text:#F3EAD6;--rf-leise:#BFCBCD;position:fixed;inset:0;z-index:110;display:grid;place-items:center;overflow:hidden;overscroll-behavior:contain;color:var(--rf-text);
+ background:radial-gradient(ellipse 120% 90% at 50% 36%,#143440 0%,#10303a 46%,#0D252D 100%);animation:rfGrund .5s ease-out both;
+ padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.rf.rf-weg{animation:rfWeg .26s ease-in both}
+.rf-flaeche{position:absolute;inset:0;z-index:0;border:0;background:none;cursor:pointer}
+.rf-flaeche:focus,.rf-flaeche:focus-visible{outline:none}
+html:has(.rf){scrollbar-gutter:auto}   /* am PC reserviert die Seite sonst einen Streifen am Rand, den die Überlagerung nicht deckt */
+html[dir=rtl] .rf-svg{transform:scaleX(-1)}   /* die Bögen zählen von rechts nach links */
+.rf-mitte{position:relative;z-index:1;pointer-events:none;width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.8vh,18px);text-align:center}
+.rf-emblem{position:relative;flex:none;width:min(66vw,300px,40vh);aspect-ratio:1;animation:rfEmblem .9s cubic-bezier(.2,.7,.2,1) .15s both}
+.rf-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rf-z{fill:none;stroke:var(--rf-gold);stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100 120;stroke-dashoffset:0;animation:rfZeichne var(--t,1000ms) cubic-bezier(.45,.05,.2,1) var(--d,0ms) both}
+.rf-rand{stroke-width:1}.rf-rand.dunn{stroke-width:.6;stroke-opacity:.6}
+.rf-bogen{stroke:var(--rf-gold);stroke-width:2.2;stroke-opacity:.22}
+.rf-bogen.an{stroke:var(--rf-gold2);stroke-width:3.1;stroke-opacity:1}
+.rf-stern{stroke-width:.9;stroke-opacity:.75}.rf-stern.zwei{stroke-opacity:.42}
+.rf-linie{stroke:var(--rf-gold2);stroke-width:6}
+.rf-fuell{opacity:1;animation:rfBlende .75s ease-out 1650ms both}.rf-fuell.f2{animation-delay:1900ms}
+.rf-kern{position:absolute;left:-65%;top:-65%;width:230%;height:230%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(241,221,168,.30) 0,rgba(212,175,106,.12) 22%,transparent 52%);animation:rfKern 1.9s ease-out 1.45s both}
+.rf-s3 .rf-kern{background:radial-gradient(circle,rgba(241,221,168,.40) 0,rgba(212,175,106,.17) 22%,transparent 54%)}
+.rf-s4 .rf-kern{background:radial-gradient(circle,rgba(241,221,168,.52) 0,rgba(212,175,106,.22) 22%,transparent 56%)}
+.rf-welle{position:absolute;left:-50%;top:-50%;width:200%;height:200%;border-radius:50%;pointer-events:none;opacity:0;border:1.5px solid rgba(233,207,149,.75);box-shadow:0 0 26px rgba(212,175,106,.32),inset 0 0 26px rgba(212,175,106,.16);animation:rfWelle 1.5s cubic-bezier(.2,.6,.3,1) 1.7s both}
+.rf-welle.zwei{display:none;animation-delay:2.05s}.rf-s4 .rf-welle.zwei{display:block}
+.rf-funken{position:absolute;left:-14%;right:-14%;top:0;bottom:0;pointer-events:none}
+.rf-funken i{position:absolute;bottom:22%;width:var(--g,3px);height:var(--g,3px);border-radius:50%;background:#F1DDA8;box-shadow:0 0 6px 1px rgba(233,207,149,.65);opacity:0;animation:rfFunke var(--t,1800ms) ease-out var(--d,1600ms) both}
+.rf-text{display:flex;flex-direction:column;align-items:center;gap:clamp(2px,.8vh,8px)}
+.rf-text>*{animation:rfAuf .6s ease-out both}
+.rf-etikett{font-size:var(--s-etikett);letter-spacing:.16em;text-transform:uppercase;color:var(--rf-gold);font-weight:700;animation-delay:.7s}
+.rf-etikett:lang(ar),.rf-etikett:lang(ur){letter-spacing:0;text-transform:none;font-size:var(--s-klein)}
+.rf-ar{font-family:'Uthmani',serif;font-size:clamp(42px,12.5vw,68px);line-height:1.7;color:var(--rf-gold2);text-shadow:0 0 26px rgba(212,175,106,.38);animation-delay:1.9s;animation-duration:.7s}
+.rf-name{font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;color:var(--rf-text);line-height:1.2;animation-delay:2.25s}
+.rf-de{font-size:var(--s-text);color:var(--rf-leise);max-width:30ch;line-height:1.35;animation-delay:2.45s}
+.rf-stufe{font-size:var(--s-klein);color:var(--rf-gold);letter-spacing:.04em;animation-delay:2.65s}
+.rf-weiter{pointer-events:auto;margin-top:clamp(6px,2vh,16px);min-width:190px;min-height:48px;padding:0 34px;border:0;border-radius:14px;background:var(--rf-gold);color:#0D252D;font-weight:700;font-size:var(--s-text);box-shadow:0 8px 24px rgba(212,175,106,.28);animation-delay:2.8s;animation-duration:.45s}
+.rf-weiter:focus-visible{outline:3px solid var(--rf-gold2);outline-offset:3px}
+.rf-weiter:disabled{pointer-events:none}
+/* Überspringen und Schließen: alles springt in den Endzustand */
+.rf.rf-fertig .rf-emblem,.rf.rf-fertig .rf-emblem *,.rf.rf-fertig .rf-text>*{animation-duration:.001s!important;animation-delay:0s!important}
+.rf.rf-fertig .rf-funken,.rf.rf-fertig .rf-welle{display:none}
+@keyframes rfGrund{from{opacity:0}to{opacity:1}}
+@keyframes rfWeg{from{opacity:1}to{opacity:0}}
+@keyframes rfEmblem{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes rfZeichne{from{stroke-dashoffset:105}to{stroke-dashoffset:0}}
+@keyframes rfBlende{from{opacity:0}to{opacity:1}}
+@keyframes rfAuf{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
+@keyframes rfKern{0%{opacity:0;transform:scale(.7)}35%{opacity:1;transform:scale(1.06)}100%{opacity:.6;transform:none}}
+@keyframes rfWelle{0%{opacity:0;transform:scale(.3)}22%{opacity:.85}100%{opacity:0;transform:none}}
+@keyframes rfFunke{0%{opacity:0;transform:translate3d(0,0,0)}18%{opacity:.95}100%{opacity:0;transform:translate3d(var(--dx,0px),calc(var(--h,150px) * -1),0)}}
+/* Querformat am Handy: Zeichen links, Text rechts */
+@media (max-height:520px) and (orientation:landscape){.rf-mitte{flex-direction:row;max-width:none;width:auto;gap:clamp(20px,5vw,48px)}.rf-emblem{width:min(46vh,240px)}.rf-ar{font-size:clamp(38px,9vh,56px);line-height:1.5}}
+/* Bewegung reduziert: kein Zeichnen, kein Aufsteigen, nur sanftes Einblenden */
+.rf-ruhig .rf-z,.rf-ruhig .rf-fuell{animation:none}
+.rf-ruhig .rf-funken,.rf-ruhig .rf-welle,.rf-ruhig .rf-kern{display:none}
+.rf-ruhig .rf-emblem,.rf-ruhig .rf-text>*{animation:rfBlende .7s ease-out both}
+.rf-ruhig .rf-etikett{animation-delay:.15s}.rf-ruhig .rf-ar{animation-delay:.35s}.rf-ruhig .rf-name{animation-delay:.5s}.rf-ruhig .rf-de{animation-delay:.6s}.rf-ruhig .rf-stufe{animation-delay:.7s}.rf-ruhig .rf-weiter{animation-delay:.85s;animation-duration:.5s}
+@media (prefers-reduced-motion:reduce){.rf .rf-z,.rf .rf-fuell{animation:none}.rf .rf-funken,.rf .rf-welle,.rf .rf-kern{display:none}.rf .rf-emblem,.rf .rf-text>*{animation-name:rfBlende}}
+/* Rangseite: Knopf „Animation ansehen“ */
+.rang-ansehen{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 4px;border:0;background:none;color:var(--akzentT);font-weight:600;font-size:var(--s-klein);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+/* Üben-Leiste 2.05 */
+/* Runde Knöpfe (Aufnahme, Stopp, Wiedergabe, Pause): gezeichnete Symbole, in jeder Schrift gleich groß */
+.knopf.rund .ikon{width:20px;height:20px;display:block;fill:currentColor;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round;pointer-events:none}
+/* Hochformat: alle runden Knöpfe gleich hoch und unten bündig, auch wenn eine Beschriftung in einer anderen Sprache umbricht */
+.steuerung #knoepfe>.knopf.rund{align-self:flex-end;height:57px;min-height:57px}
+.steuerung #knoepfe>.knopf:not(.rund){min-height:57px}
+/* Querformat und breite Fenster: feste Rasterstruktur der Leiste. Links ein fester Block (Punkte und Zähler, darunter Hinweis und Textlinks, linksbündig),
+   rechts ein Block mit fester Breite: drei gleich breite Spalten für die Knöpfe der Mitte, ganz außen eine Spalte für den runden Knopf.
+   Aufnahme, Wiedergabe und Pause teilen sich diese eine Spalte, die Knöpfe der Mitte füllen ihre Spalten je nach Zustand (ein breiter, zwei, drei). Nichts hängt von der Länge einer Beschriftung ab. */
+@media (orientation:landscape) and (max-height:520px), (min-width:700px){
+  .steuerung .fort-zeile,.steuerung .zeile2{align-self:start;justify-content:flex-start}
+  .steuerung .punkte{justify-content:flex-start}
+  .steuerung .fort-zeile .zaehler{border:0;padding:0}
+  .steuerung .fort-zeile .punkte:empty{display:none}   /* ganzer Abschnitt am Stück: keine Punkte, der Zähler beginnt am Rand */
+  .steuerung #hinweis{min-height:calc(3 * 1.3 * 12.5px)}   /* drei Zeilen sind immer reserviert: der Wechsel zwischen den Zuständen verschiebt die Punkte nicht */
+  .steuerung #knoepfe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 44px;grid-auto-rows:minmax(44px,auto);column-gap:10px;width:100%;align-self:end;margin-bottom:11px;--m1:1;--m4:4;--r:4}
+  .steuerung #knoepfe>*{grid-row:1;align-self:stretch}
+  .steuerung #knoepfe>.knopf.rund{grid-column:var(--r);justify-self:stretch;align-self:end;width:auto;height:44px;min-height:44px}
+  .steuerung #knoepfe>.knopf:not(.rund){grid-column:var(--m1) / var(--m4);min-height:44px}
+  .steuerung #knoepfe>#f,.steuerung #knoepfe>#teil,.steuerung #knoepfe>#g-neu,.steuerung #knoepfe>#abh-ab{grid-column:var(--m1) / span 1}
+  .steuerung #knoepfe>#z{grid-column:calc(var(--m1) + 1) / span 1}
+  .steuerung #knoepfe>#r{grid-column:calc(var(--m1) + 2) / span 1}
+  .steuerung #knoepfe>#f+#r,.steuerung #knoepfe>#teil+#auf,.steuerung #knoepfe>#g-neu+#g-fertig,.steuerung #knoepfe>#abh-ab+#abh-fertig{grid-column:calc(var(--m1) + 1) / span 2}
+  [dir=rtl] .steuerung #knoepfe{grid-template-columns:44px repeat(3,minmax(0,1fr));--m1:2;--m4:5;--r:1}
+}
+/* Erst ansehen: Tipp auf eine Āya zeigt ihre Übersetzung */
+.tippbar.vorschau .w{cursor:pointer}
+.vorschau .w.uebs{outline:0;border-radius:0}
+.vorschau .w.uebs,.vorschau .w.zu.uebs{--wbg:rgba(217,154,78,.46)!important}
+.vorschau .w.vfokus{--wbg:rgba(217,154,78,.3)!important}
+.vorschau .w.vfokus.uebs{--wbg:rgba(217,154,78,.46)!important}
+.vorschau .w[role=button]:focus-visible{outline:0}
+.uebs-blase.uebs-vorschau{padding-inline:16px 52px}
+.uebs-vorschau .uebs-zu{right:auto;inset-inline-end:4px}

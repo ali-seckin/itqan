@@ -357,6 +357,7 @@ export async function lauf(h, idText, modus) {
     const w2 = app.querySelector('#as-weiter'); if (w2) w2.onclick = () => lauf(h, z.stelle, 'weiter');
     app.querySelector('#as-uebersicht').onclick = () => { if (location.hash === '#uebungen') h.zeige(); else location.replace('#uebungen'); };
     window.scrollTo(0, 0); h.hochzaehlen(app);
+    h.rangFeier?.(evs);   // einmalige Freischaltung eines neuen Ranges (js/rangfeier.js)
   }
 
   // Seite wird verlassen oder in den Hintergrund gelegt: der Stand steht schon im Zwischenstand, hier nur noch die Zeit anhalten
