@@ -56,7 +56,8 @@ export async function mitteilungPlanen(inhalt) {
   try { await LN.cancel({ notifications: ALLE_IDS.map(id => ({ id })) }); } catch (e) {}
   if (!mitteilungAn()) return true;
   const [hour, minute] = String(inhalt?.zeit || '05:30').split(':').map(Number);
-  const kopf = { title: inhalt.titel, body: inhalt.text };
+  // Auf Android ungefähr statt auf die Minute: kein SCHEDULE_EXACT_ALARM nötig (das Fenster beträgt bis zu einer Stunde), iOS ignoriert das Feld
+  const kopf = { title: inhalt.titel, body: inhalt.text, isExactNotification: false };
   const tage = Array.isArray(inhalt.tage) && inhalt.tage.length === 7 ? inhalt.tage.map(Boolean) : Array(7).fill(true);
   let liste;
   if (inhalt.pause) {

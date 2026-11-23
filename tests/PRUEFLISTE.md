@@ -128,3 +128,4 @@ Automatische Logiktests: im Ordner `app` `node --test tests/*.test.mjs` (laufen 
 99. Heute: nach Bonusabschnitten steht im Ring 4/3, 5/3 und so weiter, die Zahl ist golden.
 100. Konto anlegen: Nach „Code senden“ erscheint der Dialog zur ausdrücklichen Einwilligung (Art. 9 DSGVO). „Ich willige ein“ sendet den Code, „Abbrechen“ sendet nichts. Die Einwilligung merkt sich das Gerät, bei „Konto löschen“ wird sie vergessen.
 101. Bestehendes Konto ohne gemerkte Einwilligung: einige Sekunden nach dem Start erscheint der Dialog mit Hinweis. „Ich willige ein“ lässt alles wie es ist, „Abmelden“ meldet ab, der Lernstand auf dem Gerät bleibt. Beim Teilen des Lernprotokolls steht der Hinweis zu Art. 9 im Dialog.
+102. Android: Erinnerung einschalten öffnet keine Systemseite „Wecker und Erinnerungen“, die Mitteilung kommt zur gewählten Uhrzeit mit bis zu einer Stunde Verzögerung. Profil › Sicherung nennt Dateien, die eigene Cloud und WhatsApp (kein „iCloud Drive“ mehr).
