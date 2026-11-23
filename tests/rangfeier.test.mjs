@@ -26,7 +26,7 @@ test('ausstehend: nur gültige Ränge über dem gemerkten, aufsteigend, ohne Dop
 
 test('Merker: nur aufwärts, fehlendes Feld gilt als 0, Unsinn wird nie geschrieben', () => {
   const P = {};
-  assert.equal(RF.gesehenLesen(P), 0); assert.equal(RF.gesehenLesen(null), 0); assert.equal(RF.gesehenLesen({ rangGesehen: 'x' }), 0); assert.equal(RF.gesehenLesen({ rangGesehen: -3 }), 0);
+  assert.equal(RF.gesehenLesen(P), -1); assert.equal(RF.gesehenLesen(null), -1); assert.equal(RF.gesehenLesen({ rangGesehen: 'x' }), -1); assert.equal(RF.gesehenLesen({ rangGesehen: -3 }), -1); assert.equal(RF.gesehenLesen({ rangGesehen: 0 }), 0);
   assert.equal(RF.gesehenMerken(P, 2), true); assert.equal(P.rangGesehen, 2);
   assert.equal(RF.gesehenMerken(P, 2), false); assert.equal(RF.gesehenMerken(P, 1), false); assert.equal(P.rangGesehen, 2);
   assert.equal(RF.gesehenMerken(P, 4), true); assert.equal(P.rangGesehen, 4);
@@ -107,18 +107,35 @@ test('Profilformat: rangGesehen darf fehlen, gültige Werte gehen durch, Unsinn 
   for (const gut of [0, 1, 12]) { const p = kopie(Z.P); p.rangGesehen = gut; assert.doesNotThrow(() => Z.profilPruefen(p), String(gut)); }
   for (const schlecht of ['2', -1, 1.5, 101, [], {}, '<b>x</b>']) { const p = kopie(Z.P); p.rangGesehen = schlecht; assert.throws(() => Z.profilPruefen(kopie(p)), JSON.stringify(schlecht)); }
   // ältere Dateien ohne das Feld laden sich unverändert
-  const alt = kopie(Z.P); delete alt.rangGesehen; Z.profilPruefen(alt); assert.equal(RF.gesehenLesen(Z.ergaenzen(alt)), 0);
+  const alt = kopie(Z.P); delete alt.rangGesehen; Z.profilPruefen(alt); assert.equal(RF.gesehenLesen(Z.ergaenzen(alt)), -1);
 });
 
-test('Emblem: ein Bogen je erreichtem Rang leuchtet, höhere Ränge bekommen mehr Gold', () => {
-  for (let r = 1; r < Z.RAENGE.length; r++) {
-    const s = RF.emblem(r);
-    assert.equal((s.match(/class="rf-z rf-bogen an"/g) || []).length, r, `Rang ${r}`);
-    assert.equal((s.match(/class="rf-z rf-bogen"/g) || []).length, 12 - r);
+test('Emblem: zwölf Bögen für die Ränge 1 bis 12 (Rang 1 den ersten), bei Rang 13 alle und der innere Kreis; höhere Ränge bekommen mehr Gold', () => {
+  for (let r = 0; r < Z.RAENGE.length; r++) {
+    const s = RF.emblem(r), an = Math.min(r + 1, 12);
+    assert.equal((s.match(/class="rf-z rf-bogen an"/g) || []).length, an, `Rang ${r + 1}: Bögen an`);
+    assert.equal((s.match(/class="rf-z rf-bogen"/g) || []).length, 12 - an);
+    assert.equal((s.match(/rf-rand dunn an"/g) || []).length, r === 12 ? 1 : 0, `Rang ${r + 1}: der innere Kreis leuchtet nur bei Rang 13`);
     assert.equal((s.match(/rf-stern/g) || []).length, RF.stufeVon(r) >= 3 ? 4 : RF.stufeVon(r) >= 2 ? 2 : 0, `Sterne bei Rang ${r}`);
     assert.ok(!/NaN|undefined/.test(s));
   }
   assert.deepEqual([1, 3, 4, 6, 7, 9, 10, 12].map(RF.stufeVon), [1, 1, 2, 2, 3, 3, 4, 4]);
+});
+
+test('Mubtadiʾ: der erste Übungsabschluss ist ein Rang-Ereignis (Rang 1, erster Bogen), danach kommt es nicht wieder; die Freischaltung merkt Rang 0', async () => {
+  frisch({ pensum: 3 });
+  assert.equal(Z.P.rangBeste, undefined); assert.equal(RF.gesehenLesen(Z.P), -1);
+  const id = Z.tagesplan().plan[0];
+  const res = Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
+  assert.deepEqual(res.ereignisse.filter(x => x.typ === 'rang'), [rang(0)], 'ein Rang-Ereignis für Mubtadiʾ');
+  assert.equal(Z.P.rangBeste.r, 0);
+  const a = attrappe();
+  assert.deepEqual(await RF.feiern(res.ereignisse, { P: Z.P, speichern: () => Z.speichern(), zeigen: a.zeigen }), [0]);
+  assert.deepEqual(a.g, [['auf', 0], ['zu', 0]]); assert.equal(Z.P.rangGesehen, 0);
+  assert.deepEqual(await RF.feiern([rang(0)], { P: Z.P, zeigen: a.zeigen }), [], 'nicht noch einmal');
+  const id2 = Z.tagesplan().plan.find(x => x !== id) ?? id;
+  const res2 = Z.abschnittAbschliessen(id2, Array.from({ length: D.A[id2].ayat }, () => 'ok'));
+  assert.deepEqual(res2.ereignisse.filter(x => x.typ === 'rang'), [], 'der nächste Abschluss bringt keinen Rang');
 });
 
 test('Texte: der Abschnitt rangfeier steht in allen sieben Sprachen, gleiche Schlüssel, ohne Gedankenstriche', () => {

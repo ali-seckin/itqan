@@ -12,15 +12,16 @@ import { ueberlagerung, hintergrundSperren } from './sperre.js';
 import { abzeichen } from './abzeichen.js';
 
 // ---------- Logik ----------
-export const gesehenLesen = P => { const g = P?.rangGesehen; return Number.isInteger(g) && g >= 0 ? g : 0; };
+// -1: noch keine Freischaltung gezeigt (auch Rang 1, Mubtadiʾ, wird beim ersten Übungsabschluss gezeigt); ältere Profile ohne das Feld zählen so
+export const gesehenLesen = P => { const g = P?.rangGesehen; return Number.isInteger(g) && g >= 0 ? g : -1; };
 // Trägt den Rang ein; false, wenn er nicht höher ist als der schon gemerkte (dann bleibt alles, wie es ist)
 export function gesehenMerken(P, r) {
   if (!P || typeof P !== 'object' || !Number.isInteger(r) || r <= gesehenLesen(P)) return false;
   P.rangGesehen = r; return true;
 }
 // Welche Freischaltungen aus den Ereignissen eines Abschlusses sind noch zu zeigen? Aufsteigend, jeder Rang höchstens einmal.
-export function ausstehend(ereignisse, gesehen = 0) {
-  const g = Number.isInteger(gesehen) ? gesehen : 0, art = new Set();
+export function ausstehend(ereignisse, gesehen = -1) {
+  const g = Number.isInteger(gesehen) ? gesehen : -1, art = new Set();
   for (const x of Array.isArray(ereignisse) ? ereignisse : []) if (x && x.typ === 'rang' && Number.isInteger(x.r) && x.r > g && x.r < RAENGE.length) art.add(x.r);
   return [...art].sort((a, b) => a - b);
 }
@@ -51,10 +52,10 @@ const zeichne = (d, wann, dauer, klasse = '') => `<path class="rf-z ${klasse}" p
 
 export function emblem(r) {
   const stufe = stufeVon(r), arme = [];
-  // zwölf Bögen, einer je erreichtem Rang leuchtet
+  // zwölf Bögen für die Ränge 1 bis 12: der erste leuchtet bei Mubtadiʾ, der zweite bei Murīd und so fort; bei Rang 13 leuchten alle zwölf und der innere Kreis
   for (let i = 0; i < 12; i++) {
     const a0 = -90 + i * 30 + 3, [x0, y0] = punkt(98, a0), [x1, y1] = punkt(98, a0 + 24);
-    arme.push(zeichne(`M${x0} ${y0}A98 98 0 0 1 ${x1} ${y1}`, 760 + i * 70, 560, i < r ? 'rf-bogen an' : 'rf-bogen'));
+    arme.push(zeichne(`M${x0} ${y0}A98 98 0 0 1 ${x1} ${y1}`, 760 + i * 70, 560, i <= r ? 'rf-bogen an' : 'rf-bogen'));
   }
   const rest = [];
   if (stufe >= 2) rest.push(...stern(84, -90).map(d => zeichne(d, 650, 1100, 'rf-stern')));
@@ -62,7 +63,7 @@ export function emblem(r) {
   return `<svg class="rf-svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false">
     <defs><linearGradient id="rf-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1DDA8"/><stop offset=".55" stop-color="#D4AF6A"/><stop offset="1" stop-color="#B58E48"/></linearGradient></defs>
     <circle class="rf-z rf-rand" cx="120" cy="120" r="112" pathLength="100" style="--d:260ms;--t:1100ms"/>
-    <circle class="rf-z rf-rand dunn" cx="120" cy="120" r="${stufe >= 2 ? 59.4 : 66}" pathLength="100" style="--d:520ms;--t:900ms"/>
+    <circle class="rf-z rf-rand dunn${r >= 12 ? ' an' : ''}" cx="120" cy="120" r="${stufe >= 2 ? 59.4 : 66}" pathLength="100" style="--d:520ms;--t:900ms"/>
     ${arme.join('')}${rest.join('')}
     ${abzeichen(r).replace('<svg ', '<svg class="rf-abz" x="60" y="60" width="120" height="120" ')}</svg>`;
 }
@@ -76,7 +77,7 @@ export function zeigen(r, opt = {}) {
     const aufraeumen = () => { try { wurzel?.remove(); } catch (e) { /* schon weg */ } if (hinterGesperrt) { hinterGesperrt = false; try { hintergrundSperren(false); } catch (e) { /* egal */ } } };
     try {
       const R = RAENGE[r];
-      if (!R || !(r > 0) || typeof document === 'undefined') { fertig(false); return; }
+      if (!R || !(r >= 0) || typeof document === 'undefined') { fertig(false); return; }
       if (document.querySelector('.rf')) { fertig(false); return; }   // es steht schon eine da (doppeltes Tippen)
       const ruhig = opt.ruhig ?? matchMedia('(prefers-reduced-motion: reduce)').matches;
       const stufe = stufeVon(r), n = R.n, de = R.de, zufallsZahl = zufall(r + 1);

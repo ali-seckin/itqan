@@ -629,7 +629,7 @@ body.im-vollbild{overflow:hidden}
 .fs-fort i.an{background:var(--gut)}
 /* Ränge */
 .rangkarte{background:linear-gradient(160deg,var(--karte2),var(--karte));border:1px solid var(--akzent);border-radius:18px;padding:16px;margin:16px 0 4px;display:grid;gap:10px;box-shadow:0 10px 26px var(--glow)}
-.rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}
+.rangkarte .kopf,.rangstufe .kopf{display:flex;align-items:center;gap:14px}.rangkarte .kopf>div,.rangstufe .kopf>div{flex:1;min-width:0}
 .rangkarte .ar,.rangstufe .ar,.rang-band .ar{font-family:'Uthmani',serif;font-size:34px;line-height:1.3;color:var(--akzent);min-width:74px;text-align:center}
 [data-modus=dunkel] .rangkarte .ar,[data-modus=dunkel] .rangstufe .ar{color:var(--akzent2)}
 .rangkarte b,.rangstufe .kopf b{display:block;font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;line-height:1.15}
@@ -1458,7 +1458,7 @@ html[dir=rtl] .rf-svg{transform:scaleX(-1)}   /* die Bögen zählen von rechts n
 .rf-emblem{position:relative;flex:none;width:min(66vw,300px,40vh);aspect-ratio:1;animation:rfEmblem .9s cubic-bezier(.2,.7,.2,1) .15s both}
 .rf-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .rf-z{fill:none;stroke:var(--rf-gold);stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100 120;stroke-dashoffset:0;animation:rfZeichne var(--t,1000ms) cubic-bezier(.45,.05,.2,1) var(--d,0ms) both}
-.rf-rand{stroke-width:1}.rf-rand.dunn{stroke-width:.6;stroke-opacity:.6}
+.rf-rand{stroke-width:1}.rf-rand.dunn{stroke-width:.6;stroke-opacity:.6}.rf-rand.dunn.an{stroke:var(--rf-gold2);stroke-width:1.6;stroke-opacity:1}
 .rf-bogen{stroke:var(--rf-gold);stroke-width:2.2;stroke-opacity:.22}
 .rf-bogen.an{stroke:var(--rf-gold2);stroke-width:3.1;stroke-opacity:1}
 .rf-stern{stroke-width:.9;stroke-opacity:.75}.rf-stern.zwei{stroke-opacity:.42}

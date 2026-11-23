@@ -1,5 +1,5 @@
 // Itqān · Service Worker: App-Gerüst offline, Seitenschriften bei Bedarf
-const SCHALE = 'itqan-schale-v168';
+const SCHALE = 'itqan-schale-v169';
 const SEITEN = 'itqan-seiten-v1';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'css/itqan.css', 'css/schriften.css', 'js/start.js', 'js/huelle.js', 'js/nativ.js', 'js/rangfeier.js', 'js/abzeichen.js', 'js/lernmodell.js', 'js/forschung.js', 'js/fehler.js', 'js/sprache.js', 'js/sprache/de.js', 'js/sprache/ar.js', 'js/sprache/en.js', 'js/sprache/es.js', 'js/sprache/fr.js', 'js/sprache/tr.js', 'js/sprache/ur.js', 'js/app.js', 'js/uebersetzung.js', 'js/daten.js', 'js/zustand.js', 'js/abfragen.js', 'js/auswahl.js', 'js/lichtkarte.js', 'js/sperre.js', 'js/mushaf.js', 'js/blaettern.js', 'js/ziffern.js', 'js/abgleich.js', 'js/konto.js', 'js/server.js', 'js/ornamente.js', 'js/fuehrung.js', 'js/version.js', 'js/suche.js', 'js/aehnlich.js', 'js/rueckblick.js', 'js/hilfe.js', 'js/amstueck.js', 'js/evidenz.js', 'daten/text.json', 'daten/mutashabihat.json', 'daten/aehnlich.json',
   'daten/layout_v1.json', 'daten/layout_v2.json', 'daten/verse.json', 'daten/abschnitte.json', 'daten/abschnitte_anf.json', 'daten/abschnitte_seite_v1.json', 'daten/abschnitte_seite_v2.json',

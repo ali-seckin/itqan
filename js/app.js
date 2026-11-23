@@ -2230,7 +2230,7 @@ const istText = b => b.k === 'ganz' || b.k === 'offen0' ? (b.ok ? tx('isttext.er
 const bedListe = (i, z) => `<div class="bed">${Z.bedingungen(i, z).map(b => `<div class="${b.ok ? 'ok' : ''}"><span>${b.ok ? '✓ ' : ''}${b.text}</span><span>${istText(b)}</span><i><b style="width:${(fortschritt(b) * 100).toFixed(1)}%"></b></i></div>`).join('')}</div>`;
 function rangKarte() {
   const z = Z.kennzahlen(), r = Z.rangJetzt(z), R = Z.RAENGE[r], best = Z.P.rangBeste?.r ?? 0;
-  return `<div class="rangkarte"><div class="kopf"><span class="abz">${abzeichen(r)}</span><div><span class="titel-klein" style="margin:0">${tx('rangkarte.rang_von', { a: r + 1, n: Z.RAENGE.length })}</span>${arabischZeile(R)}<b>${R.n}</b><span>${R.de}</span></div></div>
+  return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.rang_von', { a: r + 1, n: Z.RAENGE.length })}</span>${arabischZeile(R)}<b>${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(r)}</span></div>
     ${best > r ? `<p class="unter">${tx('rangkarte.hoechster_erreichter_rang_die', { n: Z.RAENGE[best].n })}</p>` : ''}
     ${r + 1 < Z.RAENGE.length ? `<p class="naechster">${tx('rangkarte.zum_naechsten_rang', { n: Z.RAENGE[r + 1].n })}</p>${bedListe(r + 1, z)}` : `<p class="naechster">${tx('rangkarte.der_hoechste_rang_allahumma_barik')}</p>`}
     <a class="textlink" href="#raenge" style="padding-left:0">${tx('rangkarte.alle_raenge_und_was_sie_bedeuten')}</a></div>`;
@@ -2243,8 +2243,8 @@ function raenge() {
     <p class="unter" style="margin:14px 0 4px">${tx('raenge.ein_rang_verlangt_immer_beides_fleiss')}</p>
     <p class="unter">${tx('raenge.ab_rang_7_gilt_nur_der_ganze_quran_bei')}</p>
     ${Z.RAENGE.map((R, i) => `<div class="rangstufe ${i === r ? 'jetzt' : i < r ? 'erreicht' : ''}">
-      <div class="kopf"><span class="abz">${abzeichen(i)}</span><div>${arabischZeile(R)}<b>${i + 1}. ${R.n}</b><span>${R.de}</span></div></div>
-      <p>${R.hifz}</p>${i && i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${i ? bedListe(i, z) : ''}</div>`).join('')}`;
+      <div class="kopf"><div>${arabischZeile(R)}<b>${i + 1}. ${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(i)}</span></div>
+      <p>${R.hifz}</p>${i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${i ? bedListe(i, z) : ''}</div>`).join('')}`;
   // erreichte Ränge: die Freischaltung noch einmal ansehen (ohne Merker, ohne Folgen)
   app.querySelectorAll('.rang-ansehen').forEach(b => { b.onclick = async () => { try { const RF = await rfLaden(); await RF.zeigen(+b.dataset.rang); } catch (e) { console.warn('Rangfeier', e); } }; });
 }

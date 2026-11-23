@@ -1096,7 +1096,8 @@ function abschlussAnwenden(e0) {
   if (k.st > vorher) ereignisse.push({ typ: 'stufe', st: k.st });
   // Rang: neu erreicht, wenn er höher ist als der bisher höchste
   const rg = rangJetzt();
-  if (rg > (P.rangBeste?.r ?? 0)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
+  // auch Mubtadiʾ (Rang 1) ist ein Ereignis: der erste Übungsabschluss
+  if (rg > (P.rangBeste?.r ?? -1)) { P.rangBeste = { r: rg, d: datum }; ereignisse.push({ typ: "rang", r: rg }); }
   return { hasanat, ereignisse, stufe: k.st, vorher, lern };
 }
 
