@@ -15,11 +15,9 @@ concurrency:
   # eine begonnene Veröffentlichung läuft zu Ende; von mehreren wartenden Läufen bleibt nur der neueste
   cancel-in-progress: false
 jobs:
-  deploy:
+  # Zwei Aufträge wie in der Vorlage von GitHub: Das Artefakt ist fertig abgeschlossen, wenn der zweite beginnt (im einen Auftrag fand deploy-pages es gelegentlich nicht)
+  bauen:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       # Prüfungen zuerst: schlägt eine fehl, wird nichts veröffentlicht
@@ -64,17 +62,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
-      # deploy-pages fand das Artefakt gelegentlich nicht, obwohl es hochgeladen war (Liste kurz nach dem Hochladen noch leer): erst warten, bis es gelistet ist
-      - name: Auf das Artefakt in der Liste warten
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          for i in $(seq 1 24); do
-            n=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" | grep -c '"name": *"github-pages"' || true)
-            if [ "${n:-0}" -ge 1 ]; then echo "Artefakt in der Liste nach $((i * 5)) Sekunden"; exit 0; fi
-            sleep 5
-          done
-          echo "::warning::Artefakt nach zwei Minuten nicht in der Liste, deploy-pages versucht es trotzdem"
+  veroeffentlichen:
+    needs: bauen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # für die Rauchprobe: Schale und Version aus diesem Stand
+      - uses: actions/checkout@v7
       - id: deployment
         uses: actions/deploy-pages@v5
       # Rauchprobe nach der Veröffentlichung: die Schale und die Version im Netz sind die aus diesem Stand, die Startdateien kommen an,
