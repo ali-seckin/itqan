@@ -138,7 +138,7 @@ test('Texte: der Abschnitt rangfeier steht in allen sieben Sprachen, gleiche Sch
 test('Bewegung reduziert: eigene Regeln ohne Zeichnen, Aufsteigen und Wellen; Endzustand beim Überspringen; nur transform und opacity bewegt', () => {
   const css = lies('css/itqan.css'), teil = css.slice(css.indexOf('/* Rangfeier 2.05 */'));
   assert.ok(teil.length > 500);
-  assert.match(teil, /\.rf-ruhig \.rf-z,\.rf-ruhig \.rf-fuell\{animation:none\}/);
+  assert.match(teil, /\.rf-ruhig \.rf-z,\.rf-ruhig \.rf-fuell,\.rf-ruhig \.rf-abz\{animation:none\}/);
   assert.match(teil, /\.rf-ruhig \.rf-funken,\.rf-ruhig \.rf-welle[^{]*\{display:none\}/);
   assert.match(teil, /@media \(prefers-reduced-motion:reduce\)\{[^@]*\.rf-funken[^@]*display:none/);
   assert.match(teil, /\.rf\.rf-fertig \.rf-emblem[^{]*\{animation-duration:\.001s!important/);

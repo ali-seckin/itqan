@@ -9,6 +9,7 @@
 import { RAENGE } from './zustand.js';
 import { tx } from './sprache.js';
 import { ueberlagerung, hintergrundSperren } from './sperre.js';
+import { abzeichen } from './abzeichen.js';
 
 // ---------- Logik ----------
 export const gesehenLesen = P => { const g = P?.rangGesehen; return Number.isInteger(g) && g >= 0 ? g : 0; };
@@ -37,9 +38,6 @@ export async function feiern(ereignisse, { P, speichern, zeigen }) {
 }
 
 // ---------- Ansicht ----------
-// Das Itqān-Zeichen (Nische mit Flamme), dieselben Umrisse wie das App-Symbol in js/app.js
-const NISCHE = 'M272 820 V470 C272 330 392 230 512 176 C632 230 752 330 752 470 V820 H672 V488 C672 384 592 314 512 270 C432 314 352 384 352 488 V820 Z';
-const FLAMME = 'M512 452 C576 532 600 596 578 652 C566 684 540 706 512 712 C484 706 458 684 446 652 C424 596 448 532 512 452 Z';
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ESC[c]);
 // Intensität: höhere Ränge bekommen mehr Gold (Stufe 1 bis 4: Rang 1-3, 4-6, 7-9, 10-12)
@@ -66,10 +64,7 @@ export function emblem(r) {
     <circle class="rf-z rf-rand" cx="120" cy="120" r="112" pathLength="100" style="--d:260ms;--t:1100ms"/>
     <circle class="rf-z rf-rand dunn" cx="120" cy="120" r="${stufe >= 2 ? 59.4 : 66}" pathLength="100" style="--d:520ms;--t:900ms"/>
     ${arme.join('')}${rest.join('')}
-    <svg x="80" y="68" width="80" height="97.7" viewBox="232 156 560 684" overflow="visible">
-      <path class="rf-fuell" d="${NISCHE}" fill="url(#rf-gold)"/><path class="rf-fuell f2" d="${FLAMME}" fill="url(#rf-gold)"/>
-      <path class="rf-z rf-linie" pathLength="100" style="--d:820ms;--t:1100ms" d="${NISCHE}"/><path class="rf-z rf-linie" pathLength="100" style="--d:1300ms;--t:700ms" d="${FLAMME}"/>
-    </svg></svg>`;
+    ${abzeichen(r).replace('<svg ', '<svg class="rf-abz" x="60" y="60" width="120" height="120" ')}</svg>`;
 }
 const arKern = s => String(s ?? '').replace(/[ً-ٰٟۖ-ۭ]/g, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/[ہھۃ]/g, 'ه').replace(/\s+/g, '');
 

@@ -633,7 +633,15 @@ body.im-vollbild{overflow:hidden}
 .rangkarte .ar,.rangstufe .ar,.rang-band .ar{font-family:'Uthmani',serif;font-size:34px;line-height:1.3;color:var(--akzent);min-width:74px;text-align:center}
 [data-modus=dunkel] .rangkarte .ar,[data-modus=dunkel] .rangstufe .ar{color:var(--akzent2)}
 .rangkarte b,.rangstufe .kopf b{display:block;font-family:var(--kopf);font-size:var(--s-titel);font-weight:600;line-height:1.15}
-.rangkarte .kopf span:not(.ar),.rangstufe .kopf span:not(.ar):not(.nr){display:block;font-size:var(--s-klein);color:var(--leise)}
+.rangkarte .kopf span:not(.ar):not(.abz):not(.arz),.rangstufe .kopf span:not(.ar):not(.nr):not(.abz):not(.arz){display:block;font-size:var(--s-klein);color:var(--leise)}
+/* Abzeichen der Ränge (js/abzeichen.js): runde Medaille, Größe je Ort; noch nicht erreichte Ränge stehen blass und grau da */
+/* Grund der Abzeichen: im hellen Modus warmes Nussbraun und tiefes Olivgrün statt Petrol, damit Gold und Bronze auf dem Creme der App stehen; dunkel und in der Freischaltung bleibt es Petrol */
+:root,[data-modus=hell]{--abz-n0:#5A4230;--abz-n1:#3E2D20;--abz-n2:#2A1E15;--abz-e0:#4A7A5E;--abz-e1:#335A44;--abz-e2:#223F30}
+[data-modus=dunkel],.rf{--abz-n0:#16404E;--abz-n1:#10303E;--abz-n2:#0A2230;--abz-e0:#2A7380;--abz-e1:#17505B;--abz-e2:#0F3A45}
+.abz{display:block;flex:none;width:var(--abz,56px);height:var(--abz,56px)}.abz svg{display:block;width:100%;height:100%;overflow:visible}
+.rangkarte .abz{--abz:84px}.rangstufe .abz{--abz:64px}.rang-band .abz{--abz:56px}
+.rangstufe:not(.erreicht):not(.jetzt) .abz{opacity:.4;filter:grayscale(.85)}
+.arz{display:block;font-family:'Uthmani',serif;font-size:26px;line-height:1.4;color:var(--akzent)}[data-modus=dunkel] .arz{color:var(--akzent2)}
 .naechster{font-size:var(--s-klein);font-weight:500}
 .bed{display:grid;gap:9px}
 .bed>div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:var(--s-klein)}
@@ -1455,6 +1463,8 @@ html[dir=rtl] .rf-svg{transform:scaleX(-1)}   /* die Bögen zählen von rechts n
 .rf-bogen.an{stroke:var(--rf-gold2);stroke-width:3.1;stroke-opacity:1}
 .rf-stern{stroke-width:.9;stroke-opacity:.75}.rf-stern.zwei{stroke-opacity:.42}
 .rf-linie{stroke:var(--rf-gold2);stroke-width:6}
+.rf-abz{transform-box:fill-box;transform-origin:center;animation:rfAbz .9s cubic-bezier(.2,.7,.2,1) 1500ms both}
+@keyframes rfAbz{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
 .rf-fuell{opacity:1;animation:rfBlende .75s ease-out 1650ms both}.rf-fuell.f2{animation-delay:1900ms}
 .rf-kern{position:absolute;left:-65%;top:-65%;width:230%;height:230%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(241,221,168,.30) 0,rgba(212,175,106,.12) 22%,transparent 52%);animation:rfKern 1.9s ease-out 1.45s both}
 .rf-s3 .rf-kern{background:radial-gradient(circle,rgba(241,221,168,.40) 0,rgba(212,175,106,.17) 22%,transparent 54%)}
@@ -1489,11 +1499,11 @@ html[dir=rtl] .rf-svg{transform:scaleX(-1)}   /* die Bögen zählen von rechts n
 /* Querformat am Handy: Zeichen links, Text rechts */
 @media (max-height:520px) and (orientation:landscape){.rf-mitte{flex-direction:row;max-width:none;width:auto;gap:clamp(20px,5vw,48px)}.rf-emblem{width:min(46vh,240px)}.rf-ar{font-size:clamp(38px,9vh,56px);line-height:1.5}}
 /* Bewegung reduziert: kein Zeichnen, kein Aufsteigen, nur sanftes Einblenden */
-.rf-ruhig .rf-z,.rf-ruhig .rf-fuell{animation:none}
+.rf-ruhig .rf-z,.rf-ruhig .rf-fuell,.rf-ruhig .rf-abz{animation:none}
 .rf-ruhig .rf-funken,.rf-ruhig .rf-welle,.rf-ruhig .rf-kern{display:none}
 .rf-ruhig .rf-emblem,.rf-ruhig .rf-text>*{animation:rfBlende .7s ease-out both}
 .rf-ruhig .rf-etikett{animation-delay:.15s}.rf-ruhig .rf-ar{animation-delay:.35s}.rf-ruhig .rf-name{animation-delay:.5s}.rf-ruhig .rf-de{animation-delay:.6s}.rf-ruhig .rf-stufe{animation-delay:.7s}.rf-ruhig .rf-weiter{animation-delay:.85s;animation-duration:.5s}
-@media (prefers-reduced-motion:reduce){.rf .rf-z,.rf .rf-fuell{animation:none}.rf .rf-funken,.rf .rf-welle,.rf .rf-kern{display:none}.rf .rf-emblem,.rf .rf-text>*{animation-name:rfBlende}}
+@media (prefers-reduced-motion:reduce){.rf .rf-z,.rf .rf-fuell,.rf .rf-abz{animation:none}.rf .rf-funken,.rf .rf-welle,.rf .rf-kern{display:none}.rf .rf-emblem,.rf .rf-text>*{animation-name:rfBlende}}
 /* Rangseite: Knopf „Animation ansehen“ */
 .rang-ansehen{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 4px;border:0;background:none;color:var(--akzentT);font-weight:600;font-size:var(--s-klein);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 /* Üben-Leiste 2.05 */
