@@ -1762,6 +1762,8 @@ export default {
     blaettern203_2: 'Les cadres dorés restent en place pendant le tournage et n’apparaissent plus d’un coup à la fin.',
     blaettern203_3: 'Tourne ton téléphone en paysage : la double page s’affiche aussitôt et centrée, sans zoomer. En glissant, la page suit ton doigt.',
     blaettern203_4: 'Dans les réglages, une sélection partielle des Aǧzāʾ affiche désormais « achèvement » au lieu de « Ḫatma ».',
+    sprung204_titel: 'Pages tournées sans décalage',
+    sprung204_1: 'En tournant les pages du Mushaf, la page ne saute plus légèrement vers le haut à la fin, même pour les pages à long titre.',
     lichtkarte92_titel: 'Carte de lumière, pages, couleurs',
     lichtkarte92_1: 'Dans la feuille de page de la carte de lumière, les sections avec des points d’erreur ouverts sont désormais marquées en rouge. Tourner les pages dans le Mushaf fait glisser la page suivante sans rupture, même hors plein écran. Le choix de couleur des signes de pause a un nouvel ordre. La fermeture du plein écran est plus fluide : la page glisse jusqu’à sa place.',
     blaettern91_titel: 'Pages qui glissent, fenêtre du graphique',

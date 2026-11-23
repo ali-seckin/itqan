@@ -1762,6 +1762,8 @@ export default {
     blaettern203_2: 'Los marcos dorados se quedan en su sitio al pasar y ya no aparecen de golpe al final.',
     blaettern203_3: 'Gira el móvil a horizontal y la doble página aparece al instante y centrada, sin hacer zoom. Al deslizar, la página sigue tu dedo.',
     blaettern203_4: 'En los ajustes, una selección parcial de Aǧzāʾ ahora dice «finalización» en lugar de «Ḫatma».',
+    sprung204_titel: 'Pasar páginas sin desajuste',
+    sprung204_1: 'Al pasar las páginas del Mushaf, la página ya no salta un poco hacia arriba al final, tampoco en las páginas con título largo.',
     lichtkarte92_titel: 'Mapa de luz, páginas, colores',
     lichtkarte92_1: 'En la hoja de página del mapa de luz, las secciones con puntos de error abiertos aparecen ahora marcadas en rojo. Al pasar de página en el Mushaf, la siguiente entra sin saltos, también sin pantalla completa. La elección de color de los signos de pausa tiene un nuevo orden. Cerrar la pantalla completa es más fluido: la página se desliza hasta su lugar.',
     blaettern91_titel: 'Páginas que se deslizan, ventana del gráfico',

@@ -1762,6 +1762,8 @@ export default {
     blaettern203_2: 'The golden frames stay in place while you turn and no longer pop in at the end.',
     blaettern203_3: 'Turn your phone to landscape and the double page appears at once and centred, without zooming. When you swipe, the page follows your finger.',
     blaettern203_4: 'In Settings, a partial selection of Aǧzāʾ now says “completion” instead of “Ḫatma”.',
+    sprung204_titel: 'Page turning without a shift',
+    sprung204_1: 'When turning pages in the Mushaf, the page no longer jumps slightly upward at the end, not even on pages with a long title.',
     lichtkarte92_titel: 'Light map, page turns, colours',
     lichtkarte92_1: 'In the light map’s page sheet, sections with open trouble spots are now marked in red. Turning pages in the Mushaf slides the next page in seamlessly, even without full screen. The stop sign colour choice has a new order. Closing full screen is smoother: the page glides to its place.',
     blaettern91_titel: 'Sliding page turns, chart popup',

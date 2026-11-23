@@ -1762,6 +1762,8 @@ export default {
     blaettern203_2: 'Altın çerçeveler sayfa çevirirken yerinde kalır, sonunda birdenbire belirmez.',
     blaettern203_3: 'Telefonu yatay çevirdiğinde çift sayfa yakınlaştırmadan hemen ve ortalanmış görünür. Kaydırırken sayfa parmağını izler.',
     blaettern203_4: 'Ayarlar’da Aǧzāʾ kısmen seçildiğinde artık “Ḫatma” yerine “tamamlama” yazar.',
+    sprung204_titel: 'Kayma olmadan sayfa çevirme',
+    sprung204_1: 'Muṣḥaf’ta sayfa çevirirken sayfa sonunda artık hafifçe yukarı kaymaz, başlığı uzun sayfalarda da.',
     lichtkarte92_titel: 'Işık haritası, sayfa çevirme, renkler',
     lichtkarte92_1: 'Işık haritasının sayfa panelinde açık hata yeri olan bölümler artık kırmızı işaretli. Mushaf’ta sayfa çevirmek, tam ekran olmadan da bir sonraki sayfayı kesintisiz içeri kaydırır. Durak işareti renk seçiminin sırası değişti. Tam ekranı kapatmak daha akıcı: sayfa yerine yumuşakça kayar.',
     blaettern91_titel: 'Kayarak sayfa çevirme, grafik penceresi',

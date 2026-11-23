@@ -1758,6 +1758,8 @@ export default {
     blaettern203_2: 'Die goldenen Rahmen bleiben beim Blättern stehen und ploppen am Ende nicht mehr auf.',
     blaettern203_3: 'Dreh dein Handy ins Querformat, und die Doppelseite erscheint sofort und mittig, ohne Zoomen. Beim Wischen folgt die Seite deinem Finger.',
     blaettern203_4: 'In den Einstellungen steht bei einer Teilauswahl der Aǧzāʾ jetzt „Durchlauf“ statt „Ḫatma“.',
+    sprung204_titel: 'Blättern ohne Verschieben',
+    sprung204_1: 'Beim Blättern im Muṣḥaf springt die Seite am Ende nicht mehr minimal nach oben, auch nicht bei Seiten mit langem Titel.',
     lichtkarte92_titel: 'Lichtkarte, Blättern, Farbwahl',
     lichtkarte92_1: 'Im Seitenblatt der Lichtkarte sind Abschnitte mit offenen Fehlerstellen jetzt rot gekennzeichnet. Das Blättern im Muṣḥaf schiebt die nächste Seite nahtlos herein, auch ohne Vollbild. Die Farbwahl der Stoppzeichen hat eine neue Reihenfolge. Das Schließen des Vollbilds ist geschmeidiger: Die Seite wandert fließend an ihren Platz.',
     blaettern91_titel: 'Blättern mit Gleiten, Diagrammfenster',

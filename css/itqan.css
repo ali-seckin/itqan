@@ -1426,3 +1426,11 @@ html[data-gross] .blatt-feld .blatt-nb{top:6px}   /* die Bildlaufleiste der verg
 /* Jede Seite hält ihren Inhalt für sich: Rendering und Bewegung berühren das übrige Dokument nicht */
 .seite{contain:layout paint style}
 @media (prefers-reduced-motion:reduce){.blatt-feld .blatt,.vb-buehne .blatt{transition:none}}
+/* Blättern: gleiche Lage vor, während und nach der Bewegung (2.03, Nachbesserung) */
+/* Einseitig im dunklen Design: der Rand der Seite (4 px) liegt am Feld statt an der Seite. In einem eigenen Container (Nachbarblatt) kollabiert er nicht nach außen,
+   die gleitende Seite saß dadurch 4 px tiefer und sprang am Ende nach oben. So sitzen aktuelle und gleitende Seite von Anfang an gleich. */
+[data-modus=dunkel] body:not(.doppelt)[data-ansicht=mushaf] .blatt-feld{margin-top:4px;margin-bottom:4px}
+[data-modus=dunkel] body:not(.doppelt)[data-ansicht=mushaf] .blatt-feld .blatt .seite{margin-top:0;margin-bottom:0}
+/* Der Untertitel (Seite, Sūra, Ǧuzʾ) hat auf schmalen Bildschirmen immer Platz für zwei Zeilen: sonst wird der Kopf erst am Ende der Bewegung höher, wenn der neue Titel länger ist,
+   und die Seite rutscht dabei nach unten (zum Beispiel von Seite 603 zu 604: 18 px). */
+@media (max-width:520px){[data-ansicht=mushaf] .marke small{min-height:2.4em}}
