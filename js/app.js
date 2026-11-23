@@ -184,6 +184,25 @@ function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbr
     document.body.appendChild(d); d.querySelector('[data-a="1"]').focus();
   });
 }
+// ---------- Ausdrückliche Einwilligung (Art. 9 DSGVO): Konto und Lernstand können mittelbar die religiöse Überzeugung zeigen ----------
+// Gemerkt wird nur auf diesem Gerät; ohne Speicher fragt die App beim nächsten Mal erneut. Rückgabe: true (erteilt), false (abgelehnt), null (Dialog durch Wechsel der Ansicht geschlossen)
+const ART9_SCHLUESSEL = 'itqan-art9-einwilligung';
+const art9Erteilt = () => { try { return !!localStorage.getItem(ART9_SCHLUESSEL); } catch (e) { return false; } };
+const art9Vergessen = () => { try { localStorage.removeItem(ART9_SCHLUESSEL); } catch (e) { /* nichts zu tun */ } };
+async function art9Einholen({ bestehend = false } = {}) {
+  if (art9Erteilt()) return true;
+  const ja = await dialog({ titel: tx('konto.art9_titel'), html: tx('konto.art9_text') + (bestehend ? `<p class="unter">${tx('konto.art9_alt')}</p>` : ''), ja: tx('konto.art9_ja'), nein: bestehend ? tx('konto.abmelden') : tx('dialog.abbrechen') });
+  if (ja === true) { try { localStorage.setItem(ART9_SCHLUESSEL, Z.heute()); } catch (e) { /* ohne Speicher wird erneut gefragt */ } }
+  return ja;
+}
+// Bestehende Konten, die vor dieser Einwilligung angelegt wurden: einmal fragen; wer ablehnt, wird abgemeldet (der Lernstand auf dem Gerät bleibt)
+async function art9Bestand() {
+  if (art9Erteilt() || !sicher('art9', () => Ab.status().angemeldet, false)) return;
+  const ja = await art9Einholen({ bestehend: true });
+  if (ja !== false) return;
+  try { await Ab.abmelden(); toast(tx('konto.abgemeldet_ok')); } catch (e) { fehlerMerken(e, 'art9'); }
+  if (location.hash === '#konto') zeige();
+}
 // ---------- Bleibender Hinweis am oberen Rand (Speicherfehler, neue Version): steht, bis er geschlossen wird ----------
 function leiste(id, text, knoepfe = []) {
   let l = document.getElementById(id);
@@ -2445,7 +2464,7 @@ function kontoSeite() {
       app.querySelector('#k-aus').onclick = async () => { if (await dialog({ titel: tx('konto.abmelden_titel'), html: `<p class="unter">${tx('konto.abmelden_text')}</p>`, ja: tx('konto.abmelden') })) { await Ab.abmelden(); toast(tx('konto.abgemeldet_ok')); zeichne(); } };
       app.querySelector('#k-loeschen').onclick = async () => {
         if (!await dialog({ titel: tx('konto.loeschen_titel'), html: `<p class="unter">${tx('konto.loeschen_text')}</p>`, ja: tx('konto.loeschen_ja'), gefahr: true })) return;
-        try { await Ab.kontoLoeschen({ hoechstAlter: LOESCH_ALTER }); toast(tx('konto.geloescht_ok')); zeichne(); }
+        try { await Ab.kontoLoeschen({ hoechstAlter: LOESCH_ALTER }); art9Vergessen(); toast(tx('konto.geloescht_ok')); zeichne(); }
         catch (e) {
           if (!(e instanceof Ab.AnmeldungAltFehler)) return meldung(fehlerText(e), true);
           // Die Anmeldung liegt länger zurück: Vor dem endgültigen Löschen bestätigt ein neuer Code, dass wirklich der Inhaber löscht
@@ -2464,7 +2483,7 @@ function kontoSeite() {
       knopf.onclick = () => lauf(knopf, async () => {
         const c = feld.value.replace(/\D/g, ''); if (c.length < 6) return meldung(tx('konto.fehler_code'), true);
         try { await Ab.codePruefen(email, c); } catch (e) { return meldung(codeFehler(e), true); }
-        try { await Ab.kontoLoeschen({ hoechstAlter: LOESCH_ALTER }); toast(tx('konto.geloescht_ok')); zeichne(); } catch (e) { meldung(fehlerText(e), true); }
+        try { await Ab.kontoLoeschen({ hoechstAlter: LOESCH_ALTER }); art9Vergessen(); toast(tx('konto.geloescht_ok')); zeichne(); } catch (e) { meldung(fehlerText(e), true); }
       });
     } else if (schritt === 'code') {
       app.innerHTML = kopf + `<div class="abschnitt"><p class="unter">${tx('konto.code_gesendet', { email: alsHtml(esc(email)) })}</p>
@@ -2487,6 +2506,7 @@ function kontoSeite() {
       const feld = app.querySelector('#k-mail'), knopf = app.querySelector('#k-senden'); enter(feld, knopf);
       knopf.onclick = () => lauf(knopf, async () => {
         email = feld.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return meldung(tx('konto.fehler_mail'), true);
+        if (await art9Einholen() !== true) return;   // ohne ausdrückliche Einwilligung kein Konto
         try { await Ab.codeSenden(email); } catch (e) { return meldung(sicher('codefehler', () => Ab.codeFehlerArt(e), '') === 'zu_oft' ? tx('konto.zu_oft') : fehlerText(e), true); }
         zeichne('code');
       });
@@ -3209,7 +3229,7 @@ function einstellungen() {
   wahl('hasanat', w => { E.hasanat = w === '1'; });
   app.querySelector('#forschung').onclick = async ev => {
     const w = ev.target.dataset.w; if (w == null) return;
-    if (w === '1' && !Forschung.an()) { const ja = await dialog({ titel: tx('forschung.dialog_titel'), html: tx('forschung.dialog_text'), ja: tx('forschung.ja') }); if (!ja) return; Forschung.einschalten(Z.P?.erstellt); }
+    if (w === '1' && !Forschung.an()) { const ja = await dialog({ titel: tx('forschung.dialog_titel'), html: tx('forschung.dialog_text') + tx('forschung.dialog_art9'), ja: tx('forschung.ja') }); if (!ja) return; Forschung.einschalten(Z.P?.erstellt); }
     else if (w === '0' && Forschung.an()) { await Forschung.widerrufen(); toast(tx('forschung.widerrufen')); }
     app.querySelectorAll('#forschung button').forEach(b => b.classList.toggle('an', (b.dataset.w === '1') === Forschung.an()));
   };
@@ -3431,6 +3451,7 @@ async function starten() {
   if (Z.P) { try { navigator.storage?.persist?.()?.catch?.(() => {}); } catch (e) { /* nicht überall vorhanden */ } }   // auch für Profile, die geladen statt angelegt wurden
   addEventListener('online', abgleichStill); document.addEventListener('visibilitychange', () => { if (!document.hidden) abgleichStill(); });
   setTimeout(neuigkeitenPruefen, 600);
+  setTimeout(art9Bestand, 3500);
   setTimeout(vorratSpeichern, 4000);
   // wieder Netz: Seiten in einfacher Schrift bekommen ihre Muṣḥaf-Schrift, der Vorrat wird nachgeholt
   addEventListener('online', () => { schriftAbgleichen().catch(() => {}); vorratSpeichern(); });
