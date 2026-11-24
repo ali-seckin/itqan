@@ -2,7 +2,7 @@
 // Eine runde Medaille auf dem Petrol der App. Das Material steigt mit dem Rang (Bronze 1 bis 3, Silber 4 bis 6, Gold 7 bis 9,
 // Gold mit Email 10 bis 12, Licht 13), ab Rang 7 steht das Abschnittszeichen (Stern) hinter der Medaille. Das Zeichen in der Mitte ist je Rang eigen
 // und zeigt die Bedeutung des Namens, ohne Lebewesen:
-//  1 Keimling, 2 Flamme, 3 sieben Tage, 4 Salomonsknoten, 5 Wachturm, 6 Siegelring, 7 offenes Buch, 8 Waage, 9 Schreibfeder,
+//  1 Keimling, 2 Flamme, 3 sieben Tage, 4 Salomonsknoten, 5 Wachturm, 6 Siegel in Achtstern-Form, 7 offenes Buch, 8 Waage, 9 Schreibfeder,
 //  10 Baum mit Wurzeln, 11 Mihrab, 12 Knoten (gewebter Achtstern mit Lichtpunkt, Ṯabt heißt Festigkeit), 13 Strahlenstern.
 // Die drei letzten Ränge lesen sich als Weg: erst durch den Mihrab, dann die Festigkeit mit dem Licht, am Ende das Licht selbst.
 // Die Entwürfe und das Werkzeug dazu liegen in werkzeuge/abzeichen. abzeichen(i) liefert ein SVG als Text; jede Abfrage bekommt eigene
@@ -14,7 +14,7 @@ const STOFF = {
   licht: ['#FFFFFF', '#F6E3A6', '#C79A3B']
 };
 const STOFF_VON = ['bronze', 'bronze', 'bronze', 'silber', 'silber', 'silber', 'gold', 'gold', 'gold', 'gold', 'gold', 'gold', 'licht'];
-const SKALA = [1.2, 1.2, 1.15, 1.15, 1.2, 1.15, 1.15, 1.08, 1.15, 1.15, 1.15, 1.15, 1.05];
+const SKALA = [1.2, 1.2, 1.15, 1.15, 1.2, 1.1, 1.15, 1.08, 1.15, 1.15, 1.15, 1.15, 1.05];
 export const ANZAHL = 13;
 
 const r2 = x => Math.round(x * 100) / 100;
@@ -23,7 +23,7 @@ const stern = (n, ro, ri, cx = 100, cy = 100, rot = -90) => Array.from({ length:
 const punkte = (n, r, g, farbe, op = 1) => Array.from({ length: n }, (_, i) => { const [x, y] = pt(r, -90 + i * 360 / n); return `<circle cx="${x}" cy="${y}" r="${g}" fill="${farbe}" opacity="${op}"/>`; }).join('');
 
 // M: Füllung im Material, C: Farbe der Aussparungen (Grund der Medaille), u: Kennung für Masken
-function zeichen(i, M, C, u) {
+function zeichen(i, M, C, u, h, d) {   // h: Glanzlicht, d: Schattenton des Materials
   switch (i) {
     case 0: return `<path d="M100 137 V100" stroke="${M}" stroke-width="5" stroke-linecap="round" fill="none"/>
       <path d="M100 104 C82 104 70 93 68 77 C86 77 99 88 100 104Z" fill="${M}"/><path d="M100 96 C116 96 129 85 131 69 C114 69 101 80 100 96Z" fill="${M}"/>
@@ -38,9 +38,12 @@ function zeichen(i, M, C, u) {
     case 4: return `<rect x="70" y="134" width="60" height="5" rx="2" fill="${M}"/><rect x="78" y="90" width="44" height="44" fill="${M}"/>
       <rect x="78" y="76" width="10" height="16" fill="${M}"/><rect x="95" y="76" width="10" height="16" fill="${M}"/><rect x="112" y="76" width="10" height="16" fill="${M}"/>
       <path d="M92 134 V114 a8 8 0 0 1 16 0 V134Z" fill="${C}"/><rect x="98" y="99" width="4" height="9" rx="1" fill="${C}"/>`;
-    case 5: return `<circle cx="100" cy="113" r="23" fill="none" stroke="${M}" stroke-width="7.5"/>
-      <ellipse cx="100" cy="83" rx="29" ry="19.5" fill="${M}" stroke="${C}" stroke-width="2.2"/><ellipse cx="100" cy="83" rx="23" ry="14" fill="none" stroke="${C}" stroke-width="1.2" opacity=".85"/>
-      <polygon points="${stern(8, 9.5, 5.6, 100, 83)}" fill="${C}"/>`;
+    case 5: {   // Siegel in Achtstern-Form: der Rand folgt dem Abschnittszeichen (zwei Quadrate mit weichen Ecken), Perlenring, kleiner Stern; vollkommen symmetrisch
+      const perlen = Array.from({ length: 16 }, (_, k) => { const [x, y] = pt(24.5, k * 22.5 - 90); return `<circle cx="${x}" cy="${y}" r="1.4" fill="${C}"/>`; }).join('');
+      return `<rect x="67" y="67" width="66" height="66" rx="11" fill="${M}"/><rect x="67" y="67" width="66" height="66" rx="11" fill="${M}" transform="rotate(45 100 100)"/>
+        <circle cx="100" cy="100" r="31" fill="none" stroke="${d}" stroke-opacity=".5" stroke-width="2.4"/><circle cx="100" cy="100" r="27.6" fill="none" stroke="${h}" stroke-opacity=".6" stroke-width="1.2"/>
+        <circle cx="100" cy="100" r="21" fill="none" stroke="${C}" stroke-width="1.5"/>${perlen}<polygon points="${stern(8, 13, 7.6)}" fill="${C}"/><circle cx="100" cy="100" r="3" fill="${M}"/>`;
+    }
     case 6: return `<path d="M100 84 C90 76 76 74 62 78 V128 C76 124 90 126 100 134Z" fill="${M}"/><path d="M100 84 C110 76 124 74 138 78 V128 C124 124 110 126 100 134Z" fill="${M}"/>
       <path d="M100 84 V134" stroke="${C}" stroke-width="2.6"/>
       <g stroke="${C}" stroke-width="2" stroke-linecap="round" fill="none"><path d="M70 92 C78 90 86 91 92 94"/><path d="M70 104 C78 102 86 103 92 106"/><path d="M70 116 C78 114 86 115 92 118"/><path d="M130 92 C122 90 114 91 108 94"/><path d="M130 104 C122 102 114 103 108 106"/><path d="M130 116 C122 114 114 115 108 118"/></g>
@@ -101,7 +104,7 @@ export function abzeichen(i, name = '') {
 <radialGradient id="${u}f" cx=".38" cy=".3" r=".9"><stop offset="0" stop-color="${grund[0]}"/><stop offset=".6" stop-color="${grund[1]}"/><stop offset="1" stop-color="${grund[2]}"/></radialGradient></defs>
 ${hinten}<circle cx="100" cy="100" r="88" fill="${kante}" stroke="${d}" stroke-opacity=".5" stroke-width="1"/>${leiste}
 <circle cx="100" cy="100" r="79" fill="${d}" opacity=".55"/><circle cx="100" cy="100" r="77" fill="url(#${u}f)"/>${innen}
-<g transform="translate(100 100) scale(${SKALA[i]}) translate(-100 -100)">${zeichen(i, kante, C, u)}</g>
+<g transform="translate(100 100) scale(${SKALA[i]}) translate(-100 -100)">${zeichen(i, kante, C, u, h, d)}</g>
 <path d="M${ax} ${ay} A86 86 0 0 1 ${bx} ${by}" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
 </svg>`;
   return svg.replace(/(fill|stroke|stop-color)="(var\([^"]*\))"/g, 'style="$1:$2"');
