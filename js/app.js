@@ -6,6 +6,7 @@ import { hintergrundSperren, hintergrundFreigeben, ueberlagerung, eigenerRuecksc
 import * as Forschung from './forschung.js';
 import * as Fehler from './fehler.js';
 import { abzeichen } from './abzeichen.js';
+import { navFest } from './navfest.js';
 import { Stapel, paarVon, einheitVon, doppelEntscheid } from './blaettern.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
@@ -2230,13 +2231,20 @@ async function vollbild(start) {
 const fortschritt = b => b.k === 'ganz' || b.k === 'offen0' || b.k === 'tag1' ? (b.ok ? 1 : 0) : Math.min(1, b.ist / b.soll);
 const istText = b => b.k === 'ganz' || b.k === 'offen0' || b.k === 'tag1' ? (b.ok ? tx('isttext.erfuellt') : tx('isttext.offen')) : (w => ['quote', 'st2', 'st3', 'st4'].includes(b.k) ? prozent(w) : w)(b.k === 'punkte' ? zahl(b.ist) : b.ist.toLocaleString(gebiet('zahl'), { useGrouping: false }));
 const bedListe = (i, z) => `<div class="bed">${Z.bedingungen(i, z).map(b => `<div class="${b.ok ? 'ok' : ''}"><span>${b.ok ? '✓ ' : ''}${b.text}</span><span>${istText(b)}</span><i><b style="width:${(fortschritt(b) * 100).toFixed(1)}%"></b></i></div>`).join('')}</div>`;
+// Abzeichen groß ansehen: in den Farben des gerade gewählten Modus (hell oder dunkel), auch für noch nicht erreichte Ränge
+function abzeichenVorschau(i) {
+  const R = Z.RAENGE[i]; if (!R) return Promise.resolve(null);
+  const erreicht = i <= Z.rangJetzt(Z.kennzahlen());
+  return dialog({ titel: `${i + 1}. ${R.n}`, ja: tx('dialog.ok'), nein: '', html: `<div class="abz-gross">${abzeichen(i, R.n)}</div>${arabischZeile(R) ? `<p class="abz-ar">${arabischZeile(R)}</p>` : ''}<p class="abz-de">${R.de}</p>${erreicht ? '' : `<p class="unter abz-hinweis">${tx('rangfeier.noch_nicht_erreicht')}</p>`}` });
+}
+document.addEventListener('click', ev => { const b = ev.target.closest?.('[data-abz]'); if (b) abzeichenVorschau(+b.dataset.abz); });
 function rangKarte() {
   const z = Z.kennzahlen(), r = Z.rangJetzt(z), best = Z.P.rangBeste?.r ?? -1;
-  if (r < 0) return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.noch_kein_rang')}</span><p class="unter" style="margin:6px 0 0">${tx('rangkarte.erstes_ziel_hinweis')}</p></div><span class="abz abz-leer">${abzeichen(0)}</span></div>
+  if (r < 0) return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.noch_kein_rang')}</span><p class="unter" style="margin:6px 0 0">${tx('rangkarte.erstes_ziel_hinweis')}</p></div><button type="button" class="abz abz-knopf abz-leer" data-abz="0" aria-label="${esc(tx('rangfeier.vorschau', { n: Z.RAENGE[0].n }))}">${abzeichen(0)}</button></div>
     <p class="naechster">${tx('rangkarte.zum_naechsten_rang', { n: Z.RAENGE[0].n })}</p>${bedListe(0, z)}
     <a class="textlink" href="#raenge" style="padding-left:0">${tx('rangkarte.alle_raenge_und_was_sie_bedeuten')}</a></div>`;
   const R = Z.RAENGE[r];
-  return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.rang_von', { a: r + 1, n: Z.RAENGE.length })}</span>${arabischZeile(R)}<b>${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(r)}</span></div>
+  return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.rang_von', { a: r + 1, n: Z.RAENGE.length })}</span>${arabischZeile(R)}<b>${R.n}</b><span>${R.de}</span></div><button type="button" class="abz abz-knopf" data-abz="${r}" aria-label="${esc(tx('rangfeier.vorschau', { n: R.n }))}">${abzeichen(r)}</button></div>
     ${best > r ? `<p class="unter">${tx('rangkarte.hoechster_erreichter_rang_die', { n: Z.RAENGE[best].n })}</p>` : ''}
     ${r + 1 < Z.RAENGE.length ? `<p class="naechster">${tx('rangkarte.zum_naechsten_rang', { n: Z.RAENGE[r + 1].n })}</p>${bedListe(r + 1, z)}` : `<p class="naechster">${tx('rangkarte.der_hoechste_rang_allahumma_barik')}</p>`}
     <a class="textlink" href="#raenge" style="padding-left:0">${tx('rangkarte.alle_raenge_und_was_sie_bedeuten')}</a></div>`;
@@ -2249,7 +2257,7 @@ function raenge() {
     <p class="unter" style="margin:14px 0 4px">${tx('raenge.ein_rang_verlangt_immer_beides_fleiss')}</p>
     <p class="unter">${tx('raenge.ab_rang_7_gilt_nur_der_ganze_quran_bei')}</p>
     ${Z.RAENGE.map((R, i) => `<div class="rangstufe ${i === r ? 'jetzt' : i < r ? 'erreicht' : ''}">
-      <div class="kopf"><div>${arabischZeile(R)}<b>${i + 1}. ${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(i)}</span></div>
+      <div class="kopf"><div>${arabischZeile(R)}<b>${i + 1}. ${R.n}</b><span>${R.de}</span></div><button type="button" class="abz abz-knopf" data-abz="${i}" aria-label="${esc(tx('rangfeier.vorschau', { n: R.n }))}">${abzeichen(i)}</button></div>
       <p>${R.hifz}</p>${i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${bedListe(i, z)}</div>`).join('')}`;
   // erreichte Ränge: die Freischaltung noch einmal ansehen (ohne Merker, ohne Folgen)
   app.querySelectorAll('.rang-ansehen').forEach(b => { b.onclick = async () => { try { const RF = await rfLaden(); await RF.zeigen(+b.dataset.rang); } catch (e) { console.warn('Rangfeier', e); } }; });
@@ -3474,6 +3482,7 @@ async function starten() {
     const los = () => { if (erledigt) return; erledigt = true; vv?.removeEventListener('resize', los); tippt(); };
     if (vv && istTouch()) { vv.addEventListener('resize', los); setTimeout(los, 350); } else setTimeout(los, 0);
   });
+  navFest(nav);   // die untere Leiste prüft ihre Lage selbst und rückt sich zurecht (js/navfest.js)
   Z.abschlussHakenSetzen(Forschung.eintragen); Forschung.starten();   // freiwilliges Lernprotokoll: nur nach Zustimmung
   if (!NATIV && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
   // Store-App: tägliche Mitteilung mit aktueller Sprache und Uhrzeit neu planen

@@ -1142,8 +1142,8 @@ html[data-stopp="6"]{--sk-ende:#8f5410;--sk-stopp:#0f6a74}
 /* Menüleiste mit fünf Reitern: der Muṣḥaf liegt in der Mitte und ist hervorgehoben */
 .nav a{min-width:56px;padding:4px 6px}
 .nav a[data-r=mushaf]{color:var(--akzentT)}
-.nav a[data-r=mushaf] svg{box-sizing:content-box;width:26px;height:26px;padding:10px;margin-top:-26px;border-radius:50%;background:var(--akzent);color:var(--bg);border:3px solid var(--bg);box-shadow:0 3px 10px rgba(0,0,0,.35)}
-.nav a[data-r=mushaf].an svg{background:var(--akzent2)}
+.nav a[data-r=mushaf] svg{box-sizing:content-box;width:26px;height:26px;padding:10px;margin-top:-26px;border-radius:50%;background:var(--akzent);color:var(--bg);border:3px solid var(--bg);position:relative;z-index:1;overflow:visible}
+.nav a[data-r=mushaf].an svg{background:var(--akzent2)}.nav a[data-r=mushaf]{position:relative}.nav a[data-r=mushaf]::before{content:"";position:absolute;top:-22px;left:50%;width:52px;height:52px;margin-left:-26px;border-radius:50%;box-shadow:0 5px 16px rgba(0,0,0,.24),0 1px 4px rgba(0,0,0,.16);pointer-events:none}
 /* Mehr: die Einstellungen als große, farbige Karte */
 /* Muṣḥaf: die Seite steht oben, die Steuerung ist eine schmale Leiste, Gehe zu klappt darunter auf */
 [data-ansicht=mushaf] .marke{font-size:1.7rem}
@@ -1540,3 +1540,10 @@ html[dir=rtl] .rf-svg{transform:scaleX(-1)}   /* die Bögen zählen von rechts n
 .vorschau .w[role=button]:focus-visible{outline:0}
 .uebs-blase.uebs-vorschau{padding-inline:16px 52px}
 .uebs-vorschau .uebs-zu{right:auto;inset-inline-end:4px}
+/* Abzeichen als Knopf und Vorschau (2.11) */
+button.abz-knopf{border:0;background:none;padding:0;margin:0;cursor:pointer;border-radius:50%;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+button.abz-knopf:active{transform:scale(.95)}
+button.abz-knopf:focus-visible{outline:3px solid var(--akzent);outline-offset:3px}
+.abz-gross{width:min(240px,64vw);margin:6px auto 10px}.abz-gross svg{display:block;width:100%;height:auto;overflow:visible}
+.dialog-text .abz-ar{margin:0;text-align:center}.dialog-text .abz-ar .arz{font-family:'Uthmani',serif;font-size:30px;line-height:1.3;color:var(--akzent)}[data-modus=dunkel] .dialog-text .abz-ar .arz{color:var(--akzent2)}
+.dialog-text .abz-de{margin:2px 0 0;text-align:center;font-size:var(--s-text);color:var(--leise)}.dialog-text .abz-hinweis{margin:8px 0 0;text-align:center}

@@ -143,7 +143,7 @@ test('Texte: der Abschnitt rangfeier steht in allen sieben Sprachen, gleiche Sch
   assert.equal(codes.length, 7);
   const block = c => lies(`js/sprache/${c}.js`).match(/^  rangfeier: \{([\s\S]*?)^  \},/m);
   const schluessel = [...block('de')[1].matchAll(/^\s+(\w+):/gm)].map(m => m[1]);
-  assert.deepEqual(schluessel, ['titel', 'ueberspringen', 'ansehen']);
+  assert.deepEqual(schluessel, ['titel', 'ueberspringen', 'ansehen', 'vorschau', 'noch_nicht_erreicht']);
   for (const c of codes) {
     const m = block(c); assert.ok(m, `${c}: Abschnitt rangfeier fehlt`);
     assert.deepEqual([...m[1].matchAll(/^\s+(\w+): '([^']+)'/gm)].map(x => x[1]), schluessel, c);

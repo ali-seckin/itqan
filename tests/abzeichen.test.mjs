@@ -58,7 +58,8 @@ test('Abzeichen: Name macht es zum Bild mit Beschriftung, ohne Name ist es Schmu
 test('Abzeichen: Einbindung in Ränge, Rangkarte, Rang-Band und Freischaltung; Modul steht im Vorrat des Service Workers', () => {
   const app = readFileSync(join(APP, 'js/app.js'), 'utf8'), rf = readFileSync(join(APP, 'js/rangfeier.js'), 'utf8'), sw = readFileSync(join(APP, 'sw.js'), 'utf8');
   assert.ok(app.includes("import { abzeichen } from './abzeichen.js'"));
-  assert.equal((app.match(/\$\{abzeichen\(/g) || []).length, 4, 'Rang-Band, Rangkarte (ohne und mit Rang) und Liste der Ränge');
+  assert.equal((app.match(/\$\{abzeichen\(/g) || []).length, 5, 'Rang-Band, Rangkarte (ohne und mit Rang), Liste der Ränge und die große Vorschau');
+  assert.equal((app.match(/data-abz=/g) || []).length, 3, 'Rangkarte (zweimal) und Liste tragen data-abz'); assert.ok(app.includes("closest?.('[data-abz]')"), 'ein Klick-Fänger öffnet die Vorschau');
   assert.ok(rf.includes("abzeichen(r)") && rf.includes('rf-abz'));
   assert.ok(sw.includes("'js/abzeichen.js'"));
   const css = readFileSync(join(APP, 'css/itqan.css'), 'utf8');
