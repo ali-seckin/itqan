@@ -71,11 +71,16 @@ test('Stufen: viermal fehlerfrei ergibt mutqan', () => {
   assert.equal(Z.karte(id).st, 4);
 });
 
-test('Ränge: neues Profil ist Mubtadiʾ, 1.000 Punkte ergeben Murīd', () => {
+test('Ränge: neues Profil hat noch keinen Rang, das erste Tagesziel ergibt Mubtadiʾ, 1.000 Punkte Murīd', () => {
   frisch();
-  assert.equal(Z.rangJetzt(), 0);
+  assert.equal(Z.rangJetzt(), -1, 'ohne erfülltes Tagesziel kein Rang');
+  assert.deepEqual(Z.bedingungen(0).map(b => [b.k, b.ok]), [['tag1', false]]);
+  Z.P.kette.beste = 1;
+  assert.equal(Z.rangJetzt(), 0, 'das erste erfüllte Tagesziel macht zum Mubtadiʾ');
   Z.P.summe.punkte = 1000;
   assert.equal(Z.rangJetzt(), 1);
+  Z.P.kette.beste = 0;
+  assert.equal(Z.rangJetzt(), 1, 'ältere Profile mit 1.000 Punkten ohne Kette gelten als gestartet');
 });
 
 test('Ornamente: auch Sūren in einer Sammelkarte bekommen ihr Ornament', () => {

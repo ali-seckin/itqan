@@ -58,10 +58,10 @@ test('Abzeichen: Name macht es zum Bild mit Beschriftung, ohne Name ist es Schmu
 test('Abzeichen: Einbindung in Ränge, Rangkarte, Rang-Band und Freischaltung; Modul steht im Vorrat des Service Workers', () => {
   const app = readFileSync(join(APP, 'js/app.js'), 'utf8'), rf = readFileSync(join(APP, 'js/rangfeier.js'), 'utf8'), sw = readFileSync(join(APP, 'sw.js'), 'utf8');
   assert.ok(app.includes("import { abzeichen } from './abzeichen.js'"));
-  assert.equal((app.match(/\$\{abzeichen\(/g) || []).length, 3, 'Rang-Band, Rangkarte und Liste der Ränge');
+  assert.equal((app.match(/\$\{abzeichen\(/g) || []).length, 4, 'Rang-Band, Rangkarte (ohne und mit Rang) und Liste der Ränge');
   assert.ok(rf.includes("abzeichen(r)") && rf.includes('rf-abz'));
   assert.ok(sw.includes("'js/abzeichen.js'"));
   const css = readFileSync(join(APP, 'css/itqan.css'), 'utf8');
-  assert.match(css, /\.rangstufe:not\(\.erreicht\):not\(\.jetzt\) \.abz\{opacity:\.4/);
+  assert.match(css, /\.rangstufe:not\(\.erreicht\):not\(\.jetzt\) \.abz,\.abz-leer\{opacity:\.4/);
   assert.match(css, /\.rf-ruhig \.rf-z,\.rf-ruhig \.rf-fuell,\.rf-ruhig \.rf-abz\{animation:none\}/);
 });

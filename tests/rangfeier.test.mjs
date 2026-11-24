@@ -37,7 +37,7 @@ test('Merker: nur aufwärts, fehlendes Feld gilt als 0, Unsinn wird nie geschrie
 test('Echter Aufstieg: das Ereignis entsteht einmal, die Freischaltung wird einmal gezeigt', async () => {
   frisch({ pensum: 3 });
   Z.P.summe.punkte = 990;                       // knapp unter Rang 2 (Murīd, 1000 Punkte)
-  assert.equal(Z.rangJetzt(), 0);
+  assert.equal(Z.rangJetzt(), -1);
   const id = Z.tagesplan().plan[0];
   const res = Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
   const rangs = res.ereignisse.filter(x => x.typ === 'rang');
@@ -122,20 +122,20 @@ test('Emblem: zwölf Bögen für die Ränge 1 bis 12 (Rang 1 den ersten), bei Ra
   assert.deepEqual([1, 3, 4, 6, 7, 9, 10, 12].map(RF.stufeVon), [1, 1, 2, 2, 3, 3, 4, 4]);
 });
 
-test('Mubtadiʾ: der erste Übungsabschluss ist ein Rang-Ereignis (Rang 1, erster Bogen), danach kommt es nicht wieder; die Freischaltung merkt Rang 0', async () => {
+test('Mubtadiʾ: das erste erfüllte Tagesziel (alle geplanten Abschnitte) ist das Rang-Ereignis, vorher kein Rang; die Freischaltung merkt Rang 0', async () => {
   frisch({ pensum: 3 });
-  assert.equal(Z.P.rangBeste, undefined); assert.equal(RF.gesehenLesen(Z.P), -1);
-  const id = Z.tagesplan().plan[0];
-  const res = Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
-  assert.deepEqual(res.ereignisse.filter(x => x.typ === 'rang'), [rang(0)], 'ein Rang-Ereignis für Mubtadiʾ');
-  assert.equal(Z.P.rangBeste.r, 0);
+  assert.equal(Z.P.rangBeste, undefined); assert.equal(RF.gesehenLesen(Z.P), -1); assert.equal(Z.rangJetzt(), -1);
+  const plan = Z.tagesplan().plan, abschl = id => Z.abschnittAbschliessen(id, Array.from({ length: D.A[id].ayat }, () => 'ok'));
+  assert.ok(plan.length >= 2, 'das Pensum hat mehrere Abschnitte');
+  for (const id of plan.slice(0, -1)) assert.deepEqual(abschl(id).ereignisse.filter(x => x.typ === 'rang'), [], 'noch kein Rang vor dem Ende des Tagesziels');
+  assert.equal(Z.rangJetzt(), -1); assert.equal(Z.P.rangBeste, undefined);
+  const res = abschl(plan[plan.length - 1]);
+  assert.deepEqual(res.ereignisse.filter(x => x.typ === 'rang'), [rang(0)], 'der letzte geplante Abschnitt erfüllt das Tagesziel: Mubtadiʾ');
+  assert.equal(Z.rangJetzt(), 0); assert.equal(Z.P.rangBeste.r, 0);
   const a = attrappe();
   assert.deepEqual(await RF.feiern(res.ereignisse, { P: Z.P, speichern: () => Z.speichern(), zeigen: a.zeigen }), [0]);
   assert.deepEqual(a.g, [['auf', 0], ['zu', 0]]); assert.equal(Z.P.rangGesehen, 0);
   assert.deepEqual(await RF.feiern([rang(0)], { P: Z.P, zeigen: a.zeigen }), [], 'nicht noch einmal');
-  const id2 = Z.tagesplan().plan.find(x => x !== id) ?? id;
-  const res2 = Z.abschnittAbschliessen(id2, Array.from({ length: D.A[id2].ayat }, () => 'ok'));
-  assert.deepEqual(res2.ereignisse.filter(x => x.typ === 'rang'), [], 'der nächste Abschluss bringt keinen Rang');
 });
 
 test('Texte: der Abschnitt rangfeier steht in allen sieben Sprachen, gleiche Schlüssel, ohne Gedankenstriche', () => {

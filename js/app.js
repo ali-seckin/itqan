@@ -1463,7 +1463,7 @@ async function ueben(idText, quelle, fokusText) {
       sichtbar(teile[ti]?.[0]);
       autoAufnahme();
     } else {
-      K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : ''}`;
+      K.innerHTML = `<button class="knopf schlecht" id="f">${tx('allg.fehler')}</button>${hilfe ? '' : `<button class="knopf leise" id="z">${tx('ueben.gezoegert')}</button>`}<button class="knopf gut" id="r">${tx('ueben.richtig')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : hoerenPlatz()}`;
       if (blockAnz > 1 && blockEnde > pos) spans(vi).forEach(x => x.classList.add('dran'));
       H.textContent = aufnahme ? tx('ueben.hoer_dir_deine_rezitation_an_und') : hilfe ? tx('ueben.mit_hilfe_zaehlt_als_halb_sicher') : blockAnz > 1 && blockEnde > pos ? tx('ueben.block_frage', { a: D.V[vi][1] }) : tx('ueben.warst_du_sicher_und_fehlerfrei');
       if (uebersetzungSprache() && !hilfe) { const ub = document.createElement('button'); ub.type = 'button'; ub.className = 'textlink mini'; ub.id = 'uebers'; ub.textContent = tx('uebers.link'); H.append(document.createElement('br'), ub); ub.onclick = () => uebersetzungZeigen(vi); }
@@ -1477,6 +1477,8 @@ async function ueben(idText, quelle, fokusText) {
       const zb = app.querySelector('#z'); if (zb) zb.onclick = () => bewerte('zoegern');
     }
   }
+  // Solange der Rekorder nach dem Aufdecken noch ausläuft, steht ein unsichtbarer Platzhalter in der Größe des Play-Knopfs da: die Knöpfe daneben rutschen nicht
+  const hoerenPlatz = () => rec ? '<button type="button" class="knopf leise rund" disabled tabindex="-1" aria-hidden="true" style="visibility:hidden"></button>' : '';
   // Wiedergabeknopf: Zeichen und Beschriftung wechseln zwischen Abspielen und Pause, die Größe bleibt gleich
   function hoerenZeichen(b, spielt) { b.innerHTML = ikon(spielt ? 'pause' : 'play'); b.setAttribute('aria-label', spielt ? tx('uebenleiste.pause') : tx('ueben.aufnahme_anhoeren')); b.dataset.spielt = spielt ? '1' : '0'; }
   function aufdecken() {
@@ -1578,7 +1580,7 @@ async function ueben(idText, quelle, fokusText) {
     app.querySelector('#punkte').innerHTML = '';
     A.classList.remove('verdeckt');
     A.innerHTML = Z.FEHLERARTEN.map(([w, l]) => `<button data-a="${w}">${l}</button>`).join('') + `<button data-a="zg">${tx('ueben.ganz_gezoegert')}</button>`;
-    K.innerHTML = `<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : ''}`;
+    K.innerHTML = `<button class="knopf leise" id="g-neu">${tx('ueben.ganz_neu')}</button><button class="knopf haupt" id="g-fertig">${tx('ueben.ganz_abschliessen')}</button>${aufnahme ? `<button class="knopf leise rund" id="hoeren" aria-label="${tx('ueben.aufnahme_anhoeren')}">${ikon('play')}</button>` : hoerenPlatz()}`;
     H.innerHTML = aufnahme ? tx('ueben.ganz_pruef_ton') : tx('ueben.ganz_pruef');
     const hb = app.querySelector('#hoeren'); if (hb) hb.onclick = () => ganzHoeren(hb);
     app.querySelector('#g-neu').onclick = () => {
@@ -2225,11 +2227,15 @@ async function vollbild(start) {
 }
 
 // ---------- Ränge ----------
-const fortschritt = b => b.k === 'ganz' || b.k === 'offen0' ? (b.ok ? 1 : 0) : Math.min(1, b.ist / b.soll);
-const istText = b => b.k === 'ganz' || b.k === 'offen0' ? (b.ok ? tx('isttext.erfuellt') : tx('isttext.offen')) : (w => ['quote', 'st2', 'st3', 'st4'].includes(b.k) ? prozent(w) : w)(b.k === 'punkte' ? zahl(b.ist) : b.ist.toLocaleString(gebiet('zahl'), { useGrouping: false }));
+const fortschritt = b => b.k === 'ganz' || b.k === 'offen0' || b.k === 'tag1' ? (b.ok ? 1 : 0) : Math.min(1, b.ist / b.soll);
+const istText = b => b.k === 'ganz' || b.k === 'offen0' || b.k === 'tag1' ? (b.ok ? tx('isttext.erfuellt') : tx('isttext.offen')) : (w => ['quote', 'st2', 'st3', 'st4'].includes(b.k) ? prozent(w) : w)(b.k === 'punkte' ? zahl(b.ist) : b.ist.toLocaleString(gebiet('zahl'), { useGrouping: false }));
 const bedListe = (i, z) => `<div class="bed">${Z.bedingungen(i, z).map(b => `<div class="${b.ok ? 'ok' : ''}"><span>${b.ok ? '✓ ' : ''}${b.text}</span><span>${istText(b)}</span><i><b style="width:${(fortschritt(b) * 100).toFixed(1)}%"></b></i></div>`).join('')}</div>`;
 function rangKarte() {
-  const z = Z.kennzahlen(), r = Z.rangJetzt(z), R = Z.RAENGE[r], best = Z.P.rangBeste?.r ?? 0;
+  const z = Z.kennzahlen(), r = Z.rangJetzt(z), best = Z.P.rangBeste?.r ?? -1;
+  if (r < 0) return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.noch_kein_rang')}</span><p class="unter" style="margin:6px 0 0">${tx('rangkarte.erstes_ziel_hinweis')}</p></div><span class="abz abz-leer">${abzeichen(0)}</span></div>
+    <p class="naechster">${tx('rangkarte.zum_naechsten_rang', { n: Z.RAENGE[0].n })}</p>${bedListe(0, z)}
+    <a class="textlink" href="#raenge" style="padding-left:0">${tx('rangkarte.alle_raenge_und_was_sie_bedeuten')}</a></div>`;
+  const R = Z.RAENGE[r];
   return `<div class="rangkarte"><div class="kopf"><div><span class="titel-klein" style="margin:0">${tx('rangkarte.rang_von', { a: r + 1, n: Z.RAENGE.length })}</span>${arabischZeile(R)}<b>${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(r)}</span></div>
     ${best > r ? `<p class="unter">${tx('rangkarte.hoechster_erreichter_rang_die', { n: Z.RAENGE[best].n })}</p>` : ''}
     ${r + 1 < Z.RAENGE.length ? `<p class="naechster">${tx('rangkarte.zum_naechsten_rang', { n: Z.RAENGE[r + 1].n })}</p>${bedListe(r + 1, z)}` : `<p class="naechster">${tx('rangkarte.der_hoechste_rang_allahumma_barik')}</p>`}
@@ -2244,7 +2250,7 @@ function raenge() {
     <p class="unter">${tx('raenge.ab_rang_7_gilt_nur_der_ganze_quran_bei')}</p>
     ${Z.RAENGE.map((R, i) => `<div class="rangstufe ${i === r ? 'jetzt' : i < r ? 'erreicht' : ''}">
       <div class="kopf"><div>${arabischZeile(R)}<b>${i + 1}. ${R.n}</b><span>${R.de}</span></div><span class="abz">${abzeichen(i)}</span></div>
-      <p>${R.hifz}</p>${i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${i ? bedListe(i, z) : ''}</div>`).join('')}`;
+      <p>${R.hifz}</p>${i <= r ? `<button type="button" class="rang-ansehen" data-rang="${i}">${tx('rangfeier.ansehen')}</button>` : ''}${bedListe(i, z)}</div>`).join('')}`;
   // erreichte Ränge: die Freischaltung noch einmal ansehen (ohne Merker, ohne Folgen)
   app.querySelectorAll('.rang-ansehen').forEach(b => { b.onclick = async () => { try { const RF = await rfLaden(); await RF.zeigen(+b.dataset.rang); } catch (e) { console.warn('Rangfeier', e); } }; });
 }
@@ -3387,7 +3393,7 @@ async function lehrer() {
       return w.length ? (0.12 + 0.88 * (w.reduce((a, b) => a + b, 0) / w.length) / 4.6).toFixed(2) : null;
     });
     return `<div class="abschnitt"><div class="kopfzeile"><h3>${esc(x.profil.name || tx('lehrer.ohne_namen'))}</h3><button class="textlink" data-weg="${x.nr}">${tx('lehrer.entfernen')}</button></div>
-      <p class="unter">${tx('lehrer.rang', { n: Z.RAENGE[Z.rangJetzt()].n })} · ${tx('lehrer.stand', { a: new Date(x.exportiert).toLocaleDateString(gebiet('datum')) })} · ${tx('lehrer.markierte_fehlerstellen', { n: Object.keys(x.profil.fstellen || {}).length })}${x.echt ? '' : ` · <b style="color:var(--schlechtT)">${tx('lehrer.datei_wurde_veraendert')}</b>`}</p>
+      <p class="unter">${tx('lehrer.rang', { n: Z.rangJetzt() >= 0 ? Z.RAENGE[Z.rangJetzt()].n : tx('rangkarte.noch_kein_rang') })} · ${tx('lehrer.stand', { a: new Date(x.exportiert).toLocaleDateString(gebiet('datum')) })} · ${tx('lehrer.markierte_fehlerstellen', { n: Object.keys(x.profil.fstellen || {}).length })}${x.echt ? '' : ` · <b style="color:var(--schlechtT)">${tx('lehrer.datei_wurde_veraendert')}</b>`}</p>
       <div class="zahlen"><div class="zahl"><b>${zahl(+x.profil.kette?.n || 0)}</b><span>${tx('allg.kette')}</span></div><div class="zahl"><b>${prozent(q)}</b><span>${tx('allg.ayat_sicher')}</span></div><div class="zahl"><b>${prozent(Math.floor(kf.anteil * 100))}</b><span>${tx('lehrer.hatma', { a: (+x.profil.zyklus?.khatma || 0) + 1 })}</span></div></div>
       <div class="licht-seiten" role="img" aria-label="${tx('lehrer.lichtkarte_der_30_agza_von_30_mit_uebung', { n: juz.filter(o => o != null).length })}" style="grid-template-columns:repeat(30,1fr);gap:2px">${juz.map(o => `<button tabindex="-1" aria-hidden="true" class="${o == null ? 'aus' : ''}" style="aspect-ratio:1/2;${o ? 'opacity:' + o : ''}"></button>`).join('')}</div>
       <p class="unter" style="margin-top:10px">${kopie.einst.modus === 'anf' ? `${tx('lehrer.uebt_im_anfaenger_modus')} ` : kopie.einst.modus === 'seite' ? `${tx('lehrer.uebt_in_ganzen_seiten')} ` : ''}${schwach.length ? `${tx('lehrer.schwach')} ${schwach.map(({ id }) => `${abschnittName(D.A[id])} (${esc(D.A[id].titel)})`).join(' · ')}` : tx('lehrer.noch_keine_wiederholungen')}</p></div>`;

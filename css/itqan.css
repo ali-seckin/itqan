@@ -640,7 +640,7 @@ body.im-vollbild{overflow:hidden}
 [data-modus=dunkel],.rf{--abz-n0:#16404E;--abz-n1:#10303E;--abz-n2:#0A2230;--abz-e0:#2A7380;--abz-e1:#17505B;--abz-e2:#0F3A45}
 .abz{display:block;flex:none;width:var(--abz,56px);height:var(--abz,56px)}.abz svg{display:block;width:100%;height:100%;overflow:visible}
 .rangkarte .abz{--abz:84px}.rangstufe .abz{--abz:64px}.rang-band .abz{--abz:56px}
-.rangstufe:not(.erreicht):not(.jetzt) .abz{opacity:.4;filter:grayscale(.85)}
+.rangstufe:not(.erreicht):not(.jetzt) .abz,.abz-leer{opacity:.4;filter:grayscale(.85)}
 .arz{display:block;font-family:'Uthmani',serif;font-size:26px;line-height:1.4;color:var(--akzent)}[data-modus=dunkel] .arz{color:var(--akzent2)}
 .naechster{font-size:var(--s-klein);font-weight:500}
 .bed{display:grid;gap:9px}

@@ -1136,7 +1136,7 @@ export function ornamentStand(s) {
 // ohne Fehler und ohne Hilfe, gemessen über den ganzen gewählten Bereich), st2/st3/st4 (% der Abschnitte
 // mindestens gefestigt / sicher / mutqan), offen0 (keine Kontrolle nach Fehler offen)
 export const RAENGE = [
-  { get n() { return tx('zustand.mubtadi'); }, ar: 'مُبْتَدِئ', get de() { return tx('zustand.der_beginnende'); }, get hifz() { return tx('zustand.du_hast_mit_der_geordneten_muragaa'); }, b: {} },
+  { get n() { return tx('zustand.mubtadi'); }, ar: 'مُبْتَدِئ', get de() { return tx('zustand.der_beginnende'); }, get hifz() { return tx('zustand.du_hast_mit_der_geordneten_muragaa'); }, b: { tag1: 1 } },
   { get n() { return tx('zustand.murid'); }, ar: 'مُرِيد', get de() { return tx('zustand.der_wollende_der_strebende'); }, get hifz() { return tx('zustand.die_absicht_ist_gefasst_und_durch_taten'); }, b: { punkte: 1000 } },
   { get n() { return tx('zustand.muwazib'); }, ar: 'مُوَاظِب', get de() { return tx('zustand.der_bestaendige'); }, get hifz() { return tx('zustand.die_wiederholung_hat_einen_festen_platz'); }, b: { punkte: 5000, kette: 7 } },
   { get n() { return tx('zustand.mutaahid'); }, ar: 'مُتَعَاهِد', get de() { return tx('zustand.der_der_den_quran_pflegt'); }, get hifz() { return tx('zustand.nach_dem_hadit_taahadu_hada_l_quran_er'); }, b: { punkte: 15000, kette: 40 } },
@@ -1162,6 +1162,8 @@ export function kennzahlen() {
     quote: ay ? 100 * ok / ay : 0, st2: ab(2), st3: ab(3), st4: ab(4), offen };
 }
 const BED = {
+  // erstes erfülltes Tagesziel (Wird): die längste Kette ist mindestens 1; ältere Profile mit 1000 Punkten gelten ebenfalls als gestartet
+  tag1: (s, z) => [tx('zustand.erstes_tagesziel_erfuellt'), z.kette >= 1 || z.punkte >= 1000 ? 1 : 0, 1],
   punkte: (s, z) => [tx('zustand.itqan_punkte', { s: s.toLocaleString(gebiet('zahl')) }), z.punkte, s],
   kette: (s, z) => [tx('zustand.tage_kette_laengste', { s }), z.kette, s],
   khatma: (s, z) => [tx('zustand.runden_durch_deinen_bereich', { s }), z.khatma, s],
@@ -1177,9 +1179,10 @@ const BED = {
 export function bedingungen(i, z = kennzahlen()) {
   return Object.entries(RAENGE[i].b).map(([k, s]) => { const [text, ist, soll] = BED[k](s, z); return { k, text, ist, soll, ok: ist >= soll }; });
 }
+// -1: noch kein Rang (das erste Tagesziel ist noch nicht erfüllt)
 export function rangJetzt(z = kennzahlen()) {
-  let r = 0;
-  for (let i = 1; i < RAENGE.length; i++) { if (bedingungen(i, z).every(b => b.ok)) r = i; else break; }
+  let r = -1;
+  for (let i = 0; i < RAENGE.length; i++) { if (bedingungen(i, z).every(b => b.ok)) r = i; else break; }
   return r;
 }
 
