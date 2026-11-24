@@ -507,6 +507,7 @@ export default {
   },
   profil: {
     gruppe_mehr_t_ohne: 'Vue enseignant',
+    gruppe_mehr_t_spende: 'Vue enseignant, soutenir le projet',
     itqan_installieren: 'Installer Itqān',
     itqan: 'Itqān {VERSION}',
     hilfe_und_glossar: 'Aide et glossaire',
@@ -1706,6 +1707,18 @@ export default {
     ansehen: 'Revoir l’animation',
     vorschau: 'Voir le badge « {n} » en grand',
     noch_nicht_erreicht: 'Pas encore atteint.',
+  },
+  spende: {
+    eintrag: 'Soutenir le projet',
+    titel: 'Soutenir le projet',
+    text_1: 'Cette appli est gratuite : ses frais courants (serveur, domaine, hébergement, etc.) sont pris en charge par des soutiens bénévoles. Elle donne à beaucoup de gens un accès actif au Coran ; soutenir ce projet est donc, in shā’ Allāh, une grande ṣadaqa.',
+    text_2: 'Tu veux participer ? Utilise le bouton ci-dessous :',
+    knopf: 'Soutenir avec PayPal',
+    schliessen: 'Fermer',
+    freitag_titel: 'Ṣadaqa jāriya',
+    freitag_1: 'As-salāmu ʿalaykum et un Jumuʿa béni !',
+    freitag_2: 'L’appli est une ṣadaqa jāriya (une bonne action qui se poursuit) et vit grâce à des soutiens bénévoles. Profite de la bénédiction du vendredi pour soutenir le projet :',
+    freitag_dua: 'Qu’Allāh (swt) accepte chaque don et le récompense généreusement !',
   },
   uebenleiste: {
     tipp_hinweis: 'Touche un verset pour voir sa traduction.',

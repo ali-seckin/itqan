@@ -1547,3 +1547,6 @@ button.abz-knopf:focus-visible{outline:3px solid var(--akzent);outline-offset:3p
 .abz-gross{width:min(240px,64vw);margin:6px auto 10px}.abz-gross svg{display:block;width:100%;height:auto;overflow:visible}
 .dialog-text .abz-ar{margin:0;text-align:center}.dialog-text .abz-ar .arz{font-family:'Uthmani',serif;font-size:30px;line-height:1.3;color:var(--akzent)}[data-modus=dunkel] .dialog-text .abz-ar .arz{color:var(--akzent2)}
 .dialog-text .abz-de{margin:2px 0 0;text-align:center;font-size:var(--s-text);color:var(--leise)}.dialog-text .abz-hinweis{margin:8px 0 0;text-align:center}
+/* Projekt unterstützen (nur Android-App, Schalter in js/unterstuetzen.js) */
+.sp-knopf{display:flex;margin:14px 0 0}.sp-knopf .knopf{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;text-decoration:none}.sp-knopf svg{flex:none;width:18px;height:18px}
+.dialog-text .sp-dua{text-align:center;margin:12px 0 0}

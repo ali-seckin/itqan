@@ -7,6 +7,7 @@ import * as Forschung from './forschung.js';
 import * as Fehler from './fehler.js';
 import { abzeichen } from './abzeichen.js';
 import { navFest } from './navfest.js';
+import { SPENDE, spendeMoeglich, freitagFaellig, tagKey, SPENDE_MERKER, ruheRoute } from './unterstuetzen.js';
 import { Stapel, paarVon, einheitVon, doppelEntscheid } from './blaettern.js';
 import { seiteHTML, schriftenLaden, schrift, wortHTML, schriftAbgleichen, zeilenEinpassen, grenzenZeichnen, seitenText, wortText, textFuerLeser } from './mushaf.js';
 import { ornamentSVG, groesse, KLASSEN_TEXT, ornamentInfo } from './ornamente.js';
@@ -164,11 +165,11 @@ const arabischZeile = R => /[؀-ۿ]/.test(R.n) ? '' : `<span class="arz" lang="a
 const rangBand = r => `<div class="band rang-band"><span class="abz">${abzeichen(r)}</span><span>${tx('rangband.neuer_rang_was_das_bedeutet', { n: Z.RAENGE[r].n, de: Z.RAENGE[r].de })}</span></div>`;
 
 // ---------- Dialog (statt confirm): Titel, Inhalt, zwei Knöpfe; liefert true oder false ----------
-function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbrechen'), gefahr = false }) {
+function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbrechen'), gefahr = false, jaLeise = false }) {
   return new Promise(fertig => {
     const d = document.createElement('div'); d.className = 'dialog';
     d.innerHTML = `<div class="dialog-karte" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3><div class="dialog-text">${html}</div>
-      <div class="reihe">${nein ? `<button class="knopf leise klein" data-a="0">${esc(nein)}</button>` : ''}<button class="knopf ${gefahr ? 'schlecht' : 'haupt'} klein" data-a="1">${esc(ja)}</button></div></div>`;
+      <div class="reihe">${nein ? `<button class="knopf leise klein" data-a="0">${esc(nein)}</button>` : ''}<button class="knopf ${gefahr ? 'schlecht' : jaLeise ? 'leise' : 'haupt'} klein" data-a="1">${esc(ja)}</button></div></div>`;
     const vorher = document.activeElement;   // nach dem Schließen kehrt der Fokus dorthin zurück
     hintergrundSperren(true);
     // Wechselt die Ansicht (auch über die Zurück-Taste), schließt der Dialog wie mit „Abbrechen“; das Ergebnis ist dann null statt false
@@ -187,6 +188,23 @@ function dialog({ titel, html = '', ja = tx('dialog.ok'), nein = tx('dialog.abbr
     addEventListener('keydown', taste, true); addEventListener('hashchange', weg);
     document.body.appendChild(d); d.querySelector('[data-a="1"]').focus();
   });
+}
+// ---------- Projekt unterstützen (nur Android-App, Schalter SPENDE.an in js/unterstuetzen.js, derzeit aus) ----------
+const SPENDE_HERZ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.7a4.2 4.2 0 0 1 7.5 2.5c0 5.7-7.5 10.3-7.5 10.3z"/></svg>';
+const spendeKnopf = () => `<div class="sp-knopf"><a class="knopf haupt" href="${esc(SPENDE.url)}" target="_blank" rel="noopener">${SPENDE_HERZ}${tx('spende.knopf')}</a></div>`;
+// Info-Fenster (Profil › Mehr › Projekt unterstützen) und Freitagsfenster; beide führen nur mit einem Tipp auf den Knopf zu PayPal
+function spendeFenster(freitag) {
+  return dialog({ titel: freitag ? tx('spende.freitag_titel') : tx('spende.titel'), ja: tx('spende.schliessen'), nein: '', jaLeise: true,
+    html: freitag ? `<p>${tx('spende.freitag_1')}</p><p>${tx('spende.freitag_2')}</p>${spendeKnopf()}<p class="unter sp-dua">${tx('spende.freitag_dua')}</p>` : `<p>${tx('spende.text_1')}</p><p>${tx('spende.text_2')}</p>${spendeKnopf()}` });
+}
+// Jeden Freitag beim ersten Start einmal: erst, wenn kein anderes Fenster offen ist und niemand mitten im Üben steht; gemerkt wird erst beim Zeigen
+function freitagPruefen(versuch = 0) {
+  if (!spendeMoeglich() || !Z.P) return;
+  let gemerkt = ''; try { gemerkt = localStorage.getItem(SPENDE_MERKER) || ''; } catch (e) { /* ohne Speicher: dann bei jedem Start */ }
+  const jetzt = new Date(); if (!freitagFaellig(jetzt, gemerkt)) return;
+  if (document.querySelector('.dialog, .rf') || !ruheRoute(location.hash)) { if (versuch < 40) setTimeout(() => freitagPruefen(versuch + 1), 3000); return; }
+  try { localStorage.setItem(SPENDE_MERKER, tagKey(jetzt)); } catch (e) { /* siehe oben */ }
+  spendeFenster(true);
 }
 // ---------- Ausdrückliche Einwilligung (Art. 9 DSGVO): Konto und Lernstand können mittelbar die religiöse Überzeugung zeigen ----------
 // Gemerkt wird nur auf diesem Gerät; ohne Speicher fragt die App beim nächsten Mal erneut. Rückgabe: true (erteilt), false (abgelehnt), null (Dialog durch Wechsel der Ansicht geschlossen)
@@ -2309,10 +2327,11 @@ function profil() {
       </div></details>
     <details class="profil-gruppe"><summary><i class="gr-zeichen">${IK('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7"/><path d="M12 17h.01"/>')}</i><span><b>${tx('profil.gruppe_hilfe')}</b><small>${tx('profil.gruppe_hilfe_t')}</small></span></summary>
       <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#hilfe"><div class="t"><b>${tx('profil.hilfe_und_glossar')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#evidenz"><div class="t"><b>${tx('evidenz.eintrag')}</b></div><span class="pfeil">›</span></a><a class="karte" href="#einfuehrung"><div class="t"><b>${tx('profil.einfuehrung_ansehen')}</b></div><span class="pfeil">›</span></a><button type="button" class="karte" id="tour-neu"><div class="t"><b>${tx('profil.erklaerung_beim_ueben_wieder_zeigen')}</b></div><span class="pfeil">›</span></button><a class="karte" href="#rueckmeldung"><div class="t"><b>${tx('profil.rueckmeldung_senden')}</b></div><span class="pfeil">›</span></a>${Fehler.letzte() ? `<button type="button" class="karte" id="fehler-letzter"><div class="t"><b>${tx('fehlermeldung.letzter_fehler_ansehen')}</b></div><span class="pfeil">›</span></button>` : ''}</div></div></details>
-    <details class="profil-gruppe"><summary><i class="gr-zeichen">${IK('<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>')}</i><span><b>${tx('profil.gruppe_mehr')}</b><small>${UEBERGANG.installieren && !NATIV ? tx('profil.gruppe_mehr_t') : tx('profil.gruppe_mehr_t_ohne')}</small></span></summary>
-      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren && !NATIV ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}</div></div></details>
+    <details class="profil-gruppe"><summary><i class="gr-zeichen">${IK('<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>')}</i><span><b>${tx('profil.gruppe_mehr')}</b><small>${UEBERGANG.installieren && !NATIV ? tx('profil.gruppe_mehr_t') : spendeMoeglich() ? tx('profil.gruppe_mehr_t_spende') : tx('profil.gruppe_mehr_t_ohne')}</small></span></summary>
+      <div class="profil-inhalt"><div class="unterseiten"><a class="karte" href="#lehrer"><div class="t"><b>${tx('profil.lehreransicht')}</b></div><span class="pfeil">›</span></a>${UEBERGANG.installieren && !NATIV ? `<a class="karte" href="#installieren"><div class="t"><b>${tx('profil.itqan_installieren')}</b></div><span class="pfeil">›</span></a>` : ''}${spendeMoeglich() ? `<button type="button" class="karte" id="spende-oeffnen"><div class="t"><b>${tx('spende.eintrag')}</b></div><span class="pfeil">›</span></button>` : ''}</div></div></details>
     <p class="version-zeile">${tx('profil.itqan', { VERSION })} · <a href="#neu">${tx('allg.was_ist_neu')}</a></p>`;
   app.querySelector('#sichern').onclick = async () => { if (await profilSichern()) profil(); };
+  app.querySelector('#spende-oeffnen')?.addEventListener('click', () => spendeFenster(false));
   const diaBlock = app.querySelector('#diagramm-block');
   // Tippen oder Darüberwischen öffnet ein kleines Fenster mit Datum und Punkten über dem Balken; ein Tipp daneben oder auf dasselbe Fenster schließt es
   const diaWerte = () => {
@@ -3470,6 +3489,7 @@ async function starten() {
   setTimeout(neuigkeitenPruefen, 600);
   setTimeout(art9Bestand, 3500);
   setTimeout(vorratSpeichern, 4000);
+  setTimeout(freitagPruefen, 5500);
   // wieder Netz: Seiten in einfacher Schrift bekommen ihre Muṣḥaf-Schrift, der Vorrat wird nachgeholt
   addEventListener('online', () => { schriftAbgleichen().catch(() => {}); vorratSpeichern(); });
   // Solange in ein Feld getippt wird, weicht die Navigation: auf dem iPhone rutscht sie sonst mit der Tastatur über den Inhalt

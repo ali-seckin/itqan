@@ -507,6 +507,7 @@ export default {
   },
   profil: {
     gruppe_mehr_t_ohne: 'Teacher view',
+    gruppe_mehr_t_spende: 'Teacher view, support the project',
     itqan_installieren: 'Install Itqān',
     itqan: 'Itqān {VERSION}',
     hilfe_und_glossar: 'Help and glossary',
@@ -1706,6 +1707,18 @@ export default {
     ansehen: 'Watch the animation',
     vorschau: 'View the badge for {n} larger',
     noch_nicht_erreicht: 'Not reached yet.',
+  },
+  spende: {
+    eintrag: 'Support the project',
+    titel: 'Support the project',
+    text_1: 'Because this app is free, its running costs (server, domain, hosting and so on) are carried by voluntary supporters. The app gives many people active access to the Qur’an, so supporting this project is, in shā’ Allāh, a great ṣadaqah.',
+    text_2: 'Would you like to take part? Use the button below:',
+    knopf: 'Support with PayPal',
+    schliessen: 'Close',
+    freitag_titel: 'Ṣadaqah jāriyah',
+    freitag_1: 'As-salāmu ʿalaykum and a blessed Jumuʿah!',
+    freitag_2: 'The app is a ṣadaqah jāriyah (an ongoing good deed) and is funded by voluntary supporters. Use the blessing of Friday to support the project:',
+    freitag_dua: 'May Allāh (swt) accept every donation and reward it generously!',
   },
   uebenleiste: {
     tipp_hinweis: 'Tap an ayah to see its translation.',

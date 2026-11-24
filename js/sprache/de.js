@@ -503,6 +503,7 @@ export default {
   },
   profil: {
     gruppe_mehr_t_ohne: 'Lehreransicht',
+    gruppe_mehr_t_spende: 'Lehreransicht, Projekt unterstützen',
     itqan_installieren: 'Itqān installieren',
     itqan: 'Itqān {VERSION}',
     hilfe_und_glossar: 'Hilfe und Glossar',
@@ -1702,6 +1703,18 @@ export default {
     ansehen: 'Animation ansehen',
     vorschau: 'Abzeichen „{n}“ groß ansehen',
     noch_nicht_erreicht: 'Noch nicht erreicht.',
+  },
+  spende: {
+    eintrag: 'Projekt unterstützen',
+    titel: 'Projekt unterstützen',
+    text_1: 'Da diese App kostenlos ist, werden die laufenden Kosten (Server, Domain, Hosting usw.) von freiwilligen Unterstützern getragen. Die App ermöglicht vielen Menschen den aktiven Zugang zum Qurʾān und die Unterstützung dieses Projektes ist daher inšāʾAllāh eine große Ṣadaqah.',
+    text_2: 'Du möchtest dich beteiligen? Nutze den folgenden Button:',
+    knopf: 'Mit PayPal unterstützen',
+    schliessen: 'Schließen',
+    freitag_titel: 'Ṣadaqah Ǧāriyah',
+    freitag_1: 'As-salām ʿalaykum und einen gesegneten Ǧumuʿah!',
+    freitag_2: 'Die App ist eine Ṣadaqah Ǧāriyah (laufende Wohltat) und wird durch freiwillige Unterstützer finanziert. Nutze den Segen des Freitags, um das Projekt zu unterstützen:',
+    freitag_dua: 'Möge Allāh (swt) jede Spende annehmen und großzügig entlohnen!',
   },
   uebenleiste: {
     tipp_hinweis: 'Tippe auf eine Āya, um ihre Übersetzung zu sehen.',

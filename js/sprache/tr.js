@@ -507,6 +507,7 @@ export default {
   },
   profil: {
     gruppe_mehr_t_ohne: 'Hoca görünümü',
+    gruppe_mehr_t_spende: 'Öğretmen görünümü, projeye destek ol',
     itqan_installieren: 'Itqān’ı yükle',
     itqan: 'Itqān {VERSION}',
     hilfe_und_glossar: 'Yardım ve sözlük',
@@ -1706,6 +1707,18 @@ export default {
     ansehen: 'Animasyonu izle',
     vorschau: '{n} rozetini büyük göster',
     noch_nicht_erreicht: 'Henüz ulaşılmadı.',
+  },
+  spende: {
+    eintrag: 'Projeye destek ol',
+    titel: 'Projeye destek ol',
+    text_1: 'Bu uygulama ücretsiz olduğu için sunucu, alan adı, barındırma gibi süregelen giderleri gönüllü destekçiler karşılıyor. Uygulama birçok kişinin Kur’an’a aktif biçimde ulaşmasını sağlıyor; bu yüzden projeye destek olmak inşallah büyük bir sadakadır.',
+    text_2: 'Katılmak ister misin? Aşağıdaki düğmeyi kullan:',
+    knopf: 'PayPal ile destek ol',
+    schliessen: 'Kapat',
+    freitag_titel: 'Sadaka-i câriye',
+    freitag_1: 'Es-selâmü aleyküm ve hayırlı Cumalar!',
+    freitag_2: 'Uygulama bir sadaka-i câriyedir (süregelen hayır) ve gönüllü destekçilerle finanse edilir. Cuma’nın bereketinden yararlanıp projeye destek ol:',
+    freitag_dua: 'Allah (c.c.) her bağışı kabul etsin ve bol bol mükâfatlandırsın!',
   },
   uebenleiste: {
     tipp_hinweis: 'Çevirisini görmek için bir ayete dokun.',
